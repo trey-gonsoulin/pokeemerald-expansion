@@ -1818,6 +1818,12 @@ bool32 IsAbilityAndRecord(enum BattlerId battler, enum Ability battlerAbility, e
     return TRUE;
 }
 
+// Index into gBattleStruct->givenExpMons: opponent B's party gets its own set of bits.
+u32 GetGivenExpMonsIndex(enum BattlerId battler)
+{
+    return GetBattlerTrainer(battler) == B_TRAINER_OPPONENT_B ? 1 : 0;
+}
+
 bool32 HandleFaintedMonActions(void)
 {
     if (gBattleTypeFlags & BATTLE_TYPE_SAFARI)
@@ -1841,7 +1847,7 @@ bool32 HandleFaintedMonActions(void)
             {
                 gBattlerFainted = gBattlerTarget = gBattleStruct->eventState.faintedActionBattler;
                 if (gBattleMons[gBattlerFainted].hp == 0
-                 && !(gBattleStruct->givenExpMons[GetBattlerTrainer(gBattlerFainted) & BIT_FLANK] & (1u << gBattlerPartyIndexes[gBattlerFainted]))
+                 && !(gBattleStruct->givenExpMons[GetGivenExpMonsIndex(gBattlerFainted)] & (1u << gBattlerPartyIndexes[gBattlerFainted]))
                  && !(gAbsentBattlerFlags & (1u << gBattlerFainted)))
                 {
                     BattleScriptExecute(BattleScript_GiveExp);
