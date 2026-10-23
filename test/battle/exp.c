@@ -254,3 +254,26 @@ AI_SINGLE_BATTLE_TEST("Pokemon gain experience when the opponent's last Pokemon 
         EXPECT_GT(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_EXP), gExperienceTables[gSpeciesInfo[SPECIES_WOBBUFFET].growthRate][15]);
     }
 }
+
+AI_ONE_VS_TWO_BATTLE_TEST("Every Pokemon of opponent B gives experience in battle against two opponents", s32 exp)
+{
+    u32 koBoth;
+    PARAMETRIZE { koBoth = FALSE; }
+    PARAMETRIZE { koBoth = TRUE; }
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET) { Level(20); Speed(100); }
+        PLAYER(SPECIES_WYNAUT) { Level(20); Speed(100); }
+        OPPONENT_A(SPECIES_WOBBUFFET) { Level(10); Speed(50); Moves(MOVE_CELEBRATE); }
+        OPPONENT_B(SPECIES_CATERPIE) { Level(10); HP(1); Speed(50); Moves(MOVE_CELEBRATE); }
+        OPPONENT_B(SPECIES_CATERPIE) { Level(10); HP(1); Speed(50); Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        TURN { MOVE(playerLeft, MOVE_SCRATCH, target: opponentRight); MOVE(playerRight, MOVE_CELEBRATE); }
+        if (koBoth)
+            TURN { MOVE(playerLeft, MOVE_SCRATCH, target: opponentRight); MOVE(playerRight, MOVE_CELEBRATE); }
+    } THEN {
+        results[i].exp = GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_EXP) - gExperienceTables[gSpeciesInfo[SPECIES_WOBBUFFET].growthRate][20];
+    } FINALLY {
+        EXPECT_GT(results[0].exp, 0);
+        EXPECT_EQ(results[1].exp, results[0].exp * 2);
+    }
+}
