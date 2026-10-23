@@ -1634,8 +1634,14 @@ bool32 DoEndTurnEffects(void)
 {
     enum BattlerId battler = MAX_BATTLERS_COUNT;
 
-    if (gBattleOutcome != 0 && gBattleStruct->eventState.endTurn < ENDTURN_TRAINER_A_SLIDES) // Skip most stuff if battle's outcome is determined
-        gBattleStruct->eventState.endTurn = ENDTURN_TRAINER_A_SLIDES;
+    // Skip most stuff if battle's outcome is determined, but still hand out exp for mons that fainted this turn
+    if (gBattleOutcome != 0 && gBattleStruct->eventState.endTurn < ENDTURN_FAINTED_MON_ACTIONS)
+    {
+        gBattleStruct->eventState.endTurn = ENDTURN_FAINTED_MON_ACTIONS;
+        gBattleStruct->eventState.endTurnBattler = 0;
+        gBattleStruct->eventState.battlerSide = 0;
+        gBattleStruct->eventState.endTurnBlock = 0;
+    }
 
     for (;;)
     {
