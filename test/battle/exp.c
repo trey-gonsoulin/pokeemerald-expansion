@@ -234,3 +234,23 @@ AI_ONE_VS_TWO_BATTLE_TEST("Both opponent's Pokemon give experience in battle aga
         EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_EXP), expectedXp);
     }
 }
+
+AI_SINGLE_BATTLE_TEST("Pokemon gain experience when the opponent's last Pokemon faints from end-of-turn damage")
+{
+    u32 status, playerSpeed;
+    PARAMETRIZE { status = STATUS1_POISON; playerSpeed = 1; }
+    PARAMETRIZE { status = STATUS1_POISON; playerSpeed = 100; }
+    PARAMETRIZE { status = STATUS1_BURN;   playerSpeed = 1; }
+    PARAMETRIZE { status = STATUS1_BURN;   playerSpeed = 100; }
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET) { Level(15); Speed(playerSpeed); }
+        OPPONENT(SPECIES_TREECKO) { Level(15); HP(1); Speed(50); Status1(status); Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_CELEBRATE); }
+    } SCENE {
+        MESSAGE("The opposing Treecko fainted!");
+        EXPERIENCE_BAR(player);
+    } THEN {
+        EXPECT_GT(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_EXP), gExperienceTables[gSpeciesInfo[SPECIES_WOBBUFFET].growthRate][15]);
+    }
+}
