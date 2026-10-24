@@ -20,7 +20,7 @@ What the fork adds over upstream (`git diff origin/master...origin/emerald-plus 
 
 devkitARM lives at `/opt/devkitpro/devkitARM` and is **not** on PATH. `TOOLCHAIN=` alone isn't enough, because trainerproc header generation needs the bin dir on PATH.
 
-The owner's shell exports `CPATH` (macOS SDK headers) and `LDFLAGS` (Homebrew), and `arm-none-eabi-gcc` honours them. Unset the host compiler variables first, or the GBA code compiles against Darwin's libc headers with `_FORTIFY_SOURCE`: `make debug` and `make check` then fail to link, and the ROM bytes depend on the shell.
+The owner's shell exports `CPATH` (macOS SDK headers) and `LDFLAGS` (Homebrew). `arm-none-eabi-gcc` honours `CPATH`, so unset the host compiler variables first. Otherwise the GBA code compiles against Darwin's libc headers with `_FORTIFY_SOURCE`: `make debug` and `make check` then fail to link, and the ROM bytes depend on the shell. (The Makefile overrides `LDFLAGS`/`CPPFLAGS` but appends to `CFLAGS`, and the host tool builds may read any of them, so unset the whole set.)
 
 ```sh
 export PATH=/opt/devkitpro/devkitARM/bin:$PATH
