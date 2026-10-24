@@ -1,0 +1,9033 @@
+{
+ "gRoute101": {
+  "map": "MAP_ROUTE101",
+  "location": "hoenn-route-101",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "route/beginner",
+   "pool": "land",
+   "level": 2.4
+  },
+  "reason": {
+   "land": "default",
+   "water": null
+  }
+ },
+ "gRoute102": {
+  "map": "MAP_ROUTE102",
+  "location": "hoenn-route-102",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "route/beginner",
+   "pool": "land",
+   "level": 3.4
+  },
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 21.7
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 29.3
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:hoenn-route-102"
+  }
+ },
+ "gRoute103": {
+  "map": "MAP_ROUTE103",
+  "location": "hoenn-route-103",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "route/beginner",
+   "pool": "land",
+   "level": 2.9
+  },
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/late",
+    "pool": "fish_super",
+    "level": 32.0
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:hoenn-route-103"
+  }
+ },
+ "gRoute104": {
+  "map": "MAP_ROUTE104",
+  "location": "hoenn-route-104",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "route/beginner",
+   "pool": "land",
+   "level": 4.3
+  },
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 29.3
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:hoenn-route-104"
+  }
+ },
+ "gRoute105": {
+  "map": "MAP_ROUTE105",
+  "location": "hoenn-route-105",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 29.3
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:hoenn-route-105"
+  }
+ },
+ "gRoute110": {
+  "map": "MAP_ROUTE110",
+  "location": "hoenn-route-110",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "route/early",
+   "pool": "land",
+   "level": 12.4
+  },
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 29.3
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:hoenn-route-110"
+  }
+ },
+ "gRoute111": {
+  "map": "MAP_ROUTE111",
+  "location": "hoenn-route-111",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "desert/mid",
+   "pool": "land",
+   "level": 20.1
+  },
+  "rock_smash_mons": {
+   "archetype": "desert/early",
+   "pool": "rock_smash",
+   "level": 11.5
+  },
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 21.7
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 29.3
+   }
+  },
+  "reason": {
+   "land": "override:hoenn-route-111",
+   "water": "pokeapi-majority:hoenn-route-111"
+  }
+ },
+ "gRoute112": {
+  "map": "MAP_ROUTE112",
+  "location": "hoenn-route-112",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "mountain/early",
+   "pool": "land",
+   "level": 14.9
+  },
+  "reason": {
+   "land": "override:hoenn-route-112",
+   "water": null
+  }
+ },
+ "gRoute113": {
+  "map": "MAP_ROUTE113",
+  "location": "hoenn-route-113",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "volcanic/early",
+   "pool": "land",
+   "level": 14.9
+  },
+  "reason": {
+   "land": "override:hoenn-route-113",
+   "water": null
+  }
+ },
+ "gRoute114": {
+  "map": "MAP_ROUTE114",
+  "location": "hoenn-route-114",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "route/early",
+   "pool": "land",
+   "level": 16.0
+  },
+  "rock_smash_mons": {
+   "archetype": "route/early",
+   "pool": "rock_smash",
+   "level": 11.5
+  },
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 21.7
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 29.3
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:hoenn-route-114"
+  }
+ },
+ "gRoute116": {
+  "map": "MAP_ROUTE116",
+  "location": "hoenn-route-116",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "route/beginner",
+   "pool": "land",
+   "level": 6.5
+  },
+  "reason": {
+   "land": "default",
+   "water": null
+  }
+ },
+ "gRoute117": {
+  "map": "MAP_ROUTE117",
+  "location": "hoenn-route-117",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "route/early",
+   "pool": "land",
+   "level": 13.3
+  },
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 21.7
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 29.3
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:hoenn-route-117"
+  }
+ },
+ "gRoute118": {
+  "map": "MAP_ROUTE118",
+  "location": "hoenn-route-118",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 25.1
+  },
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/late",
+    "pool": "fish_super",
+    "level": 31.3
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:hoenn-route-118"
+  }
+ },
+ "gRoute124": {
+  "map": "MAP_ROUTE124",
+  "location": "hoenn-route-124",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/late",
+    "pool": "fish_super",
+    "level": 32.0
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:hoenn-route-124"
+  }
+ },
+ "gPetalburgWoods": {
+  "map": "MAP_PETALBURG_WOODS",
+  "location": "petalburg-woods",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "forest/beginner",
+   "pool": "land",
+   "level": 5.2
+  },
+  "reason": {
+   "land": "keyword:petalburg-woods",
+   "water": null
+  }
+ },
+ "gRusturfTunnel": {
+  "map": "MAP_RUSTURF_TUNNEL",
+  "location": "rusturf-tunnel",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/beginner",
+   "pool": "land",
+   "level": 6.5
+  },
+  "reason": {
+   "land": "keyword:rusturf-tunnel",
+   "water": null
+  }
+ },
+ "gGraniteCave_1F": {
+  "map": "MAP_GRANITE_CAVE_1F",
+  "location": "granite-cave",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/early",
+   "pool": "land",
+   "level": 7.8
+  },
+  "reason": {
+   "land": "keyword:granite-cave",
+   "water": null
+  }
+ },
+ "gGraniteCave_B1F": {
+  "map": "MAP_GRANITE_CAVE_B1F",
+  "location": "granite-cave",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/early",
+   "pool": "land",
+   "level": 9.8
+  },
+  "reason": {
+   "land": "keyword:granite-cave",
+   "water": null
+  }
+ },
+ "gMtPyre_1F": {
+  "map": "MAP_MT_PYRE_1F",
+  "location": "mt-pyre",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "haunted/mid",
+   "pool": "land",
+   "level": 26.3
+  },
+  "reason": {
+   "land": "override:mt-pyre",
+   "water": null
+  }
+ },
+ "gVictoryRoad_1F": {
+  "map": "MAP_VICTORY_ROAD_1F",
+  "location": "hoenn-victory-road",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/late",
+   "pool": "land",
+   "level": 38.6
+  },
+  "reason": {
+   "land": "keyword:hoenn-victory-road",
+   "water": null
+  }
+ },
+ "gSafariZone_South": {
+  "map": "MAP_SAFARI_ZONE_SOUTH",
+  "location": "hoenn-safari-zone",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "safari/mid",
+   "pool": "land",
+   "level": 25.8
+  },
+  "reason": {
+   "land": "keyword:hoenn-safari-zone",
+   "water": null
+  }
+ },
+ "gUnderwater_Route126": {
+  "map": "MAP_UNDERWATER_ROUTE126",
+  "location": "hoenn-route-126",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "water_mons": {
+   "archetype": "underwater/mid",
+   "pool": "surf",
+   "level": 25.8
+  },
+  "reason": {
+   "land": "default",
+   "water": "area:underwater"
+  }
+ },
+ "gAbandonedShip_Rooms_B1F": {
+  "map": "MAP_ABANDONED_SHIP_ROOMS_B1F",
+  "location": "abandoned-ship",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.1
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/late",
+    "pool": "fish_super",
+    "level": 30.2
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:abandoned-ship"
+  }
+ },
+ "gGraniteCave_B2F": {
+  "map": "MAP_GRANITE_CAVE_B2F",
+  "location": "granite-cave",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/early",
+   "pool": "land",
+   "level": 10.7
+  },
+  "rock_smash_mons": {
+   "archetype": "cave/early",
+   "pool": "rock_smash",
+   "level": 13.2
+  },
+  "reason": {
+   "land": "keyword:granite-cave",
+   "water": null
+  }
+ },
+ "gFieryPath": {
+  "map": "MAP_FIERY_PATH",
+  "location": "fiery-path",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "volcanic/early",
+   "pool": "land",
+   "level": 15.2
+  },
+  "reason": {
+   "land": "keyword:fiery-path",
+   "water": null
+  }
+ },
+ "gMeteorFalls_B1F_2R": {
+  "map": "MAP_METEOR_FALLS_B1F_2R",
+  "location": "meteor-falls",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/late",
+   "pool": "land",
+   "level": 34.4
+  },
+  "water_mons": {
+   "archetype": "cave_water/late",
+   "pool": "surf",
+   "level": 31.6
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "cave_water/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "cave_water/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "cave_water/late",
+    "pool": "fish_super",
+    "level": 30.8
+   }
+  },
+  "reason": {
+   "land": "override:meteor-falls",
+   "water": "pokeapi-majority:meteor-falls"
+  }
+ },
+ "gJaggedPass": {
+  "map": "MAP_JAGGED_PASS",
+  "location": "jagged-pass",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "volcanic/mid",
+   "pool": "land",
+   "level": 20.9
+  },
+  "reason": {
+   "land": "override:jagged-pass",
+   "water": null
+  }
+ },
+ "gRoute106": {
+  "map": "MAP_ROUTE106",
+  "location": "hoenn-route-106",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 29.3
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:hoenn-route-106"
+  }
+ },
+ "gRoute107": {
+  "map": "MAP_ROUTE107",
+  "location": "hoenn-route-107",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 29.3
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:hoenn-route-107"
+  }
+ },
+ "gRoute108": {
+  "map": "MAP_ROUTE108",
+  "location": "hoenn-route-108",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 29.3
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:hoenn-route-108"
+  }
+ },
+ "gRoute109": {
+  "map": "MAP_ROUTE109",
+  "location": "hoenn-route-109",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 29.3
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:hoenn-route-109"
+  }
+ },
+ "gRoute115": {
+  "map": "MAP_ROUTE115",
+  "location": "hoenn-route-115",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 24.0
+  },
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 29.3
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:hoenn-route-115"
+  }
+ },
+ "gNewMauville_Inside": {
+  "map": "MAP_NEW_MAUVILLE_INSIDE",
+  "location": "new-mauville",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "urban/mid",
+   "pool": "land",
+   "level": 24.1
+  },
+  "reason": {
+   "land": "override:new-mauville",
+   "water": null
+  }
+ },
+ "gRoute119": {
+  "map": "MAP_ROUTE119",
+  "location": "hoenn-route-119",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 25.6
+  },
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 29.3
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:hoenn-route-119"
+  }
+ },
+ "gRoute120": {
+  "map": "MAP_ROUTE120",
+  "location": "hoenn-route-120",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 25.6
+  },
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 21.7
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 29.3
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:hoenn-route-120"
+  }
+ },
+ "gRoute121": {
+  "map": "MAP_ROUTE121",
+  "location": "hoenn-route-121",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 26.6
+  },
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 29.3
+   }
+  },
+  "reason": {
+   "land": "override:hoenn-route-121",
+   "water": "pokeapi-majority:hoenn-route-121"
+  }
+ },
+ "gRoute122": {
+  "map": "MAP_ROUTE122",
+  "location": "hoenn-route-122",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/late",
+    "pool": "fish_super",
+    "level": 32.0
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:hoenn-route-122"
+  }
+ },
+ "gRoute123": {
+  "map": "MAP_ROUTE123",
+  "location": "hoenn-route-123",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 26.6
+  },
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 29.3
+   }
+  },
+  "reason": {
+   "land": "override:hoenn-route-123",
+   "water": "pokeapi-majority:hoenn-route-123"
+  }
+ },
+ "gMtPyre_2F": {
+  "map": "MAP_MT_PYRE_2F",
+  "location": "mt-pyre",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "haunted/mid",
+   "pool": "land",
+   "level": 26.3
+  },
+  "reason": {
+   "land": "override:mt-pyre",
+   "water": null
+  }
+ },
+ "gMtPyre_3F": {
+  "map": "MAP_MT_PYRE_3F",
+  "location": "mt-pyre",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "haunted/mid",
+   "pool": "land",
+   "level": 26.3
+  },
+  "reason": {
+   "land": "override:mt-pyre",
+   "water": null
+  }
+ },
+ "gMtPyre_4F": {
+  "map": "MAP_MT_PYRE_4F",
+  "location": "mt-pyre",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "haunted/mid",
+   "pool": "land",
+   "level": 26.4
+  },
+  "reason": {
+   "land": "override:mt-pyre",
+   "water": null
+  }
+ },
+ "gMtPyre_5F": {
+  "map": "MAP_MT_PYRE_5F",
+  "location": "mt-pyre",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "haunted/mid",
+   "pool": "land",
+   "level": 26.4
+  },
+  "reason": {
+   "land": "override:mt-pyre",
+   "water": null
+  }
+ },
+ "gMtPyre_6F": {
+  "map": "MAP_MT_PYRE_6F",
+  "location": "mt-pyre",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "haunted/mid",
+   "pool": "land",
+   "level": 26.4
+  },
+  "reason": {
+   "land": "override:mt-pyre",
+   "water": null
+  }
+ },
+ "gMtPyre_Exterior": {
+  "map": "MAP_MT_PYRE_EXTERIOR",
+  "location": "mt-pyre",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "haunted/mid",
+   "pool": "land",
+   "level": 27.5
+  },
+  "reason": {
+   "land": "override:mt-pyre",
+   "water": null
+  }
+ },
+ "gMtPyre_Summit": {
+  "map": "MAP_MT_PYRE_SUMMIT",
+  "location": "mt-pyre",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "haunted/mid",
+   "pool": "land",
+   "level": 27.6
+  },
+  "reason": {
+   "land": "override:mt-pyre",
+   "water": null
+  }
+ },
+ "gGraniteCave_StevensRoom": {
+  "map": "MAP_GRANITE_CAVE_STEVENS_ROOM",
+  "location": "granite-cave",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/early",
+   "pool": "land",
+   "level": 7.8
+  },
+  "reason": {
+   "land": "keyword:granite-cave",
+   "water": null
+  }
+ },
+ "gRoute125": {
+  "map": "MAP_ROUTE125",
+  "location": "hoenn-route-125",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/late",
+    "pool": "fish_super",
+    "level": 32.0
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:hoenn-route-125"
+  }
+ },
+ "gRoute126": {
+  "map": "MAP_ROUTE126",
+  "location": "hoenn-route-126",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/late",
+    "pool": "fish_super",
+    "level": 32.0
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:hoenn-route-126"
+  }
+ },
+ "gRoute127": {
+  "map": "MAP_ROUTE127",
+  "location": "hoenn-route-127",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/late",
+    "pool": "fish_super",
+    "level": 32.0
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:hoenn-route-127"
+  }
+ },
+ "gRoute128": {
+  "map": "MAP_ROUTE128",
+  "location": "hoenn-route-128",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/late",
+    "pool": "fish_super",
+    "level": 32.8
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:hoenn-route-128"
+  }
+ },
+ "gRoute129": {
+  "map": "MAP_ROUTE129",
+  "location": "hoenn-route-129",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/late",
+    "pool": "fish_super",
+    "level": 32.0
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:hoenn-route-129"
+  }
+ },
+ "gRoute130": {
+  "map": "MAP_ROUTE130",
+  "location": "hoenn-route-130",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 30.0
+  },
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/late",
+    "pool": "fish_super",
+    "level": 32.0
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:hoenn-route-130"
+  }
+ },
+ "gRoute131": {
+  "map": "MAP_ROUTE131",
+  "location": "hoenn-route-131",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/late",
+    "pool": "fish_super",
+    "level": 32.0
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:hoenn-route-131"
+  }
+ },
+ "gRoute132": {
+  "map": "MAP_ROUTE132",
+  "location": "hoenn-route-132",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/late",
+    "pool": "fish_super",
+    "level": 32.0
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:hoenn-route-132"
+  }
+ },
+ "gRoute133": {
+  "map": "MAP_ROUTE133",
+  "location": "hoenn-route-133",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/late",
+    "pool": "fish_super",
+    "level": 32.0
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:hoenn-route-133"
+  }
+ },
+ "gRoute134": {
+  "map": "MAP_ROUTE134",
+  "location": "hoenn-route-134",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/late",
+    "pool": "fish_super",
+    "level": 32.0
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:hoenn-route-134"
+  }
+ },
+ "gAbandonedShip_HiddenFloorCorridors": {
+  "map": "MAP_ABANDONED_SHIP_HIDDEN_FLOOR_CORRIDORS",
+  "location": "abandoned-ship",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.1
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/late",
+    "pool": "fish_super",
+    "level": 30.2
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:abandoned-ship"
+  }
+ },
+ "gSeafloorCavern_Room1": {
+  "map": "MAP_SEAFLOOR_CAVERN_ROOM1",
+  "location": "seafloor-cavern",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/late",
+   "pool": "land",
+   "level": 31.3
+  },
+  "reason": {
+   "land": "keyword:seafloor-cavern",
+   "water": null
+  }
+ },
+ "gSeafloorCavern_Room2": {
+  "map": "MAP_SEAFLOOR_CAVERN_ROOM2",
+  "location": "seafloor-cavern",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/late",
+   "pool": "land",
+   "level": 31.3
+  },
+  "reason": {
+   "land": "keyword:seafloor-cavern",
+   "water": null
+  }
+ },
+ "gSeafloorCavern_Room3": {
+  "map": "MAP_SEAFLOOR_CAVERN_ROOM3",
+  "location": "seafloor-cavern",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/late",
+   "pool": "land",
+   "level": 31.3
+  },
+  "reason": {
+   "land": "keyword:seafloor-cavern",
+   "water": null
+  }
+ },
+ "gSeafloorCavern_Room4": {
+  "map": "MAP_SEAFLOOR_CAVERN_ROOM4",
+  "location": "seafloor-cavern",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/late",
+   "pool": "land",
+   "level": 31.3
+  },
+  "reason": {
+   "land": "keyword:seafloor-cavern",
+   "water": null
+  }
+ },
+ "gSeafloorCavern_Room5": {
+  "map": "MAP_SEAFLOOR_CAVERN_ROOM5",
+  "location": "seafloor-cavern",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/late",
+   "pool": "land",
+   "level": 31.3
+  },
+  "reason": {
+   "land": "keyword:seafloor-cavern",
+   "water": null
+  }
+ },
+ "gSeafloorCavern_Room6": {
+  "map": "MAP_SEAFLOOR_CAVERN_ROOM6",
+  "location": "seafloor-cavern",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/late",
+   "pool": "land",
+   "level": 31.3
+  },
+  "water_mons": {
+   "archetype": "cave_water/mid",
+   "pool": "surf",
+   "level": 21.2
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "cave_water/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "cave_water/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "cave_water/mid",
+    "pool": "fish_super",
+    "level": 29.3
+   }
+  },
+  "reason": {
+   "land": "keyword:seafloor-cavern",
+   "water": "pokeapi-majority:seafloor-cavern"
+  }
+ },
+ "gSeafloorCavern_Room7": {
+  "map": "MAP_SEAFLOOR_CAVERN_ROOM7",
+  "location": "seafloor-cavern",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/late",
+   "pool": "land",
+   "level": 31.3
+  },
+  "water_mons": {
+   "archetype": "cave_water/mid",
+   "pool": "surf",
+   "level": 21.2
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "cave_water/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "cave_water/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "cave_water/mid",
+    "pool": "fish_super",
+    "level": 29.3
+   }
+  },
+  "reason": {
+   "land": "keyword:seafloor-cavern",
+   "water": "pokeapi-majority:seafloor-cavern"
+  }
+ },
+ "gSeafloorCavern_Room8": {
+  "map": "MAP_SEAFLOOR_CAVERN_ROOM8",
+  "location": "seafloor-cavern",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/late",
+   "pool": "land",
+   "level": 31.3
+  },
+  "reason": {
+   "land": "keyword:seafloor-cavern",
+   "water": null
+  }
+ },
+ "gSeafloorCavern_Entrance": {
+  "map": "MAP_SEAFLOOR_CAVERN_ENTRANCE",
+  "location": "seafloor-cavern",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "water_mons": {
+   "archetype": "cave_water/mid",
+   "pool": "surf",
+   "level": 21.2
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "cave_water/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "cave_water/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "cave_water/mid",
+    "pool": "fish_super",
+    "level": 29.3
+   }
+  },
+  "reason": {
+   "land": "keyword:seafloor-cavern",
+   "water": "pokeapi-majority:seafloor-cavern"
+  }
+ },
+ "gCaveOfOrigin_Entrance": {
+  "map": "MAP_CAVE_OF_ORIGIN_ENTRANCE",
+  "location": "cave-of-origin",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/late",
+   "pool": "land",
+   "level": 31.3
+  },
+  "reason": {
+   "land": "keyword:cave-of-origin",
+   "water": null
+  }
+ },
+ "gCaveOfOrigin_1F": {
+  "map": "MAP_CAVE_OF_ORIGIN_1F",
+  "location": "cave-of-origin",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/late",
+   "pool": "land",
+   "level": 31.8
+  },
+  "reason": {
+   "land": "keyword:cave-of-origin",
+   "water": null
+  }
+ },
+ "gCaveOfOrigin_UnusedRubySapphireMap1": {
+  "map": "MAP_CAVE_OF_ORIGIN_UNUSED_RUBY_SAPPHIRE_MAP1",
+  "location": "cave-of-origin",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/late",
+   "pool": "land",
+   "level": 31.8
+  },
+  "reason": {
+   "land": "keyword:cave-of-origin",
+   "water": null
+  }
+ },
+ "gCaveOfOrigin_UnusedRubySapphireMap2": {
+  "map": "MAP_CAVE_OF_ORIGIN_UNUSED_RUBY_SAPPHIRE_MAP2",
+  "location": "cave-of-origin",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/late",
+   "pool": "land",
+   "level": 31.8
+  },
+  "reason": {
+   "land": "keyword:cave-of-origin",
+   "water": null
+  }
+ },
+ "gCaveOfOrigin_UnusedRubySapphireMap3": {
+  "map": "MAP_CAVE_OF_ORIGIN_UNUSED_RUBY_SAPPHIRE_MAP3",
+  "location": "cave-of-origin",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/late",
+   "pool": "land",
+   "level": 31.8
+  },
+  "reason": {
+   "land": "keyword:cave-of-origin",
+   "water": null
+  }
+ },
+ "gNewMauville_Entrance": {
+  "map": "MAP_NEW_MAUVILLE_ENTRANCE",
+  "location": "new-mauville",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "urban/mid",
+   "pool": "land",
+   "level": 24.0
+  },
+  "reason": {
+   "land": "override:new-mauville",
+   "water": null
+  }
+ },
+ "gSafariZone_Southwest": {
+  "map": "MAP_SAFARI_ZONE_SOUTHWEST",
+  "location": "hoenn-safari-zone",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "safari/mid",
+   "pool": "land",
+   "level": 26.0
+  },
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 25.8
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_good",
+    "level": 19.5
+   },
+   "super_rod": {
+    "archetype": "freshwater/late",
+    "pool": "fish_super",
+    "level": 30.6
+   }
+  },
+  "reason": {
+   "land": "keyword:hoenn-safari-zone",
+   "water": "pokeapi-majority:hoenn-safari-zone"
+  }
+ },
+ "gSafariZone_North": {
+  "map": "MAP_SAFARI_ZONE_NORTH",
+  "location": "hoenn-safari-zone",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "safari/mid",
+   "pool": "land",
+   "level": 28.0
+  },
+  "rock_smash_mons": {
+   "archetype": "safari/early",
+   "pool": "rock_smash",
+   "level": 11.8
+  },
+  "reason": {
+   "land": "keyword:hoenn-safari-zone",
+   "water": null
+  }
+ },
+ "gSafariZone_Northwest": {
+  "map": "MAP_SAFARI_ZONE_NORTHWEST",
+  "location": "hoenn-safari-zone",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "safari/mid",
+   "pool": "land",
+   "level": 28.0
+  },
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 25.8
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_good",
+    "level": 19.5
+   },
+   "super_rod": {
+    "archetype": "freshwater/late",
+    "pool": "fish_super",
+    "level": 30.6
+   }
+  },
+  "reason": {
+   "land": "keyword:hoenn-safari-zone",
+   "water": "pokeapi-majority:hoenn-safari-zone"
+  }
+ },
+ "gVictoryRoad_B1F": {
+  "map": "MAP_VICTORY_ROAD_B1F",
+  "location": "hoenn-victory-road",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/late",
+   "pool": "land",
+   "level": 39.8
+  },
+  "rock_smash_mons": {
+   "archetype": "cave/late",
+   "pool": "rock_smash",
+   "level": 35.2
+  },
+  "reason": {
+   "land": "keyword:hoenn-victory-road",
+   "water": null
+  }
+ },
+ "gVictoryRoad_B2F": {
+  "map": "MAP_VICTORY_ROAD_B2F",
+  "location": "hoenn-victory-road",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/late",
+   "pool": "land",
+   "level": 41.0
+  },
+  "water_mons": {
+   "archetype": "cave_water/late",
+   "pool": "surf",
+   "level": 31.5
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "cave_water/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "cave_water/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "cave_water/late",
+    "pool": "fish_super",
+    "level": 30.8
+   }
+  },
+  "reason": {
+   "land": "keyword:hoenn-victory-road",
+   "water": "pokeapi-majority:hoenn-victory-road"
+  }
+ },
+ "gMeteorFalls_1F_1R": {
+  "map": "MAP_METEOR_FALLS_1F_1R",
+  "location": "meteor-falls",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/early",
+   "pool": "land",
+   "level": 16.4
+  },
+  "water_mons": {
+   "archetype": "cave_water/mid",
+   "pool": "surf",
+   "level": 24.1
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "cave_water/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "cave_water/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "cave_water/mid",
+    "pool": "fish_super",
+    "level": 29.3
+   }
+  },
+  "reason": {
+   "land": "override:meteor-falls",
+   "water": "pokeapi-majority:meteor-falls"
+  }
+ },
+ "gMeteorFalls_1F_2R": {
+  "map": "MAP_METEOR_FALLS_1F_2R",
+  "location": "meteor-falls",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/late",
+   "pool": "land",
+   "level": 35.0
+  },
+  "water_mons": {
+   "archetype": "cave_water/late",
+   "pool": "surf",
+   "level": 31.6
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "cave_water/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "cave_water/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "cave_water/late",
+    "pool": "fish_super",
+    "level": 30.8
+   }
+  },
+  "reason": {
+   "land": "override:meteor-falls",
+   "water": "pokeapi-majority:meteor-falls"
+  }
+ },
+ "gMeteorFalls_B1F_1R": {
+  "map": "MAP_METEOR_FALLS_B1F_1R",
+  "location": "meteor-falls",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/late",
+   "pool": "land",
+   "level": 35.0
+  },
+  "water_mons": {
+   "archetype": "cave_water/late",
+   "pool": "surf",
+   "level": 31.6
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "cave_water/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "cave_water/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "cave_water/late",
+    "pool": "fish_super",
+    "level": 30.8
+   }
+  },
+  "reason": {
+   "land": "override:meteor-falls",
+   "water": "pokeapi-majority:meteor-falls"
+  }
+ },
+ "gShoalCave_LowTideStairsRoom": {
+  "map": "MAP_SHOAL_CAVE_LOW_TIDE_STAIRS_ROOM",
+  "location": "shoal-cave",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "ice/mid",
+   "pool": "land",
+   "level": 28.4
+  },
+  "reason": {
+   "land": "override:shoal-cave",
+   "water": null
+  }
+ },
+ "gShoalCave_LowTideLowerRoom": {
+  "map": "MAP_SHOAL_CAVE_LOW_TIDE_LOWER_ROOM",
+  "location": "shoal-cave",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "ice/mid",
+   "pool": "land",
+   "level": 28.4
+  },
+  "reason": {
+   "land": "override:shoal-cave",
+   "water": null
+  }
+ },
+ "gShoalCave_LowTideInnerRoom": {
+  "map": "MAP_SHOAL_CAVE_LOW_TIDE_INNER_ROOM",
+  "location": "shoal-cave",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "ice/mid",
+   "pool": "land",
+   "level": 28.4
+  },
+  "water_mons": {
+   "archetype": "cave_water/mid",
+   "pool": "surf",
+   "level": 20.8
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "cave_water/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "cave_water/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "cave_water/mid",
+    "pool": "fish_super",
+    "level": 29.3
+   }
+  },
+  "reason": {
+   "land": "override:shoal-cave",
+   "water": "pokeapi-majority:shoal-cave"
+  }
+ },
+ "gShoalCave_LowTideEntranceRoom": {
+  "map": "MAP_SHOAL_CAVE_LOW_TIDE_ENTRANCE_ROOM",
+  "location": "shoal-cave",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "ice/mid",
+   "pool": "land",
+   "level": 28.4
+  },
+  "water_mons": {
+   "archetype": "cave_water/mid",
+   "pool": "surf",
+   "level": 20.8
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "cave_water/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "cave_water/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "cave_water/mid",
+    "pool": "fish_super",
+    "level": 29.3
+   }
+  },
+  "reason": {
+   "land": "override:shoal-cave",
+   "water": "pokeapi-majority:shoal-cave"
+  }
+ },
+ "gLilycoveCity": {
+  "map": "MAP_LILYCOVE_CITY",
+  "location": "lilycove-city",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/late",
+    "pool": "fish_super",
+    "level": 30.1
+   }
+  },
+  "reason": {
+   "land": "keyword:lilycove-city",
+   "water": "pokeapi-majority:lilycove-city"
+  }
+ },
+ "gDewfordTown": {
+  "map": "MAP_DEWFORD_TOWN",
+  "location": "dewford-town",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 29.3
+   }
+  },
+  "reason": {
+   "land": "keyword:dewford-town",
+   "water": "pokeapi-majority:dewford-town"
+  }
+ },
+ "gSlateportCity": {
+  "map": "MAP_SLATEPORT_CITY",
+  "location": "slateport-city",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 29.3
+   }
+  },
+  "reason": {
+   "land": "keyword:slateport-city",
+   "water": "pokeapi-majority:slateport-city"
+  }
+ },
+ "gMossdeepCity": {
+  "map": "MAP_MOSSDEEP_CITY",
+  "location": "mossdeep-city",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/late",
+    "pool": "fish_super",
+    "level": 32.0
+   }
+  },
+  "reason": {
+   "land": "keyword:mossdeep-city",
+   "water": "pokeapi-majority:mossdeep-city"
+  }
+ },
+ "gPacifidlogTown": {
+  "map": "MAP_PACIFIDLOG_TOWN",
+  "location": "pacifidlog-town",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/late",
+    "pool": "fish_super",
+    "level": 32.0
+   }
+  },
+  "reason": {
+   "land": "keyword:pacifidlog-town",
+   "water": "pokeapi-majority:pacifidlog-town"
+  }
+ },
+ "gEverGrandeCity": {
+  "map": "MAP_EVER_GRANDE_CITY",
+  "location": "ever-grande-city",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/late",
+    "pool": "fish_super",
+    "level": 32.8
+   }
+  },
+  "reason": {
+   "land": "keyword:ever-grande-city",
+   "water": "pokeapi-majority:ever-grande-city"
+  }
+ },
+ "gPetalburgCity": {
+  "map": "MAP_PETALBURG_CITY",
+  "location": "petalburg-city",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 21.5
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 29.3
+   }
+  },
+  "reason": {
+   "land": "keyword:petalburg-city",
+   "water": "pokeapi-majority:petalburg-city"
+  }
+ },
+ "gUnderwater_Route124": {
+  "map": "MAP_UNDERWATER_ROUTE124",
+  "location": "hoenn-route-124",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "water_mons": {
+   "archetype": "underwater/mid",
+   "pool": "surf",
+   "level": 25.8
+  },
+  "reason": {
+   "land": "default",
+   "water": "area:underwater"
+  }
+ },
+ "gShoalCave_LowTideIceRoom": {
+  "map": "MAP_SHOAL_CAVE_LOW_TIDE_ICE_ROOM",
+  "location": "shoal-cave",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "ice/mid",
+   "pool": "land",
+   "level": 27.8
+  },
+  "reason": {
+   "land": "override:shoal-cave",
+   "water": null
+  }
+ },
+ "gSkyPillar_1F": {
+  "map": "MAP_SKY_PILLAR_1F",
+  "location": "sky-pillar",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "ruins/late",
+   "pool": "land",
+   "level": 35.0
+  },
+  "reason": {
+   "land": "override:sky-pillar",
+   "water": null
+  }
+ },
+ "gSootopolisCity": {
+  "map": "MAP_SOOTOPOLIS_CITY",
+  "location": "sootopolis-city",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_good",
+    "level": 20.0
+   },
+   "super_rod": {
+    "archetype": "sea/late",
+    "pool": "fish_super",
+    "level": 33.5
+   }
+  },
+  "reason": {
+   "land": "keyword:sootopolis-city",
+   "water": "pokeapi-majority:sootopolis-city"
+  }
+ },
+ "gSkyPillar_3F": {
+  "map": "MAP_SKY_PILLAR_3F",
+  "location": "sky-pillar",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "ruins/late",
+   "pool": "land",
+   "level": 35.0
+  },
+  "reason": {
+   "land": "override:sky-pillar",
+   "water": null
+  }
+ },
+ "gSkyPillar_5F": {
+  "map": "MAP_SKY_PILLAR_5F",
+  "location": "sky-pillar",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "ruins/late",
+   "pool": "land",
+   "level": 35.1
+  },
+  "reason": {
+   "land": "override:sky-pillar",
+   "water": null
+  }
+ },
+ "gSafariZone_Southeast": {
+  "map": "MAP_SAFARI_ZONE_SOUTHEAST",
+  "location": "hoenn-safari-zone",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "safari/late",
+   "pool": "land",
+   "level": 34.4
+  },
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 27.8
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_old",
+    "level": 27.5
+   },
+   "good_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_good",
+    "level": 28.5
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 28.6
+   }
+  },
+  "reason": {
+   "land": "keyword:hoenn-safari-zone",
+   "water": "pokeapi-majority:hoenn-safari-zone"
+  }
+ },
+ "gSafariZone_Northeast": {
+  "map": "MAP_SAFARI_ZONE_NORTHEAST",
+  "location": "hoenn-safari-zone",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "safari/late",
+   "pool": "land",
+   "level": 34.4
+  },
+  "rock_smash_mons": {
+   "archetype": "safari/mid",
+   "pool": "rock_smash",
+   "level": 26.6
+  },
+  "reason": {
+   "land": "keyword:hoenn-safari-zone",
+   "water": null
+  }
+ },
+ "gMagmaHideout_1F": {
+  "map": "MAP_MAGMA_HIDEOUT_1F",
+  "location": "magma-hideout",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "volcanic/mid",
+   "pool": "land",
+   "level": 28.8
+  },
+  "reason": {
+   "land": "keyword:magma-hideout",
+   "water": null
+  }
+ },
+ "gMagmaHideout_2F_1R": {
+  "map": "MAP_MAGMA_HIDEOUT_2F_1R",
+  "location": "magma-hideout",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "volcanic/mid",
+   "pool": "land",
+   "level": 28.8
+  },
+  "reason": {
+   "land": "keyword:magma-hideout",
+   "water": null
+  }
+ },
+ "gMagmaHideout_2F_2R": {
+  "map": "MAP_MAGMA_HIDEOUT_2F_2R",
+  "location": "magma-hideout",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "volcanic/mid",
+   "pool": "land",
+   "level": 28.8
+  },
+  "reason": {
+   "land": "keyword:magma-hideout",
+   "water": null
+  }
+ },
+ "gMagmaHideout_3F_1R": {
+  "map": "MAP_MAGMA_HIDEOUT_3F_1R",
+  "location": "magma-hideout",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "volcanic/mid",
+   "pool": "land",
+   "level": 28.8
+  },
+  "reason": {
+   "land": "keyword:magma-hideout",
+   "water": null
+  }
+ },
+ "gMagmaHideout_3F_2R": {
+  "map": "MAP_MAGMA_HIDEOUT_3F_2R",
+  "location": "magma-hideout",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "volcanic/mid",
+   "pool": "land",
+   "level": 28.8
+  },
+  "reason": {
+   "land": "keyword:magma-hideout",
+   "water": null
+  }
+ },
+ "gMagmaHideout_4F": {
+  "map": "MAP_MAGMA_HIDEOUT_4F",
+  "location": "magma-hideout",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "volcanic/mid",
+   "pool": "land",
+   "level": 28.8
+  },
+  "reason": {
+   "land": "keyword:magma-hideout",
+   "water": null
+  }
+ },
+ "gMagmaHideout_3F_3R": {
+  "map": "MAP_MAGMA_HIDEOUT_3F_3R",
+  "location": "magma-hideout",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "volcanic/mid",
+   "pool": "land",
+   "level": 28.8
+  },
+  "reason": {
+   "land": "keyword:magma-hideout",
+   "water": null
+  }
+ },
+ "gMagmaHideout_2F_3R": {
+  "map": "MAP_MAGMA_HIDEOUT_2F_3R",
+  "location": "magma-hideout",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "volcanic/mid",
+   "pool": "land",
+   "level": 28.8
+  },
+  "reason": {
+   "land": "keyword:magma-hideout",
+   "water": null
+  }
+ },
+ "gMirageTower_1F": {
+  "map": "MAP_MIRAGE_TOWER_1F",
+  "location": "mirage-tower",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "desert/mid",
+   "pool": "land",
+   "level": 20.9
+  },
+  "reason": {
+   "land": "override:mirage-tower",
+   "water": null
+  }
+ },
+ "gMirageTower_2F": {
+  "map": "MAP_MIRAGE_TOWER_2F",
+  "location": "mirage-tower",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "desert/mid",
+   "pool": "land",
+   "level": 20.9
+  },
+  "reason": {
+   "land": "override:mirage-tower",
+   "water": null
+  }
+ },
+ "gMirageTower_3F": {
+  "map": "MAP_MIRAGE_TOWER_3F",
+  "location": "mirage-tower",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "desert/mid",
+   "pool": "land",
+   "level": 20.9
+  },
+  "reason": {
+   "land": "override:mirage-tower",
+   "water": null
+  }
+ },
+ "gMirageTower_4F": {
+  "map": "MAP_MIRAGE_TOWER_4F",
+  "location": "mirage-tower",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "desert/mid",
+   "pool": "land",
+   "level": 20.9
+  },
+  "reason": {
+   "land": "override:mirage-tower",
+   "water": null
+  }
+ },
+ "gDesertUnderpass": {
+  "map": "MAP_DESERT_UNDERPASS",
+  "location": "desert-underpass",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/late",
+   "pool": "land",
+   "level": 38.4
+  },
+  "reason": {
+   "land": "override:desert-underpass",
+   "water": null
+  }
+ },
+ "gArtisanCave_B1F": {
+  "map": "MAP_ARTISAN_CAVE_B1F",
+  "location": "artisan-cave",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/late",
+   "pool": "land",
+   "level": 43.1
+  },
+  "reason": {
+   "land": "keyword:artisan-cave",
+   "water": null
+  }
+ },
+ "gArtisanCave_1F": {
+  "map": "MAP_ARTISAN_CAVE_1F",
+  "location": "artisan-cave",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/late",
+   "pool": "land",
+   "level": 43.1
+  },
+  "reason": {
+   "land": "keyword:artisan-cave",
+   "water": null
+  }
+ },
+ "gAlteringCave1": {
+  "map": "MAP_ALTERING_CAVE",
+  "location": "hoenn-altering-cave",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/early",
+   "pool": "land",
+   "level": 11.0
+  },
+  "reason": {
+   "land": "override:hoenn-altering-cave",
+   "water": null
+  }
+ },
+ "gAlteringCave2": {
+  "map": "MAP_ALTERING_CAVE",
+  "location": "hoenn-altering-cave",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/early",
+   "pool": "land",
+   "level": 8.0
+  },
+  "reason": {
+   "land": "override:hoenn-altering-cave",
+   "water": null
+  }
+ },
+ "gAlteringCave3": {
+  "map": "MAP_ALTERING_CAVE",
+  "location": "hoenn-altering-cave",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/mid",
+   "pool": "land",
+   "level": 24.1
+  },
+  "reason": {
+   "land": "override:hoenn-altering-cave",
+   "water": null
+  }
+ },
+ "gAlteringCave4": {
+  "map": "MAP_ALTERING_CAVE",
+  "location": "hoenn-altering-cave",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/early",
+   "pool": "land",
+   "level": 17.0
+  },
+  "reason": {
+   "land": "override:hoenn-altering-cave",
+   "water": null
+  }
+ },
+ "gAlteringCave5": {
+  "map": "MAP_ALTERING_CAVE",
+  "location": "hoenn-altering-cave",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/early",
+   "pool": "land",
+   "level": 11.0
+  },
+  "reason": {
+   "land": "override:hoenn-altering-cave",
+   "water": null
+  }
+ },
+ "gAlteringCave6": {
+  "map": "MAP_ALTERING_CAVE",
+  "location": "hoenn-altering-cave",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/mid",
+   "pool": "land",
+   "level": 23.0
+  },
+  "reason": {
+   "land": "override:hoenn-altering-cave",
+   "water": null
+  }
+ },
+ "gAlteringCave7": {
+  "map": "MAP_ALTERING_CAVE",
+  "location": "hoenn-altering-cave",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/mid",
+   "pool": "land",
+   "level": 23.0
+  },
+  "reason": {
+   "land": "override:hoenn-altering-cave",
+   "water": null
+  }
+ },
+ "gAlteringCave8": {
+  "map": "MAP_ALTERING_CAVE",
+  "location": "hoenn-altering-cave",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/mid",
+   "pool": "land",
+   "level": 23.0
+  },
+  "reason": {
+   "land": "override:hoenn-altering-cave",
+   "water": null
+  }
+ },
+ "gAlteringCave9": {
+  "map": "MAP_ALTERING_CAVE",
+  "location": "hoenn-altering-cave",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/mid",
+   "pool": "land",
+   "level": 23.0
+  },
+  "reason": {
+   "land": "override:hoenn-altering-cave",
+   "water": null
+  }
+ },
+ "gMeteorFalls_StevensCave": {
+  "map": "MAP_METEOR_FALLS_STEVENS_CAVE",
+  "location": "meteor-falls",
+  "matched_pokeapi": true,
+  "region": "hoenn",
+  "land_mons": {
+   "archetype": "cave/late",
+   "pool": "land",
+   "level": 35.0
+  },
+  "reason": {
+   "land": "override:meteor-falls",
+   "water": null
+  }
+ },
+ "sSevenIslandTanobyRuinsMoneanChamber_FireRed": {
+  "map": "MAP_SEVEN_ISLAND_TANOBY_RUINS_MONEAN_CHAMBER",
+  "location": "monean-chamber",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ruins/mid",
+   "pool": "land",
+   "level": 25.0
+  },
+  "reason": {
+   "land": "keyword:monean-chamber",
+   "water": null
+  }
+ },
+ "sSevenIslandTanobyRuinsMoneanChamber_LeafGreen": {
+  "map": "MAP_SEVEN_ISLAND_TANOBY_RUINS_MONEAN_CHAMBER",
+  "location": "monean-chamber",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ruins/mid",
+   "pool": "land",
+   "level": 25.0
+  },
+  "reason": {
+   "land": "keyword:monean-chamber",
+   "water": null
+  }
+ },
+ "sSevenIslandTanobyRuinsLiptooChamber_FireRed": {
+  "map": "MAP_SEVEN_ISLAND_TANOBY_RUINS_LIPTOO_CHAMBER",
+  "location": "liptoo-chamber",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ruins/mid",
+   "pool": "land",
+   "level": 25.0
+  },
+  "reason": {
+   "land": "keyword:liptoo-chamber",
+   "water": null
+  }
+ },
+ "sSevenIslandTanobyRuinsLiptooChamber_LeafGreen": {
+  "map": "MAP_SEVEN_ISLAND_TANOBY_RUINS_LIPTOO_CHAMBER",
+  "location": "liptoo-chamber",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ruins/mid",
+   "pool": "land",
+   "level": 25.0
+  },
+  "reason": {
+   "land": "keyword:liptoo-chamber",
+   "water": null
+  }
+ },
+ "sSevenIslandTanobyRuinsWeepthChamber_FireRed": {
+  "map": "MAP_SEVEN_ISLAND_TANOBY_RUINS_WEEPTH_CHAMBER",
+  "location": "weepth-chamber",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ruins/mid",
+   "pool": "land",
+   "level": 25.0
+  },
+  "reason": {
+   "land": "keyword:weepth-chamber",
+   "water": null
+  }
+ },
+ "sSevenIslandTanobyRuinsWeepthChamber_LeafGreen": {
+  "map": "MAP_SEVEN_ISLAND_TANOBY_RUINS_WEEPTH_CHAMBER",
+  "location": "weepth-chamber",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ruins/mid",
+   "pool": "land",
+   "level": 25.0
+  },
+  "reason": {
+   "land": "keyword:weepth-chamber",
+   "water": null
+  }
+ },
+ "sSevenIslandTanobyRuinsDilfordChamber_FireRed": {
+  "map": "MAP_SEVEN_ISLAND_TANOBY_RUINS_DILFORD_CHAMBER",
+  "location": "dilford-chamber",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ruins/mid",
+   "pool": "land",
+   "level": 25.0
+  },
+  "reason": {
+   "land": "keyword:dilford-chamber",
+   "water": null
+  }
+ },
+ "sSevenIslandTanobyRuinsDilfordChamber_LeafGreen": {
+  "map": "MAP_SEVEN_ISLAND_TANOBY_RUINS_DILFORD_CHAMBER",
+  "location": "dilford-chamber",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ruins/mid",
+   "pool": "land",
+   "level": 25.0
+  },
+  "reason": {
+   "land": "keyword:dilford-chamber",
+   "water": null
+  }
+ },
+ "sSevenIslandTanobyRuinsScufibChamber_FireRed": {
+  "map": "MAP_SEVEN_ISLAND_TANOBY_RUINS_SCUFIB_CHAMBER",
+  "location": "scufib-chamber",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ruins/mid",
+   "pool": "land",
+   "level": 25.0
+  },
+  "reason": {
+   "land": "keyword:scufib-chamber",
+   "water": null
+  }
+ },
+ "sSevenIslandTanobyRuinsScufibChamber_LeafGreen": {
+  "map": "MAP_SEVEN_ISLAND_TANOBY_RUINS_SCUFIB_CHAMBER",
+  "location": "scufib-chamber",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ruins/mid",
+   "pool": "land",
+   "level": 25.0
+  },
+  "reason": {
+   "land": "keyword:scufib-chamber",
+   "water": null
+  }
+ },
+ "sSevenIslandTanobyRuinsRixyChamber_FireRed": {
+  "map": "MAP_SEVEN_ISLAND_TANOBY_RUINS_RIXY_CHAMBER",
+  "location": "rixy-chamber",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ruins/mid",
+   "pool": "land",
+   "level": 25.0
+  },
+  "reason": {
+   "land": "keyword:rixy-chamber",
+   "water": null
+  }
+ },
+ "sSevenIslandTanobyRuinsRixyChamber_LeafGreen": {
+  "map": "MAP_SEVEN_ISLAND_TANOBY_RUINS_RIXY_CHAMBER",
+  "location": "rixy-chamber",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ruins/mid",
+   "pool": "land",
+   "level": 25.0
+  },
+  "reason": {
+   "land": "keyword:rixy-chamber",
+   "water": null
+  }
+ },
+ "sSevenIslandTanobyRuinsViapoisChamber_FireRed": {
+  "map": "MAP_SEVEN_ISLAND_TANOBY_RUINS_VIAPOIS_CHAMBER",
+  "location": "tanoby-ruins",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ruins/mid",
+   "pool": "land",
+   "level": 25.0
+  },
+  "reason": {
+   "land": "keyword:tanoby-ruins",
+   "water": null
+  }
+ },
+ "sSevenIslandTanobyRuinsViapoisChamber_LeafGreen": {
+  "map": "MAP_SEVEN_ISLAND_TANOBY_RUINS_VIAPOIS_CHAMBER",
+  "location": "tanoby-ruins",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ruins/mid",
+   "pool": "land",
+   "level": 25.0
+  },
+  "reason": {
+   "land": "keyword:tanoby-ruins",
+   "water": null
+  }
+ },
+ "sViridianForest_FireRed": {
+  "map": "MAP_VIRIDIAN_FOREST",
+  "location": "viridian-forest",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "forest/beginner",
+   "pool": "land",
+   "level": 4.1
+  },
+  "reason": {
+   "land": "keyword:viridian-forest",
+   "water": null
+  }
+ },
+ "sViridianForest_LeafGreen": {
+  "map": "MAP_VIRIDIAN_FOREST",
+  "location": "viridian-forest",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "forest/beginner",
+   "pool": "land",
+   "level": 4.1
+  },
+  "reason": {
+   "land": "keyword:viridian-forest",
+   "water": null
+  }
+ },
+ "sMtMoon1F_FireRed": {
+  "map": "MAP_MT_MOON_1F",
+  "location": "mt-moon",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/early",
+   "pool": "land",
+   "level": 8.0
+  },
+  "reason": {
+   "land": "keyword:mt-moon",
+   "water": null
+  }
+ },
+ "sMtMoon1F_LeafGreen": {
+  "map": "MAP_MT_MOON_1F",
+  "location": "mt-moon",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/early",
+   "pool": "land",
+   "level": 8.0
+  },
+  "reason": {
+   "land": "keyword:mt-moon",
+   "water": null
+  }
+ },
+ "sMtMoonB1F_FireRed": {
+  "map": "MAP_MT_MOON_B1F",
+  "location": "mt-moon",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/early",
+   "pool": "land",
+   "level": 7.4
+  },
+  "reason": {
+   "land": "keyword:mt-moon",
+   "water": null
+  }
+ },
+ "sMtMoonB1F_LeafGreen": {
+  "map": "MAP_MT_MOON_B1F",
+  "location": "mt-moon",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/early",
+   "pool": "land",
+   "level": 7.4
+  },
+  "reason": {
+   "land": "keyword:mt-moon",
+   "water": null
+  }
+ },
+ "sMtMoonB2F_FireRed": {
+  "map": "MAP_MT_MOON_B2F",
+  "location": "mt-moon",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/early",
+   "pool": "land",
+   "level": 9.5
+  },
+  "reason": {
+   "land": "keyword:mt-moon",
+   "water": null
+  }
+ },
+ "sMtMoonB2F_LeafGreen": {
+  "map": "MAP_MT_MOON_B2F",
+  "location": "mt-moon",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/early",
+   "pool": "land",
+   "level": 9.5
+  },
+  "reason": {
+   "land": "keyword:mt-moon",
+   "water": null
+  }
+ },
+ "sSSAnneExterior_FireRed": {
+  "map": "MAP_SSANNE_EXTERIOR",
+  "location": "ss-anne",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:ss-anne"
+  }
+ },
+ "sSSAnneExterior_LeafGreen": {
+  "map": "MAP_SSANNE_EXTERIOR",
+  "location": "ss-anne",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:ss-anne"
+  }
+ },
+ "sDiglettsCaveB1F_FireRed": {
+  "map": "MAP_DIGLETTS_CAVE_B1F",
+  "location": "digletts-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/mid",
+   "pool": "land",
+   "level": 18.7
+  },
+  "reason": {
+   "land": "keyword:digletts-cave",
+   "water": null
+  }
+ },
+ "sDiglettsCaveB1F_LeafGreen": {
+  "map": "MAP_DIGLETTS_CAVE_B1F",
+  "location": "digletts-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/mid",
+   "pool": "land",
+   "level": 18.7
+  },
+  "reason": {
+   "land": "keyword:digletts-cave",
+   "water": null
+  }
+ },
+ "sVictoryRoad1F_FireRed": {
+  "map": "MAP_VICTORY_ROAD_1F_FRLG",
+  "location": "kanto-victory-road-2",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/late",
+   "pool": "land",
+   "level": 37.7
+  },
+  "reason": {
+   "land": "keyword:kanto-victory-road-2",
+   "water": null
+  }
+ },
+ "sVictoryRoad1F_LeafGreen": {
+  "map": "MAP_VICTORY_ROAD_1F_FRLG",
+  "location": "kanto-victory-road-2",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/late",
+   "pool": "land",
+   "level": 37.7
+  },
+  "reason": {
+   "land": "keyword:kanto-victory-road-2",
+   "water": null
+  }
+ },
+ "sVictoryRoad2F_FireRed": {
+  "map": "MAP_VICTORY_ROAD_2F",
+  "location": "kanto-victory-road-2",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/late",
+   "pool": "land",
+   "level": 39.7
+  },
+  "reason": {
+   "land": "keyword:kanto-victory-road-2",
+   "water": null
+  }
+ },
+ "sVictoryRoad2F_LeafGreen": {
+  "map": "MAP_VICTORY_ROAD_2F",
+  "location": "kanto-victory-road-2",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/late",
+   "pool": "land",
+   "level": 39.7
+  },
+  "reason": {
+   "land": "keyword:kanto-victory-road-2",
+   "water": null
+  }
+ },
+ "sVictoryRoad3F_FireRed": {
+  "map": "MAP_VICTORY_ROAD_3F",
+  "location": "kanto-victory-road-2",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/late",
+   "pool": "land",
+   "level": 37.7
+  },
+  "reason": {
+   "land": "keyword:kanto-victory-road-2",
+   "water": null
+  }
+ },
+ "sVictoryRoad3F_LeafGreen": {
+  "map": "MAP_VICTORY_ROAD_3F",
+  "location": "kanto-victory-road-2",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/late",
+   "pool": "land",
+   "level": 37.7
+  },
+  "reason": {
+   "land": "keyword:kanto-victory-road-2",
+   "water": null
+  }
+ },
+ "sPokemonMansion1F_FireRed": {
+  "map": "MAP_POKEMON_MANSION_1F",
+  "location": "pokemon-mansion",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 30.3
+  },
+  "reason": {
+   "land": "keyword:pokemon-mansion",
+   "water": null
+  }
+ },
+ "sPokemonMansion1F_LeafGreen": {
+  "map": "MAP_POKEMON_MANSION_1F",
+  "location": "pokemon-mansion",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 30.3
+  },
+  "reason": {
+   "land": "keyword:pokemon-mansion",
+   "water": null
+  }
+ },
+ "sPokemonMansion2F_FireRed": {
+  "map": "MAP_POKEMON_MANSION_2F",
+  "location": "pokemon-mansion",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 30.3
+  },
+  "reason": {
+   "land": "keyword:pokemon-mansion",
+   "water": null
+  }
+ },
+ "sPokemonMansion2F_LeafGreen": {
+  "map": "MAP_POKEMON_MANSION_2F",
+  "location": "pokemon-mansion",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 30.3
+  },
+  "reason": {
+   "land": "keyword:pokemon-mansion",
+   "water": null
+  }
+ },
+ "sPokemonMansion3F_FireRed": {
+  "map": "MAP_POKEMON_MANSION_3F",
+  "location": "pokemon-mansion",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 30.3
+  },
+  "reason": {
+   "land": "keyword:pokemon-mansion",
+   "water": null
+  }
+ },
+ "sPokemonMansion3F_LeafGreen": {
+  "map": "MAP_POKEMON_MANSION_3F",
+  "location": "pokemon-mansion",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 30.3
+  },
+  "reason": {
+   "land": "keyword:pokemon-mansion",
+   "water": null
+  }
+ },
+ "sPokemonMansionB1F_FireRed": {
+  "map": "MAP_POKEMON_MANSION_B1F",
+  "location": "pokemon-mansion",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 31.2
+  },
+  "reason": {
+   "land": "keyword:pokemon-mansion",
+   "water": null
+  }
+ },
+ "sPokemonMansionB1F_LeafGreen": {
+  "map": "MAP_POKEMON_MANSION_B1F",
+  "location": "pokemon-mansion",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 31.2
+  },
+  "reason": {
+   "land": "keyword:pokemon-mansion",
+   "water": null
+  }
+ },
+ "sSafariZoneCenter_FireRed": {
+  "map": "MAP_SAFARI_ZONE_CENTER",
+  "location": "kanto-safari-zone",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "safari/mid",
+   "pool": "land",
+   "level": 24.9
+  },
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 23.3
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 22.3
+   }
+  },
+  "reason": {
+   "land": "keyword:kanto-safari-zone",
+   "water": "pokeapi-majority:kanto-safari-zone"
+  }
+ },
+ "sSafariZoneCenter_LeafGreen": {
+  "map": "MAP_SAFARI_ZONE_CENTER",
+  "location": "kanto-safari-zone",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "safari/mid",
+   "pool": "land",
+   "level": 24.9
+  },
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 23.3
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 22.3
+   }
+  },
+  "reason": {
+   "land": "keyword:kanto-safari-zone",
+   "water": "pokeapi-majority:kanto-safari-zone"
+  }
+ },
+ "sSafariZoneEast_FireRed": {
+  "map": "MAP_SAFARI_ZONE_EAST",
+  "location": "kanto-safari-zone",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "safari/mid",
+   "pool": "land",
+   "level": 25.1
+  },
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 23.3
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 22.3
+   }
+  },
+  "reason": {
+   "land": "keyword:kanto-safari-zone",
+   "water": "pokeapi-majority:kanto-safari-zone"
+  }
+ },
+ "sSafariZoneEast_LeafGreen": {
+  "map": "MAP_SAFARI_ZONE_EAST",
+  "location": "kanto-safari-zone",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "safari/mid",
+   "pool": "land",
+   "level": 25.1
+  },
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 23.3
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 22.3
+   }
+  },
+  "reason": {
+   "land": "keyword:kanto-safari-zone",
+   "water": "pokeapi-majority:kanto-safari-zone"
+  }
+ },
+ "sSafariZoneNorth_FireRed": {
+  "map": "MAP_SAFARI_ZONE_NORTH_FRLG",
+  "location": "kanto-safari-zone",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "safari/mid",
+   "pool": "land",
+   "level": 27.3
+  },
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 23.3
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 22.3
+   }
+  },
+  "reason": {
+   "land": "keyword:kanto-safari-zone",
+   "water": "pokeapi-majority:kanto-safari-zone"
+  }
+ },
+ "sSafariZoneNorth_LeafGreen": {
+  "map": "MAP_SAFARI_ZONE_NORTH_FRLG",
+  "location": "kanto-safari-zone",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "safari/mid",
+   "pool": "land",
+   "level": 27.3
+  },
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 23.3
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 22.3
+   }
+  },
+  "reason": {
+   "land": "keyword:kanto-safari-zone",
+   "water": "pokeapi-majority:kanto-safari-zone"
+  }
+ },
+ "sSafariZoneWest_FireRed": {
+  "map": "MAP_SAFARI_ZONE_WEST",
+  "location": "kanto-safari-zone",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "safari/mid",
+   "pool": "land",
+   "level": 25.6
+  },
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 23.3
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 22.3
+   }
+  },
+  "reason": {
+   "land": "keyword:kanto-safari-zone",
+   "water": "pokeapi-majority:kanto-safari-zone"
+  }
+ },
+ "sSafariZoneWest_LeafGreen": {
+  "map": "MAP_SAFARI_ZONE_WEST",
+  "location": "kanto-safari-zone",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "safari/mid",
+   "pool": "land",
+   "level": 25.6
+  },
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 23.3
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 22.3
+   }
+  },
+  "reason": {
+   "land": "keyword:kanto-safari-zone",
+   "water": "pokeapi-majority:kanto-safari-zone"
+  }
+ },
+ "sCeruleanCave1F_FireRed": {
+  "map": "MAP_CERULEAN_CAVE_1F",
+  "location": "cerulean-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/endgame",
+   "pool": "land",
+   "level": 50.6
+  },
+  "rock_smash_mons": {
+   "archetype": "cave/late",
+   "pool": "rock_smash",
+   "level": 39.2
+  },
+  "water_mons": {
+   "archetype": "cave_water/late",
+   "pool": "surf",
+   "level": 39.2
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "cave_water/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "cave_water/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "cave_water/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "keyword:cerulean-cave",
+   "water": "pokeapi-majority:cerulean-cave"
+  }
+ },
+ "sCeruleanCave1F_LeafGreen": {
+  "map": "MAP_CERULEAN_CAVE_1F",
+  "location": "cerulean-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/endgame",
+   "pool": "land",
+   "level": 50.6
+  },
+  "rock_smash_mons": {
+   "archetype": "cave/late",
+   "pool": "rock_smash",
+   "level": 39.2
+  },
+  "water_mons": {
+   "archetype": "cave_water/late",
+   "pool": "surf",
+   "level": 39.2
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "cave_water/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "cave_water/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "cave_water/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "keyword:cerulean-cave",
+   "water": "pokeapi-majority:cerulean-cave"
+  }
+ },
+ "sCeruleanCave2F_FireRed": {
+  "map": "MAP_CERULEAN_CAVE_2F",
+  "location": "cerulean-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/endgame",
+   "pool": "land",
+   "level": 53.0
+  },
+  "rock_smash_mons": {
+   "archetype": "cave/endgame",
+   "pool": "rock_smash",
+   "level": 44.2
+  },
+  "reason": {
+   "land": "keyword:cerulean-cave",
+   "water": null
+  }
+ },
+ "sCeruleanCave2F_LeafGreen": {
+  "map": "MAP_CERULEAN_CAVE_2F",
+  "location": "cerulean-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/endgame",
+   "pool": "land",
+   "level": 53.0
+  },
+  "rock_smash_mons": {
+   "archetype": "cave/endgame",
+   "pool": "rock_smash",
+   "level": 44.2
+  },
+  "reason": {
+   "land": "keyword:cerulean-cave",
+   "water": null
+  }
+ },
+ "sCeruleanCaveB1F_FireRed": {
+  "map": "MAP_CERULEAN_CAVE_B1F",
+  "location": "cerulean-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/endgame",
+   "pool": "land",
+   "level": 57.6
+  },
+  "rock_smash_mons": {
+   "archetype": "cave/endgame",
+   "pool": "rock_smash",
+   "level": 49.2
+  },
+  "water_mons": {
+   "archetype": "cave_water/endgame",
+   "pool": "surf",
+   "level": 49.2
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "cave_water/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "cave_water/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "cave_water/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "keyword:cerulean-cave",
+   "water": "pokeapi-majority:cerulean-cave"
+  }
+ },
+ "sCeruleanCaveB1F_LeafGreen": {
+  "map": "MAP_CERULEAN_CAVE_B1F",
+  "location": "cerulean-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/endgame",
+   "pool": "land",
+   "level": 57.6
+  },
+  "rock_smash_mons": {
+   "archetype": "cave/endgame",
+   "pool": "rock_smash",
+   "level": 49.2
+  },
+  "water_mons": {
+   "archetype": "cave_water/endgame",
+   "pool": "surf",
+   "level": 49.2
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "cave_water/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "cave_water/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "cave_water/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "keyword:cerulean-cave",
+   "water": "pokeapi-majority:cerulean-cave"
+  }
+ },
+ "sRockTunnel1F_FireRed": {
+  "map": "MAP_ROCK_TUNNEL_1F",
+  "location": "rock-tunnel",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/early",
+   "pool": "land",
+   "level": 15.8
+  },
+  "reason": {
+   "land": "keyword:rock-tunnel",
+   "water": null
+  }
+ },
+ "sRockTunnel1F_LeafGreen": {
+  "map": "MAP_ROCK_TUNNEL_1F",
+  "location": "rock-tunnel",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/early",
+   "pool": "land",
+   "level": 15.8
+  },
+  "reason": {
+   "land": "keyword:rock-tunnel",
+   "water": null
+  }
+ },
+ "sRockTunnelB1F_FireRed": {
+  "map": "MAP_ROCK_TUNNEL_B1F",
+  "location": "rock-tunnel",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/early",
+   "pool": "land",
+   "level": 16.1
+  },
+  "rock_smash_mons": {
+   "archetype": "cave/early",
+   "pool": "rock_smash",
+   "level": 14.8
+  },
+  "reason": {
+   "land": "keyword:rock-tunnel",
+   "water": null
+  }
+ },
+ "sRockTunnelB1F_LeafGreen": {
+  "map": "MAP_ROCK_TUNNEL_B1F",
+  "location": "rock-tunnel",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/early",
+   "pool": "land",
+   "level": 16.1
+  },
+  "rock_smash_mons": {
+   "archetype": "cave/early",
+   "pool": "rock_smash",
+   "level": 14.8
+  },
+  "reason": {
+   "land": "keyword:rock-tunnel",
+   "water": null
+  }
+ },
+ "sSeafoamIslands1F_FireRed": {
+  "map": "MAP_SEAFOAM_ISLANDS_1F",
+  "location": "seafoam-islands",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ice/mid",
+   "pool": "land",
+   "level": 26.7
+  },
+  "reason": {
+   "land": "override:seafoam-islands",
+   "water": null
+  }
+ },
+ "sSeafoamIslands1F_LeafGreen": {
+  "map": "MAP_SEAFOAM_ISLANDS_1F",
+  "location": "seafoam-islands",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ice/mid",
+   "pool": "land",
+   "level": 26.7
+  },
+  "reason": {
+   "land": "override:seafoam-islands",
+   "water": null
+  }
+ },
+ "sSeafoamIslandsB1F_FireRed": {
+  "map": "MAP_SEAFOAM_ISLANDS_B1F",
+  "location": "seafoam-islands",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ice/mid",
+   "pool": "land",
+   "level": 27.3
+  },
+  "reason": {
+   "land": "override:seafoam-islands",
+   "water": null
+  }
+ },
+ "sSeafoamIslandsB1F_LeafGreen": {
+  "map": "MAP_SEAFOAM_ISLANDS_B1F",
+  "location": "seafoam-islands",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ice/mid",
+   "pool": "land",
+   "level": 27.3
+  },
+  "reason": {
+   "land": "override:seafoam-islands",
+   "water": null
+  }
+ },
+ "sSeafoamIslandsB2F_FireRed": {
+  "map": "MAP_SEAFOAM_ISLANDS_B2F",
+  "location": "seafoam-islands",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ice/mid",
+   "pool": "land",
+   "level": 29.2
+  },
+  "reason": {
+   "land": "override:seafoam-islands",
+   "water": null
+  }
+ },
+ "sSeafoamIslandsB2F_LeafGreen": {
+  "map": "MAP_SEAFOAM_ISLANDS_B2F",
+  "location": "seafoam-islands",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ice/mid",
+   "pool": "land",
+   "level": 29.2
+  },
+  "reason": {
+   "land": "override:seafoam-islands",
+   "water": null
+  }
+ },
+ "sSeafoamIslandsB3F_FireRed": {
+  "map": "MAP_SEAFOAM_ISLANDS_B3F",
+  "location": "seafoam-islands",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ice/late",
+   "pool": "land",
+   "level": 30.2
+  },
+  "water_mons": {
+   "archetype": "cave_water/mid",
+   "pool": "surf",
+   "level": 29.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "cave_water/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "cave_water/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "cave_water/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "override:seafoam-islands",
+   "water": "pokeapi-majority:seafoam-islands"
+  }
+ },
+ "sSeafoamIslandsB3F_LeafGreen": {
+  "map": "MAP_SEAFOAM_ISLANDS_B3F",
+  "location": "seafoam-islands",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ice/late",
+   "pool": "land",
+   "level": 30.2
+  },
+  "water_mons": {
+   "archetype": "cave_water/mid",
+   "pool": "surf",
+   "level": 29.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "cave_water/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "cave_water/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "cave_water/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "override:seafoam-islands",
+   "water": "pokeapi-majority:seafoam-islands"
+  }
+ },
+ "sSeafoamIslandsB4F_FireRed": {
+  "map": "MAP_SEAFOAM_ISLANDS_B4F",
+  "location": "seafoam-islands",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ice/late",
+   "pool": "land",
+   "level": 31.4
+  },
+  "water_mons": {
+   "archetype": "cave_water/mid",
+   "pool": "surf",
+   "level": 29.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "cave_water/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "cave_water/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "cave_water/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "override:seafoam-islands",
+   "water": "pokeapi-majority:seafoam-islands"
+  }
+ },
+ "sSeafoamIslandsB4F_LeafGreen": {
+  "map": "MAP_SEAFOAM_ISLANDS_B4F",
+  "location": "seafoam-islands",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ice/late",
+   "pool": "land",
+   "level": 31.4
+  },
+  "water_mons": {
+   "archetype": "cave_water/mid",
+   "pool": "surf",
+   "level": 29.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "cave_water/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "cave_water/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "cave_water/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "override:seafoam-islands",
+   "water": "pokeapi-majority:seafoam-islands"
+  }
+ },
+ "sPokemonTower3F_FireRed": {
+  "map": "MAP_POKEMON_TOWER_3F",
+  "location": "pokemon-tower",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/early",
+   "pool": "land",
+   "level": 15.8
+  },
+  "reason": {
+   "land": "override:pokemon-tower",
+   "water": null
+  }
+ },
+ "sPokemonTower3F_LeafGreen": {
+  "map": "MAP_POKEMON_TOWER_3F",
+  "location": "pokemon-tower",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/early",
+   "pool": "land",
+   "level": 15.8
+  },
+  "reason": {
+   "land": "override:pokemon-tower",
+   "water": null
+  }
+ },
+ "sPokemonTower4F_FireRed": {
+  "map": "MAP_POKEMON_TOWER_4F",
+  "location": "pokemon-tower",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/early",
+   "pool": "land",
+   "level": 15.9
+  },
+  "reason": {
+   "land": "override:pokemon-tower",
+   "water": null
+  }
+ },
+ "sPokemonTower4F_LeafGreen": {
+  "map": "MAP_POKEMON_TOWER_4F",
+  "location": "pokemon-tower",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/early",
+   "pool": "land",
+   "level": 15.9
+  },
+  "reason": {
+   "land": "override:pokemon-tower",
+   "water": null
+  }
+ },
+ "sPokemonTower5F_FireRed": {
+  "map": "MAP_POKEMON_TOWER_5F",
+  "location": "pokemon-tower",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/early",
+   "pool": "land",
+   "level": 15.9
+  },
+  "reason": {
+   "land": "override:pokemon-tower",
+   "water": null
+  }
+ },
+ "sPokemonTower5F_LeafGreen": {
+  "map": "MAP_POKEMON_TOWER_5F",
+  "location": "pokemon-tower",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/early",
+   "pool": "land",
+   "level": 15.9
+  },
+  "reason": {
+   "land": "override:pokemon-tower",
+   "water": null
+  }
+ },
+ "sPokemonTower6F_FireRed": {
+  "map": "MAP_POKEMON_TOWER_6F",
+  "location": "pokemon-tower",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/early",
+   "pool": "land",
+   "level": 17.0
+  },
+  "reason": {
+   "land": "override:pokemon-tower",
+   "water": null
+  }
+ },
+ "sPokemonTower6F_LeafGreen": {
+  "map": "MAP_POKEMON_TOWER_6F",
+  "location": "pokemon-tower",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/early",
+   "pool": "land",
+   "level": 17.0
+  },
+  "reason": {
+   "land": "override:pokemon-tower",
+   "water": null
+  }
+ },
+ "sPokemonTower7F_FireRed": {
+  "map": "MAP_POKEMON_TOWER_7F",
+  "location": "pokemon-tower",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/mid",
+   "pool": "land",
+   "level": 18.0
+  },
+  "reason": {
+   "land": "override:pokemon-tower",
+   "water": null
+  }
+ },
+ "sPokemonTower7F_LeafGreen": {
+  "map": "MAP_POKEMON_TOWER_7F",
+  "location": "pokemon-tower",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/mid",
+   "pool": "land",
+   "level": 18.0
+  },
+  "reason": {
+   "land": "override:pokemon-tower",
+   "water": null
+  }
+ },
+ "sPowerPlant_FireRed": {
+  "map": "MAP_POWER_PLANT",
+  "location": "kanto-power-plant",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "urban/mid",
+   "pool": "land",
+   "level": 24.6
+  },
+  "reason": {
+   "land": "override:kanto-power-plant",
+   "water": null
+  }
+ },
+ "sPowerPlant_LeafGreen": {
+  "map": "MAP_POWER_PLANT",
+  "location": "kanto-power-plant",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "urban/mid",
+   "pool": "land",
+   "level": 24.5
+  },
+  "reason": {
+   "land": "override:kanto-power-plant",
+   "water": null
+  }
+ },
+ "sMtEmberExterior_FireRed": {
+  "map": "MAP_MT_EMBER_EXTERIOR",
+  "location": "mt-ember",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "volcanic/late",
+   "pool": "land",
+   "level": 34.2
+  },
+  "rock_smash_mons": {
+   "archetype": "volcanic/early",
+   "pool": "rock_smash",
+   "level": 14.8
+  },
+  "reason": {
+   "land": "override:mt-ember",
+   "water": null
+  }
+ },
+ "sMtEmberExterior_LeafGreen": {
+  "map": "MAP_MT_EMBER_EXTERIOR",
+  "location": "mt-ember",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "volcanic/late",
+   "pool": "land",
+   "level": 34.6
+  },
+  "rock_smash_mons": {
+   "archetype": "volcanic/early",
+   "pool": "rock_smash",
+   "level": 14.8
+  },
+  "reason": {
+   "land": "override:mt-ember",
+   "water": null
+  }
+ },
+ "sMtEmberSummitPath1F_FireRed": {
+  "map": "MAP_MT_EMBER_SUMMIT_PATH_1F",
+  "location": "mt-ember",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "volcanic/late",
+   "pool": "land",
+   "level": 33.4
+  },
+  "reason": {
+   "land": "override:mt-ember",
+   "water": null
+  }
+ },
+ "sMtEmberSummitPath1F_LeafGreen": {
+  "map": "MAP_MT_EMBER_SUMMIT_PATH_1F",
+  "location": "mt-ember",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "volcanic/late",
+   "pool": "land",
+   "level": 33.4
+  },
+  "reason": {
+   "land": "override:mt-ember",
+   "water": null
+  }
+ },
+ "sMtEmberSummitPath2F_FireRed": {
+  "map": "MAP_MT_EMBER_SUMMIT_PATH_2F",
+  "location": "mt-ember",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "volcanic/late",
+   "pool": "land",
+   "level": 34.6
+  },
+  "rock_smash_mons": {
+   "archetype": "volcanic/early",
+   "pool": "rock_smash",
+   "level": 14.8
+  },
+  "reason": {
+   "land": "override:mt-ember",
+   "water": null
+  }
+ },
+ "sMtEmberSummitPath2F_LeafGreen": {
+  "map": "MAP_MT_EMBER_SUMMIT_PATH_2F",
+  "location": "mt-ember",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "volcanic/late",
+   "pool": "land",
+   "level": 34.6
+  },
+  "rock_smash_mons": {
+   "archetype": "volcanic/early",
+   "pool": "rock_smash",
+   "level": 14.8
+  },
+  "reason": {
+   "land": "override:mt-ember",
+   "water": null
+  }
+ },
+ "sMtEmberSummitPath3F_FireRed": {
+  "map": "MAP_MT_EMBER_SUMMIT_PATH_3F",
+  "location": "mt-ember",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "volcanic/late",
+   "pool": "land",
+   "level": 33.4
+  },
+  "reason": {
+   "land": "override:mt-ember",
+   "water": null
+  }
+ },
+ "sMtEmberSummitPath3F_LeafGreen": {
+  "map": "MAP_MT_EMBER_SUMMIT_PATH_3F",
+  "location": "mt-ember",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "volcanic/late",
+   "pool": "land",
+   "level": 33.4
+  },
+  "reason": {
+   "land": "override:mt-ember",
+   "water": null
+  }
+ },
+ "sMtEmberRubyPath1F_FireRed": {
+  "map": "MAP_MT_EMBER_RUBY_PATH_1F",
+  "location": "mt-ember",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "volcanic/late",
+   "pool": "land",
+   "level": 36.4
+  },
+  "rock_smash_mons": {
+   "archetype": "volcanic/late",
+   "pool": "rock_smash",
+   "level": 33.1
+  },
+  "reason": {
+   "land": "override:mt-ember",
+   "water": null
+  }
+ },
+ "sMtEmberRubyPath1F_LeafGreen": {
+  "map": "MAP_MT_EMBER_RUBY_PATH_1F",
+  "location": "mt-ember",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "volcanic/late",
+   "pool": "land",
+   "level": 36.4
+  },
+  "rock_smash_mons": {
+   "archetype": "volcanic/late",
+   "pool": "rock_smash",
+   "level": 33.1
+  },
+  "reason": {
+   "land": "override:mt-ember",
+   "water": null
+  }
+ },
+ "sMtEmberRubyPathB1F_FireRed": {
+  "map": "MAP_MT_EMBER_RUBY_PATH_B1F",
+  "location": "mt-ember",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "volcanic/late",
+   "pool": "land",
+   "level": 34.3
+  },
+  "rock_smash_mons": {
+   "archetype": "volcanic/late",
+   "pool": "rock_smash",
+   "level": 33.1
+  },
+  "reason": {
+   "land": "override:mt-ember",
+   "water": null
+  }
+ },
+ "sMtEmberRubyPathB1F_LeafGreen": {
+  "map": "MAP_MT_EMBER_RUBY_PATH_B1F",
+  "location": "mt-ember",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "volcanic/late",
+   "pool": "land",
+   "level": 34.3
+  },
+  "rock_smash_mons": {
+   "archetype": "volcanic/late",
+   "pool": "rock_smash",
+   "level": 33.1
+  },
+  "reason": {
+   "land": "override:mt-ember",
+   "water": null
+  }
+ },
+ "sMtEmberRubyPathB2F_FireRed": {
+  "map": "MAP_MT_EMBER_RUBY_PATH_B2F",
+  "location": "mt-ember",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "volcanic/late",
+   "pool": "land",
+   "level": 32.7
+  },
+  "rock_smash_mons": {
+   "archetype": "volcanic/late",
+   "pool": "rock_smash",
+   "level": 33.1
+  },
+  "reason": {
+   "land": "override:mt-ember",
+   "water": null
+  }
+ },
+ "sMtEmberRubyPathB2F_LeafGreen": {
+  "map": "MAP_MT_EMBER_RUBY_PATH_B2F",
+  "location": "mt-ember",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "volcanic/late",
+   "pool": "land",
+   "level": 32.7
+  },
+  "rock_smash_mons": {
+   "archetype": "volcanic/late",
+   "pool": "rock_smash",
+   "level": 33.1
+  },
+  "reason": {
+   "land": "override:mt-ember",
+   "water": null
+  }
+ },
+ "sMtEmberRubyPathB3F_FireRed": {
+  "map": "MAP_MT_EMBER_RUBY_PATH_B3F",
+  "location": "mt-ember",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "volcanic/mid",
+   "pool": "land",
+   "level": 27.0
+  },
+  "rock_smash_mons": {
+   "archetype": "volcanic/mid",
+   "pool": "rock_smash",
+   "level": 25.0
+  },
+  "reason": {
+   "land": "override:mt-ember",
+   "water": null
+  }
+ },
+ "sMtEmberRubyPathB3F_LeafGreen": {
+  "map": "MAP_MT_EMBER_RUBY_PATH_B3F",
+  "location": "mt-ember",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "volcanic/mid",
+   "pool": "land",
+   "level": 27.0
+  },
+  "rock_smash_mons": {
+   "archetype": "volcanic/mid",
+   "pool": "rock_smash",
+   "level": 25.0
+  },
+  "reason": {
+   "land": "override:mt-ember",
+   "water": null
+  }
+ },
+ "sMtEmberRubyPathB1FStairs_FireRed": {
+  "map": "MAP_MT_EMBER_RUBY_PATH_B1F_STAIRS",
+  "location": "mt-ember",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "volcanic/late",
+   "pool": "land",
+   "level": 32.7
+  },
+  "rock_smash_mons": {
+   "archetype": "volcanic/late",
+   "pool": "rock_smash",
+   "level": 33.1
+  },
+  "reason": {
+   "land": "override:mt-ember",
+   "water": null
+  }
+ },
+ "sMtEmberRubyPathB1FStairs_LeafGreen": {
+  "map": "MAP_MT_EMBER_RUBY_PATH_B1F_STAIRS",
+  "location": "mt-ember",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "volcanic/late",
+   "pool": "land",
+   "level": 32.7
+  },
+  "rock_smash_mons": {
+   "archetype": "volcanic/late",
+   "pool": "rock_smash",
+   "level": 33.1
+  },
+  "reason": {
+   "land": "override:mt-ember",
+   "water": null
+  }
+ },
+ "sMtEmberRubyPathB2FStairs_FireRed": {
+  "map": "MAP_MT_EMBER_RUBY_PATH_B2F_STAIRS",
+  "location": "mt-ember",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "volcanic/late",
+   "pool": "land",
+   "level": 34.3
+  },
+  "rock_smash_mons": {
+   "archetype": "volcanic/late",
+   "pool": "rock_smash",
+   "level": 33.1
+  },
+  "reason": {
+   "land": "override:mt-ember",
+   "water": null
+  }
+ },
+ "sMtEmberRubyPathB2FStairs_LeafGreen": {
+  "map": "MAP_MT_EMBER_RUBY_PATH_B2F_STAIRS",
+  "location": "mt-ember",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "volcanic/late",
+   "pool": "land",
+   "level": 34.3
+  },
+  "rock_smash_mons": {
+   "archetype": "volcanic/late",
+   "pool": "rock_smash",
+   "level": 33.1
+  },
+  "reason": {
+   "land": "override:mt-ember",
+   "water": null
+  }
+ },
+ "sThreeIslandBerryForest_FireRed": {
+  "map": "MAP_THREE_ISLAND_BERRY_FOREST",
+  "location": "berry-forest",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "forest/late",
+   "pool": "land",
+   "level": 34.5
+  },
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 19.5
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "keyword:berry-forest",
+   "water": "pokeapi-majority:berry-forest"
+  }
+ },
+ "sThreeIslandBerryForest_LeafGreen": {
+  "map": "MAP_THREE_ISLAND_BERRY_FOREST",
+  "location": "berry-forest",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "forest/late",
+   "pool": "land",
+   "level": 34.5
+  },
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 19.5
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "keyword:berry-forest",
+   "water": "pokeapi-majority:berry-forest"
+  }
+ },
+ "sFourIslandIcefallCaveEntrance_FireRed": {
+  "map": "MAP_FOUR_ISLAND_ICEFALL_CAVE_ENTRANCE",
+  "location": "icefall-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ice/endgame",
+   "pool": "land",
+   "level": 45.4
+  },
+  "water_mons": {
+   "archetype": "cave_water/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "cave_water/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "cave_water/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "cave_water/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "override:icefall-cave",
+   "water": "pokeapi-majority:icefall-cave"
+  }
+ },
+ "sFourIslandIcefallCaveEntrance_LeafGreen": {
+  "map": "MAP_FOUR_ISLAND_ICEFALL_CAVE_ENTRANCE",
+  "location": "icefall-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ice/endgame",
+   "pool": "land",
+   "level": 45.4
+  },
+  "water_mons": {
+   "archetype": "cave_water/mid",
+   "pool": "surf",
+   "level": 20.4
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "cave_water/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "cave_water/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "cave_water/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "override:icefall-cave",
+   "water": "pokeapi-majority:icefall-cave"
+  }
+ },
+ "sFourIslandIcefallCave1F_FireRed": {
+  "map": "MAP_FOUR_ISLAND_ICEFALL_CAVE_1F",
+  "location": "icefall-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ice/late",
+   "pool": "land",
+   "level": 34.7
+  },
+  "reason": {
+   "land": "override:icefall-cave",
+   "water": null
+  }
+ },
+ "sFourIslandIcefallCave1F_LeafGreen": {
+  "map": "MAP_FOUR_ISLAND_ICEFALL_CAVE_1F",
+  "location": "icefall-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ice/late",
+   "pool": "land",
+   "level": 34.7
+  },
+  "reason": {
+   "land": "override:icefall-cave",
+   "water": null
+  }
+ },
+ "sFourIslandIcefallCaveB1F_FireRed": {
+  "map": "MAP_FOUR_ISLAND_ICEFALL_CAVE_B1F",
+  "location": "icefall-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ice/late",
+   "pool": "land",
+   "level": 34.7
+  },
+  "reason": {
+   "land": "override:icefall-cave",
+   "water": null
+  }
+ },
+ "sFourIslandIcefallCaveB1F_LeafGreen": {
+  "map": "MAP_FOUR_ISLAND_ICEFALL_CAVE_B1F",
+  "location": "icefall-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ice/late",
+   "pool": "land",
+   "level": 34.7
+  },
+  "reason": {
+   "land": "override:icefall-cave",
+   "water": null
+  }
+ },
+ "sFourIslandIcefallCaveBack_FireRed": {
+  "map": "MAP_FOUR_ISLAND_ICEFALL_CAVE_BACK",
+  "location": "icefall-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ice/endgame",
+   "pool": "land",
+   "level": 45.4
+  },
+  "water_mons": {
+   "archetype": "cave_water/mid",
+   "pool": "surf",
+   "level": 19.7
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "cave_water/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "cave_water/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "cave_water/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "override:icefall-cave",
+   "water": "pokeapi-majority:icefall-cave"
+  }
+ },
+ "sFourIslandIcefallCaveBack_LeafGreen": {
+  "map": "MAP_FOUR_ISLAND_ICEFALL_CAVE_BACK",
+  "location": "icefall-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "ice/endgame",
+   "pool": "land",
+   "level": 45.4
+  },
+  "water_mons": {
+   "archetype": "cave_water/mid",
+   "pool": "surf",
+   "level": 19.7
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "cave_water/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "cave_water/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "cave_water/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "override:icefall-cave",
+   "water": "pokeapi-majority:icefall-cave"
+  }
+ },
+ "sSixIslandPatternBush_FireRed": {
+  "map": "MAP_SIX_ISLAND_PATTERN_BUSH",
+  "location": "pattern-bush",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "forest/early",
+   "pool": "land",
+   "level": 10.9
+  },
+  "reason": {
+   "land": "override:pattern-bush",
+   "water": null
+  }
+ },
+ "sSixIslandPatternBush_LeafGreen": {
+  "map": "MAP_SIX_ISLAND_PATTERN_BUSH",
+  "location": "pattern-bush",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "forest/early",
+   "pool": "land",
+   "level": 10.9
+  },
+  "reason": {
+   "land": "override:pattern-bush",
+   "water": null
+  }
+ },
+ "sFiveIslandLostCaveRoom1_FireRed": {
+  "map": "MAP_FIVE_ISLAND_LOST_CAVE_ROOM1",
+  "location": "lost-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 40.7
+  },
+  "reason": {
+   "land": "override:lost-cave",
+   "water": null
+  }
+ },
+ "sFiveIslandLostCaveRoom1_LeafGreen": {
+  "map": "MAP_FIVE_ISLAND_LOST_CAVE_ROOM1",
+  "location": "lost-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 40.7
+  },
+  "reason": {
+   "land": "override:lost-cave",
+   "water": null
+  }
+ },
+ "sFiveIslandLostCaveRoom2_FireRed": {
+  "map": "MAP_FIVE_ISLAND_LOST_CAVE_ROOM2",
+  "location": "lost-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 40.7
+  },
+  "reason": {
+   "land": "override:lost-cave",
+   "water": null
+  }
+ },
+ "sFiveIslandLostCaveRoom2_LeafGreen": {
+  "map": "MAP_FIVE_ISLAND_LOST_CAVE_ROOM2",
+  "location": "lost-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 40.7
+  },
+  "reason": {
+   "land": "override:lost-cave",
+   "water": null
+  }
+ },
+ "sFiveIslandLostCaveRoom3_FireRed": {
+  "map": "MAP_FIVE_ISLAND_LOST_CAVE_ROOM3",
+  "location": "lost-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 40.7
+  },
+  "reason": {
+   "land": "override:lost-cave",
+   "water": null
+  }
+ },
+ "sFiveIslandLostCaveRoom3_LeafGreen": {
+  "map": "MAP_FIVE_ISLAND_LOST_CAVE_ROOM3",
+  "location": "lost-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 40.7
+  },
+  "reason": {
+   "land": "override:lost-cave",
+   "water": null
+  }
+ },
+ "sFiveIslandLostCaveRoom4_FireRed": {
+  "map": "MAP_FIVE_ISLAND_LOST_CAVE_ROOM4",
+  "location": "lost-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 40.7
+  },
+  "reason": {
+   "land": "override:lost-cave",
+   "water": null
+  }
+ },
+ "sFiveIslandLostCaveRoom4_LeafGreen": {
+  "map": "MAP_FIVE_ISLAND_LOST_CAVE_ROOM4",
+  "location": "lost-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 40.7
+  },
+  "reason": {
+   "land": "override:lost-cave",
+   "water": null
+  }
+ },
+ "sFiveIslandLostCaveRoom5_FireRed": {
+  "map": "MAP_FIVE_ISLAND_LOST_CAVE_ROOM5",
+  "location": "lost-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 40.7
+  },
+  "reason": {
+   "land": "override:lost-cave",
+   "water": null
+  }
+ },
+ "sFiveIslandLostCaveRoom5_LeafGreen": {
+  "map": "MAP_FIVE_ISLAND_LOST_CAVE_ROOM5",
+  "location": "lost-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 40.7
+  },
+  "reason": {
+   "land": "override:lost-cave",
+   "water": null
+  }
+ },
+ "sFiveIslandLostCaveRoom6_FireRed": {
+  "map": "MAP_FIVE_ISLAND_LOST_CAVE_ROOM6",
+  "location": "lost-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 40.7
+  },
+  "reason": {
+   "land": "override:lost-cave",
+   "water": null
+  }
+ },
+ "sFiveIslandLostCaveRoom6_LeafGreen": {
+  "map": "MAP_FIVE_ISLAND_LOST_CAVE_ROOM6",
+  "location": "lost-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 40.7
+  },
+  "reason": {
+   "land": "override:lost-cave",
+   "water": null
+  }
+ },
+ "sFiveIslandLostCaveRoom7_FireRed": {
+  "map": "MAP_FIVE_ISLAND_LOST_CAVE_ROOM7",
+  "location": "lost-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 40.7
+  },
+  "reason": {
+   "land": "override:lost-cave",
+   "water": null
+  }
+ },
+ "sFiveIslandLostCaveRoom7_LeafGreen": {
+  "map": "MAP_FIVE_ISLAND_LOST_CAVE_ROOM7",
+  "location": "lost-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 40.7
+  },
+  "reason": {
+   "land": "override:lost-cave",
+   "water": null
+  }
+ },
+ "sFiveIslandLostCaveRoom8_FireRed": {
+  "map": "MAP_FIVE_ISLAND_LOST_CAVE_ROOM8",
+  "location": "lost-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 40.7
+  },
+  "reason": {
+   "land": "override:lost-cave",
+   "water": null
+  }
+ },
+ "sFiveIslandLostCaveRoom8_LeafGreen": {
+  "map": "MAP_FIVE_ISLAND_LOST_CAVE_ROOM8",
+  "location": "lost-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 40.7
+  },
+  "reason": {
+   "land": "override:lost-cave",
+   "water": null
+  }
+ },
+ "sFiveIslandLostCaveRoom9_FireRed": {
+  "map": "MAP_FIVE_ISLAND_LOST_CAVE_ROOM9",
+  "location": "lost-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 40.7
+  },
+  "reason": {
+   "land": "override:lost-cave",
+   "water": null
+  }
+ },
+ "sFiveIslandLostCaveRoom9_LeafGreen": {
+  "map": "MAP_FIVE_ISLAND_LOST_CAVE_ROOM9",
+  "location": "lost-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 40.7
+  },
+  "reason": {
+   "land": "override:lost-cave",
+   "water": null
+  }
+ },
+ "sFiveIslandLostCaveRoom10_FireRed": {
+  "map": "MAP_FIVE_ISLAND_LOST_CAVE_ROOM10",
+  "location": "lost-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 40.7
+  },
+  "reason": {
+   "land": "override:lost-cave",
+   "water": null
+  }
+ },
+ "sFiveIslandLostCaveRoom10_LeafGreen": {
+  "map": "MAP_FIVE_ISLAND_LOST_CAVE_ROOM10",
+  "location": "lost-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 40.7
+  },
+  "reason": {
+   "land": "override:lost-cave",
+   "water": null
+  }
+ },
+ "sFiveIslandLostCaveRoom11_FireRed": {
+  "map": "MAP_FIVE_ISLAND_LOST_CAVE_ROOM11",
+  "location": "lost-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 37.0
+  },
+  "reason": {
+   "land": "override:lost-cave",
+   "water": null
+  }
+ },
+ "sFiveIslandLostCaveRoom11_LeafGreen": {
+  "map": "MAP_FIVE_ISLAND_LOST_CAVE_ROOM11",
+  "location": "lost-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 37.0
+  },
+  "reason": {
+   "land": "override:lost-cave",
+   "water": null
+  }
+ },
+ "sFiveIslandLostCaveRoom12_FireRed": {
+  "map": "MAP_FIVE_ISLAND_LOST_CAVE_ROOM12",
+  "location": "lost-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 37.0
+  },
+  "reason": {
+   "land": "override:lost-cave",
+   "water": null
+  }
+ },
+ "sFiveIslandLostCaveRoom12_LeafGreen": {
+  "map": "MAP_FIVE_ISLAND_LOST_CAVE_ROOM12",
+  "location": "lost-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 37.0
+  },
+  "reason": {
+   "land": "override:lost-cave",
+   "water": null
+  }
+ },
+ "sFiveIslandLostCaveRoom13_FireRed": {
+  "map": "MAP_FIVE_ISLAND_LOST_CAVE_ROOM13",
+  "location": "lost-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 37.0
+  },
+  "reason": {
+   "land": "override:lost-cave",
+   "water": null
+  }
+ },
+ "sFiveIslandLostCaveRoom13_LeafGreen": {
+  "map": "MAP_FIVE_ISLAND_LOST_CAVE_ROOM13",
+  "location": "lost-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 37.0
+  },
+  "reason": {
+   "land": "override:lost-cave",
+   "water": null
+  }
+ },
+ "sFiveIslandLostCaveRoom14_FireRed": {
+  "map": "MAP_FIVE_ISLAND_LOST_CAVE_ROOM14",
+  "location": "lost-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 37.0
+  },
+  "reason": {
+   "land": "override:lost-cave",
+   "water": null
+  }
+ },
+ "sFiveIslandLostCaveRoom14_LeafGreen": {
+  "map": "MAP_FIVE_ISLAND_LOST_CAVE_ROOM14",
+  "location": "lost-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "haunted/late",
+   "pool": "land",
+   "level": 37.0
+  },
+  "reason": {
+   "land": "override:lost-cave",
+   "water": null
+  }
+ },
+ "sOneIslandKindleRoad_FireRed": {
+  "map": "MAP_ONE_ISLAND_KINDLE_ROAD",
+  "location": "kindle-road",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/late",
+   "pool": "land",
+   "level": 33.1
+  },
+  "rock_smash_mons": {
+   "archetype": "route/early",
+   "pool": "rock_smash",
+   "level": 14.8
+  },
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 19.5
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "override:kindle-road",
+   "water": "pokeapi-majority:kindle-road"
+  }
+ },
+ "sOneIslandKindleRoad_LeafGreen": {
+  "map": "MAP_ONE_ISLAND_KINDLE_ROAD",
+  "location": "kindle-road",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/late",
+   "pool": "land",
+   "level": 33.1
+  },
+  "rock_smash_mons": {
+   "archetype": "route/early",
+   "pool": "rock_smash",
+   "level": 14.8
+  },
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 19.5
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "override:kindle-road",
+   "water": "pokeapi-majority:kindle-road"
+  }
+ },
+ "sOneIslandTreasureBeach_FireRed": {
+  "map": "MAP_ONE_ISLAND_TREASURE_BEACH",
+  "location": "treasure-beach",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "beach/late",
+   "pool": "land",
+   "level": 33.6
+  },
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 19.5
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "keyword:treasure-beach",
+   "water": "pokeapi-majority:treasure-beach"
+  }
+ },
+ "sOneIslandTreasureBeach_LeafGreen": {
+  "map": "MAP_ONE_ISLAND_TREASURE_BEACH",
+  "location": "treasure-beach",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "beach/late",
+   "pool": "land",
+   "level": 33.6
+  },
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 19.5
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "keyword:treasure-beach",
+   "water": "pokeapi-majority:treasure-beach"
+  }
+ },
+ "sTwoIslandCapeBrink_FireRed": {
+  "map": "MAP_TWO_ISLAND_CAPE_BRINK",
+  "location": "cape-brink",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "beach/late",
+   "pool": "land",
+   "level": 32.9
+  },
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 19.5
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "keyword:cape-brink",
+   "water": "pokeapi-majority:cape-brink"
+  }
+ },
+ "sTwoIslandCapeBrink_LeafGreen": {
+  "map": "MAP_TWO_ISLAND_CAPE_BRINK",
+  "location": "cape-brink",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "beach/late",
+   "pool": "land",
+   "level": 32.9
+  },
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 19.5
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "keyword:cape-brink",
+   "water": "pokeapi-majority:cape-brink"
+  }
+ },
+ "sThreeIslandBondBridge_FireRed": {
+  "map": "MAP_THREE_ISLAND_BOND_BRIDGE",
+  "location": "bond-bridge",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/late",
+   "pool": "land",
+   "level": 32.6
+  },
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 19.5
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "override:bond-bridge",
+   "water": "pokeapi-majority:bond-bridge"
+  }
+ },
+ "sThreeIslandBondBridge_LeafGreen": {
+  "map": "MAP_THREE_ISLAND_BOND_BRIDGE",
+  "location": "bond-bridge",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/late",
+   "pool": "land",
+   "level": 32.6
+  },
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 19.5
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "override:bond-bridge",
+   "water": "pokeapi-majority:bond-bridge"
+  }
+ },
+ "sThreeIslandPort_FireRed": {
+  "map": "MAP_THREE_ISLAND_PORT",
+  "location": "three-isle-port",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 17.4
+  },
+  "reason": {
+   "land": "override:three-isle-port",
+   "water": null
+  }
+ },
+ "sThreeIslandPort_LeafGreen": {
+  "map": "MAP_THREE_ISLAND_PORT",
+  "location": "three-isle-port",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 17.4
+  },
+  "reason": {
+   "land": "override:three-isle-port",
+   "water": null
+  }
+ },
+ "sFiveIslandResortGorgeous_FireRed": {
+  "map": "MAP_FIVE_ISLAND_RESORT_GORGEOUS",
+  "location": "resort-gorgeous",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 18.8
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "keyword:resort-gorgeous",
+   "water": "pokeapi-majority:resort-gorgeous"
+  }
+ },
+ "sFiveIslandResortGorgeous_LeafGreen": {
+  "map": "MAP_FIVE_ISLAND_RESORT_GORGEOUS",
+  "location": "resort-gorgeous",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 18.8
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "keyword:resort-gorgeous",
+   "water": "pokeapi-majority:resort-gorgeous"
+  }
+ },
+ "sFiveIslandWaterLabyrinth_FireRed": {
+  "map": "MAP_FIVE_ISLAND_WATER_LABYRINTH",
+  "location": "water-labyrinth",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/early",
+   "pool": "surf",
+   "level": 14.2
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:water-labyrinth"
+  }
+ },
+ "sFiveIslandWaterLabyrinth_LeafGreen": {
+  "map": "MAP_FIVE_ISLAND_WATER_LABYRINTH",
+  "location": "water-labyrinth",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 18.8
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:water-labyrinth"
+  }
+ },
+ "sFiveIslandMeadow_FireRed": {
+  "map": "MAP_FIVE_ISLAND_MEADOW",
+  "location": "five-isle-meadow",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "meadow/mid",
+   "pool": "land",
+   "level": 29.9
+  },
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 18.8
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "keyword:five-isle-meadow",
+   "water": "pokeapi-majority:five-isle-meadow"
+  }
+ },
+ "sFiveIslandMeadow_LeafGreen": {
+  "map": "MAP_FIVE_ISLAND_MEADOW",
+  "location": "five-isle-meadow",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "meadow/mid",
+   "pool": "land",
+   "level": 29.9
+  },
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 18.8
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "keyword:five-isle-meadow",
+   "water": "pokeapi-majority:five-isle-meadow"
+  }
+ },
+ "sFiveIslandMemorialPillar_FireRed": {
+  "map": "MAP_FIVE_ISLAND_MEMORIAL_PILLAR",
+  "location": "memorial-pillar",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/early",
+   "pool": "land",
+   "level": 11.0
+  },
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 18.8
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "override:memorial-pillar",
+   "water": "pokeapi-majority:memorial-pillar"
+  }
+ },
+ "sFiveIslandMemorialPillar_LeafGreen": {
+  "map": "MAP_FIVE_ISLAND_MEMORIAL_PILLAR",
+  "location": "memorial-pillar",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/early",
+   "pool": "land",
+   "level": 11.0
+  },
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 18.8
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "override:memorial-pillar",
+   "water": "pokeapi-majority:memorial-pillar"
+  }
+ },
+ "sSixIslandOutcastIsland_FireRed": {
+  "map": "MAP_SIX_ISLAND_OUTCAST_ISLAND",
+  "location": "outcast-island",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 19.5
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "keyword:outcast-island",
+   "water": "pokeapi-majority:outcast-island"
+  }
+ },
+ "sSixIslandOutcastIsland_LeafGreen": {
+  "map": "MAP_SIX_ISLAND_OUTCAST_ISLAND",
+  "location": "outcast-island",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 19.5
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "keyword:outcast-island",
+   "water": "pokeapi-majority:outcast-island"
+  }
+ },
+ "sSixIslandGreenPath_FireRed": {
+  "map": "MAP_SIX_ISLAND_GREEN_PATH",
+  "location": "green-path",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 19.5
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "override:green-path",
+   "water": "pokeapi-majority:green-path"
+  }
+ },
+ "sSixIslandGreenPath_LeafGreen": {
+  "map": "MAP_SIX_ISLAND_GREEN_PATH",
+  "location": "green-path",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 19.5
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "override:green-path",
+   "water": "pokeapi-majority:green-path"
+  }
+ },
+ "sSixIslandWaterPath_FireRed": {
+  "map": "MAP_SIX_ISLAND_WATER_PATH",
+  "location": "water-path",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/late",
+   "pool": "land",
+   "level": 34.9
+  },
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 19.5
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "override:water-path",
+   "water": "pokeapi-majority:water-path"
+  }
+ },
+ "sSixIslandWaterPath_LeafGreen": {
+  "map": "MAP_SIX_ISLAND_WATER_PATH",
+  "location": "water-path",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/late",
+   "pool": "land",
+   "level": 34.9
+  },
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 19.5
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "override:water-path",
+   "water": "pokeapi-majority:water-path"
+  }
+ },
+ "sSixIslandRuinValley_FireRed": {
+  "map": "MAP_SIX_ISLAND_RUIN_VALLEY",
+  "location": "ruin-valley",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/late",
+   "pool": "land",
+   "level": 31.1
+  },
+  "water_mons": {
+   "archetype": "freshwater/early",
+   "pool": "surf",
+   "level": 14.1
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "override:ruin-valley",
+   "water": "pokeapi-majority:ruin-valley"
+  }
+ },
+ "sSixIslandRuinValley_LeafGreen": {
+  "map": "MAP_SIX_ISLAND_RUIN_VALLEY",
+  "location": "ruin-valley",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/late",
+   "pool": "land",
+   "level": 31.1
+  },
+  "water_mons": {
+   "archetype": "freshwater/early",
+   "pool": "surf",
+   "level": 14.1
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "override:ruin-valley",
+   "water": "pokeapi-majority:ruin-valley"
+  }
+ },
+ "sSevenIslandTrainerTower_FireRed": {
+  "map": "MAP_SEVEN_ISLAND_TRAINER_TOWER",
+  "location": "trainer-tower",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 19.5
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "keyword:trainer-tower",
+   "water": "pokeapi-majority:trainer-tower"
+  }
+ },
+ "sSevenIslandTrainerTower_LeafGreen": {
+  "map": "MAP_SEVEN_ISLAND_TRAINER_TOWER",
+  "location": "trainer-tower",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 19.5
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "keyword:trainer-tower",
+   "water": "pokeapi-majority:trainer-tower"
+  }
+ },
+ "sSevenIslandSevaultCanyonEntrance_FireRed": {
+  "map": "MAP_SEVEN_ISLAND_SEVAULT_CANYON_ENTRANCE",
+  "location": "canyon-entrance",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "mountain/mid",
+   "pool": "land",
+   "level": 29.9
+  },
+  "reason": {
+   "land": "override:canyon-entrance",
+   "water": null
+  }
+ },
+ "sSevenIslandSevaultCanyonEntrance_LeafGreen": {
+  "map": "MAP_SEVEN_ISLAND_SEVAULT_CANYON_ENTRANCE",
+  "location": "canyon-entrance",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "mountain/mid",
+   "pool": "land",
+   "level": 29.9
+  },
+  "reason": {
+   "land": "override:canyon-entrance",
+   "water": null
+  }
+ },
+ "sSevenIslandSevaultCanyon_FireRed": {
+  "map": "MAP_SEVEN_ISLAND_SEVAULT_CANYON",
+  "location": "sevault-canyon",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "mountain/late",
+   "pool": "land",
+   "level": 38.8
+  },
+  "rock_smash_mons": {
+   "archetype": "mountain/late",
+   "pool": "rock_smash",
+   "level": 33.1
+  },
+  "reason": {
+   "land": "override:sevault-canyon",
+   "water": null
+  }
+ },
+ "sSevenIslandSevaultCanyon_LeafGreen": {
+  "map": "MAP_SEVEN_ISLAND_SEVAULT_CANYON",
+  "location": "sevault-canyon",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "mountain/late",
+   "pool": "land",
+   "level": 39.8
+  },
+  "rock_smash_mons": {
+   "archetype": "mountain/late",
+   "pool": "rock_smash",
+   "level": 33.1
+  },
+  "reason": {
+   "land": "override:sevault-canyon",
+   "water": null
+  }
+ },
+ "sSevenIslandTanobyRuins_FireRed": {
+  "map": "MAP_SEVEN_ISLAND_TANOBY_RUINS",
+  "location": "tanoby-ruins",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 19.5
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "keyword:tanoby-ruins",
+   "water": "pokeapi-majority:tanoby-ruins"
+  }
+ },
+ "sSevenIslandTanobyRuins_LeafGreen": {
+  "map": "MAP_SEVEN_ISLAND_TANOBY_RUINS",
+  "location": "tanoby-ruins",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 19.5
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "keyword:tanoby-ruins",
+   "water": "pokeapi-majority:tanoby-ruins"
+  }
+ },
+ "sRoute1_FireRed": {
+  "map": "MAP_ROUTE1",
+  "location": "kanto-route-1",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/beginner",
+   "pool": "land",
+   "level": 2.9
+  },
+  "reason": {
+   "land": "default",
+   "water": null
+  }
+ },
+ "sRoute1_LeafGreen": {
+  "map": "MAP_ROUTE1",
+  "location": "kanto-route-1",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/beginner",
+   "pool": "land",
+   "level": 2.9
+  },
+  "reason": {
+   "land": "default",
+   "water": null
+  }
+ },
+ "sRoute2_FireRed": {
+  "map": "MAP_ROUTE2",
+  "location": "kanto-route-2",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/beginner",
+   "pool": "land",
+   "level": 3.3
+  },
+  "reason": {
+   "land": "default",
+   "water": null
+  }
+ },
+ "sRoute2_LeafGreen": {
+  "map": "MAP_ROUTE2",
+  "location": "kanto-route-2",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/beginner",
+   "pool": "land",
+   "level": 3.3
+  },
+  "reason": {
+   "land": "default",
+   "water": null
+  }
+ },
+ "sRoute3_FireRed": {
+  "map": "MAP_ROUTE3",
+  "location": "kanto-route-3",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/beginner",
+   "pool": "land",
+   "level": 6.3
+  },
+  "reason": {
+   "land": "default",
+   "water": null
+  }
+ },
+ "sRoute3_LeafGreen": {
+  "map": "MAP_ROUTE3",
+  "location": "kanto-route-3",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/beginner",
+   "pool": "land",
+   "level": 6.3
+  },
+  "reason": {
+   "land": "default",
+   "water": null
+  }
+ },
+ "sRoute4_FireRed": {
+  "map": "MAP_ROUTE4",
+  "location": "kanto-route-4",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/early",
+   "pool": "land",
+   "level": 9.4
+  },
+  "water_mons": {
+   "archetype": "freshwater/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:kanto-route-4"
+  }
+ },
+ "sRoute4_LeafGreen": {
+  "map": "MAP_ROUTE4",
+  "location": "kanto-route-4",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/early",
+   "pool": "land",
+   "level": 9.4
+  },
+  "water_mons": {
+   "archetype": "freshwater/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:kanto-route-4"
+  }
+ },
+ "sRoute5_FireRed": {
+  "map": "MAP_ROUTE5",
+  "location": "kanto-route-5",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/early",
+   "pool": "land",
+   "level": 13.2
+  },
+  "reason": {
+   "land": "default",
+   "water": null
+  }
+ },
+ "sRoute5_LeafGreen": {
+  "map": "MAP_ROUTE5",
+  "location": "kanto-route-5",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/early",
+   "pool": "land",
+   "level": 13.2
+  },
+  "reason": {
+   "land": "default",
+   "water": null
+  }
+ },
+ "sRoute6_FireRed": {
+  "map": "MAP_ROUTE6",
+  "location": "kanto-route-6",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/early",
+   "pool": "land",
+   "level": 13.2
+  },
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 23.3
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:kanto-route-6"
+  }
+ },
+ "sRoute6_LeafGreen": {
+  "map": "MAP_ROUTE6",
+  "location": "kanto-route-6",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/early",
+   "pool": "land",
+   "level": 13.2
+  },
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 23.3
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:kanto-route-6"
+  }
+ },
+ "sRoute7_FireRed": {
+  "map": "MAP_ROUTE7",
+  "location": "kanto-route-7",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 19.0
+  },
+  "reason": {
+   "land": "default",
+   "water": null
+  }
+ },
+ "sRoute7_LeafGreen": {
+  "map": "MAP_ROUTE7",
+  "location": "kanto-route-7",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 19.0
+  },
+  "reason": {
+   "land": "default",
+   "water": null
+  }
+ },
+ "sRoute8_FireRed": {
+  "map": "MAP_ROUTE8",
+  "location": "kanto-route-8",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 17.9
+  },
+  "reason": {
+   "land": "default",
+   "water": null
+  }
+ },
+ "sRoute8_LeafGreen": {
+  "map": "MAP_ROUTE8",
+  "location": "kanto-route-8",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 17.9
+  },
+  "reason": {
+   "land": "default",
+   "water": null
+  }
+ },
+ "sRoute9_FireRed": {
+  "map": "MAP_ROUTE9",
+  "location": "kanto-route-9",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/early",
+   "pool": "land",
+   "level": 14.8
+  },
+  "reason": {
+   "land": "default",
+   "water": null
+  }
+ },
+ "sRoute9_LeafGreen": {
+  "map": "MAP_ROUTE9",
+  "location": "kanto-route-9",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/early",
+   "pool": "land",
+   "level": 14.8
+  },
+  "reason": {
+   "land": "default",
+   "water": null
+  }
+ },
+ "sRoute10_FireRed": {
+  "map": "MAP_ROUTE10",
+  "location": "kanto-route-10",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/early",
+   "pool": "land",
+   "level": 14.8
+  },
+  "water_mons": {
+   "archetype": "freshwater/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:kanto-route-10"
+  }
+ },
+ "sRoute10_LeafGreen": {
+  "map": "MAP_ROUTE10",
+  "location": "kanto-route-10",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/early",
+   "pool": "land",
+   "level": 14.8
+  },
+  "water_mons": {
+   "archetype": "freshwater/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:kanto-route-10"
+  }
+ },
+ "sRoute11_FireRed": {
+  "map": "MAP_ROUTE11",
+  "location": "kanto-route-11",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/early",
+   "pool": "land",
+   "level": 13.7
+  },
+  "water_mons": {
+   "archetype": "sea/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:kanto-route-11"
+  }
+ },
+ "sRoute11_LeafGreen": {
+  "map": "MAP_ROUTE11",
+  "location": "kanto-route-11",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/early",
+   "pool": "land",
+   "level": 13.7
+  },
+  "water_mons": {
+   "archetype": "sea/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:kanto-route-11"
+  }
+ },
+ "sRoute12_FireRed": {
+  "map": "MAP_ROUTE12",
+  "location": "kanto-route-12",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 24.4
+  },
+  "water_mons": {
+   "archetype": "sea/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:kanto-route-12"
+  }
+ },
+ "sRoute12_LeafGreen": {
+  "map": "MAP_ROUTE12",
+  "location": "kanto-route-12",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 24.4
+  },
+  "water_mons": {
+   "archetype": "sea/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:kanto-route-12"
+  }
+ },
+ "sRoute13_FireRed": {
+  "map": "MAP_ROUTE13",
+  "location": "kanto-route-13",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 25.0
+  },
+  "water_mons": {
+   "archetype": "sea/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:kanto-route-13"
+  }
+ },
+ "sRoute13_LeafGreen": {
+  "map": "MAP_ROUTE13",
+  "location": "kanto-route-13",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 25.0
+  },
+  "water_mons": {
+   "archetype": "sea/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:kanto-route-13"
+  }
+ },
+ "sRoute14_FireRed": {
+  "map": "MAP_ROUTE14",
+  "location": "kanto-route-14",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 24.8
+  },
+  "reason": {
+   "land": "default",
+   "water": null
+  }
+ },
+ "sRoute14_LeafGreen": {
+  "map": "MAP_ROUTE14",
+  "location": "kanto-route-14",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 24.8
+  },
+  "reason": {
+   "land": "default",
+   "water": null
+  }
+ },
+ "sRoute15_FireRed": {
+  "map": "MAP_ROUTE15",
+  "location": "kanto-route-15",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 25.0
+  },
+  "reason": {
+   "land": "default",
+   "water": null
+  }
+ },
+ "sRoute15_LeafGreen": {
+  "map": "MAP_ROUTE15",
+  "location": "kanto-route-15",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 25.0
+  },
+  "reason": {
+   "land": "default",
+   "water": null
+  }
+ },
+ "sRoute16_FireRed": {
+  "map": "MAP_ROUTE16",
+  "location": "kanto-route-16",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 19.9
+  },
+  "reason": {
+   "land": "default",
+   "water": null
+  }
+ },
+ "sRoute16_LeafGreen": {
+  "map": "MAP_ROUTE16",
+  "location": "kanto-route-16",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 19.9
+  },
+  "reason": {
+   "land": "default",
+   "water": null
+  }
+ },
+ "sRoute17_FireRed": {
+  "map": "MAP_ROUTE17",
+  "location": "kanto-route-17",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 24.0
+  },
+  "reason": {
+   "land": "default",
+   "water": null
+  }
+ },
+ "sRoute17_LeafGreen": {
+  "map": "MAP_ROUTE17",
+  "location": "kanto-route-17",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 24.0
+  },
+  "reason": {
+   "land": "default",
+   "water": null
+  }
+ },
+ "sRoute18_FireRed": {
+  "map": "MAP_ROUTE18",
+  "location": "kanto-route-18",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 23.9
+  },
+  "reason": {
+   "land": "default",
+   "water": null
+  }
+ },
+ "sRoute18_LeafGreen": {
+  "map": "MAP_ROUTE18",
+  "location": "kanto-route-18",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 23.9
+  },
+  "reason": {
+   "land": "default",
+   "water": null
+  }
+ },
+ "sRoute19_FireRed": {
+  "map": "MAP_ROUTE19",
+  "location": "kanto-sea-route-19",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:kanto-sea-route-19"
+  }
+ },
+ "sRoute19_LeafGreen": {
+  "map": "MAP_ROUTE19",
+  "location": "kanto-sea-route-19",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:kanto-sea-route-19"
+  }
+ },
+ "sRoute20_FireRed": {
+  "map": "MAP_ROUTE20",
+  "location": "kanto-sea-route-20",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:kanto-sea-route-20"
+  }
+ },
+ "sRoute20_LeafGreen": {
+  "map": "MAP_ROUTE20",
+  "location": "kanto-sea-route-20",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:kanto-sea-route-20"
+  }
+ },
+ "sRoute21North_FireRed": {
+  "map": "MAP_ROUTE21_NORTH",
+  "location": "kanto-sea-route-21",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 22.5
+  },
+  "water_mons": {
+   "archetype": "sea/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:kanto-sea-route-21"
+  }
+ },
+ "sRoute21North_LeafGreen": {
+  "map": "MAP_ROUTE21_NORTH",
+  "location": "kanto-sea-route-21",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 22.5
+  },
+  "water_mons": {
+   "archetype": "sea/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:kanto-sea-route-21"
+  }
+ },
+ "sRoute21South_FireRed": {
+  "map": "MAP_ROUTE21_SOUTH",
+  "location": "kanto-sea-route-21",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 22.5
+  },
+  "water_mons": {
+   "archetype": "sea/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:kanto-sea-route-21"
+  }
+ },
+ "sRoute21South_LeafGreen": {
+  "map": "MAP_ROUTE21_SOUTH",
+  "location": "kanto-sea-route-21",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/mid",
+   "pool": "land",
+   "level": 22.5
+  },
+  "water_mons": {
+   "archetype": "sea/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:kanto-sea-route-21"
+  }
+ },
+ "sRoute22_FireRed": {
+  "map": "MAP_ROUTE22",
+  "location": "kanto-route-22",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/beginner",
+   "pool": "land",
+   "level": 3.3
+  },
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 23.3
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:kanto-route-22"
+  }
+ },
+ "sRoute22_LeafGreen": {
+  "map": "MAP_ROUTE22",
+  "location": "kanto-route-22",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/beginner",
+   "pool": "land",
+   "level": 3.3
+  },
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 23.3
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:kanto-route-22"
+  }
+ },
+ "sRoute23_FireRed": {
+  "map": "MAP_ROUTE23",
+  "location": "kanto-route-23",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/late",
+   "pool": "land",
+   "level": 35.8
+  },
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 23.3
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:kanto-route-23"
+  }
+ },
+ "sRoute23_LeafGreen": {
+  "map": "MAP_ROUTE23",
+  "location": "kanto-route-23",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/late",
+   "pool": "land",
+   "level": 35.8
+  },
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 23.3
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:kanto-route-23"
+  }
+ },
+ "sRoute24_FireRed": {
+  "map": "MAP_ROUTE24",
+  "location": "kanto-route-24",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/early",
+   "pool": "land",
+   "level": 9.6
+  },
+  "water_mons": {
+   "archetype": "freshwater/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:kanto-route-24"
+  }
+ },
+ "sRoute24_LeafGreen": {
+  "map": "MAP_ROUTE24",
+  "location": "kanto-route-24",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/early",
+   "pool": "land",
+   "level": 9.6
+  },
+  "water_mons": {
+   "archetype": "freshwater/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:kanto-route-24"
+  }
+ },
+ "sRoute25_FireRed": {
+  "map": "MAP_ROUTE25",
+  "location": "kanto-route-25",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/early",
+   "pool": "land",
+   "level": 10.4
+  },
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 23.3
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:kanto-route-25"
+  }
+ },
+ "sRoute25_LeafGreen": {
+  "map": "MAP_ROUTE25",
+  "location": "kanto-route-25",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "route/early",
+   "pool": "land",
+   "level": 10.4
+  },
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 23.3
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "default",
+   "water": "pokeapi-majority:kanto-route-25"
+  }
+ },
+ "sPalletTown_FireRed": {
+  "map": "MAP_PALLET_TOWN",
+  "location": "pallet-town",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "keyword:pallet-town",
+   "water": "pokeapi-majority:pallet-town"
+  }
+ },
+ "sPalletTown_LeafGreen": {
+  "map": "MAP_PALLET_TOWN",
+  "location": "pallet-town",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_old",
+    "level": 7.5
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "keyword:pallet-town",
+   "water": "pokeapi-majority:pallet-town"
+  }
+ },
+ "sViridianCity_FireRed": {
+  "map": "MAP_VIRIDIAN_CITY",
+  "location": "viridian-city",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 23.3
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "keyword:viridian-city",
+   "water": "pokeapi-majority:viridian-city"
+  }
+ },
+ "sViridianCity_LeafGreen": {
+  "map": "MAP_VIRIDIAN_CITY",
+  "location": "viridian-city",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 23.3
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "keyword:viridian-city",
+   "water": "pokeapi-majority:viridian-city"
+  }
+ },
+ "sCeruleanCity_FireRed": {
+  "map": "MAP_CERULEAN_CITY",
+  "location": "cerulean-city",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "freshwater/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "keyword:cerulean-city",
+   "water": "pokeapi-majority:cerulean-city"
+  }
+ },
+ "sCeruleanCity_LeafGreen": {
+  "map": "MAP_CERULEAN_CITY",
+  "location": "cerulean-city",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "freshwater/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "keyword:cerulean-city",
+   "water": "pokeapi-majority:cerulean-city"
+  }
+ },
+ "sVermilionCity_FireRed": {
+  "map": "MAP_VERMILION_CITY",
+  "location": "vermilion-city",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "keyword:vermilion-city",
+   "water": "pokeapi-majority:vermilion-city"
+  }
+ },
+ "sVermilionCity_LeafGreen": {
+  "map": "MAP_VERMILION_CITY",
+  "location": "vermilion-city",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "keyword:vermilion-city",
+   "water": "pokeapi-majority:vermilion-city"
+  }
+ },
+ "sCeladonCity_FireRed": {
+  "map": "MAP_CELADON_CITY",
+  "location": "celadon-city",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "freshwater/early",
+   "pool": "surf",
+   "level": 12.0
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 20.6
+   }
+  },
+  "reason": {
+   "land": "keyword:celadon-city",
+   "water": "pokeapi-majority:celadon-city"
+  }
+ },
+ "sCeladonCity_LeafGreen": {
+  "map": "MAP_CELADON_CITY",
+  "location": "celadon-city",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "freshwater/early",
+   "pool": "surf",
+   "level": 12.0
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 20.6
+   }
+  },
+  "reason": {
+   "land": "keyword:celadon-city",
+   "water": "pokeapi-majority:celadon-city"
+  }
+ },
+ "sFuchsiaCity_FireRed": {
+  "map": "MAP_FUCHSIA_CITY",
+  "location": "fuchsia-city",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 23.3
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "keyword:fuchsia-city",
+   "water": "pokeapi-majority:fuchsia-city"
+  }
+ },
+ "sFuchsiaCity_LeafGreen": {
+  "map": "MAP_FUCHSIA_CITY",
+  "location": "fuchsia-city",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "freshwater/mid",
+   "pool": "surf",
+   "level": 23.3
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "freshwater/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "freshwater/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "freshwater/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "keyword:fuchsia-city",
+   "water": "pokeapi-majority:fuchsia-city"
+  }
+ },
+ "sCinnabarIsland_FireRed": {
+  "map": "MAP_CINNABAR_ISLAND",
+  "location": "cinnabar-island",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "keyword:cinnabar-island",
+   "water": "pokeapi-majority:cinnabar-island"
+  }
+ },
+ "sCinnabarIsland_LeafGreen": {
+  "map": "MAP_CINNABAR_ISLAND",
+  "location": "cinnabar-island",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/early",
+   "pool": "surf",
+   "level": 11.9
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "keyword:cinnabar-island",
+   "water": "pokeapi-majority:cinnabar-island"
+  }
+ },
+ "sOneIsland_FireRed": {
+  "map": "MAP_ONE_ISLAND",
+  "location": "one-island",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 19.5
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "keyword:one-island",
+   "water": "pokeapi-majority:one-island"
+  }
+ },
+ "sOneIsland_LeafGreen": {
+  "map": "MAP_ONE_ISLAND",
+  "location": "one-island",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 19.5
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "keyword:one-island",
+   "water": "pokeapi-majority:one-island"
+  }
+ },
+ "sFourIsland_FireRed": {
+  "map": "MAP_FOUR_ISLAND",
+  "location": "four-island",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/early",
+   "pool": "surf",
+   "level": 14.0
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "keyword:four-island",
+   "water": "pokeapi-majority:four-island"
+  }
+ },
+ "sFourIsland_LeafGreen": {
+  "map": "MAP_FOUR_ISLAND",
+  "location": "four-island",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/early",
+   "pool": "surf",
+   "level": 14.0
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 22.1
+   }
+  },
+  "reason": {
+   "land": "keyword:four-island",
+   "water": "pokeapi-majority:four-island"
+  }
+ },
+ "sFiveIsland_FireRed": {
+  "map": "MAP_FIVE_ISLAND",
+  "location": "five-island",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 18.8
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "keyword:five-island",
+   "water": "pokeapi-majority:five-island"
+  }
+ },
+ "sFiveIsland_LeafGreen": {
+  "map": "MAP_FIVE_ISLAND",
+  "location": "five-island",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "water_mons": {
+   "archetype": "sea/mid",
+   "pool": "surf",
+   "level": 18.8
+  },
+  "fishing_mons": {
+   "old_rod": {
+    "archetype": "sea/beginner",
+    "pool": "fish_old",
+    "level": 5.0
+   },
+   "good_rod": {
+    "archetype": "sea/early",
+    "pool": "fish_good",
+    "level": 10.0
+   },
+   "super_rod": {
+    "archetype": "sea/mid",
+    "pool": "fish_super",
+    "level": 20.5
+   }
+  },
+  "reason": {
+   "land": "keyword:five-island",
+   "water": "pokeapi-majority:five-island"
+  }
+ },
+ "sSixIslandAlteringCave_FireRed": {
+  "map": "MAP_SIX_ISLAND_ALTERING_CAVE",
+  "location": "kanto-altering-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/early",
+   "pool": "land",
+   "level": 11.0
+  },
+  "reason": {
+   "land": "override:kanto-altering-cave",
+   "water": null
+  }
+ },
+ "sSixIslandAlteringCave_2_FireRed": {
+  "map": "MAP_SIX_ISLAND_ALTERING_CAVE",
+  "location": "kanto-altering-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/early",
+   "pool": "land",
+   "level": 8.0
+  },
+  "reason": {
+   "land": "override:kanto-altering-cave",
+   "water": null
+  }
+ },
+ "sSixIslandAlteringCave_3_FireRed": {
+  "map": "MAP_SIX_ISLAND_ALTERING_CAVE",
+  "location": "kanto-altering-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/mid",
+   "pool": "land",
+   "level": 24.1
+  },
+  "reason": {
+   "land": "override:kanto-altering-cave",
+   "water": null
+  }
+ },
+ "sSixIslandAlteringCave_4_FireRed": {
+  "map": "MAP_SIX_ISLAND_ALTERING_CAVE",
+  "location": "kanto-altering-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/early",
+   "pool": "land",
+   "level": 17.0
+  },
+  "reason": {
+   "land": "override:kanto-altering-cave",
+   "water": null
+  }
+ },
+ "sSixIslandAlteringCave_5_FireRed": {
+  "map": "MAP_SIX_ISLAND_ALTERING_CAVE",
+  "location": "kanto-altering-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/mid",
+   "pool": "land",
+   "level": 23.0
+  },
+  "reason": {
+   "land": "override:kanto-altering-cave",
+   "water": null
+  }
+ },
+ "sSixIslandAlteringCave_6_FireRed": {
+  "map": "MAP_SIX_ISLAND_ALTERING_CAVE",
+  "location": "kanto-altering-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/mid",
+   "pool": "land",
+   "level": 23.0
+  },
+  "reason": {
+   "land": "override:kanto-altering-cave",
+   "water": null
+  }
+ },
+ "sSixIslandAlteringCave_7_FireRed": {
+  "map": "MAP_SIX_ISLAND_ALTERING_CAVE",
+  "location": "kanto-altering-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/mid",
+   "pool": "land",
+   "level": 23.0
+  },
+  "reason": {
+   "land": "override:kanto-altering-cave",
+   "water": null
+  }
+ },
+ "sSixIslandAlteringCave_8_FireRed": {
+  "map": "MAP_SIX_ISLAND_ALTERING_CAVE",
+  "location": "kanto-altering-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/mid",
+   "pool": "land",
+   "level": 23.0
+  },
+  "reason": {
+   "land": "override:kanto-altering-cave",
+   "water": null
+  }
+ },
+ "sSixIslandAlteringCave_9_FireRed": {
+  "map": "MAP_SIX_ISLAND_ALTERING_CAVE",
+  "location": "kanto-altering-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/mid",
+   "pool": "land",
+   "level": 23.0
+  },
+  "reason": {
+   "land": "override:kanto-altering-cave",
+   "water": null
+  }
+ },
+ "sSixIslandAlteringCave_LeafGreen": {
+  "map": "MAP_SIX_ISLAND_ALTERING_CAVE",
+  "location": "kanto-altering-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/early",
+   "pool": "land",
+   "level": 11.0
+  },
+  "reason": {
+   "land": "override:kanto-altering-cave",
+   "water": null
+  }
+ },
+ "sSixIslandAlteringCave_2_LeafGreen": {
+  "map": "MAP_SIX_ISLAND_ALTERING_CAVE",
+  "location": "kanto-altering-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/early",
+   "pool": "land",
+   "level": 8.0
+  },
+  "reason": {
+   "land": "override:kanto-altering-cave",
+   "water": null
+  }
+ },
+ "sSixIslandAlteringCave_3_LeafGreen": {
+  "map": "MAP_SIX_ISLAND_ALTERING_CAVE",
+  "location": "kanto-altering-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/mid",
+   "pool": "land",
+   "level": 24.1
+  },
+  "reason": {
+   "land": "override:kanto-altering-cave",
+   "water": null
+  }
+ },
+ "sSixIslandAlteringCave_4_LeafGreen": {
+  "map": "MAP_SIX_ISLAND_ALTERING_CAVE",
+  "location": "kanto-altering-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/early",
+   "pool": "land",
+   "level": 17.0
+  },
+  "reason": {
+   "land": "override:kanto-altering-cave",
+   "water": null
+  }
+ },
+ "sSixIslandAlteringCave_5_LeafGreen": {
+  "map": "MAP_SIX_ISLAND_ALTERING_CAVE",
+  "location": "kanto-altering-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/mid",
+   "pool": "land",
+   "level": 23.0
+  },
+  "reason": {
+   "land": "override:kanto-altering-cave",
+   "water": null
+  }
+ },
+ "sSixIslandAlteringCave_6_LeafGreen": {
+  "map": "MAP_SIX_ISLAND_ALTERING_CAVE",
+  "location": "kanto-altering-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/mid",
+   "pool": "land",
+   "level": 23.0
+  },
+  "reason": {
+   "land": "override:kanto-altering-cave",
+   "water": null
+  }
+ },
+ "sSixIslandAlteringCave_7_LeafGreen": {
+  "map": "MAP_SIX_ISLAND_ALTERING_CAVE",
+  "location": "kanto-altering-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/mid",
+   "pool": "land",
+   "level": 23.0
+  },
+  "reason": {
+   "land": "override:kanto-altering-cave",
+   "water": null
+  }
+ },
+ "sSixIslandAlteringCave_8_LeafGreen": {
+  "map": "MAP_SIX_ISLAND_ALTERING_CAVE",
+  "location": "kanto-altering-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/mid",
+   "pool": "land",
+   "level": 23.0
+  },
+  "reason": {
+   "land": "override:kanto-altering-cave",
+   "water": null
+  }
+ },
+ "sSixIslandAlteringCave_9_LeafGreen": {
+  "map": "MAP_SIX_ISLAND_ALTERING_CAVE",
+  "location": "kanto-altering-cave",
+  "matched_pokeapi": true,
+  "region": "kanto",
+  "land_mons": {
+   "archetype": "cave/mid",
+   "pool": "land",
+   "level": 23.0
+  },
+  "reason": {
+   "land": "override:kanto-altering-cave",
+   "water": null
+  }
+ }
+}
