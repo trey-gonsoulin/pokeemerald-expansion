@@ -193,8 +193,6 @@ enum DebugMenuTypes
 #define DEBUG_MENU_WIDTH_FLAGVAR 4
 #define DEBUG_MENU_HEIGHT_FLAGVAR 2
 
-#define DEBUG_NUMBER_DIGITS_ITEMS 4
-
 #define DEBUG_NUMBER_ICON_X 210
 #define DEBUG_NUMBER_ICON_Y 50
 
@@ -246,6 +244,7 @@ struct DebugSelectionStep
 {
     void (*stepUpdate)(u8 taskId, u8 digits, u32 min, u32 max);
     DebugFunc stepConfirm;
+    bool32 (*canConfirm)(u8 taskId); // optional: A does nothing while this returns FALSE
     union {
         u32 minValue;
         u32 (*minFunc)(u8 taskId);
@@ -255,7 +254,6 @@ struct DebugSelectionStep
         u32 (*maxFunc)(u8 taskId);
     };
     u8 substepCount;
-    u8 digits;
     bool8 useMinFunc:1;
     bool8 useMaxFunc:1;
     bool8 padding:6;
@@ -1291,31 +1289,32 @@ static void Debug_DestroyMenu_Full_Script(u8 taskId, const u8 *script)
     ScriptContext_SetupScript(script);
 }
 
-// Up/Down repeat while held. A step past either end stops on min/max, and a new press there
-// wraps to the other end (holding never wraps). L/R jump to min/max and Select goes back to
-// the value the step started from.
-static void Debug_HandleInput_Numeric(u8 taskId, s32 min, s32 max, u32 digits)
-{
-    s32 input = DEBUG_TASK_INPUT(taskId);
-    s32 step = sPowersOfTen[gTasks[taskId].tDigit];
+// Which way the last Debug_HandleInput_Numeric moved, for steps that skip invalid values
+static EWRAM_DATA bool8 sNumericInputMovedDown = FALSE;
 
-    if (JOY_REPEAT(DPAD_UP))
+// Up/Down turn only the highlighted digit, like a combination lock: 9 wraps to 0 and back with
+// no carry into the other digits, and they repeat while held. A result past either end stops
+// on min/max. L/R jump to min/max and Select goes back to the value the step started from.
+// Left/Right move the highlight the way they point (tDigit counts from the ones place).
+static void Debug_HandleInput_Numeric(u8 taskId, u32 min, u32 max, u32 digits)
+{
+    u32 input = DEBUG_TASK_INPUT(taskId);
+
+    sNumericInputMovedDown = FALSE;
+    if (JOY_REPEAT(DPAD_UP | DPAD_DOWN))
     {
-        if (input >= max && JOY_NEW(DPAD_UP))
-            input = min;
-        else if (input + step > max)
+        u32 oldInput = input;
+        u32 place = sPowersOfTen[gTasks[taskId].tDigit];
+        u32 digit = (input / place) % 10;
+        input -= digit * place;
+        digit = (digit + (JOY_REPEAT(DPAD_UP) ? 1 : 9)) % 10;
+        input += digit * place;
+        if (input > max)
             input = max;
-        else
-            input += step;
-    }
-    else if (JOY_REPEAT(DPAD_DOWN))
-    {
-        if (input <= min && JOY_NEW(DPAD_DOWN))
-            input = max;
-        else if (input - step < min)
+        else if (input < min)
             input = min;
-        else
-            input -= step;
+        // A digit wrap can move the value against the button (Up on a 9 goes down)
+        sNumericInputMovedDown = input < oldInput;
     }
     else if (JOY_NEW(L_BUTTON))
     {
@@ -1324,6 +1323,7 @@ static void Debug_HandleInput_Numeric(u8 taskId, s32 min, s32 max, u32 digits)
     else if (JOY_NEW(R_BUTTON))
     {
         input = max;
+        sNumericInputMovedDown = TRUE; // max can be invalid, so search down from there
     }
     else if (JOY_NEW(SELECT_BUTTON))
     {
@@ -1333,49 +1333,50 @@ static void Debug_HandleInput_Numeric(u8 taskId, s32 min, s32 max, u32 digits)
 
     if (JOY_NEW(DPAD_LEFT))
     {
-        if (gTasks[taskId].tDigit > 0)
-            gTasks[taskId].tDigit -= 1;
+        if (gTasks[taskId].tDigit < digits - 1)
+            gTasks[taskId].tDigit += 1;
     }
     if (JOY_NEW(DPAD_RIGHT))
     {
-        if (gTasks[taskId].tDigit < digits - 1)
-            gTasks[taskId].tDigit += 1;
+        if (gTasks[taskId].tDigit > 0)
+            gTasks[taskId].tDigit -= 1;
     }
 }
 
 // For steps that skip invalid values: which way Debug_HandleInput_Numeric just moved.
-// R jumps to max and a Down wrap lands on max, so both search downwards from there.
+// R jumps to max, so it searches downwards from there.
 static bool32 Debug_NumericInputMovedDown(void)
 {
-    return !JOY_REPEAT(DPAD_UP) && (JOY_REPEAT(DPAD_DOWN) || JOY_NEW(R_BUTTON));
+    return sNumericInputMovedDown;
 }
 
 enum SongType { SONG_SE, SONG_MUS };
 enum FindSongMode { SONG_FIRST_GE, SONG_FIRST_GT, SONG_LAST_LT };
 u32 FindSong(enum SongType, enum FindSongMode, u32 fromSongId);
+static u32 Debug_GetLastSong(enum SongType type);
 
-static void Debug_HandleInput_SongId(u8 taskId, enum SongType type, u32 digits)
+// The sound test's ID runs from the first to the last song of its type (MUS_DUMMY is silence, so skip it)
+static u32 Debug_GetFirstSong(enum SongType type)
 {
-    if (JOY_NEW(DPAD_UP))
-    {
-        for (u32 i = 0; i < sPowersOfTen[gTasks[taskId].tDigit]; i++)
-            gTasks[taskId].tInput = FindSong(type, SONG_FIRST_GT, gTasks[taskId].tInput);
-    }
-    if (JOY_NEW(DPAD_DOWN))
-    {
-        for (u32 i = 0; i < sPowersOfTen[gTasks[taskId].tDigit]; i++)
-            gTasks[taskId].tInput = FindSong(type, SONG_LAST_LT, gTasks[taskId].tInput);
-    }
-    if (JOY_NEW(DPAD_LEFT))
-    {
-        if (gTasks[taskId].tDigit > 0)
-            gTasks[taskId].tDigit -= 1;
-    }
-    if (JOY_NEW(DPAD_RIGHT))
-    {
-        if (gTasks[taskId].tDigit < digits - 1)
-            gTasks[taskId].tDigit += 1;
-    }
+    return FindSong(type, SONG_FIRST_GT, MUS_DUMMY);
+}
+
+// Dialing can land between songs of the type. songId is at most the last song,
+// so FindSong only returns songId itself when it is a song of the type.
+static bool32 Debug_IsSong(enum SongType type, u32 songId)
+{
+    return FindSong(type, SONG_FIRST_GE, songId) == songId;
+}
+
+// Same input as the other numeric screens. Returns whether the ID or the highlighted digit changed.
+static bool32 Debug_HandleInput_SongId(u8 taskId, enum SongType type)
+{
+    s16 oldInput = gTasks[taskId].tInput;
+    s16 oldDigit = gTasks[taskId].tDigit;
+    u32 max = Debug_GetLastSong(type);
+
+    Debug_HandleInput_Numeric(taskId, Debug_GetFirstSong(type), max, CountDigits(max));
+    return gTasks[taskId].tInput != oldInput || gTasks[taskId].tDigit != oldDigit;
 }
 
 static void DebugAction_Cancel(u8 taskId)
@@ -1441,7 +1442,8 @@ static void DebugAction_Selection_PrepareStep(u8 taskId, const struct DebugSelec
 
     gTasks[taskId].tInputStart = input;
     gTasks[taskId].tDigit = 0;
-    selectionStep->stepUpdate(taskId, selectionStep->digits, min, max);
+    sNumericInputMovedDown = FALSE;
+    selectionStep->stepUpdate(taskId, CountDigits(max), min, max);
     gTasks[taskId].func = DebugAction_Selection_StepUpdate;
 }
 
@@ -1465,6 +1467,11 @@ static void DebugAction_Selection_StepUpdate(u8 taskId)
     SelectionStep selectionStep = ((struct DebugSelection *)GetWordTaskArg(taskId, DEBUG_SELECTION_PTR_ARG))->steps[gTasks[taskId].tStep];
     if (JOY_NEW(A_BUTTON))
     {
+        if (selectionStep->canConfirm != NULL && !selectionStep->canConfirm(taskId))
+        {
+            PlaySE(SE_FAILURE);
+            return;
+        }
         selectionStep->stepConfirm(taskId);
         gTasks[taskId].tSubstep++;
         gTasks[taskId].tStepsDataIndex++;
@@ -1501,12 +1508,13 @@ static void DebugAction_Selection_StepUpdate(u8 taskId)
             max = selectionStep->maxFunc(taskId);
         else
             max = selectionStep->maxValue;
-        Debug_HandleInput_Numeric(taskId, min, max, selectionStep->digits);
+        u32 digits = CountDigits(max);
+        Debug_HandleInput_Numeric(taskId, min, max, digits);
         // Holding Up/Down at min/max changes nothing, so don't beep or redraw every repeat
         if (gTasks[taskId].tInput == oldInput && gTasks[taskId].tDigit == oldDigit)
             return;
         PlaySE(SE_SELECT);
-        selectionStep->stepUpdate(taskId, selectionStep->digits, min, max);
+        selectionStep->stepUpdate(taskId, digits, min, max);
         return;
     }
 }
@@ -2061,7 +2069,6 @@ static const struct DebugSelectionStep sMapGroupSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = 0,
     .maxValue = MAP_GROUPS_COUNT - 1,
-    .digits = 3
 };
 
 static const struct DebugSelectionStep sMapNumSelectionStep = {
@@ -2069,7 +2076,6 @@ static const struct DebugSelectionStep sMapNumSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = 0,
     .maxFunc = DebugSelectionStep_GetLastMapNum,
-    .digits = 3,
     .useMaxFunc = TRUE,
 };
 
@@ -2078,7 +2084,6 @@ static const struct DebugSelectionStep sWarpSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = 0,
     .maxFunc = DebugSelectionStep_GetLastWarp,
-    .digits = 3,
     .useMaxFunc = TRUE,
 };
 
@@ -2203,7 +2208,6 @@ static const struct DebugSelectionStep sWeatherSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = WEATHER_NONE,
     .maxValue = WEATHER_DYNAMIC - 1,
-    .digits = 2
 };
 
 static const struct DebugSelection sSetWeatherSelection = {
@@ -2422,7 +2426,6 @@ static const struct DebugSelectionStep sRandomGeneratorArgsSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = 0,
     .maxValue = 0xFFFF,
-    .digits = 5,
     .substepCount = 2,
 };
 
@@ -2431,7 +2434,6 @@ static const struct DebugSelectionStep sSpeciesGeneratorSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = 0,
     .maxValue = RANDOM_SPECIES_OPTIONS_COUNT - 1,
-    .digits = 2,
 };
 
 static const struct DebugSelectionStep sItemGeneratorSelectionStep = {
@@ -2439,7 +2441,6 @@ static const struct DebugSelectionStep sItemGeneratorSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = 0,
     .maxValue = RANDOM_ITEM_OPTIONS_COUNT - 1,
-    .digits = 2,
 };
 
 static const struct DebugSelection sSpeciesGeneratorSelection = {
@@ -2579,7 +2580,6 @@ static const struct DebugSelectionStep sMapTrainerSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = 1,
     .maxFunc = DebugSelectionStep_GetObjectEventCount,
-    .digits = 3,
     .useMaxFunc = TRUE,
 };
 
@@ -2621,7 +2621,6 @@ static const struct DebugSelectionStep sTrainerSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = 0,
     .maxValue = TRAINERS_COUNT - 1,
-    .digits = 3,
 };
 
 static const struct DebugSelectionStep sPartnerSelectionStep = {
@@ -2629,7 +2628,6 @@ static const struct DebugSelectionStep sPartnerSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = 0,
     .maxValue = PARTNER_COUNT - 1,
-    .digits = 2,
 };
 
 // TRAINER_SINGLE_SELECTION creates selection functions that matches trainer battle
@@ -2817,27 +2815,28 @@ static void DebugSelectionStep_PrintGenericBooleanInput(u8 taskId, const u8 *str
 static void DebugSelectionStep_Update ## label(u8 taskId, u8 digits, u32 min, u32 max) {    \
     DebugSelectionStep_PrintGenericInput(taskId, digits, COMPOUND_STRING("" #title ":")); };
 
+// Dialing can land on disabled species: they show as not enabled and A can't give them
+static bool32 DebugSelectionStep_CanConfirmSpecies(u8 taskId)
+{
+    return IsSpeciesEnabled(DEBUG_TASK_INPUT(taskId));
+}
+
 static void DebugSelectionStep_UpdateSpecies(u8 taskId, u8 digits, u32 min, u32 max)
 {
-    u32 species = gTasks[taskId].tInput;
-    bool32 searchDown = Debug_NumericInputMovedDown();
-    while (!IsSpeciesEnabled(species))
-    {
-        // Turn round at the ends so the search never leaves min..max (SPECIES_EGG is above max)
-        if (species >= max)
-            searchDown = TRUE;
-        else if (species <= min)
-            searchDown = FALSE;
-        if (searchDown)
-            species--;
-        else
-            species++;
-    }
-    gTasks[taskId].tInput = species;
+    u32 species = DEBUG_TASK_INPUT(taskId);
     Debug_InputToDecimalString(gStringVar3, taskId, digits);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Species: {STR_VAR_3}"));
-    u8 *end = StringCopy(gStringVar2, GetSpeciesName(species));
-    WrapFontIdToFit(gStringVar2, end, DEBUG_MENU_FONT, WindowWidthPx(gTasks[taskId].tSubWindowId));
+    if (DebugSelectionStep_CanConfirmSpecies(taskId))
+    {
+        u8 *end = StringCopy(gStringVar2, GetSpeciesName(species));
+        WrapFontIdToFit(gStringVar2, end, DEBUG_MENU_FONT, WindowWidthPx(gTasks[taskId].tSubWindowId));
+    }
+    else
+    {
+        // Disabled species have no icon graphics, so show the SPECIES_NONE one
+        StringCopy(gStringVar2, COMPOUND_STRING("{COLOR RED}{SHADOW LIGHT_RED}Not enabled"));
+        species = SPECIES_NONE;
+    }
     StringCopy(gStringVar3, COMPOUND_STRING(""));
     Debug_ResetInputDisplayMonIcon(taskId, species);
     DebugNativeStep_PrintWindowSelection(taskId);
@@ -2878,7 +2877,7 @@ UPDATE_GENERIC_INPUT(OutbreakProbability, Probability)
 UPDATE_GENERIC_INPUT(OutbreakDaysLeft, Days Left)
 
 // Disabled species at the top of the list would hide max from the numeric input,
-// so Up/R stop on the last enabled species and a new press there wraps to min
+// so dialing and R stop on the last enabled species
 static u32 DebugSelectionStep_GetLastEnabledSpecies(u8 taskId)
 {
     u32 species = NUM_SPECIES - 1;
@@ -2890,9 +2889,9 @@ static u32 DebugSelectionStep_GetLastEnabledSpecies(u8 taskId)
 static const struct DebugSelectionStep sSpeciesSelectionStep = {
     .stepUpdate = DebugSelectionStep_UpdateSpecies,
     .stepConfirm = DebugSelectionStep_GenericInputConfirmAndDestroyIcon,
+    .canConfirm = DebugSelectionStep_CanConfirmSpecies,
     .minValue = 1,
     .maxFunc = DebugSelectionStep_GetLastEnabledSpecies,
-    .digits = 4,
     .useMaxFunc = TRUE,
 };
 
@@ -2901,7 +2900,6 @@ static const struct DebugSelectionStep sLevelSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = MIN_LEVEL,
     .maxValue = MAX_LEVEL,
-    .digits = 3
 };
 
 static const struct DebugSelectionStep sMovesSelectionStep = {
@@ -2909,7 +2907,6 @@ static const struct DebugSelectionStep sMovesSelectionStep = {
     .stepConfirm = DebugSelectionStep_MovesConfirm,
     .minValue = MOVE_NONE,
     .maxValue = MOVES_COUNT,
-    .digits = 3,
     .substepCount = 4,
 };
 
@@ -2918,7 +2915,6 @@ static const struct DebugSelectionStep sOutbreakProbabilitySelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = 1,
     .maxValue = 100,
-    .digits = 3
 };
 
 static const struct DebugSelectionStep sOutbreakDaysLeftSelectionStep = {
@@ -2926,7 +2922,6 @@ static const struct DebugSelectionStep sOutbreakDaysLeftSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = 1,
     .maxValue = 999,
-    .digits = 3
 };
 
 // MASS_OUTRBREAK_SINGLE_COMPLETION creates selection functions that
@@ -3060,7 +3055,6 @@ static const struct DebugSelectionStep sStaticOutbreakSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = 0,
     .maxValue = OUTBREAK_COUNT - 1,
-    .digits = 2
 };
 
 static bool32 DebugSelection_SetStaticMassOutbreak_Complete(u8 taskId)
@@ -3107,7 +3101,6 @@ static const struct DebugSelectionStep sFlagSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = FLAG_TEMP_1,
     .maxValue = FLAGS_COUNT - 1,
-    .digits = 4
 };
 
 static const struct DebugSelection sToggleFlagSelection = {
@@ -3140,7 +3133,7 @@ static void DebugSelectionStep_UpdateVarValue(u8 taskId, u8 digits, u32 min, u32
     u8 *end;
     DebugSelectionStep_PrepareVarDisplay(DebugSelection_GetData(taskId, gTasks[taskId].tStep - 1));
     end = StringCopy(gStringVar3, COMPOUND_STRING("New: "));
-    Debug_InputToDecimalString(end, taskId, 5);
+    Debug_InputToDecimalString(end, taskId, digits);
     DebugNativeStep_PrintWindowSelection(taskId);
 }
 
@@ -3159,7 +3152,6 @@ static const struct DebugSelectionStep sVarIdSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = VARS_START,
     .maxValue = VARS_END,
-    .digits = 4
 };
 
 static const struct DebugSelectionStep sVarValueSelectionStep = {
@@ -3167,7 +3159,6 @@ static const struct DebugSelectionStep sVarValueSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = 0,
     .maxValue = 0xFFFF,
-    .digits = 5
 };
 
 static const struct DebugSelection sSetVarSelection = {
@@ -3451,7 +3442,6 @@ static const struct DebugSelectionStep sItemSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = 1,
     .maxValue = ITEMS_COUNT - 1,
-    .digits = 3
 };
 
 static const struct DebugSelectionStep sQuantitySelectionStep = {
@@ -3459,7 +3449,6 @@ static const struct DebugSelectionStep sQuantitySelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirmAndDestroyIcon,
     .minValue = 1,
     .maxValue = MAX_BAG_ITEM_CAPACITY,
-    .digits = 3
 };
 
 static const struct DebugSelection sGiveItemSelection = {
@@ -3622,7 +3611,6 @@ static const struct DebugSelectionStep sGenderSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenderConfirm,
     .minValue = 0,
     .maxValue = 255,
-    .digits = 3
 };
 
 static const struct DebugSelectionStep sShinynessSelectionStep = {
@@ -3630,7 +3618,6 @@ static const struct DebugSelectionStep sShinynessSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = 0,
     .maxValue = 1,
-    .digits = 1
 };
 
 static const struct DebugSelectionStep sAbilitySelectionStep = {
@@ -3638,7 +3625,6 @@ static const struct DebugSelectionStep sAbilitySelectionStep = {
     .stepConfirm = DebugSelectionStep_AbilityConfirm,
     .minValue = 0,
     .maxFunc = DebugSelectionStep_GetMaxAbility,
-    .digits = 1,
     .useMaxFunc = TRUE
 };
 
@@ -3647,7 +3633,6 @@ static const struct DebugSelectionStep sNatureSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = 0,
     .maxValue = NUM_NATURES - 1,
-    .digits = 2,
 };
 
 static const struct DebugSelectionStep sIVsSelectionStep = {
@@ -3655,7 +3640,6 @@ static const struct DebugSelectionStep sIVsSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = 0,
     .maxValue = MAX_PER_STAT_IVS,
-    .digits = 2,
     .substepCount = 6
 };
 
@@ -3664,7 +3648,6 @@ static const struct DebugSelectionStep sEVsSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = 0,
     .maxValue = MAX_PER_STAT_EVS,
-    .digits = 3,
     .substepCount = 6
 };
 
@@ -3673,7 +3656,6 @@ static const struct DebugSelectionStep sDynamaxLevelSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = 0,
     .maxValue = MAX_DYNAMAX_LEVEL,
-    .digits = 2,
 };
 
 static const struct DebugSelectionStep sGigantamaxFactorSelectionStep = {
@@ -3681,7 +3663,6 @@ static const struct DebugSelectionStep sGigantamaxFactorSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = 0,
     .maxValue = 1,
-    .digits = 1,
 };
 
 static const struct DebugSelectionStep sTeraTypeSelectionStep = {
@@ -3689,7 +3670,6 @@ static const struct DebugSelectionStep sTeraTypeSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = 1,
     .maxValue = NUMBER_OF_MON_TYPES - 1,
-    .digits = 2,
 };
 
 static bool32 DebugSelection_GiveComplexPokemon_OnComplete(u8 taskId)
@@ -3808,7 +3788,6 @@ static const struct DebugSelectionStep sDecorationSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirmAndDestroyIcon,
     .minValue = 1,
     .maxValue = NUM_DECORATIONS,
-    .digits = 3
 };
 
 static const struct DebugSelection sGiveDecorationSelection = {
@@ -4056,7 +4035,20 @@ static const u8 *const sSongNames[];
 
 #define tCurrentSong  data[6]
 
-static void DebugAction_Sound_SE(u8 taskId)
+// Prints the sound test's ID with the digit that Up/Down changes highlighted, and its song name
+static void DebugAction_Sound_PrintId(u8 taskId, enum SongType type)
+{
+    const u8 *name = sSongNames[gTasks[taskId].tInput];
+    if (!Debug_IsSong(type, DEBUG_TASK_INPUT(taskId)))
+        name = sDebugText_Dashes;
+    StringCopy(gStringVar2, gText_DigitIndicator[gTasks[taskId].tDigit]);
+    StringCopyPadded(gStringVar1, name, CHAR_SPACE, 35);
+    Debug_InputToDecimalString(gStringVar3, taskId, CountDigits(Debug_GetLastSong(type)));
+    StringExpandPlaceholders(gStringVar4, type == SONG_SE ? sDebugText_Sound_SFX_ID : sDebugText_Sound_Music_ID);
+    AddTextPrinterParameterized(gTasks[taskId].tSubWindowId, DEBUG_MENU_FONT, gStringVar4, 0, 0, 0, NULL);
+}
+
+static void DebugAction_Sound_Start(u8 taskId, enum SongType type)
 {
     u8 windowId;
 
@@ -4071,114 +4063,74 @@ static void DebugAction_Sound_SE(u8 taskId)
 
     StopMapMusic(); //Stop map music to better hear sounds
 
-    gTasks[taskId].func = DebugAction_Sound_SE_SelectId;
+    if (type == SONG_SE)
+        gTasks[taskId].func = DebugAction_Sound_SE_SelectId;
+    else
+        gTasks[taskId].func = DebugAction_Sound_MUS_SelectId;
     gTasks[taskId].tSubWindowId = windowId;
-    gTasks[taskId].tInput = FindSong(SONG_SE, SONG_FIRST_GE, MUS_DUMMY);
+    gTasks[taskId].tInput = Debug_GetFirstSong(type);
+    gTasks[taskId].tInputStart = gTasks[taskId].tInput;
     gTasks[taskId].tDigit = 0;
     gTasks[taskId].tCurrentSong = gTasks[taskId].tInput;
 
-    // Display initial sound effect
-    StringCopy(gStringVar2, gText_DigitIndicator[0]);
-    ConvertIntToDecimalStringN(gStringVar3, gTasks[taskId].tInput, STR_CONV_MODE_LEADING_ZEROS, DEBUG_NUMBER_DIGITS_ITEMS);
-    StringCopyPadded(gStringVar1, sSongNames[gTasks[taskId].tInput], CHAR_SPACE, 35);
-    StringExpandPlaceholders(gStringVar4, sDebugText_Sound_SFX_ID);
-    AddTextPrinterParameterized(windowId, DEBUG_MENU_FONT, gStringVar4, 0, 0, 0, NULL);
+    DebugAction_Sound_PrintId(taskId, type);
 }
 
-static void DebugAction_Sound_SE_SelectId(u8 taskId)
+// Returns whether B left the sound test
+static bool32 DebugAction_Sound_HandleInput(u8 taskId, enum SongType type)
 {
-    if (JOY_NEW(DPAD_ANY))
-    {
-        Debug_HandleInput_SongId(taskId, SONG_SE, DEBUG_NUMBER_DIGITS_ITEMS);
-
-        StringCopy(gStringVar2, gText_DigitIndicator[gTasks[taskId].tDigit]);
-        const u8 *seName = sSongNames[gTasks[taskId].tInput];
-        if (seName == NULL)
-            seName = sDebugText_Dashes;
-        StringCopyPadded(gStringVar1, seName, CHAR_SPACE, 35);
-        ConvertIntToDecimalStringN(gStringVar3, gTasks[taskId].tInput, STR_CONV_MODE_LEADING_ZEROS, DEBUG_NUMBER_DIGITS_ITEMS);
-        StringExpandPlaceholders(gStringVar4, sDebugText_Sound_SFX_ID);
-        AddTextPrinterParameterized(gTasks[taskId].tSubWindowId, DEBUG_MENU_FONT, gStringVar4, 0, 0, 0, NULL);
-    }
-
+    // A comes first, as in the other numeric screens, so in L=A mode L doesn't also jump to the first song
     if (JOY_NEW(A_BUTTON))
     {
-        m4aSongNumStop(gTasks[taskId].tCurrentSong);
-        gTasks[taskId].tCurrentSong = gTasks[taskId].tInput;
-        m4aSongNumStart(gTasks[taskId].tInput);
+        if (Debug_IsSong(type, DEBUG_TASK_INPUT(taskId)))
+        {
+            m4aSongNumStop(gTasks[taskId].tCurrentSong);
+            gTasks[taskId].tCurrentSong = gTasks[taskId].tInput;
+            m4aSongNumStart(gTasks[taskId].tInput);
+        }
     }
     else if (JOY_NEW(B_BUTTON))
     {
         PlaySE(SE_SELECT);
-        m4aSongNumStop(gTasks[taskId].tCurrentSong);
-        Debug_DestroyMenu_Full(taskId);
+        return TRUE;
     }
     else if (JOY_NEW(START_BUTTON))
     {
         m4aSongNumStop(gTasks[taskId].tCurrentSong);
+    }
+    else if (JOY_REPEAT(DPAD_UP | DPAD_DOWN) || JOY_NEW(DPAD_LEFT | DPAD_RIGHT | L_BUTTON | R_BUTTON | SELECT_BUTTON))
+    {
+        if (Debug_HandleInput_SongId(taskId, type))
+            DebugAction_Sound_PrintId(taskId, type);
+    }
+    return FALSE;
+}
+
+static void DebugAction_Sound_SE(u8 taskId)
+{
+    DebugAction_Sound_Start(taskId, SONG_SE);
+}
+
+static void DebugAction_Sound_SE_SelectId(u8 taskId)
+{
+    if (DebugAction_Sound_HandleInput(taskId, SONG_SE))
+    {
+        m4aSongNumStop(gTasks[taskId].tCurrentSong);
+        Debug_DestroyMenu_Full(taskId);
     }
 }
 
 static void DebugAction_Sound_MUS(u8 taskId)
 {
-    u8 windowId;
-
-    Debug_RemoveMainWindow(taskId);
-
-    HideMapNamePopUpWindow();
-    LoadMessageBoxAndBorderGfx();
-    windowId = AddWindow(&sDebugMenuWindowTemplateSound);
-    DrawStdWindowFrame(windowId, FALSE);
-
-    CopyWindowToVram(windowId, COPYWIN_FULL);
-
-    StopMapMusic(); //Stop map music to better hear new music
-
-    gTasks[taskId].func = DebugAction_Sound_MUS_SelectId;
-    gTasks[taskId].tSubWindowId = windowId;
-    gTasks[taskId].tInput = FindSong(SONG_MUS, SONG_FIRST_GE, MUS_DUMMY);
-    gTasks[taskId].tDigit = 0;
-    gTasks[taskId].tCurrentSong = gTasks[taskId].tInput;
-
-    // Display initial song
-    StringCopy(gStringVar2, gText_DigitIndicator[0]);
-    ConvertIntToDecimalStringN(gStringVar3, gTasks[taskId].tInput, STR_CONV_MODE_LEADING_ZEROS, DEBUG_NUMBER_DIGITS_ITEMS);
-    StringCopyPadded(gStringVar1, sSongNames[gTasks[taskId].tInput], CHAR_SPACE, 35);
-    StringExpandPlaceholders(gStringVar4, sDebugText_Sound_Music_ID);
-    AddTextPrinterParameterized(windowId, DEBUG_MENU_FONT, gStringVar4, 0, 0, 0, NULL);
+    DebugAction_Sound_Start(taskId, SONG_MUS);
 }
 
 static void DebugAction_Sound_MUS_SelectId(u8 taskId)
 {
-    if (JOY_NEW(DPAD_ANY))
+    if (DebugAction_Sound_HandleInput(taskId, SONG_MUS))
     {
-        Debug_HandleInput_SongId(taskId, SONG_MUS, DEBUG_NUMBER_DIGITS_ITEMS);
-
-        StringCopy(gStringVar2, gText_DigitIndicator[gTasks[taskId].tDigit]);
-        const u8 *bgmName = sSongNames[gTasks[taskId].tInput];
-        if (bgmName == NULL)
-            bgmName = sDebugText_Dashes;
-        StringCopyPadded(gStringVar1, bgmName, CHAR_SPACE, 35);
-        ConvertIntToDecimalStringN(gStringVar3, gTasks[taskId].tInput, STR_CONV_MODE_LEADING_ZEROS, DEBUG_NUMBER_DIGITS_ITEMS);
-        StringExpandPlaceholders(gStringVar4, sDebugText_Sound_Music_ID);
-        AddTextPrinterParameterized(gTasks[taskId].tSubWindowId, DEBUG_MENU_FONT, gStringVar4, 0, 0, 0, NULL);
-    }
-
-    if (JOY_NEW(A_BUTTON))
-    {
-        m4aSongNumStop(gTasks[taskId].tCurrentSong);
-        gTasks[taskId].tCurrentSong = gTasks[taskId].tInput;
-        m4aSongNumStart(gTasks[taskId].tInput);
-    }
-    else if (JOY_NEW(B_BUTTON))
-    {
-        PlaySE(SE_SELECT);
         // m4aSongNumStop(gTasks[taskId].tCurrentSong);   //Uncomment if music should stop after leaving menu
         Debug_DestroyMenu_Full(taskId);
-    }
-    else if (JOY_NEW(START_BUTTON))
-    {
-        m4aSongNumStop(gTasks[taskId].tCurrentSong);
     }
 }
 
@@ -4782,6 +4734,11 @@ u32 FindSong(enum SongType type, enum FindSongMode mode, u32 fromSongId)
     }
 }
 
+static u32 Debug_GetLastSong(enum SongType type)
+{
+    return FindSong(type, SONG_LAST_LT, ARRAY_COUNT(sSongNames));
+}
+
 // *******************************
 // Actions BerryFunctions
 
@@ -4948,7 +4905,6 @@ static const struct DebugSelectionStep sFriendshipSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = 0,
     .maxValue = MAX_FRIENDSHIP,
-    .digits = 3
 };
 
 static const struct DebugSelection sFriendshipSelection = {
@@ -5016,7 +4972,6 @@ static const struct DebugSelectionStep sPokerusStrainSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = 0,
     .maxValue = 15,
-    .digits = 2
 };
 
 static const struct DebugSelectionStep sPokerusDaysLeftSelectionStep = {
@@ -5024,7 +4979,6 @@ static const struct DebugSelectionStep sPokerusDaysLeftSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = 0,
     .maxValue = 15,
-    .digits = 2
 };
 
 static const struct DebugSelection sPokerusSelection = {
