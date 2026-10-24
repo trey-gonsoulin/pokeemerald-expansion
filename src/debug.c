@@ -1408,22 +1408,27 @@ static void DebugNativeStep_CloseDebugWindow(u8 taskId)
     UnlockPlayerFieldControls();
 }
 
-// An out-of-range index asserts in debug builds and is otherwise ignored, so it can't touch the heap past the block
+// NULL for an index outside the stepsData block, so a bookkeeping bug can't touch the heap past it.
+// It only logs a warning: an assert would halt the debug-menu ROM, the one build that runs this.
+static u16 *DebugSelection_DataSlot(u8 taskId, u32 index)
+{
+    AGB_WARNING(index < (u16)gTasks[taskId].tStepsDataCount);
+    if (index >= (u16)gTasks[taskId].tStepsDataCount)
+        return NULL;
+    return (u16 *)GetWordTaskArg(taskId, STEPS_DATA_PTR_ARG) + index;
+}
+
 static void DebugSelection_SetData(u8 taskId, u32 index, u16 value)
 {
-    u16 *stepsData = (u16 *)GetWordTaskArg(taskId, STEPS_DATA_PTR_ARG);
-    AGB_ASSERT(index < (u16)gTasks[taskId].tStepsDataCount);
-    if (index < (u16)gTasks[taskId].tStepsDataCount)
-        stepsData[index] = value;
+    u16 *slot = DebugSelection_DataSlot(taskId, index);
+    if (slot != NULL)
+        *slot = value;
 }
 
 static u16 DebugSelection_GetData(u8 taskId, u32 index)
 {
-    u16 *stepsData = (u16 *)GetWordTaskArg(taskId, STEPS_DATA_PTR_ARG);
-    AGB_ASSERT(index < (u16)gTasks[taskId].tStepsDataCount);
-    if (index >= (u16)gTasks[taskId].tStepsDataCount)
-        return 0;
-    return stepsData[index];
+    u16 *slot = DebugSelection_DataSlot(taskId, index);
+    return slot != NULL ? *slot : 0;
 }
 
 // stepsData holds one slot per step, or substepCount slots for a multi-value step
@@ -1570,7 +1575,7 @@ static void Debug_Selection_StepsDataInit(u8 taskId, const struct DebugSelection
 static void DebugAction_Selection_Init(u8 taskId, const void *params)
 {
     const struct DebugSelection *selection = (const struct DebugSelection *)params;
-    // Set Friendship re-enters here in the same task, so start every selection from a known state
+    // Defensive: Set Friendship re-enters here in the same task, so don't rely on leftover task data
     gTasks[taskId].tStep = -1;
     gTasks[taskId].tSubstep = 0;
     SetWordTaskArg(taskId, DEBUG_SELECTION_PTR_ARG, (u32) selection);
@@ -4959,7 +4964,7 @@ static void DebugSelectionStep_UpdatePokerusDaysLeft(u8 taskId, u8 digits, u32 m
 {
     StringCopy(gStringVar1, COMPOUND_STRING("Days Left:"));
     s16 daysLeft = gTasks[taskId].tInput;
-    u16 strain = DebugSelection_GetData(taskId, DebugSelection_DataIndex(taskId) - 1);
+    u16 strain = DebugSelection_GetData(taskId, 0);
     Debug_InputToDecimalString(gStringVar2, taskId, digits);
 
     if (daysLeft == 0 && strain == 0)
