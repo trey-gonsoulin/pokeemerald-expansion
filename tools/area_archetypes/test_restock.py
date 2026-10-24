@@ -35,6 +35,13 @@ class PreprocessorTests(unittest.TestCase):
         self.assertEqual(R.c_eval('LVL >= GEN_3', d), 1)
         self.assertEqual(R.c_eval('defined(B) // comment', d), 1)
 
+    def test_function_like_macros_are_skipped(self):
+        with tempfile.TemporaryDirectory() as root:
+            os.makedirs(os.path.join(root, 'include', 'config'))
+            with open(os.path.join(root, 'include', 'config', 'x.h'), 'w', encoding='utf-8') as f:
+                f.write('#define MAX(a, b) ((a) > (b))\n#define GEN 9\n')
+            self.assertEqual(R.parse_defines(root), {'GEN': '9'})
+
 
 class SlotTests(unittest.TestCase):
     def test_most_common_species_take_the_high_rate_slots(self):
@@ -126,6 +133,9 @@ class ConfigTests(unittest.TestCase):
         mons = [{'species': 'SPECIES_NONE', 'min_level': 5, 'max_level': 5}] * 2
         new = R.restock_table(mons, [70, 30], pool, self.info, R.Settings(ratio=1.0), 'gX', 'land_mons')
         self.assertEqual(new, ['SPECIES_HOOTHOOT', 'SPECIES_HOOTHOOT'])  # Noctowl devolved at L5
+        # Nothing to place: leave the table alone instead of failing.
+        self.assertIsNone(R.restock_table(mons, [70, 30], pool, self.info,
+                                          R.Settings(ratio=1.0, new_species=0), 'gX', 'land_mons'))
 
 
 class RestockTests(unittest.TestCase):
@@ -260,6 +270,14 @@ class CliTests(unittest.TestCase):
             R.main(['--wild', wild, '--out-dir', out, '--ratio', '0.25', '--seed', '7', '--write'])
             with open(preview, encoding='utf-8') as f, open(wild, encoding='utf-8') as g:
                 self.assertEqual(f.read(), g.read())
+
+    def test_unknown_per_map_species_are_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            cfg = os.path.join(tmp, 'cfg.json')
+            with open(cfg, 'w', encoding='utf-8') as f:
+                json.dump({'maps': {'gRoute101': {'deny': ['NOT_A_MON']}}}, f)
+            with self.assertRaises(SystemExit):
+                R.main(['--config', cfg, '--out-dir', os.path.join(tmp, 'out')])
 
     def test_round_trip_formatting(self):
         with tempfile.TemporaryDirectory() as tmp:
