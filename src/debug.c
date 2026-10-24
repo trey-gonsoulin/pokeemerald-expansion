@@ -216,9 +216,19 @@ struct DebugMenuOption
     const void *actionParams;
 };
 
+// Where the cursor was in a menu, so returning to it lands on the same entry
+struct DebugMenuPosition
+{
+    const struct DebugMenuOption *items;
+    u16 scrollOffset;
+    u16 selectedRow;
+};
+
 struct DebugMenuListData
 {
     const struct DebugMenuOption *subMenuItems[DEBUG_MAX_SUB_MENU_LEVELS];
+    struct DebugMenuPosition positions[DEBUG_MAX_SUB_MENU_LEVELS];
+    u8 shownLevel; // submenu level of the list currently on screen
     struct ListMenuItem listItems[DEBUG_MAX_MENU_ITEMS + 1];
     u8 itemNames[DEBUG_MAX_MENU_ITEMS + 1][26];
     enum DebugMenuTypes menuType:2;
@@ -258,6 +268,7 @@ struct DebugSelection
 
 // EWRAM
 static EWRAM_DATA struct DebugMenuListData *sDebugMenuListData = NULL;
+static EWRAM_DATA struct DebugMenuPosition sDebugMainMenuPosition = {0}; // kept between openings until reset
 EWRAM_DATA bool8 gIsDebugBattle = FALSE;
 EWRAM_DATA u64 gDebugAIFlags = 0;
 
@@ -848,6 +859,7 @@ void Debug_ShowMainMenu(void)
 {
     sDebugMenuListData = AllocZeroed(sizeof(*sDebugMenuListData));
     sDebugMenuListData->menuType = DEBUG_BASIC_MENU;
+    sDebugMenuListData->positions[0] = sDebugMainMenuPosition;
     Debug_ShowMenu(DebugTask_HandleMenuInput_General, sDebugMenu_Actions_Main);
 }
 
@@ -907,6 +919,49 @@ static const struct DebugMenuOption *Debug_GetCurrentCallbackMenu(void)
     return callbackItems;
 }
 
+static u32 Debug_GetCurrentMenuLevel(void)
+{
+    for (u32 i = DEBUG_MAX_SUB_MENU_LEVELS; i > 0; i--)
+    {
+        if (sDebugMenuListData->subMenuItems[i - 1] != NULL)
+            return i - 1;
+    }
+    return 0;
+}
+
+static void Debug_SaveMenuPosition(u8 listTaskId)
+{
+    struct DebugMenuPosition *position = &sDebugMenuListData->positions[sDebugMenuListData->shownLevel];
+
+    ListMenuGetScrollAndRow(listTaskId, &position->scrollOffset, &position->selectedRow);
+    if (sDebugMenuListData->shownLevel == 0)
+        sDebugMainMenuPosition = *position;
+}
+
+// Returns the saved position for this level if it belongs to the same menu and still fits it
+static void Debug_GetMenuPosition(const struct DebugMenuOption *items, u32 totalItems, u16 *scrollOffset, u16 *selectedRow)
+{
+    struct DebugMenuPosition *position = &sDebugMenuListData->positions[sDebugMenuListData->shownLevel];
+    u32 maxScroll = (totalItems > DEBUG_MENU_HEIGHT_MAIN) ? totalItems - DEBUG_MENU_HEIGHT_MAIN : 0;
+    u32 index = position->scrollOffset + position->selectedRow;
+
+    *scrollOffset = 0;
+    *selectedRow = 0;
+    if (position->items != items || totalItems == 0)
+    {
+        position->items = items;
+        return;
+    }
+    if (index >= totalItems)
+        index = totalItems - 1;
+    *scrollOffset = min(position->scrollOffset, maxScroll);
+    if (*scrollOffset > index)
+        *scrollOffset = index;
+    if (index - *scrollOffset >= DEBUG_MENU_HEIGHT_MAIN)
+        *scrollOffset = index - DEBUG_MENU_HEIGHT_MAIN + 1;
+    *selectedRow = index - *scrollOffset;
+}
+
 static bool32 IsSubMenuAction(const void *action)
 {
     return action == DebugAction_OpenSubMenu
@@ -939,11 +994,13 @@ static void Debug_ShowMenu(DebugFunc HandleInput, const struct DebugMenuOption *
     u8 windowId;
     u8 menuTaskId;
     u8 inputTaskId;
+    u16 scrollOffset, selectedRow;
 
     if (items != NULL)
         Debug_SaveCallbackMenu((struct DebugMenuOption *)items);
     else
         items = Debug_GetCurrentCallbackMenu();
+    sDebugMenuListData->shownLevel = Debug_GetCurrentMenuLevel();
 
     // create window
     HideMapNamePopUpWindow();
@@ -972,7 +1029,8 @@ static void Debug_ShowMenu(DebugFunc HandleInput, const struct DebugMenuOption *
     menuTemplate.scrollMultiple = LIST_NO_MULTIPLE_SCROLL;
     menuTemplate.fontId = DEBUG_MENU_FONT;
     menuTemplate.cursorKind = 0;
-    menuTaskId = ListMenuInit(&menuTemplate, 0, 0);
+    Debug_GetMenuPosition(items, totalItems, &scrollOffset, &selectedRow);
+    menuTaskId = ListMenuInit(&menuTemplate, scrollOffset, selectedRow);
 
     // create input handler task
     inputTaskId = CreateTask(HandleInput, 3);
@@ -1048,6 +1106,7 @@ static void Debug_DestroyMenu(u8 taskId)
 {
     DestroyDebugIcon(taskId);
     Debug_RemoveWindowIfShown(&gTasks[taskId].tSubWindowId);
+    Debug_SaveMenuPosition(gTasks[taskId].tMenuTaskId);
     DestroyListMenuTask(gTasks[taskId].tMenuTaskId, NULL, NULL);
     Debug_RemoveWindowIfShown(&gTasks[taskId].tWindowId);
     DestroyTask(taskId);
