@@ -25,7 +25,6 @@ are settled. Each is also a command-line flag.
 import argparse
 import collections
 import copy
-import hashlib
 import json
 import os
 import random
@@ -608,6 +607,12 @@ def load_json(path):
         return json.load(f)
 
 
+def skeleton(wild):
+    """wild without its stamp and species: equal for two files that differ only by restocking."""
+    wild = {k: v for k, v in wild.items() if k != AA.RESTOCK_STAMP}
+    return json.loads(json.dumps(wild), object_hook=lambda d: {**d, 'species': None} if 'species' in d else d)
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(prog='area_archetypes.py restock', description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -639,7 +644,9 @@ def main(argv=None):
     p.add_argument('--maps', default=os.path.join(AA.DEFAULT_OUT, 'emerald_maps.json'))
     p.add_argument('--out-dir', default=DEFAULT_OUT_DIR, help='where the preview JSON and report go')
     p.add_argument('--write', action='store_true', help='also overwrite --wild with the result')
-    p.add_argument('--force', action='store_true', help='accept a --base that restock wrote')
+    p.add_argument('--force', action='store_true',
+                   help='accept a --base that restock wrote, and --write over a --wild that differs '
+                        'from --base in more than species')
     p.add_argument('--repo', default=AA.REPO, help=argparse.SUPPRESS)
     args = p.parse_args(argv)
 
@@ -673,11 +680,17 @@ def main(argv=None):
     unknown = sorted(named - info.constants)
     if unknown:
         sys.exit(f'unknown species: {", ".join(unknown)}')
-    base = AA.load_base(args.base, args.force)
+    base, base_sha256 = AA.load_base(args.base, args.force)
+    if (args.write and not args.force and os.path.exists(args.wild)
+            and skeleton(load_json(args.wild)) != skeleton(base)):
+        sys.exit(f'{args.wild} differs from {args.base} in more than species (an upstream merge or '
+                 f'a hand edit?), and --write would lose that; refresh the baseline (README), '
+                 f'or --force to overwrite anyway')
     new, changes = restock(base, load_json(args.maps), load_json(args.pools), info, settings)
-    with open(args.base, 'rb') as f:
-        new[AA.RESTOCK_STAMP] = {'base_sha256': hashlib.sha256(f.read()).hexdigest(),
-                                 'seed': settings.seed, 'ratio': settings.ratio}
+    stamp = {'base_sha256': base_sha256, 'seed': settings.seed, 'ratio': settings.ratio}
+    if AA.RESTOCK_STAMP in base:  # --force on a restocked base: keep its history
+        stamp['base_restocked_by'] = base[AA.RESTOCK_STAMP]
+    new[AA.RESTOCK_STAMP] = stamp
     os.makedirs(args.out_dir, exist_ok=True)
     preview = os.path.join(args.out_dir, 'wild_encounters.json')
     report = os.path.join(args.out_dir, 'restock_report.md')
