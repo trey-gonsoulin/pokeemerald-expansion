@@ -233,6 +233,7 @@ struct DebugMenuListData
     u8 scrollArrowsTaskId;
     s16 titleWindowId;
     u16 scrollArrowsOffset;
+    DebugFunc pendingInputFunc; // input handler that takes over from DebugTask_StartMenuInput
     struct ListMenuItem listItems[DEBUG_MAX_MENU_ITEMS + 1];
     u8 itemNames[DEBUG_MAX_MENU_ITEMS + 1][26];
     enum DebugMenuTypes menuType:2;
@@ -1093,6 +1094,14 @@ static s32 Debug_ListMenu_ProcessInput(u8 listTaskId)
     return LIST_NOTHING_CHOSEN;
 }
 
+// Runs for the first frame of a newly shown menu, so the button press that opened it
+// (e.g. B leaving a submenu) isn't also handled by the new menu in the same frame.
+// RunTasks can reach a task created mid-frame when a destroyed task's slot is reused.
+static void DebugTask_StartMenuInput(u8 taskId)
+{
+    gTasks[taskId].func = sDebugMenuListData->pendingInputFunc;
+}
+
 static void Debug_ShowMenu(DebugFunc HandleInput, const struct DebugMenuOption *items)
 {
     struct ListMenuTemplate menuTemplate = {0};
@@ -1140,7 +1149,8 @@ static void Debug_ShowMenu(DebugFunc HandleInput, const struct DebugMenuOption *
     Debug_AddScrollArrows(totalItems);
 
     // create input handler task
-    inputTaskId = CreateTask(HandleInput, 3);
+    sDebugMenuListData->pendingInputFunc = HandleInput;
+    inputTaskId = CreateTask(DebugTask_StartMenuInput, 3);
     gTasks[inputTaskId].tMenuTaskId = menuTaskId;
     gTasks[inputTaskId].tWindowId = windowId;
     gTasks[inputTaskId].tSubWindowId = WINDOW_NONE;
