@@ -20,11 +20,6 @@ POOLS = os.path.join(AA.DEFAULT_OUT, 'archetype_pools.json')
 MAPS = os.path.join(AA.DEFAULT_OUT, 'emerald_maps.json')
 
 
-def load(path):
-    with open(path, encoding='utf-8') as f:
-        return json.load(f)
-
-
 class PreprocessorTests(unittest.TestCase):
     def test_c_eval(self):
         d = {'A': 'TRUE', 'B': 'FALSE', 'C': 'A', 'GEN_3': '2', 'GEN_5': '4', 'LVL': 'GEN_5'}
@@ -94,6 +89,13 @@ class SpeciesInfoTests(unittest.TestCase):
         self.assertEqual(i.devolve('SPECIES_CROBAT', 25), 'SPECIES_GOLBAT')
         self.assertEqual(i.devolve('SPECIES_PIKACHU', 3), 'SPECIES_PIKACHU')
 
+    def test_species_built_from_macros(self):
+        i = self.info
+        self.assertEqual(i.min_level('SPECIES_SPEWPA'), 9)  # SPEWPA_SPECIES_INFO(...)
+        self.assertEqual(i.canon(i.devolve('SPECIES_SPEWPA', 5)), i.canon('SPECIES_SCATTERBUG'))
+        self.assertEqual(i.canon(i.devolve('SPECIES_FLOETTE', 5)), i.canon('SPECIES_FLABEBE'))
+        self.assertIn('isMythical', i.flags_of('SPECIES_ARCEUS_FIRE'))  # ARCEUS_SPECIES_INFO(...)
+
     def test_aliases_and_flags(self):
         self.assertIn('SPECIES_BURMY', self.info.enabled)  # = SPECIES_BURMY_PLANT
         self.assertIn('isRestrictedLegendary', self.info.flags_of('SPECIES_MEWTWO'))
@@ -156,14 +158,25 @@ class ConfigTests(unittest.TestCase):
         gens = R.Settings(ratio=1.0, gens={2})
         self.assertIsNone(R.restock_table(low, [70, 30], pool, self.info, gens, 'gX', 'land_mons'))
 
+    def test_denied_natives_go_even_when_nothing_is_added(self):
+        mons = [{'species': 'SPECIES_HOOTHOOT', 'min_level': 5, 'max_level': 5},
+                {'species': 'SPECIES_NOCTOWL', 'min_level': 25, 'max_level': 25}]
+        for settings in (R.Settings(ratio=0, deny={'SPECIES_NOCTOWL'}),
+                         R.Settings(ratio=1.0, deny={'SPECIES_NOCTOWL'})):  # empty pool
+            self.assertEqual(R.restock_table(mons, [70, 30], [], self.info, settings, 'gX', 'land_mons'),
+                             ['SPECIES_HOOTHOOT', 'SPECIES_HOOTHOOT'])
+        self.assertIsNone(R.restock_table(mons, [70, 30], [], self.info,
+                                          R.Settings(deny={'SPECIES_NOCTOWL'}, maps={'gX': {'skip': True}}),
+                                          'gX', 'land_mons'))
+
 
 class RestockTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.info = R.SpeciesInfo(AA.REPO)
-        cls.wild = load(WILD)
-        cls.maps = load(MAPS)
-        cls.pools = load(POOLS)
+        cls.wild = R.load_json(WILD)
+        cls.maps = R.load_json(MAPS)
+        cls.pools = R.load_json(POOLS)
         cls.runs = {ratio: R.restock(cls.wild, cls.maps, cls.pools, cls.info, R.Settings(ratio=ratio))
                     for ratio in (0.0, 0.5, 1.0)}
 
@@ -279,7 +292,7 @@ class RestockTests(unittest.TestCase):
             new, _ = R.restock(self.wild, self.maps, self.pools, self.info, R.Settings(ratio=ratio, deny=deny))
             placed = {m['species'] for e in new['wild_encounter_groups'][0]['encounters']
                       if self.maps[e['base_label']]['region'] == 'hoenn'
-                      for f in R.TABLE_FIELDS if f in e for m in e[f]['mons']}
+                      for f in R.TABLE_FIELDS + ('fishing_mons',) if f in e for m in e[f]['mons']}
             self.assertFalse(placed & deny, ratio)
 
     def test_regional_forms_can_be_excluded(self):
@@ -315,10 +328,17 @@ class CliTests(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 R.main(['--config', cfg, '--out-dir', os.path.join(tmp, 'out')])
 
+    def test_species_list_accepts_a_string(self):
+        self.assertEqual(R.parse_species_list('ZUBAT, golbat'), {'SPECIES_ZUBAT', 'SPECIES_GOLBAT'})
+
+    def test_restock_must_be_the_first_argument(self):
+        with self.assertRaises(SystemExit):
+            AA.main(['--out', os.devnull, 'restock'])
+
     def test_round_trip_formatting(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, 'w.json')
-            R.dump_wild(load(WILD), path)
+            R.dump_wild(R.load_json(WILD), path)
             with open(WILD, encoding='utf-8') as f, open(path, encoding='utf-8') as g:
                 self.assertEqual(f.read(), g.read())
 

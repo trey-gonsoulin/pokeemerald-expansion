@@ -515,6 +515,8 @@ def main(argv=None):
     p.add_argument('--cache', default=DEFAULT_CACHE, help='PokeAPI CSV cache dir')
     p.add_argument('--out', default=DEFAULT_OUT, help='output dir')
     args = p.parse_args(argv)
+    if args.command == 'restock':
+        p.error('restock must come first: area_archetypes.py restock [options]')
     if args.command == 'fetch':
         fetch(args.cache)
     else:

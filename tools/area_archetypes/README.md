@@ -143,7 +143,9 @@ Per-map overrides go under `maps`, keyed by base label:
           "gGraniteCave_1F": {"allow": ["SPECIES_ROGGENROLA", "SPECIES_WOOBAT"], "deny": ["SPECIES_ABRA"]}}}
 ```
 
-A map's `allow` replaces the global list, its `deny` adds to it.
+A map's `allow` replaces the global list, its `deny` adds to it. Denied
+natives are dropped even at ratio 0 or when nothing can be drawn (the table's
+other species take their slots); only `skip` leaves a map exactly as it is.
 
 ## Limitations
 
