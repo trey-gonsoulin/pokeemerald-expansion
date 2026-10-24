@@ -1425,7 +1425,7 @@ static void DebugAction_Selection_PrepareStep(u8 taskId, const struct DebugSelec
         input = max;
     gTasks[taskId].tInput = input;
 
-    gTasks[taskId].tInputStart = gTasks[taskId].tInput;
+    gTasks[taskId].tInputStart = input;
     gTasks[taskId].tDigit = 0;
     selectionStep->stepUpdate(taskId, selectionStep->digits, min, max);
     gTasks[taskId].func = DebugAction_Selection_StepUpdate;
@@ -2849,12 +2849,23 @@ UPDATE_GENERIC_INPUT(Level, Level)
 UPDATE_GENERIC_INPUT(OutbreakProbability, Probability)
 UPDATE_GENERIC_INPUT(OutbreakDaysLeft, Days Left)
 
+// Disabled species at the top of the list would hide max from the numeric input,
+// so Up/R stop on the last enabled species and a new press there wraps to min
+static u32 DebugSelectionStep_GetLastEnabledSpecies(u8 taskId)
+{
+    u32 species = NUM_SPECIES - 1;
+    while (species > 1 && !IsSpeciesEnabled(species))
+        species--;
+    return species;
+}
+
 static const struct DebugSelectionStep sSpeciesSelectionStep = {
     .stepUpdate = DebugSelectionStep_UpdateSpecies,
     .stepConfirm = DebugSelectionStep_GenericInputConfirmAndDestroyIcon,
     .minValue = 1,
-    .maxValue = NUM_SPECIES - 1,
-    .digits = 4
+    .maxFunc = DebugSelectionStep_GetLastEnabledSpecies,
+    .digits = 4,
+    .useMaxFunc = TRUE,
 };
 
 static const struct DebugSelectionStep sLevelSelectionStep = {
