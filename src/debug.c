@@ -203,6 +203,7 @@ enum DebugMenuTypes
 #define DEBUG_OPTION_CANT_BE_TOGGLED 0xFF
 
 #define DEBUG_ICON_TAG 0xFDF3
+#define DEBUG_SCROLL_ARROW_TAG 0xFDF4
 // *******************************
 struct DebugMenuOption;
 
@@ -229,6 +230,9 @@ struct DebugMenuListData
     const struct DebugMenuOption *subMenuItems[DEBUG_MAX_SUB_MENU_LEVELS];
     struct DebugMenuPosition positions[DEBUG_MAX_SUB_MENU_LEVELS];
     u8 shownLevel; // submenu level of the list currently on screen
+    u8 scrollArrowsTaskId;
+    s16 titleWindowId;
+    u16 scrollArrowsOffset;
     struct ListMenuItem listItems[DEBUG_MAX_MENU_ITEMS + 1];
     u8 itemNames[DEBUG_MAX_MENU_ITEMS + 1][26];
     enum DebugMenuTypes menuType:2;
@@ -807,6 +811,18 @@ static const struct WindowTemplate sDebugMenuWindowTemplateMain =
     .baseBlock = 1,
 };
 
+// Submenu path, shown to the right of the main list (one line per level)
+static const struct WindowTemplate sDebugMenuWindowTemplateTitle =
+{
+    .bg = 0,
+    .tilemapLeft = DEBUG_MENU_WIDTH_MAIN + 3,
+    .tilemapTop = 1,
+    .width = 30 - (DEBUG_MENU_WIDTH_MAIN + 3) - 1,
+    .height = 2,
+    .paletteNum = 15,
+    .baseBlock = 1 + DEBUG_MENU_WIDTH_MAIN * 2 * DEBUG_MENU_HEIGHT_MAIN,
+};
+
 static const struct WindowTemplate sDebugMenuWindowTemplateExtra =
 {
     .bg = 0,
@@ -988,6 +1004,95 @@ static u32 Debug_GenerateListBasicMenu(const struct DebugMenuOption *items)
     return totalItems;
 }
 
+// Copies the name of the menu entry that opened this submenu level, without its trailing "…"
+static void Debug_GetSubMenuName(u8 *dest, u32 level)
+{
+    const struct DebugMenuOption *parent = sDebugMenuListData->subMenuItems[level - 1];
+    const struct DebugMenuOption *items = sDebugMenuListData->subMenuItems[level];
+    u32 length;
+
+    dest[0] = EOS;
+    for (u32 i = 0; parent[i].text != NULL; i++)
+    {
+        if (parent[i].actionParams == items && IsSubMenuAction(parent[i].action))
+        {
+            StringExpandPlaceholders(dest, parent[i].text);
+            break;
+        }
+    }
+    length = StringLength(dest);
+    if (length > 0 && dest[length - 1] == CHAR_ELLIPSIS)
+        dest[length - 1] = EOS;
+}
+
+static void Debug_ShowMenuTitle(void)
+{
+    struct WindowTemplate template = sDebugMenuWindowTemplateTitle;
+    u32 level = sDebugMenuListData->shownLevel;
+    u8 windowId;
+
+    sDebugMenuListData->titleWindowId = WINDOW_NONE;
+    if (level == 0)
+        return;
+
+    template.height = 2 * level;
+    windowId = AddWindow(&template);
+    DrawStdWindowFrame(windowId, FALSE);
+    FillWindowPixelBuffer(windowId, PIXEL_FILL(1));
+    for (u32 i = 1; i <= level; i++)
+    {
+        Debug_GetSubMenuName(gStringVar4, i);
+        AddTextPrinterParameterized(windowId, FONT_NARROW, gStringVar4, (i - 1) * 4, (i - 1) * 16, 0, NULL);
+    }
+    CopyWindowToVram(windowId, COPYWIN_FULL);
+    sDebugMenuListData->titleWindowId = windowId;
+}
+
+static void Debug_ListMenuMoveCursor(s32 itemIndex, bool8 onInit, struct ListMenu *list)
+{
+    ListMenuDefaultCursorMoveFunc(itemIndex, onInit, list);
+    sDebugMenuListData->scrollArrowsOffset = list->scrollOffset;
+}
+
+static void Debug_AddScrollArrows(u32 totalItems)
+{
+    sDebugMenuListData->scrollArrowsTaskId = TASK_NONE;
+    if (totalItems <= DEBUG_MENU_HEIGHT_MAIN)
+        return;
+
+    // Centered over the main list, on its top and bottom frame
+    sDebugMenuListData->scrollArrowsTaskId = AddScrollIndicatorArrowPairParameterized(SCROLL_ARROW_UP,
+        (sDebugMenuWindowTemplateMain.tilemapLeft + DEBUG_MENU_WIDTH_MAIN / 2) * 8 + 4,
+        sDebugMenuWindowTemplateMain.tilemapTop * 8 - 4,
+        (sDebugMenuWindowTemplateMain.tilemapTop + 2 * DEBUG_MENU_HEIGHT_MAIN) * 8 + 4,
+        totalItems - DEBUG_MENU_HEIGHT_MAIN, DEBUG_SCROLL_ARROW_TAG, DEBUG_SCROLL_ARROW_TAG,
+        &sDebugMenuListData->scrollArrowsOffset);
+}
+
+// ListMenu_ProcessInput plus L/R paging and wrapping between the first and last entries.
+// L/R only act on a new press: R is often still held from the R+Start combo that opens the menu.
+static s32 Debug_ListMenu_ProcessInput(u8 listTaskId)
+{
+    struct ListMenu *list = (void *)gTasks[listTaskId].data;
+    u32 lastIndex = list->template.totalItems - 1;
+    u32 index = list->scrollOffset + list->selectedRow;
+
+    if (JOY_NEW(A_BUTTON | B_BUTTON) || lastIndex == 0)
+        return ListMenu_ProcessInput(listTaskId);
+
+    if (JOY_NEW(DPAD_UP) && index == 0)
+        ListMenuChangeSelection(list, TRUE, lastIndex, TRUE);
+    else if (JOY_NEW(DPAD_DOWN) && index == lastIndex)
+        ListMenuChangeSelection(list, TRUE, lastIndex, FALSE);
+    else if (JOY_NEW(L_BUTTON))
+        ListMenuChangeSelection(list, TRUE, list->template.maxShowed, FALSE);
+    else if (JOY_NEW(R_BUTTON))
+        ListMenuChangeSelection(list, TRUE, list->template.maxShowed, TRUE);
+    else
+        return ListMenu_ProcessInput(listTaskId);
+    return LIST_NOTHING_CHOSEN;
+}
+
 static void Debug_ShowMenu(DebugFunc HandleInput, const struct DebugMenuOption *items)
 {
     struct ListMenuTemplate menuTemplate = {0};
@@ -1008,12 +1113,13 @@ static void Debug_ShowMenu(DebugFunc HandleInput, const struct DebugMenuOption *
     windowId = AddWindow(&sDebugMenuWindowTemplateMain);
     DrawStdWindowFrame(windowId, FALSE);
     CopyWindowToVram(windowId, COPYWIN_GFX);
+    Debug_ShowMenuTitle();
 
     u32 totalItems = generateListFunctions[sDebugMenuListData->menuType](items);
 
     // create list menu
     menuTemplate.items = sDebugMenuListData->listItems;
-    menuTemplate.moveCursorFunc = ListMenuDefaultCursorMoveFunc;
+    menuTemplate.moveCursorFunc = Debug_ListMenuMoveCursor;
     menuTemplate.totalItems = totalItems;
     menuTemplate.maxShowed = DEBUG_MENU_HEIGHT_MAIN;
     menuTemplate.windowId = windowId;
@@ -1026,11 +1132,12 @@ static void Debug_ShowMenu(DebugFunc HandleInput, const struct DebugMenuOption *
     menuTemplate.cursorShadowPal = 3;
     menuTemplate.lettersSpacing = 1;
     menuTemplate.itemVerticalPadding = 0;
-    menuTemplate.scrollMultiple = LIST_NO_MULTIPLE_SCROLL;
+    menuTemplate.scrollMultiple = LIST_MULTIPLE_SCROLL_DPAD;
     menuTemplate.fontId = DEBUG_MENU_FONT;
     menuTemplate.cursorKind = 0;
     Debug_GetMenuPosition(items, totalItems, &scrollOffset, &selectedRow);
     menuTaskId = ListMenuInit(&menuTemplate, scrollOffset, selectedRow);
+    Debug_AddScrollArrows(totalItems);
 
     // create input handler task
     inputTaskId = CreateTask(HandleInput, 3);
@@ -1055,11 +1162,23 @@ static void Debug_RemoveWindowIfShown(s16 *windowId)
     }
 }
 
+// Closes the main list window together with its scroll arrows and title
+static void Debug_RemoveMainWindow(u8 taskId)
+{
+    if (sDebugMenuListData->scrollArrowsTaskId != TASK_NONE)
+    {
+        RemoveScrollIndicatorArrowPair(sDebugMenuListData->scrollArrowsTaskId);
+        sDebugMenuListData->scrollArrowsTaskId = TASK_NONE;
+    }
+    Debug_RemoveWindowIfShown(&sDebugMenuListData->titleWindowId);
+    Debug_RemoveWindowIfShown(&gTasks[taskId].tWindowId);
+}
+
 static void Debug_CreateInputDisplayWindow(u8 taskId)
 {
     u8 windowId;
 
-    Debug_RemoveWindowIfShown(&gTasks[taskId].tWindowId);
+    Debug_RemoveMainWindow(taskId);
     LoadMessageBoxAndBorderGfx();
     windowId = AddWindow(&sDebugMenuWindowTemplateExtra);
     DrawStdWindowFrame(windowId, FALSE);
@@ -1108,7 +1227,7 @@ static void Debug_DestroyMenu(u8 taskId)
     Debug_RemoveWindowIfShown(&gTasks[taskId].tSubWindowId);
     Debug_SaveMenuPosition(gTasks[taskId].tMenuTaskId);
     DestroyListMenuTask(gTasks[taskId].tMenuTaskId, NULL, NULL);
-    Debug_RemoveWindowIfShown(&gTasks[taskId].tWindowId);
+    Debug_RemoveMainWindow(taskId);
     DestroyTask(taskId);
 }
 
@@ -1710,7 +1829,7 @@ static u32 Debug_GenerateListFlagsMenu(const struct DebugMenuOption *items)
 static void DebugTask_HandleMenuInput_General(u8 taskId)
 {
     const struct DebugMenuOption *options = Debug_GetCurrentCallbackMenu();
-    u32 input = ListMenu_ProcessInput(gTasks[taskId].tMenuTaskId);
+    u32 input = Debug_ListMenu_ProcessInput(gTasks[taskId].tMenuTaskId);
     struct DebugMenuOption option = options[input];
 
     if (JOY_NEW(A_BUTTON))
@@ -2170,7 +2289,7 @@ static void DebugAction_Util_Randomizer_Wait(u8 taskId)
 static void DebugAction_Util_Randomizer_ShowValues(u8 taskId)
 {
 
-    Debug_RemoveWindowIfShown(&gTasks[taskId].tWindowId);
+    Debug_RemoveMainWindow(taskId);
     Debug_RemoveWindowIfShown(&gTasks[taskId].tSubWindowId);
 
     gTasks[taskId].tSubWindowId = AddWindow(&sDebugMenuWindowTemplateFullScreen);
@@ -3837,7 +3956,7 @@ static void DebugAction_Sound_SE(u8 taskId)
 {
     u8 windowId;
 
-    Debug_RemoveWindowIfShown(&gTasks[taskId].tWindowId);
+    Debug_RemoveMainWindow(taskId);
 
     HideMapNamePopUpWindow();
     LoadMessageBoxAndBorderGfx();
@@ -3900,7 +4019,7 @@ static void DebugAction_Sound_MUS(u8 taskId)
 {
     u8 windowId;
 
-    Debug_RemoveWindowIfShown(&gTasks[taskId].tWindowId);
+    Debug_RemoveMainWindow(taskId);
 
     HideMapNamePopUpWindow();
     LoadMessageBoxAndBorderGfx();
