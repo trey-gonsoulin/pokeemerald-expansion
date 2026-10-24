@@ -12,6 +12,7 @@ Zigzagoon, Bidoof, Patrat, Lillipup, Skwovet... with how common each one is.
 python3 tools/area_archetypes/area_archetypes.py fetch   # once: PokeAPI CSVs -> .cache/
 python3 tools/area_archetypes/area_archetypes.py build   # classify + write output/
 python3 tools/area_archetypes/area_archetypes.py restock # preview restocked wild_encounters.json
+python3 tools/area_archetypes/area_archetypes.py baseline # refresh the vanilla snapshot (see below)
 python3 -m unittest discover -s tools/area_archetypes    # tests
 ```
 
@@ -69,8 +70,9 @@ Pinwheel Forest is `forest/early` in BW but `forest/endgame` in BW2.
     included (`SPECIES_DIGLETT_ALOLA`).
 - **`archetype_pools.md`**: the top 15 of every pool, for skimming.
 - **`emerald_maps.json`**: an archetype for every table of every map in
-  `src/data/wild_encounters.json`, keyed by base label. Each fishing rod gets
-  its own entry. Example:
+  the vanilla baseline (`wild_encounters.vanilla.json`, see
+  [The vanilla baseline](#the-vanilla-baseline)), keyed by base label. Each
+  fishing rod gets its own entry. Example:
   ```json
   "gPetalburgWoods": {"map": "MAP_PETALBURG_WOODS", "location": "petalburg-woods",
     "land_mons": {"archetype": "forest/beginner", "pool": "land", "level": 5.2}}
@@ -111,12 +113,41 @@ tables are never touched.
 ```sh
 # Preview: writes tools/area_archetypes/restock/{wild_encounters.json,restock_report.md}
 python3 tools/area_archetypes/area_archetypes.py restock
-# Happy with the report? Overwrite src/data/wild_encounters.json, then build.
+# Happy with the report? Overwrite src/data/wild_encounters.json, then build the ROM.
 python3 tools/area_archetypes/area_archetypes.py restock --write
+# Tune the options and rerun; each run starts again from the vanilla baseline.
+python3 tools/area_archetypes/area_archetypes.py restock --ratio 0.4 --write
 ```
 
 `restock_report.md` lists every changed table slot by slot (`=` = unchanged).
-The same options and seed always give the same output.
+
+### The vanilla baseline
+
+`restock` never reads `src/data/wild_encounters.json`. Its natives (and the
+report's "before" column) come from `--base`, by default
+`output/wild_encounters.vanilla.json`, a committed copy of the unrestocked
+file. `build` classifies the same file into `emerald_maps.json`. So rerunning
+`restock --write` with new options replaces the last restock instead of
+restocking it again, and `build` gives the same maps after a restock as
+before. The same base, options and seed always give the same output.
+
+Every file `restock` writes (the preview and `--write`) carries a top-level
+`restocked_by` stamp with the base's SHA-256, the seed and the ratio. The game
+build ignores it. `restock --base`, `build --base` and `baseline` refuse a
+stamped file unless `--force`, so a restocked file can't become the baseline
+by mistake. A tool that rewrites the file, such as
+Porymap, may drop the stamp.
+
+Refresh the snapshot when upstream changes `src/data/wild_encounters.json`,
+then rerun `build` and `restock --write`:
+
+```sh
+# src/data/wild_encounters.json still vanilla (nothing restocked committed yet):
+python3 tools/area_archetypes/area_archetypes.py baseline
+# Already restocked: take upstream's copy instead.
+git show origin/master:src/data/wild_encounters.json > /tmp/wild_encounters.json
+python3 tools/area_archetypes/area_archetypes.py baseline --wild /tmp/wild_encounters.json
+```
 
 | option | default | meaning |
 |---|---|---|
@@ -132,7 +163,10 @@ The same options and seed always give the same output.
 | `--drop-rare-natives` | off | let a table's own rare species lose their only slot |
 | `--new-species N` | scales | new species per table; default `round(own * R / (1 - R))`, or the own count at `R = 1` |
 | `--config FILE` | none | JSON with any of the above (snake_case) plus per-map overrides; flags win |
-| `--write` | off | also overwrite `src/data/wild_encounters.json` |
+| `--base FILE` | `output/wild_encounters.vanilla.json` | vanilla file the natives come from |
+| `--wild FILE` | `src/data/wild_encounters.json` | file `--write` overwrites; never read |
+| `--write` | off | also overwrite `--wild` |
+| `--force` | off | accept a `--base` that `restock` wrote |
 
 Per-map overrides go under `maps`, keyed by base label:
 
