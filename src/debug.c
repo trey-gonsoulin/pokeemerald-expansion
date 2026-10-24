@@ -2306,10 +2306,10 @@ void DebugMenu_CalculateTimeOfDay(struct ScriptContext *ctx)
 
 #define tRandomiserType data[8]
 // The selection frees its steps data once onComplete returns, so keep the inputs in task data.
-// data[12] and data[13] held the steps data pointer, which is no longer needed after that.
+// The args reuse the steps data pointer slots, which are no longer needed after that.
 #define tRandomiserOption data[6]
-#define tRandomiserArg1   data[12]
-#define tRandomiserArg2   data[13]
+#define tRandomiserArg1   data[STEPS_DATA_PTR_ARG]
+#define tRandomiserArg2   data[STEPS_DATA_PTR_ARG + 1]
 
 #define SPECIES_RANDOMIZER 0
 #define ITEM_RANDOMIZER 1
@@ -2362,11 +2362,10 @@ static void DebugAction_Util_Randomizer_Wait(u8 taskId)
 
 static void DebugAction_Util_Randomizer_ShowValues(u8 taskId)
 {
-    // Copy before the steps data pointer in data[12..13] is overwritten
-    u16 option = DebugSelection_GetData(taskId, 0);
+    // Read both args before either write, since the writes overwrite the steps data pointer
     u16 arg1 = DebugSelection_GetData(taskId, 1);
     u16 arg2 = DebugSelection_GetData(taskId, 2);
-    gTasks[taskId].tRandomiserOption = option;
+    gTasks[taskId].tRandomiserOption = DebugSelection_GetData(taskId, 0);
     gTasks[taskId].tRandomiserArg1 = arg1;
     gTasks[taskId].tRandomiserArg2 = arg2;
 
