@@ -8,14 +8,14 @@ Binding rules for workflow agents, on top of the repo CLAUDE.md.
 - Match the surrounding C style in `src/debug.c`: 4-space indent, braces on their own line, `static` helpers, and task-data `#define`s like tInput/tDigit.
 
 ## Build (the only automated check)
-Use `.claude/build.sh`. It sets the devkitARM PATH and TOOLCHAIN, logs to `<worktree>/build/<target>.log`, and prints only the exit code plus unexpected errors and warnings. Pass your worktree's absolute path as the first argument. Run it as a plain command, not inside `cd …;` or `export …;` chains.
+Use `.claude/build.sh`. It sets the devkitARM PATH and TOOLCHAIN, unsets the host compiler variables (`CPATH`, `LDFLAGS`, …), logs to `<worktree>/build/<target>.log`, and prints only the exit code plus unexpected errors and warnings. Pass your worktree's absolute path as the first argument. Run it as a plain command, not inside `cd …;` or `export …;` chains.
 
 - `sh .claude/build.sh <worktree> src/debug.c` compiles one file. On a cold tree it builds the tools and generated sources too, in about 20 s. Use it for quick checks while iterating.
 - `sh .claude/build.sh <worktree> rom` builds the ROM with the debug menu: about 1 min cold alone, about 4.5 min when four agents build at once. `… release` builds the ROM with the debug menus off.
 - `sh .claude/build.sh <worktree> generated` builds the tools, then the generated headers. Plain `make generated` fails on a fresh worktree (`No rule to make target tools/mapjson/mapjson`), and `make tools` fails too. You only need this before a partial build that isn't a `src/*.c` file.
 - **Implementers:** before you finish, both `rom` and `release` must exit 0 with no new warnings in the files you changed.
 - **Reviewers:** don't rebuild the ROMs, because the implementer already did. Compile each changed `src/*.c` file in your own worktree with the single-file target.
-- Don't use `make debug`: it's broken (#27). `make check` doesn't cover `src/debug.c`.
+- `… debug` builds the -Og/-g ROM and `… check ["TESTS prefix"]` runs the headless tests (it prints the PASSED/TOTAL summary). Both link because build.sh unsets the host `CPATH`/`LDFLAGS`; that leak, not gcc 16.1, was the cause of #27. Don't run plain `make` from your shell, which inherits the leak. `make check` doesn't cover `src/debug.c`.
 
 ## Testing debug-menu changes
 There are no automated tests for the debug menu.
