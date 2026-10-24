@@ -4,6 +4,7 @@ and build cross-generation species pools for each archetype.
 
     python3 tools/area_archetypes/area_archetypes.py fetch
     python3 tools/area_archetypes/area_archetypes.py build
+    python3 tools/area_archetypes/area_archetypes.py baseline [--force]
     python3 tools/area_archetypes/area_archetypes.py restock [--help]
 
 ``fetch`` downloads PokeAPI's CSV dump (encounters for Gens 1-8) into a local
@@ -12,7 +13,13 @@ cache. ``build`` classifies every encounter table, then writes to ``output/``:
 * ``archetype_pools.json``   archetype -> method group -> weighted species pool
 * ``archetype_pools.md``     readable summary of the top of each pool
 * ``area_classification.csv`` every source table and the archetype it got
-* ``emerald_maps.json``      archetype for each table in src/data/wild_encounters.json
+* ``emerald_maps.json``      archetype for each table in the vanilla baseline
+
+The vanilla baseline is ``output/wild_encounters.vanilla.json``, a committed
+copy of the unrestocked src/data/wild_encounters.json that ``build`` and
+``restock`` read instead of the live file. ``baseline`` refreshes it from
+src/data/wild_encounters.json (after an upstream merge, say), and refuses a
+file ``restock`` wrote unless ``--force``.
 
 ``restock`` writes the pools back into wild_encounters.json (``restock.py``).
 Archetype rules live in ``archetypes.py``.
@@ -21,9 +28,11 @@ Archetype rules live in ``archetypes.py``.
 import argparse
 import collections
 import csv
+import hashlib
 import json
 import os
 import re
+import shutil
 import sys
 import urllib.request
 
@@ -34,6 +43,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, '..', '..'))
 DEFAULT_CACHE = os.path.join(HERE, '.cache', 'pokeapi')
 DEFAULT_OUT = os.path.join(HERE, 'output')
+SRC_WILD = os.path.join(REPO, 'src', 'data', 'wild_encounters.json')
+VANILLA_WILD = os.path.join(DEFAULT_OUT, 'wild_encounters.vanilla.json')
+# Top-level key restock adds to the JSON it writes, so a restocked file is
+# never mistaken for the vanilla baseline.
+RESTOCK_STAMP = 'restocked_by'
 POKEAPI_CSV_URL = 'https://raw.githubusercontent.com/PokeAPI/pokeapi/master/data/v2/csv/'
 CSV_FILES = [
     'encounters', 'encounter_slots', 'encounter_methods', 'locations', 'location_areas',
@@ -48,6 +62,26 @@ MD_TOP_N = 15
 # ---------------------------------------------------------------------------
 # Data loading
 # ---------------------------------------------------------------------------
+
+def load_base(path, force=False):
+    """(wild_encounters.json at path, its SHA-256), refusing one restock wrote unless force."""
+    with open(path, 'rb') as f:
+        raw = f.read()
+    wild = json.loads(raw)
+    if RESTOCK_STAMP in wild and not force:
+        sys.exit(f'{path} was written by restock ({RESTOCK_STAMP} is set), so it is not a vanilla '
+                 f'baseline; pass a vanilla file, or --force to use it anyway')
+    return wild, hashlib.sha256(raw).hexdigest()
+
+
+def refresh_baseline(src=SRC_WILD, base=VANILLA_WILD, force=False):
+    """Copy src over the vanilla baseline, unless restock wrote src."""
+    if os.path.exists(base) and os.path.samefile(src, base):
+        sys.exit(f'{src} is already the baseline')
+    load_base(src, force)
+    shutil.copyfile(src, base)
+    print(f'wrote {base} from {src}')
+
 
 def fetch(cache):
     os.makedirs(cache, exist_ok=True)
@@ -340,16 +374,14 @@ def emerald_location(map_const, region, known):
     return name, False
 
 
-def classify_emerald(data, smap, repo, water_by_loc):
-    """Archetype for every table of every map in src/data/wild_encounters.json.
+def classify_emerald(data, smap, wild, water_by_loc):
+    """Archetype for every table of every map in wild (wild_encounters.json).
 
     Land habitat runs the same rules as PokeAPI areas, on the matched PokeAPI
     location name (so overrides apply) and this repo's own species. Water
     habitat reuses what the matched location's PokeAPI tables mostly got, so a
     map agrees with its source games; unmatched maps fall back to the rules.
     """
-    with open(os.path.join(repo, 'src', 'data', 'wild_encounters.json'), encoding='utf-8') as f:
-        wild = json.load(f)
     group = next(g for g in wild['wild_encounter_groups'] if g['label'] == 'gWildMonHeaders')
     field_defs = {fd['type']: fd for fd in group['fields']}
     known = {l['identifier'] for l in data.locations.values()}
@@ -483,13 +515,13 @@ def write_outputs(out_dir, data, tables, pools, sources, emerald):
         f.write('\n'.join(lines) + '\n')
 
 
-def build(cache, out_dir, repo):
+def build(cache, out_dir, repo, base=VANILLA_WILD, force=False):
     data = PokeData(cache)
     smap = SpeciesMap(data, load_species_constants(repo))
     tables = build_tables(data)
     classify_tables(data, tables)
     pools, sources = build_pools(data, smap, tables)
-    emerald = classify_emerald(data, smap, repo, water_habitat_by_location(tables))
+    emerald = classify_emerald(data, smap, load_base(base, force)[0], water_habitat_by_location(tables))
     write_outputs(out_dir, data, tables, pools, sources, emerald)
     counts = collections.Counter(t.archetype for t in tables)
     wild = {pid for t in tables for pid in t.weight}
@@ -510,17 +542,25 @@ def main(argv=None):
         restock.main(argv[1:])
         return
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument('command', choices=['fetch', 'build', 'restock'],
+    p.add_argument('command', choices=['fetch', 'build', 'baseline', 'restock'],
                    help='restock takes its own options: restock --help')
     p.add_argument('--cache', default=DEFAULT_CACHE, help='PokeAPI CSV cache dir')
     p.add_argument('--out', default=DEFAULT_OUT, help='output dir')
+    p.add_argument('--base', default=VANILLA_WILD,
+                   help='vanilla wild_encounters.json that build classifies and baseline writes')
+    p.add_argument('--wild', help='file baseline copies from (default src/data/wild_encounters.json)')
+    p.add_argument('--force', action='store_true', help='accept a --base or --wild that restock wrote')
     args = p.parse_args(argv)
     if args.command == 'restock':
         p.error('restock must come first: area_archetypes.py restock [options]')
+    if args.wild and args.command != 'baseline':
+        p.error('--wild only applies to baseline')
     if args.command == 'fetch':
         fetch(args.cache)
+    elif args.command == 'baseline':
+        refresh_baseline(args.wild or SRC_WILD, args.base, args.force)
     else:
-        build(args.cache, args.out, REPO)
+        build(args.cache, args.out, REPO, args.base, args.force)
 
 
 if __name__ == '__main__':

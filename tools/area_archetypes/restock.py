@@ -10,9 +10,13 @@ the table's archetype pool, then hands out the table's slots so the most
 common species get the highest-rate slots. Slot counts, encounter rates and
 every slot's level range stay as they are; only ``species`` changes.
 
-Without ``--write`` nothing in src/ is touched: the restocked JSON and a
-slot-by-slot report go to ``--out-dir`` for review. Same seed and options
-give the same output.
+The natives always come from ``--base``, the vanilla baseline
+(``output/wild_encounters.vanilla.json``), never from the file ``--write``
+overwrites, so reruns don't compound. Without ``--write`` nothing in src/ is
+touched: the restocked JSON and a slot-by-slot report go to ``--out-dir`` for
+review. The same base, options and seed give the same output. The JSON
+restock writes carries a top-level ``restocked_by`` stamp, and a stamped file
+is refused as ``--base`` unless ``--force``.
 
 Every default below is a placeholder until the design questions in issue #8
 are settled. Each is also a command-line flag.
@@ -499,6 +503,10 @@ def restock(wild, emerald_maps, pools, info, settings):
     archetypes = pools['archetypes']
     info.learn_gens(pools)
     changes = []
+    unmapped = [e['base_label'] for e in group['encounters'] if e['base_label'] not in emerald_maps]
+    if unmapped:
+        print(f'warning: {len(unmapped)} gWildMonHeaders labels have no emerald_maps entry and are '
+              f'left alone (rerun build?): {", ".join(unmapped)}', file=sys.stderr)
     for enc in group['encounters']:
         label = enc['base_label']
         em = emerald_maps.get(label)
@@ -599,6 +607,12 @@ def load_json(path):
         return json.load(f)
 
 
+def skeleton(wild):
+    """wild without its stamp and species: equal for two files that differ only by restocking."""
+    wild = {k: v for k, v in wild.items() if k != AA.RESTOCK_STAMP}
+    return json.loads(json.dumps(wild), object_hook=lambda d: {**d, 'species': None} if 'species' in d else d)
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(prog='area_archetypes.py restock', description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -623,11 +637,16 @@ def main(argv=None):
                    help='new species per table (default: scales with ratio and the table\'s own species count)')
     p.add_argument('--config', help='JSON file with any of the options above plus per-map overrides; '
                                     'flags win over it. See README.')
-    p.add_argument('--wild', default=os.path.join(AA.REPO, 'src', 'data', 'wild_encounters.json'))
+    p.add_argument('--base', default=AA.VANILLA_WILD,
+                   help='vanilla wild_encounters.json the natives come from (default: the committed snapshot)')
+    p.add_argument('--wild', default=AA.SRC_WILD, help='file --write overwrites (not a source of natives)')
     p.add_argument('--pools', default=os.path.join(AA.DEFAULT_OUT, 'archetype_pools.json'))
     p.add_argument('--maps', default=os.path.join(AA.DEFAULT_OUT, 'emerald_maps.json'))
     p.add_argument('--out-dir', default=DEFAULT_OUT_DIR, help='where the preview JSON and report go')
     p.add_argument('--write', action='store_true', help='also overwrite --wild with the result')
+    p.add_argument('--force', action='store_true',
+                   help='accept a --base that restock wrote, and --write over a --wild that differs '
+                        'from --base in more than species')
     p.add_argument('--repo', default=AA.REPO, help=argparse.SUPPRESS)
     args = p.parse_args(argv)
 
@@ -661,8 +680,17 @@ def main(argv=None):
     unknown = sorted(named - info.constants)
     if unknown:
         sys.exit(f'unknown species: {", ".join(unknown)}')
-    wild = load_json(args.wild)
-    new, changes = restock(wild, load_json(args.maps), load_json(args.pools), info, settings)
+    base, base_sha256 = AA.load_base(args.base, args.force)
+    if (args.write and not args.force and os.path.exists(args.wild)
+            and skeleton(load_json(args.wild)) != skeleton(base)):
+        sys.exit(f'{args.wild} differs from {args.base} in more than species (an upstream merge or '
+                 f'a hand edit?), and --write would lose that; refresh the baseline (README), '
+                 f'or --force to overwrite anyway')
+    new, changes = restock(base, load_json(args.maps), load_json(args.pools), info, settings)
+    stamp = {'base_sha256': base_sha256, 'seed': settings.seed, 'ratio': settings.ratio}
+    if AA.RESTOCK_STAMP in base:  # --force on a restocked base: keep its history
+        stamp['base_restocked_by'] = base[AA.RESTOCK_STAMP]
+    new[AA.RESTOCK_STAMP] = stamp
     os.makedirs(args.out_dir, exist_ok=True)
     preview = os.path.join(args.out_dir, 'wild_encounters.json')
     report = os.path.join(args.out_dir, 'restock_report.md')
