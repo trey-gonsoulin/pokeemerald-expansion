@@ -4,6 +4,7 @@ and build cross-generation species pools for each archetype.
 
     python3 tools/area_archetypes/area_archetypes.py fetch
     python3 tools/area_archetypes/area_archetypes.py build
+    python3 tools/area_archetypes/area_archetypes.py restock [--help]
 
 ``fetch`` downloads PokeAPI's CSV dump (encounters for Gens 1-8) into a local
 cache. ``build`` classifies every encounter table, then writes to ``output/``:
@@ -13,6 +14,7 @@ cache. ``build`` classifies every encounter table, then writes to ``output/``:
 * ``area_classification.csv`` every source table and the archetype it got
 * ``emerald_maps.json``      archetype for each table in src/data/wild_encounters.json
 
+``restock`` writes the pools back into wild_encounters.json (``restock.py``).
 Archetype rules live in ``archetypes.py``.
 """
 
@@ -502,8 +504,14 @@ def build(cache, out_dir, repo):
 
 
 def main(argv=None):
+    argv = sys.argv[1:] if argv is None else argv
+    if argv[:1] == ['restock']:  # own options; see restock.py
+        import restock
+        restock.main(argv[1:])
+        return
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument('command', choices=['fetch', 'build'])
+    p.add_argument('command', choices=['fetch', 'build', 'restock'],
+                   help='restock takes its own options: restock --help')
     p.add_argument('--cache', default=DEFAULT_CACHE, help='PokeAPI CSV cache dir')
     p.add_argument('--out', default=DEFAULT_OUT, help='output dir')
     args = p.parse_args(argv)
