@@ -98,6 +98,9 @@ need the PokeAPI cache. For each table of each selected map it:
    using the `.evolutions` in `src/data/pokemon/species_info/`. Level
    evolutions use their level; stone, trade and friendship evolutions count
    as `max(pre-evolution + 10, 30)`, except out of babies (Pichu -> Pikachu).
+   The stage a species is devolved to must pass the same filters (deny,
+   allow, gens...), or the species isn't drawn for that table: denying Zubat
+   also keeps Golbat out of tables with low-level slots.
 
 Slot counts, encounter rates and every slot's levels stay as they are. Only
 species enabled by `include/config/species_enabled.h` (`P_GEN_*`,
@@ -125,6 +128,7 @@ The same options and seed always give the same output.
 | `--allow SPECIES,...` | none | draw new species only from these |
 | `--deny SPECIES,...` | none | never place these, and drop them where they're native |
 | `--allow-legendaries` | off | let legendaries etc. into the draw |
+| `--no-regional-forms` | off | never draw Alolan, Galarian, Hisuian or Paldean forms |
 | `--drop-rare-natives` | off | let a table's own rare species lose their only slot |
 | `--new-species N` | scales | new species per table; default `round(own * R / (1 - R))`, or the own count at `R = 1` |
 | `--config FILE` | none | JSON with any of the above (snake_case) plus per-map overrides; flags win |

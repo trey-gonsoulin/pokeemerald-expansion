@@ -48,10 +48,16 @@ BATTLE_ONLY_FLAGS = frozenset({'isMegaEvolution', 'isGigantamax', 'isPrimalRever
 KEEP_EVERY_NATIVE = True
 # Earliest level for an evolution that isn't by level (stone, trade,
 # friendship...): max(pre-evolution's earliest level + GAP, FLOOR).
-# Evolutions out of baby species (no eggs, but evolves) have no floor, so
-# Pikachu and Marill stay low-level species.
+# Evolutions out of baby species have no floor, so Pikachu and Marill stay
+# low-level species.
 NONLEVEL_EVO_GAP = 10
 NONLEVEL_EVO_FLOOR = 30
+BABY_SPECIES = frozenset('SPECIES_' + s for s in (
+    'PICHU', 'CLEFFA', 'IGGLYBUFF', 'TOGEPI', 'TYROGUE', 'SMOOCHUM', 'ELEKID', 'MAGBY',
+    'AZURILL', 'WYNAUT', 'BUDEW', 'CHINGLING', 'BONSLY', 'MIME_JR', 'HAPPINY', 'MUNCHLAX',
+    'RIOLU', 'MANTYKE', 'TOXEL'))
+# Alolan, Galarian, Hisuian and Paldean forms (skipped with --no-regional-forms).
+REGIONAL_FLAGS = frozenset({'isAlolanForm', 'isGalarianForm', 'isHisuianForm', 'isPaldeanForm'})
 # Config headers that aren't part of a normal build.
 SKIPPED_CONFIGS = ('test.h',)
 
@@ -154,6 +160,7 @@ class SpeciesInfo:
         defines = parse_defines(repo)
         info_dir = os.path.join(repo, 'src', 'data', 'pokemon', 'species_info')
         entries = collections.defaultdict(list)
+        entry_files = {}
         for name in sorted(os.listdir(info_dir)):
             if not re.fullmatch(r'gen_\d+_families\.h', name):
                 continue
@@ -162,6 +169,7 @@ class SpeciesInfo:
                 m = re.match(r'\s*\[(SPECIES_\w+)\]\s*=', line)
                 if m:
                     current = m[1]
+                    entry_files.setdefault(current, name)
                 if current:
                     entries[current].append(line)
         with open(os.path.join(repo, 'include', 'constants', 'species.h'), encoding='utf-8') as f:
@@ -171,15 +179,14 @@ class SpeciesInfo:
         self.enabled |= {a for a in self.alias if self.canon(a) in self.enabled}
         self.flags = {}
         self.pre_evos = collections.defaultdict(list)  # species -> [(from, method, param)]
-        self.baby = set()
+        # Generation of each species' family file; restock() refines it from the pools.
+        self.gen = {sp: int(re.search(r'\d+', name)[0]) for sp, name in entry_files.items()}
         for sp, lines in entries.items():
             text = ''.join(lines)
             self.flags[sp] = set(re.findall(r'\.(is\w+)\s*=\s*TRUE', text))
             m = re.search(r'\.evolutions\s*=\s*EVOLUTION\(', text)
             if not m:
                 continue
-            if 'EGG_GROUP_NO_EGGS_DISCOVERED' in text:
-                self.baby.add(sp)
             for method, param, target in re.findall(
                     r'\{\s*(EVO_\w+)\s*,\s*([^,{}]+?)\s*,\s*(SPECIES_\w+)', balanced(text, m.end())):
                 if target in self.enabled:
@@ -196,6 +203,17 @@ class SpeciesInfo:
     def flags_of(self, species):
         return self.flags.get(self.canon(species), set())
 
+    def gen_of(self, species):
+        return self.gen.get(self.canon(species))
+
+    def learn_gens(self, pools):
+        """Take each pool species' generation from the pools (PokeAPI), which,
+        unlike the family files, put Pichu in Gen 2."""
+        for arch in pools['archetypes'].values():
+            for pool in arch.get('pools', {}).values():
+                for e in pool:
+                    self.gen[self.canon(e['species'])] = e['introduced_gen']
+
     def min_level(self, species, _seen=()):
         """Earliest level a species can have through its evolution line."""
         species = self.canon(species)
@@ -210,7 +228,7 @@ class SpeciesInfo:
                 options.append(max(base, int(param)))
             elif method == 'EVO_SPLIT_FROM_EVO' and param not in _seen + (species,):
                 options.append(self.min_level(param, _seen + (species,)))  # Shedinja: as Ninjask
-            elif src in self.baby:
+            elif src in BABY_SPECIES:
                 options.append(base)
             else:
                 options.append(max(base + NONLEVEL_EVO_GAP, NONLEVEL_EVO_FLOOR))
@@ -258,7 +276,8 @@ def parse_species_list(values):
 class Settings:
     def __init__(self, ratio=DEFAULT_RATIO, seed=DEFAULT_SEED, regions=DEFAULT_REGIONS,
                  gens=None, gen_weight=None, allow=(), deny=(), allow_legendaries=False,
-                 maps=None, new_species=None, keep_every_native=KEEP_EVERY_NATIVE):
+                 maps=None, new_species=None, keep_every_native=KEEP_EVERY_NATIVE,
+                 regional_forms=True):
         self.ratio = ratio
         self.seed = seed
         self.regions = set(regions)
@@ -270,6 +289,7 @@ class Settings:
         self.maps = maps or {}  # base_label -> {ratio, allow, deny, skip, new_species}
         self.new_species = new_species
         self.keep_every_native = keep_every_native
+        self.regional_forms = regional_forms
 
     def for_map(self, label):
         """(ratio, allow, deny, new_species, skip) with per-map overrides applied."""
@@ -327,25 +347,32 @@ def weighted_sample(rng, weights, k, group=lambda s: s):
     return picked
 
 
-def candidates(pool, info, settings, allow, deny, natives):
+def candidates(pool, info, settings, allow, deny, natives, levels=()):
     """Pool species that may be added to a table, with their draw weights.
 
-    Species from an evolution line the table already has are left out.
+    Species from an evolution line the table already has are left out. So is
+    any species that would be devolved, for one of the slot ``levels``, into a
+    stage that fails the filters: denying Zubat also keeps Golbat out of
+    low-level tables.
     """
+    def allowed(sp, gen):
+        if sp not in info.enabled or sp in deny or (allow and sp not in allow):
+            return False
+        if settings.gens and gen not in settings.gens:
+            return False
+        flags = info.flags_of(sp)
+        return not (flags & BATTLE_ONLY_FLAGS
+                    or (not settings.allow_legendaries and flags & LEGENDARY_FLAGS)
+                    or (not settings.regional_forms and flags & REGIONAL_FLAGS))
+
     native_lines = {info.family(s) for s in natives}
     out = {}
     for e in pool:
         sp = e['species']
-        if sp not in info.enabled or sp in deny or info.family(sp) in native_lines:
+        if info.family(sp) in native_lines or not allowed(sp, e['introduced_gen']):
             continue
-        if allow and sp not in allow:
-            continue
-        if settings.gens and e['introduced_gen'] not in settings.gens:
-            continue
-        flags = info.flags_of(sp)
-        if flags & BATTLE_ONLY_FLAGS:
-            continue
-        if not settings.allow_legendaries and flags & LEGENDARY_FLAGS:
+        stages = {info.devolve(sp, lv) for lv in levels} - {sp}
+        if not all(allowed(st, info.gen_of(st)) for st in stages):
             continue
         w = e['share'] * settings.gen_weight.get(e['introduced_gen'], 1.0)
         if w > 0:
@@ -365,7 +392,8 @@ def restock_table(mons, rates, pool, info, settings, label, field):
     kept = {s: r for s, r in natives.items() if s not in deny and s != 'SPECIES_NONE'}
     if not kept:
         ratio = 1.0
-    cands = candidates(pool, info, settings, allow, deny, set(natives))
+    cands = candidates(pool, info, settings, allow, deny, set(natives),
+                       {m['max_level'] for m in mons})
     if not cands:
         return None
     if new_species is None:
@@ -408,6 +436,7 @@ def restock(wild, emerald_maps, pools, info, settings):
     group = next(g for g in wild['wild_encounter_groups'] if g['label'] == 'gWildMonHeaders')
     field_defs = {fd['type']: fd for fd in group['fields']}
     archetypes = pools['archetypes']
+    info.learn_gens(pools)
     changes = []
     for enc in group['encounters']:
         label = enc['base_label']
@@ -475,7 +504,8 @@ def write_report(path, changes, settings):
              'Generated by `tools/area_archetypes/area_archetypes.py restock`.', '',
              f'- ratio {settings.ratio}, seed {settings.seed}, regions {", ".join(sorted(settings.regions))}, '
              f'gens {",".join(map(str, sorted(settings.gens))) if settings.gens else "all"}, '
-             f'legendaries {"allowed" if settings.allow_legendaries else "excluded"}',
+             f'legendaries {"allowed" if settings.allow_legendaries else "excluded"}, '
+             f'regional forms {"allowed" if settings.regional_forms else "excluded"}',
              f'- {s["maps_changed"]} maps, {s["tables_changed"]} tables, {s["slots_changed"]} slots changed',
              f'- {s["distinct_species_added"]} species added somewhere, '
              f'{s["distinct_species_removed"]} removed somewhere', '']
@@ -526,6 +556,8 @@ def main(argv=None):
                    help='let legendary, mythical, Ultra Beast and Paradox species into the draw')
     p.add_argument('--drop-rare-natives', action='store_true',
                    help="let a table's own rare species lose their only slot (default: each keeps one)")
+    p.add_argument('--no-regional-forms', action='store_true',
+                   help='never draw Alolan, Galarian, Hisuian or Paldean forms')
     p.add_argument('--new-species', type=int,
                    help='new species per table (default: scales with ratio and the table\'s own species count)')
     p.add_argument('--config', help='JSON file with any of the options above plus per-map overrides; '
@@ -558,7 +590,8 @@ def main(argv=None):
         deny=parse_species_list(args.deny or cfg.get('deny')),
         allow_legendaries=args.allow_legendaries or bool(cfg.get('allow_legendaries')),
         maps=cfg.get('maps'), new_species=opt('new_species', None),
-        keep_every_native=not (args.drop_rare_natives or cfg.get('drop_rare_natives')))
+        keep_every_native=not (args.drop_rare_natives or cfg.get('drop_rare_natives')),
+        regional_forms=not (args.no_regional_forms or cfg.get('no_regional_forms')))
 
     info = SpeciesInfo(args.repo)
     named = settings.allow | settings.deny
