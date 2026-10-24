@@ -152,6 +152,45 @@ def balanced(text, start):
     return text[start:]
 
 
+def split_args(text):
+    """'A, f(b, c), D' -> ['A', 'f(b, c)', 'D']."""
+    args, depth, cur = [], 0, []
+    for ch in text:
+        if ch == ',' and depth == 0:
+            args.append(''.join(cur).strip())
+            cur = []
+            continue
+        depth += (ch == '(') - (ch == ')')
+        cur.append(ch)
+    return args + [''.join(cur).strip()]
+
+
+def expand_macros(text, macros, pattern, depth=0):
+    """Expand the family files' own macros, e.g. SPEWPA_SPECIES_INFO(POLAR)."""
+    if not pattern or depth > 8:
+        return text
+    out, pos = [], 0
+    while m := pattern.search(text, pos):
+        params, body = macros[m[1]]
+        end = m.end()
+        if params is not None:
+            call = re.match(r'\s*\(', text[end:])
+            if not call:
+                out.append(text[pos:end])
+                pos = end
+                continue
+            start = end + call.end()
+            inner = balanced(text, start)
+            end = start + len(inner) + 1
+            args = dict(zip(params, split_args(inner)))
+            body = re.sub(r'\w+', lambda w: args.get(w[0], w[0]), body)
+            body = re.sub(r'\s*##\s*', '', body)
+        out += [text[pos:m.start()], expand_macros(body, macros, pattern, depth + 1)]
+        pos = end
+    out.append(text[pos:])
+    return ''.join(out)
+
+
 class SpeciesInfo:
     """Which species the build enables, their flags, and their pre-evolutions."""
 
@@ -161,17 +200,35 @@ class SpeciesInfo:
         info_dir = os.path.join(repo, 'src', 'data', 'pokemon', 'species_info')
         entries = collections.defaultdict(list)
         entry_files = {}
+        macros = {}  # name -> (params or None, body)
         for name in sorted(os.listdir(info_dir)):
             if not re.fullmatch(r'gen_\d+_families\.h', name):
                 continue
             current = None
+            macro = None  # [name, params, body lines] while reading a multi-line #define
             for line in active_lines(os.path.join(info_dir, name), defines):
+                line = line.rstrip('\n')
+                if macro:
+                    macro[2].append(line.rstrip().removesuffix('\\'))
+                    if not line.rstrip().endswith('\\'):
+                        macros[macro[0]] = (macro[1], '\n'.join(macro[2]))
+                        macro = None
+                    continue
+                m = re.match(r'\s*#\s*define\s+(\w+)(?:\(([^)]*)\))?\s*(.*)', line)
+                if m:
+                    params = [x.strip() for x in m[2].split(',')] if m[2] is not None else None
+                    body = m[3].rstrip()
+                    if body.endswith('\\'):
+                        macro = [m[1], params, [body.removesuffix('\\')]]
+                    else:
+                        macros[m[1]] = (params, body)
+                    continue
                 m = re.match(r'\s*\[(SPECIES_\w+)\]\s*=', line)
                 if m:
                     current = m[1]
                     entry_files.setdefault(current, name)
                 if current:
-                    entries[current].append(line)
+                    entries[current].append(line + '\n')
         with open(os.path.join(repo, 'include', 'constants', 'species.h'), encoding='utf-8') as f:
             # SPECIES_BURMY = SPECIES_BURMY_PLANT and the like
             self.alias = dict(re.findall(r'^\s*(SPECIES_\w+)\s*=\s*(SPECIES_\w+)\s*,', f.read(), re.M))
@@ -181,8 +238,9 @@ class SpeciesInfo:
         self.pre_evos = collections.defaultdict(list)  # species -> [(from, method, param)]
         # Generation of each species' family file; restock() refines it from the pools.
         self.gen = {sp: int(re.search(r'\d+', name)[0]) for sp, name in entry_files.items()}
+        pattern = re.compile(r'\b(' + '|'.join(map(re.escape, macros)) + r')\b') if macros else None
         for sp, lines in entries.items():
-            text = ''.join(lines)
+            text = expand_macros(''.join(lines), macros, pattern)
             self.flags[sp] = set(re.findall(r'\.(is\w+)\s*=\s*TRUE', text))
             m = re.search(r'\.evolutions\s*=\s*EVOLUTION\(', text)
             if not m:
@@ -220,14 +278,15 @@ class SpeciesInfo:
         if species in self._min_level:
             return self._min_level[species]
         options = []
+        path = _seen + (species,)
         for src, method, param in self.pre_evos.get(species, ()):
             if src in _seen:
                 continue
-            base = self.min_level(src, _seen + (species,))
+            base = self.min_level(src, path)
             if method.startswith('EVO_LEVEL') and param.isdigit() and int(param) > 0:
                 options.append(max(base, int(param)))
-            elif method == 'EVO_SPLIT_FROM_EVO' and param not in _seen + (species,):
-                options.append(self.min_level(param, _seen + (species,)))  # Shedinja: as Ninjask
+            elif method == 'EVO_SPLIT_FROM_EVO' and param not in path:
+                options.append(self.min_level(param, path))  # Shedinja: as Ninjask
             elif src in BABY_SPECIES:
                 options.append(base)
             else:
@@ -267,7 +326,7 @@ def parse_gens(text):
 
 def parse_species_list(values):
     out = set()
-    for v in values or ():
+    for v in [values] if isinstance(values, str) else values or ():
         for s in filter(None, (x.strip() for x in v.split(','))):
             out.add(s if s.startswith('SPECIES_') else 'SPECIES_' + s.upper())
     return out
@@ -347,7 +406,7 @@ def weighted_sample(rng, weights, k, group=lambda s: s):
     return picked
 
 
-def candidates(pool, info, settings, allow, deny, natives, levels=()):
+def candidates(pool, info, settings, allow, deny, natives, levels):
     """Pool species that may be added to a table, with their draw weights.
 
     Species from an evolution line the table already has are left out. So is
@@ -384,30 +443,32 @@ def restock_table(mons, rates, pool, info, settings, label, field):
     """New species for one table's slots, or None to leave it alone."""
     ratio, allow, deny, new_species, skip = settings.for_map(label)
     ratio = min(max(ratio, 0.0), 1.0)
-    if skip or ratio == 0:
-        return None
     natives = collections.Counter()
     for m, r in zip(mons, rates):
         natives[m['species']] += r
-    kept = {s: r for s, r in natives.items() if s not in deny and s != 'SPECIES_NONE'}
+    real = [s for s in natives if s != 'SPECIES_NONE']
+    kept = {s: natives[s] for s in real if s not in deny}
+    denied = len(kept) < len(real)  # denied natives go even if nothing is added
+    if skip or (ratio == 0 and not denied):
+        return None
     if not kept:
         ratio = 1.0
-    cands = candidates(pool, info, settings, allow, deny, set(natives),
-                       {m['max_level'] for m in mons})
-    if not cands:
-        return None
     if new_species is None:
-        n = max(len(kept), 1)
+        n = len(kept) or len(real) or 1
         new_species = n if ratio >= 1 else max(1, round(n * ratio / (1 - ratio)))
     keep_all = ratio < 1 and settings.keep_every_native
     room = len(rates) - (len(kept) if keep_all else 0)
-    if room <= 0:
+    cands, picked = {}, []
+    if ratio > 0 and room > 0:
+        cands = candidates(pool, info, settings, allow, deny, set(natives),
+                           {m['max_level'] for m in mons})
+        rng = random.Random(f'{settings.seed}/{label}/{field}')
+        picked = weighted_sample(rng, cands, min(int(new_species), room), info.family)
+    if not picked and not denied:
         return None
-    rng = random.Random(f'{settings.seed}/{label}/{field}')
-    picked = weighted_sample(rng, cands, min(int(new_species), room), info.family)
     targets = collections.Counter()
     kept_total = sum(kept.values())
-    for s, r in kept.items() if ratio < 1 else ():
+    for s, r in kept.items() if ratio < 1 or not picked else ():
         targets[s] += (1 - ratio) * r / kept_total
     picked_total = sum(cands[s] for s in picked)
     for s in picked:
