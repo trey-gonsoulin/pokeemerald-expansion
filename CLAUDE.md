@@ -18,10 +18,13 @@ What the fork adds over upstream (`git diff origin/master...origin/emerald-plus 
 
 ## Build
 
-devkitARM lives at `/opt/devkitpro/devkitARM` and is **not** on PATH. `TOOLCHAIN=` alone isn't enough, because trainerproc header generation needs the bin dir on PATH:
+devkitARM lives at `/opt/devkitpro/devkitARM` and is **not** on PATH. `TOOLCHAIN=` alone isn't enough, because trainerproc header generation needs the bin dir on PATH.
+
+The owner's shell exports `CPATH` (macOS SDK headers) and `LDFLAGS` (Homebrew). `arm-none-eabi-gcc` honours `CPATH`, so unset the host compiler variables first. Otherwise the GBA code compiles against Darwin's libc headers with `_FORTIFY_SOURCE`: `make debug` and `make check` then fail to link, and the ROM bytes depend on the shell. (The Makefile overrides `LDFLAGS`/`CPPFLAGS` but appends to `CFLAGS`, and the host tool builds may read any of them, so unset the whole set.)
 
 ```sh
 export PATH=/opt/devkitpro/devkitARM/bin:$PATH
+unset CPATH C_INCLUDE_PATH CPLUS_INCLUDE_PATH OBJC_INCLUDE_PATH LIBRARY_PATH LDFLAGS CFLAGS CPPFLAGS
 make -j16 TOOLCHAIN=/opt/devkitpro/devkitARM                       # pokeemerald.gba: debug menus ON
 make -j16 release TOOLCHAIN=/opt/devkitpro/devkitARM               # pokeemerald-release.gba: debug menus OFF
 make -j16 build/emerald/src/debug.o TOOLCHAIN=/opt/devkitpro/devkitARM  # compile one file (~20 s cold)
@@ -30,14 +33,16 @@ make -j16 build/emerald/src/debug.o TOOLCHAIN=/opt/devkitpro/devkitARM  # compil
 - These all work on a fresh checkout or worktree, because they build the tools and generated sources first.
   - `make generated` and `make tools` don't: `generated` skips the tool prebuild, so a cold run fails with `No rule to make target tools/mapjson/mapjson`.
   - To get the generated headers alone, run `make -j16 -f make_tools.mk` first.
-- `.claude/build.sh <worktree> [rom|release|generated|src/x.c]` wraps all of this. It sets PATH, logs to `build/`, and prints only the exit code and unexpected warnings.
+- `.claude/build.sh <worktree> [rom|release|debug|check [TESTS]|generated|src/x.c]` wraps all of this. It sets PATH, unsets the host compiler variables, logs to `build/`, and prints only the exit code and unexpected warnings (plus the test summary for `check`).
 
 - The debug menus are `DISABLED_ON_RELEASE` (`include/config/debug.h`), so plain `make` gives the ROM with the debug menus. In the overworld, open the menu by holding R and pressing Start.
-- `make debug` (the -Og/-g build) fails to link with gcc 16.1 (#27). Use plain `make` instead.
+- `make debug` (the -Og/-g build) links once the env is clean. Its old link failure (#27: undefined `__getreent`, `_getpid_r`, `_kill_r`, `_write_r`) came from the `CPATH` leak, not gcc 16.1.
 - `make firered` / `make leafgreen` build other games through `GAME_VERSION`.
 - Warnings that are expected and not regressions: pokedex.c stringop-overflow, LTO type mismatches and the RWX segment linker warning.
 
 ## Tests
+
+Run these in the same shell setup as the build (devkitARM on PATH, host compiler variables unset), or use `.claude/build.sh <worktree> check ["Lucky Egg"]`.
 
 ```sh
 make check -j16 TOOLCHAIN=/opt/devkitpro/devkitARM                    # all tests, headless via mgba-rom-test-hydra
