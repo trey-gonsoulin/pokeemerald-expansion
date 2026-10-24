@@ -316,13 +316,19 @@ def run_quietly(argv):
         return R.main(argv)
 
 
+def first_stamp(path):
+    return R.load_json(path)[AA.RESTOCK_STAMP]
+
+
 class CliTests(unittest.TestCase):
     def test_writes_preview_and_report_without_touching_src(self):
         with tempfile.TemporaryDirectory() as tmp:
             wild = os.path.join(tmp, 'wild_encounters.json')
             out = os.path.join(tmp, 'out')
+            src = read(AA.SRC_WILD)
             run_quietly(['--wild', wild, '--out-dir', out, '--ratio', '0.25', '--seed', '7'])
             self.assertFalse(os.path.exists(wild))
+            self.assertEqual(read(AA.SRC_WILD), src)
             self.assertTrue(os.path.exists(os.path.join(out, 'restock_report.md')))
             preview = os.path.join(out, 'wild_encounters.json')
             run_quietly(['--wild', wild, '--out-dir', out, '--ratio', '0.25', '--seed', '7', '--write'])
@@ -346,10 +352,24 @@ class CliTests(unittest.TestCase):
             run_quietly(['--wild', wild, '--out-dir', out, '--write'])
             with self.assertRaises(SystemExit):
                 run_quietly(['--base', wild, '--out-dir', out])
-            run_quietly(['--base', wild, '--out-dir', out, '--force'])
+            forced, _ = run_quietly(['--base', wild, '--out-dir', out, '--force'])
+            self.assertEqual(forced[AA.RESTOCK_STAMP]['base_restocked_by'], first_stamp(wild))
             with self.assertRaises(SystemExit):
                 AA.refresh_baseline(wild, os.path.join(tmp, 'base.json'))
             self.assertFalse(os.path.exists(os.path.join(tmp, 'base.json')))
+
+    def test_write_refuses_to_drop_non_species_changes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            wild = os.path.join(tmp, 'wild_encounters.json')
+            out = os.path.join(tmp, 'out')
+            edited = R.load_json(WILD)
+            edited['wild_encounter_groups'][0]['encounters'].pop()
+            R.dump_wild(edited, wild)
+            with self.assertRaises(SystemExit):
+                run_quietly(['--wild', wild, '--out-dir', out, '--write'])
+            self.assertEqual(R.load_json(wild), edited)
+            run_quietly(['--wild', wild, '--out-dir', out, '--write', '--force'])
+            self.assertEqual(R.skeleton(R.load_json(wild)), R.skeleton(R.load_json(WILD)))
 
     def test_baseline_copies_a_vanilla_file(self):
         with tempfile.TemporaryDirectory() as tmp:

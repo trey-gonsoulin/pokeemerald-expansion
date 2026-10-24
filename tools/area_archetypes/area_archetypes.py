@@ -28,6 +28,7 @@ Archetype rules live in ``archetypes.py``.
 import argparse
 import collections
 import csv
+import hashlib
 import json
 import os
 import re
@@ -63,17 +64,20 @@ MD_TOP_N = 15
 # ---------------------------------------------------------------------------
 
 def load_base(path, force=False):
-    """wild_encounters.json at path, refusing one restock wrote unless force."""
-    with open(path, encoding='utf-8') as f:
-        wild = json.load(f)
+    """(wild_encounters.json at path, its SHA-256), refusing one restock wrote unless force."""
+    with open(path, 'rb') as f:
+        raw = f.read()
+    wild = json.loads(raw)
     if RESTOCK_STAMP in wild and not force:
         sys.exit(f'{path} was written by restock ({RESTOCK_STAMP} is set), so it is not a vanilla '
                  f'baseline; pass a vanilla file, or --force to use it anyway')
-    return wild
+    return wild, hashlib.sha256(raw).hexdigest()
 
 
 def refresh_baseline(src=SRC_WILD, base=VANILLA_WILD, force=False):
     """Copy src over the vanilla baseline, unless restock wrote src."""
+    if os.path.exists(base) and os.path.samefile(src, base):
+        sys.exit(f'{src} is already the baseline')
     load_base(src, force)
     shutil.copyfile(src, base)
     print(f'wrote {base} from {src}')
@@ -517,7 +521,7 @@ def build(cache, out_dir, repo, base=VANILLA_WILD, force=False):
     tables = build_tables(data)
     classify_tables(data, tables)
     pools, sources = build_pools(data, smap, tables)
-    emerald = classify_emerald(data, smap, load_base(base, force), water_habitat_by_location(tables))
+    emerald = classify_emerald(data, smap, load_base(base, force)[0], water_habitat_by_location(tables))
     write_outputs(out_dir, data, tables, pools, sources, emerald)
     counts = collections.Counter(t.archetype for t in tables)
     wild = {pid for t in tables for pid in t.weight}
@@ -544,15 +548,17 @@ def main(argv=None):
     p.add_argument('--out', default=DEFAULT_OUT, help='output dir')
     p.add_argument('--base', default=VANILLA_WILD,
                    help='vanilla wild_encounters.json that build classifies and baseline writes')
-    p.add_argument('--wild', default=SRC_WILD, help='file baseline copies from')
+    p.add_argument('--wild', help='file baseline copies from (default src/data/wild_encounters.json)')
     p.add_argument('--force', action='store_true', help='accept a --base or --wild that restock wrote')
     args = p.parse_args(argv)
     if args.command == 'restock':
         p.error('restock must come first: area_archetypes.py restock [options]')
+    if args.wild and args.command != 'baseline':
+        p.error('--wild only applies to baseline')
     if args.command == 'fetch':
         fetch(args.cache)
     elif args.command == 'baseline':
-        refresh_baseline(args.wild, args.base, args.force)
+        refresh_baseline(args.wild or SRC_WILD, args.base, args.force)
     else:
         build(args.cache, args.out, REPO, args.base, args.force)
 

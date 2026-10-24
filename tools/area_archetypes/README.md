@@ -135,8 +135,11 @@ Every file `restock` writes (the preview and `--write`) carries a top-level
 `restocked_by` stamp with the base's SHA-256, the seed and the ratio. The game
 build ignores it. `restock --base`, `build --base` and `baseline` refuse a
 stamped file unless `--force`, so a restocked file can't become the baseline
-by mistake. A tool that rewrites the file, such as
-Porymap, may drop the stamp.
+by mistake. A tool that rewrites the file, such as Porymap, may drop the stamp,
+and then nothing can tell it from vanilla: once a restock is committed,
+refresh the baseline from upstream's copy (below). `restock --write` also refuses, unless `--force`, when the file it would
+overwrite differs from the base in anything but species (an upstream merge
+since the last `baseline`, or a hand edit), since the write would lose it.
 
 Refresh the snapshot when upstream changes `src/data/wild_encounters.json`,
 then rerun `build` and `restock --write`:
@@ -145,7 +148,7 @@ then rerun `build` and `restock --write`:
 # src/data/wild_encounters.json still vanilla (nothing restocked committed yet):
 python3 tools/area_archetypes/area_archetypes.py baseline
 # Already restocked: take upstream's copy instead.
-git show origin/master:src/data/wild_encounters.json > /tmp/wild_encounters.json
+git show upstream/master:src/data/wild_encounters.json > /tmp/wild_encounters.json
 python3 tools/area_archetypes/area_archetypes.py baseline --wild /tmp/wild_encounters.json
 ```
 
@@ -166,7 +169,7 @@ python3 tools/area_archetypes/area_archetypes.py baseline --wild /tmp/wild_encou
 | `--base FILE` | `output/wild_encounters.vanilla.json` | vanilla file the natives come from |
 | `--wild FILE` | `src/data/wild_encounters.json` | file `--write` overwrites; never read |
 | `--write` | off | also overwrite `--wild` |
-| `--force` | off | accept a `--base` that `restock` wrote |
+| `--force` | off | accept a `--base` that `restock` wrote, and `--write` over a `--wild` that differs from it in more than species |
 
 Per-map overrides go under `maps`, keyed by base label:
 
