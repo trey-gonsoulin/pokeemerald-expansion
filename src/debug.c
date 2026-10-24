@@ -1200,9 +1200,12 @@ static void DestroyDebugIcon(u8 taskId)
 {
     if (gTasks[taskId].tSpriteId != SPRITE_NONE)
     {
+        // A failed icon creator returns MAX_SPRITES, possibly after loading
+        // the tiles and palette, so free the tags but don't destroy a sprite.
         FreeSpriteTilesByTag(DEBUG_ICON_TAG);
         FreeSpritePaletteByTag(DEBUG_ICON_TAG);
-        DestroySprite(&gSprites[gTasks[taskId].tSpriteId]);
+        if (gTasks[taskId].tSpriteId < MAX_SPRITES)
+            DestroySprite(&gSprites[gTasks[taskId].tSpriteId]);
         gTasks[taskId].tSpriteId = SPRITE_NONE;
     }
 }
