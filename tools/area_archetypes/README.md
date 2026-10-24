@@ -11,6 +11,7 @@ Zigzagoon, Bidoof, Patrat, Lillipup, Skwovet... with how common each one is.
 ```sh
 python3 tools/area_archetypes/area_archetypes.py fetch   # once: PokeAPI CSVs -> .cache/
 python3 tools/area_archetypes/area_archetypes.py build   # classify + write output/
+python3 tools/area_archetypes/area_archetypes.py restock # preview restocked wild_encounters.json
 python3 -m unittest discover -s tools/area_archetypes    # tests
 ```
 
@@ -79,6 +80,67 @@ Pinwheel Forest is `forest/early` in BW but `forest/endgame` in BW2.
 - **`area_classification.csv`**: every source table with its archetype, level,
   the rule that fired, and its top species. Use it to audit and tune the rules.
 
+## Restocking `wild_encounters.json`
+
+`restock` (in `restock.py`) puts the pools into the game. It reads
+`output/archetype_pools.json` and `output/emerald_maps.json`, so it doesn't
+need the PokeAPI cache. For each table of each selected map it:
+
+1. Keeps the table's own species, scaled down to `1 - ratio` of the table.
+2. Draws new species from the table's archetype pool, weighted by `share`
+   and a seeded RNG, at most one per evolution line and none from a line the
+   table already has. They share `ratio` of the table by pool share.
+3. Hands out the slots from the highest rate down to whichever species is
+   furthest below its share, so the most common species take the 20% (or 60%)
+   slots. Below ratio 1, each of the table's own species keeps at least one
+   slot; if they already fill every slot, the table is left alone.
+4. Devolves each new species to the stage that fits its slot's max level,
+   using the `.evolutions` in `src/data/pokemon/species_info/`. Level
+   evolutions use their level; stone, trade and friendship evolutions count
+   as `max(pre-evolution + 10, 30)`, except out of babies (Pichu -> Pikachu).
+
+Slot counts, encounter rates and every slot's levels stay as they are. Only
+species enabled by `include/config/species_enabled.h` (`P_GEN_*`,
+`P_FAMILY_*`, regional forms...) are placed. Legendary, mythical, Ultra Beast
+and Paradox species and battle-only forms are left out. Battle Pyramid/Pike
+tables are never touched.
+
+```sh
+# Preview: writes tools/area_archetypes/restock/{wild_encounters.json,restock_report.md}
+python3 tools/area_archetypes/area_archetypes.py restock
+# Happy with the report? Overwrite src/data/wild_encounters.json, then build.
+python3 tools/area_archetypes/area_archetypes.py restock --write
+```
+
+`restock_report.md` lists every changed table slot by slot (`=` = unchanged).
+The same options and seed always give the same output.
+
+| option | default | meaning |
+|---|---|---|
+| `--ratio R` | `0.5` | share of each table given to new species; `0` = unchanged, `1` = replace all |
+| `--seed N` | `1` | RNG seed; each table also seeds from its label, so tables don't shift when others change |
+| `--regions` | `hoenn` | `hoenn,kanto` to restock the FRLG tables too |
+| `--gens 4-9` | all | generations new species may come from |
+| `--gen-weight 4=2` | none | multiply a generation's draw weight ("favour Gen 4+"); repeatable |
+| `--allow SPECIES,...` | none | draw new species only from these |
+| `--deny SPECIES,...` | none | never place these, and drop them where they're native |
+| `--allow-legendaries` | off | let legendaries etc. into the draw |
+| `--drop-rare-natives` | off | let a table's own rare species lose their only slot |
+| `--new-species N` | scales | new species per table; default `round(own * R / (1 - R))`, or the own count at `R = 1` |
+| `--config FILE` | none | JSON with any of the above (snake_case) plus per-map overrides; flags win |
+| `--write` | off | also overwrite `src/data/wild_encounters.json` |
+
+Per-map overrides go under `maps`, keyed by base label:
+
+```json
+{"ratio": 0.4, "gens": "4-9", "deny": ["SPECIES_ZUBAT"],
+ "maps": {"gRoute101": {"ratio": 0.25},
+          "gRoute130": {"skip": true},
+          "gGraniteCave_1F": {"allow": ["SPECIES_ROGGENROLA", "SPECIES_WOOBAT"], "deny": ["SPECIES_ABRA"]}}}
+```
+
+A map's `allow` replaces the global list, its `deny` adds to it.
+
 ## Limitations
 
 Tracked as issues on the
@@ -104,5 +166,6 @@ Tracked as issues on the
   shaking grass/rippling water "spots", ambushes and flower patches are kept
   but weighted at ¼ inside their table
   ([#7](https://github.com/trey-gonsoulin/pokeemerald-expansion/issues/7)).
-- Nothing writes the pools back into `wild_encounters.json` yet
-  ([#8](https://github.com/trey-gonsoulin/pokeemerald-expansion/issues/8)).
+- `restock` reads `species_enabled.h` and the other config headers with a
+  small `#if` evaluator, not the real preprocessor, and its non-level
+  evolution levels are a heuristic. Check the report before `--write`.
