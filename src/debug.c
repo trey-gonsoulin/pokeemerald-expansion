@@ -1198,13 +1198,13 @@ static void Debug_CreateInputDisplayWindow(u8 taskId)
 
 static void DestroyDebugIcon(u8 taskId)
 {
-    if (gTasks[taskId].tSpriteId != SPRITE_NONE)
-    {
-        FreeSpriteTilesByTag(DEBUG_ICON_TAG);
-        FreeSpritePaletteByTag(DEBUG_ICON_TAG);
+    // No icon is SPRITE_NONE, but a failed icon creator returns MAX_SPRITES,
+    // possibly after loading the tiles and palette, so always free the tags.
+    FreeSpriteTilesByTag(DEBUG_ICON_TAG);
+    FreeSpritePaletteByTag(DEBUG_ICON_TAG);
+    if (gTasks[taskId].tSpriteId < MAX_SPRITES)
         DestroySprite(&gSprites[gTasks[taskId].tSpriteId]);
-        gTasks[taskId].tSpriteId = SPRITE_NONE;
-    }
+    gTasks[taskId].tSpriteId = SPRITE_NONE;
 }
 
 static void Debug_ResetInputDisplayMonIcon(u8 taskId, enum Species species)
