@@ -270,7 +270,6 @@ static u32 Debug_GenerateListFlagsMenu(const struct DebugMenuOption *items);
 static u32 Debug_GenerateListOutbreakMenu(const struct DebugMenuOption *items);
 static void Debug_DestroyMenu(u8 taskId);
 static void DebugAction_Cancel(u8 taskId);
-static void DebugAction_DestroyExtraWindow(u8 taskId);
 static u8 DebugNativeStep_CreateDebugWindow(void);
 static void DebugNativeStep_CloseDebugWindow(u8 taskId);
 
@@ -986,12 +985,23 @@ static void Debug_ShowMenu(DebugFunc HandleInput, const struct DebugMenuOption *
     CopyWindowToVram(windowId, COPYWIN_FULL);
 }
 
+// Closes a window whose id is stored in task data and marks it as gone, so
+// later teardown never clears or removes the same window id twice.
+static void Debug_RemoveWindowIfShown(s16 *windowId)
+{
+    if (*windowId != WINDOW_NONE)
+    {
+        ClearStdWindowAndFrame(*windowId, TRUE);
+        RemoveWindow(*windowId);
+        *windowId = WINDOW_NONE;
+    }
+}
+
 static void Debug_CreateInputDisplayWindow(u8 taskId)
 {
     u8 windowId;
 
-    ClearStdWindowAndFrame(gTasks[taskId].tWindowId, TRUE);
-    RemoveWindow(gTasks[taskId].tWindowId);
+    Debug_RemoveWindowIfShown(&gTasks[taskId].tWindowId);
     LoadMessageBoxAndBorderGfx();
     windowId = AddWindow(&sDebugMenuWindowTemplateExtra);
     DrawStdWindowFrame(windowId, FALSE);
@@ -1006,7 +1016,7 @@ static void DestroyDebugIcon(u8 taskId)
         FreeSpriteTilesByTag(DEBUG_ICON_TAG);
         FreeSpritePaletteByTag(DEBUG_ICON_TAG);
         DestroySprite(&gSprites[gTasks[taskId].tSpriteId]);
-        gTasks[taskId].tSpriteId = 0xFF;
+        gTasks[taskId].tSpriteId = SPRITE_NONE;
     }
 }
 
@@ -1032,35 +1042,35 @@ static void DebugNativeStep_PrintWindowSelection(u8 taskId)
     AddTextPrinterParameterized(windowId, DEBUG_MENU_FONT, gStringVar4, 0, 3 * DEBUG_LINE_HEIGHT, 0, NULL);
 }
 
+// Removes the menu's windows, list and input task but keeps the menu data,
+// for switching between submenus.
 static void Debug_DestroyMenu(u8 taskId)
 {
-    if (gTasks[taskId].tSubWindowId != WINDOW_NONE)
-    {
-        DestroyDebugIcon(taskId);
-        ClearStdWindowAndFrame(gTasks[taskId].tSubWindowId, TRUE);
-        RemoveWindow(gTasks[taskId].tSubWindowId);
-    }
+    DestroyDebugIcon(taskId);
+    Debug_RemoveWindowIfShown(&gTasks[taskId].tSubWindowId);
     DestroyListMenuTask(gTasks[taskId].tMenuTaskId, NULL, NULL);
-    ClearStdWindowAndFrame(gTasks[taskId].tWindowId, TRUE);
-    RemoveWindow(gTasks[taskId].tWindowId);
+    Debug_RemoveWindowIfShown(&gTasks[taskId].tWindowId);
     DestroyTask(taskId);
+}
+
+// Every way out of the debug menu must free its data: map loads don't reset the heap.
+static void Debug_FreeMenuListData(void)
+{
+    TRY_FREE_AND_SET_NULL(sDebugMenuListData);
+}
+
+// For exits that hand over to another main callback (fly map, naming screen).
+static void Debug_DestroyMenu_Leave(u8 taskId)
+{
+    Debug_DestroyMenu(taskId);
+    Debug_FreeMenuListData();
 }
 
 static void Debug_DestroyMenu_Full(u8 taskId)
 {
-    if (gTasks[taskId].tSubWindowId != WINDOW_NONE)
-    {
-        DestroyDebugIcon(taskId);
-        ClearStdWindowAndFrame(gTasks[taskId].tSubWindowId, TRUE);
-        RemoveWindow(gTasks[taskId].tSubWindowId);
-    }
-    DestroyListMenuTask(gTasks[taskId].tMenuTaskId, NULL, NULL);
-    ClearStdWindowAndFrame(gTasks[taskId].tWindowId, TRUE);
-    RemoveWindow(gTasks[taskId].tWindowId);
-    DestroyTask(taskId);
+    Debug_DestroyMenu_Leave(taskId);
     ScriptContext_Enable();
     UnfreezeObjectEvents();
-    Free(sDebugMenuListData);
 }
 
 static void Debug_DestroyMenu_Full_Script(u8 taskId, const u8 *script)
@@ -1128,22 +1138,6 @@ static void Debug_HandleInput_SongId(u8 taskId, enum SongType type, u32 digits)
 static void DebugAction_Cancel(u8 taskId)
 {
     Debug_DestroyMenu_Full(taskId);
-    ScriptContext_Enable();
-}
-
-static void DebugAction_DestroyExtraWindow(u8 taskId)
-{
-    DestroyDebugIcon(taskId);
-    ClearStdWindowAndFrame(gTasks[taskId].tWindowId, TRUE);
-    RemoveWindow(gTasks[taskId].tWindowId);
-
-    ClearStdWindowAndFrame(gTasks[taskId].tSubWindowId, TRUE);
-    RemoveWindow(gTasks[taskId].tSubWindowId);
-
-    DestroyListMenuTask(gTasks[taskId].tMenuTaskId, NULL, NULL);
-    DestroyTask(taskId);
-    ScriptContext_Enable();
-    UnfreezeObjectEvents();
 }
 
 static u8 DebugNativeStep_CreateDebugWindow(void)
@@ -1210,8 +1204,10 @@ static void DebugAction_Selection_Cancel(u8 taskId)
     struct DebugSelection *selection = (struct DebugSelection *)GetWordTaskArg(taskId, DEBUG_SELECTION_PTR_ARG);
     if (gTasks[taskId].tStep == 0)
     {
+        // onCancel may destroy this task and reopen the menu in the same task slot, which clears its data
+        void *stepsData = (void *)GetWordTaskArg(taskId, STEPS_DATA_PTR_ARG);
         selection->onCancel(taskId);
-        Free((void *)GetWordTaskArg(taskId, STEPS_DATA_PTR_ARG));
+        Free(stepsData);
         return;
     }
     gTasks[taskId].tStep--;
@@ -1270,9 +1266,11 @@ static void DebugAction_Selection_NextStep(u8 taskId)
     gTasks[taskId].tStep++;
     if (gTasks[taskId].tStep == selection->maxSteps)
     {
+        // onComplete may destroy this task and reopen the menu in the same task slot, which clears its data
+        void *stepsData = (void *)GetWordTaskArg(taskId, STEPS_DATA_PTR_ARG);
         if (selection->onComplete(taskId))
         {
-            Free((void *)GetWordTaskArg(taskId, STEPS_DATA_PTR_ARG));
+            Free(stepsData);
             return;
         }
     }
@@ -1615,7 +1613,7 @@ static u32 Debug_GenerateListFlagsMenu(const struct DebugMenuOption *items)
 
     u8 totalItems = min(ARRAY_COUNT(sDebugMenu_Actions_Flags) - 1, DEBUG_MAX_MENU_ITEMS);
 
-    // Copy item names for all entries but the last (which is Cancel)
+    // Copy item names for all entries but the NULL terminator
     for (i = 0; i < totalItems; i++)
     {
         flagResult = Debug_CheckToggleFlags(i);
@@ -1680,7 +1678,6 @@ static void DebugTask_HandleMenuInput_General(u8 taskId)
         else
         {
             Debug_DestroyMenu_Full(taskId);
-            ScriptContext_Enable();
         }
     }
 }
@@ -1746,7 +1743,7 @@ static void DebugAction_OpenSubMenuCreateFollowerNPC(u8 taskId, const struct Deb
 
 static void DebugAction_Util_Fly(u8 taskId)
 {
-    Debug_DestroyMenu(taskId);
+    Debug_DestroyMenu_Leave(taskId);
     SetMainCallback2(CB2_OpenFlyMap);
 }
 
@@ -1803,7 +1800,7 @@ static bool32 DebugSelection_SetWarp_OnComplete(u8 taskId)
         DebugSelection_GetData(taskId, 1), DebugSelection_GetData(taskId, 2));
     DoWarp();
     ResetInitialPlayerAvatarState();
-    DebugAction_DestroyExtraWindow(taskId);
+    Debug_DestroyMenu_Full(taskId);
     ScriptContext_Stop();
     return TRUE;
 }
@@ -1974,6 +1971,7 @@ static void DebugAction_Util_WatchCredits(u8 taskId)
 
 static void DebugAction_Player_Name(u8 taskId)
 {
+    Debug_DestroyMenu_Leave(taskId);
     DoNamingScreen(NAMING_SCREEN_PLAYER, gSaveBlock2Ptr->playerName, gSaveBlock2Ptr->playerGender, 0, 0, CB2_ReturnToFieldContinueScript);
 }
 
@@ -2113,11 +2111,8 @@ static void DebugAction_Util_Randomizer_Wait(u8 taskId)
 static void DebugAction_Util_Randomizer_ShowValues(u8 taskId)
 {
 
-    ClearStdWindowAndFrame(gTasks[taskId].tWindowId, TRUE);
-    RemoveWindow(gTasks[taskId].tWindowId);
-
-    ClearStdWindowAndFrame(gTasks[taskId].tSubWindowId, TRUE);
-    RemoveWindow(gTasks[taskId].tSubWindowId);
+    Debug_RemoveWindowIfShown(&gTasks[taskId].tWindowId);
+    Debug_RemoveWindowIfShown(&gTasks[taskId].tSubWindowId);
 
     gTasks[taskId].tSubWindowId = AddWindow(&sDebugMenuWindowTemplateFullScreen);
     DrawStdWindowFrame(gTasks[taskId].tSubWindowId, FALSE);
@@ -3580,7 +3575,6 @@ static void DebugAction_TimeMenu_ChangeTimeOfDay(u8 taskId)
 {
     u32 input = ListMenu_ProcessInput(gTasks[taskId].tMenuTaskId);
 
-    DebugAction_DestroyExtraWindow(taskId);
     switch (input)
     {
     case TIME_MORNING:
@@ -3606,7 +3600,6 @@ static void DebugAction_TimeMenu_ChangeWeekdays(u8 taskId)
     struct SiiRtcInfo *rtc = FakeRtc_GetCurrentTime();
     u32 daysToAdd = 0;
 
-    DebugAction_DestroyExtraWindow(taskId);
     daysToAdd = ((input - rtc->dayOfWeek) + WEEKDAY_COUNT) % WEEKDAY_COUNT;
     FakeRtc_AdvanceTimeBy(daysToAdd, 0, 0, 0);
     Debug_DestroyMenu_Full(taskId);
@@ -3785,8 +3778,7 @@ static void DebugAction_Sound_SE(u8 taskId)
 {
     u8 windowId;
 
-    ClearStdWindowAndFrame(gTasks[taskId].tWindowId, TRUE);
-    RemoveWindow(gTasks[taskId].tWindowId);
+    Debug_RemoveWindowIfShown(&gTasks[taskId].tWindowId);
 
     HideMapNamePopUpWindow();
     LoadMessageBoxAndBorderGfx();
@@ -3837,7 +3829,7 @@ static void DebugAction_Sound_SE_SelectId(u8 taskId)
     {
         PlaySE(SE_SELECT);
         m4aSongNumStop(gTasks[taskId].tCurrentSong);
-        DebugAction_DestroyExtraWindow(taskId);
+        Debug_DestroyMenu_Full(taskId);
     }
     else if (JOY_NEW(START_BUTTON))
     {
@@ -3849,8 +3841,7 @@ static void DebugAction_Sound_MUS(u8 taskId)
 {
     u8 windowId;
 
-    ClearStdWindowAndFrame(gTasks[taskId].tWindowId, TRUE);
-    RemoveWindow(gTasks[taskId].tWindowId);
+    Debug_RemoveWindowIfShown(&gTasks[taskId].tWindowId);
 
     HideMapNamePopUpWindow();
     LoadMessageBoxAndBorderGfx();
@@ -3901,7 +3892,7 @@ static void DebugAction_Sound_MUS_SelectId(u8 taskId)
     {
         PlaySE(SE_SELECT);
         // m4aSongNumStop(gTasks[taskId].tCurrentSong);   //Uncomment if music should stop after leaving menu
-        DebugAction_DestroyExtraWindow(taskId);
+        Debug_DestroyMenu_Full(taskId);
     }
     else if (JOY_NEW(START_BUTTON))
     {
