@@ -22,10 +22,15 @@ devkitARM lives at `/opt/devkitpro/devkitARM` and is **not** on PATH. `TOOLCHAIN
 
 ```sh
 export PATH=/opt/devkitpro/devkitARM/bin:$PATH
-make -j16 generated TOOLCHAIN=/opt/devkitpro/devkitARM   # fresh checkout/worktree: run first, or data/battle_partners.h / debug_trainers.h race
-make -j16 TOOLCHAIN=/opt/devkitpro/devkitARM             # pokeemerald.gba: debug menus ON
-make -j16 release TOOLCHAIN=/opt/devkitpro/devkitARM     # pokeemerald-release.gba: debug menus OFF
+make -j16 TOOLCHAIN=/opt/devkitpro/devkitARM                       # pokeemerald.gba: debug menus ON
+make -j16 release TOOLCHAIN=/opt/devkitpro/devkitARM               # pokeemerald-release.gba: debug menus OFF
+make -j16 build/emerald/src/debug.o TOOLCHAIN=/opt/devkitpro/devkitARM  # compile one file (~20 s cold)
 ```
+
+- These all work on a fresh checkout or worktree, because they build the tools and generated sources first.
+  - `make generated` and `make tools` don't: `generated` skips the tool prebuild, so a cold run fails with `No rule to make target tools/mapjson/mapjson`.
+  - To get the generated headers alone, run `make -j16 -f make_tools.mk` first.
+- `.claude/build.sh <worktree> [rom|release|generated|src/x.c]` wraps all of this. It sets PATH, logs to `build/`, and prints only the exit code and unexpected warnings.
 
 - The debug menus are `DISABLED_ON_RELEASE` (`include/config/debug.h`), so plain `make` gives the ROM with the debug menus. In the overworld, open the menu by holding R and pressing Start.
 - `make debug` (the -Og/-g build) fails to link with gcc 16.1 (#27). Use plain `make` instead.
