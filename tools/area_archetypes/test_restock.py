@@ -82,6 +82,9 @@ class SpeciesInfoTests(unittest.TestCase):
         self.assertEqual(i.min_level('SPECIES_SHEDINJA'), 20)
         self.assertGreaterEqual(i.min_level('SPECIES_CROBAT'), R.NONLEVEL_EVO_FLOOR)
         self.assertEqual(i.min_level('SPECIES_PIKACHU'), 1)  # out of a baby: no floor
+        # No-eggs species that aren't babies keep the floor.
+        self.assertGreaterEqual(i.min_level('SPECIES_NIDOQUEEN'), R.NONLEVEL_EVO_FLOOR)
+        self.assertGreaterEqual(i.min_level('SPECIES_GHOLDENGO'), R.NONLEVEL_EVO_FLOOR)
 
     def test_devolve(self):
         i = self.info
@@ -136,6 +139,22 @@ class ConfigTests(unittest.TestCase):
         # Nothing to place: leave the table alone instead of failing.
         self.assertIsNone(R.restock_table(mons, [70, 30], pool, self.info,
                                           R.Settings(ratio=1.0, new_species=0), 'gX', 'land_mons'))
+
+    def test_deny_covers_devolved_stages(self):
+        pool = [{'species': 'SPECIES_NOCTOWL', 'share': 1.0, 'introduced_gen': 2}]
+        low = [{'species': 'SPECIES_NONE', 'min_level': 5, 'max_level': 5}] * 2
+        high = [{'species': 'SPECIES_NONE', 'min_level': 25, 'max_level': 25}] * 2
+        deny = R.Settings(ratio=1.0, deny={'SPECIES_HOOTHOOT'})
+        # Noctowl would become Hoothoot at L5, so it isn't drawn at all.
+        self.assertIsNone(R.restock_table(low, [70, 30], pool, self.info, deny, 'gX', 'land_mons'))
+        self.assertEqual(R.restock_table(high, [70, 30], pool, self.info, deny, 'gX', 'land_mons'),
+                         ['SPECIES_NOCTOWL', 'SPECIES_NOCTOWL'])
+        # Same for allow lists and gens.
+        allow = R.Settings(ratio=1.0, allow={'SPECIES_NOCTOWL'})
+        self.assertIsNone(R.restock_table(low, [70, 30], pool, self.info, allow, 'gX', 'land_mons'))
+        self.info.gen['SPECIES_HOOTHOOT'] = 1
+        gens = R.Settings(ratio=1.0, gens={2})
+        self.assertIsNone(R.restock_table(low, [70, 30], pool, self.info, gens, 'gX', 'land_mons'))
 
 
 class RestockTests(unittest.TestCase):
@@ -250,10 +269,27 @@ class RestockTests(unittest.TestCase):
             natives = {sl['before'] for sl in ch['slots']}
             for sl in ch['slots']:
                 self.assertNotEqual(sl['after'], 'SPECIES_ZUBAT')
-                if sl['after'] not in natives and sl['after'] in gen_of:
-                    # Devolved species can be from an older gen (Budew -> Roselia's line).
-                    self.assertTrue(gen_of[sl['after']] in (4, 5) or
-                                    self.info.devolve(sl['after'], 100) != sl['after'], sl)
+                if sl['after'] not in natives:
+                    # Devolved stages are filtered by gen too.
+                    self.assertIn(gen_of.get(sl['after'], self.info.gen_of(sl['after'])), (4, 5), sl)
+
+    def test_deny_is_never_placed_through_devolution(self):
+        deny = R.parse_species_list(['RATTATA,EKANS,KRABBY,ZUBAT,MAGIKARP,HOOTHOOT,POLIWAG'])
+        for ratio in (0.5, 1.0):
+            new, _ = R.restock(self.wild, self.maps, self.pools, self.info, R.Settings(ratio=ratio, deny=deny))
+            placed = {m['species'] for e in new['wild_encounter_groups'][0]['encounters']
+                      if self.maps[e['base_label']]['region'] == 'hoenn'
+                      for f in R.TABLE_FIELDS if f in e for m in e[f]['mons']}
+            self.assertFalse(placed & deny, ratio)
+
+    def test_regional_forms_can_be_excluded(self):
+        _, changes = R.restock(self.wild, self.maps, self.pools, self.info,
+                               R.Settings(ratio=1.0, regional_forms=False))
+        for ch in changes:
+            natives = {sl['before'] for sl in ch['slots']}
+            for sl in ch['slots']:
+                if sl['after'] not in natives:
+                    self.assertFalse(self.info.flags_of(sl['after']) & R.REGIONAL_FLAGS, sl)
 
 
 class CliTests(unittest.TestCase):
