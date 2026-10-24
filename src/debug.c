@@ -885,6 +885,7 @@ void Debug_ShowMainMenu(void)
 #define tInput               data[3]
 #define tDigit               data[4]
 #define tSpriteId            data[5]
+#define tInputStart          data[7] // value a numeric input step started from, for Select
 #define tStepsDataIndex      data[9]
 #define tSubstep             data[10]
 #define tStep                data[11]
@@ -1208,6 +1209,29 @@ static void Debug_ResetInputDisplayMonIcon(u8 taskId, enum Species species)
     gSprites[gTasks[taskId].tSpriteId].oam.priority = 0;
 }
 
+// Prints the numeric input with the digit that Up/Down changes highlighted
+static void Debug_InputToDecimalString(u8 *dest, u8 taskId, u32 digits)
+{
+    static const u8 sColor_Digit[] = _("{COLOR BLUE}{SHADOW LIGHT_BLUE}");
+    static const u8 sColor_Default[] = _("{COLOR DARK_GRAY}{SHADOW LIGHT_GRAY}");
+    u8 number[12];
+    u32 length, position;
+
+    ConvertIntToDecimalStringN(number, gTasks[taskId].tInput, STR_CONV_MODE_LEADING_ZEROS, digits);
+    length = StringLength(number);
+    if (gTasks[taskId].tDigit >= length)
+    {
+        StringCopy(dest, number);
+        return;
+    }
+    position = length - 1 - gTasks[taskId].tDigit;
+    dest = StringCopyN(dest, number, position);
+    dest = StringCopy(dest, sColor_Digit);
+    *dest++ = number[position];
+    dest = StringCopy(dest, sColor_Default);
+    StringCopy(dest, &number[position + 1]);
+}
+
 static void DebugNativeStep_PrintWindowSelection(u8 taskId)
 {
     u32 windowId = gTasks[taskId].tSubWindowId;
@@ -1259,20 +1283,45 @@ static void Debug_DestroyMenu_Full_Script(u8 taskId, const u8 *script)
     ScriptContext_SetupScript(script);
 }
 
+// Up/Down repeat while held. A step past either end stops on min/max first, then wraps to the other end.
+// L/R jump to min/max and Select goes back to the value the step started from.
 static void Debug_HandleInput_Numeric(u8 taskId, s32 min, s32 max, u32 digits)
 {
-    if (JOY_NEW(DPAD_UP))
+    s32 input = gTasks[taskId].tInput;
+    s32 step = sPowersOfTen[gTasks[taskId].tDigit];
+
+    if (JOY_REPEAT(DPAD_UP))
     {
-        gTasks[taskId].tInput += sPowersOfTen[gTasks[taskId].tDigit];
-        if (gTasks[taskId].tInput > max)
-            gTasks[taskId].tInput = max;
+        if (input >= max)
+            input = min;
+        else if (input + step > max)
+            input = max;
+        else
+            input += step;
     }
-    if (JOY_NEW(DPAD_DOWN))
+    else if (JOY_REPEAT(DPAD_DOWN))
     {
-        gTasks[taskId].tInput -= sPowersOfTen[gTasks[taskId].tDigit];
-        if (gTasks[taskId].tInput < min)
-            gTasks[taskId].tInput = min;
+        if (input <= min)
+            input = max;
+        else if (input - step < min)
+            input = min;
+        else
+            input -= step;
     }
+    else if (JOY_NEW(L_BUTTON))
+    {
+        input = min;
+    }
+    else if (JOY_NEW(R_BUTTON))
+    {
+        input = max;
+    }
+    else if (JOY_NEW(SELECT_BUTTON))
+    {
+        input = gTasks[taskId].tInputStart;
+    }
+    gTasks[taskId].tInput = input;
+
     if (JOY_NEW(DPAD_LEFT))
     {
         if (gTasks[taskId].tDigit > 0)
@@ -1372,6 +1421,7 @@ static void DebugAction_Selection_PrepareStep(u8 taskId, const struct DebugSelec
     if (gTasks[taskId].tInput > max)
         gTasks[taskId].tInput = max;
 
+    gTasks[taskId].tInputStart = gTasks[taskId].tInput;
     gTasks[taskId].tDigit = 0;
     selectionStep->stepUpdate(taskId, selectionStep->digits, min, max);
     gTasks[taskId].func = DebugAction_Selection_StepUpdate;
@@ -1420,7 +1470,7 @@ static void DebugAction_Selection_StepUpdate(u8 taskId)
         gTasks[taskId].tSubstep = 0;
         gTasks[taskId].func = DebugAction_Selection_Cancel;
     }
-    else if (JOY_NEW(DPAD_ANY))
+    else if (JOY_REPEAT(DPAD_UP | DPAD_DOWN) || JOY_NEW(DPAD_LEFT | DPAD_RIGHT | L_BUTTON | R_BUTTON | SELECT_BUTTON))
     {
         u32 min, max;
         if (selectionStep->useMinFunc)
@@ -1927,7 +1977,7 @@ static void DebugAction_Util_Fly(u8 taskId)
 
 static void DebugSelectionStep_UpdateMapGroup(u8 taskId, u8 digits, u32 min, u32 max)
 {
-    ConvertIntToDecimalStringN(gStringVar2, gTasks[taskId].tInput, STR_CONV_MODE_LEADING_ZEROS, digits);
+    Debug_InputToDecimalString(gStringVar2, taskId, digits);
     ConvertIntToDecimalStringN(gStringVar3, max, STR_CONV_MODE_LEADING_ZEROS, digits);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Group: {STR_VAR_2} / {STR_VAR_3}"));
     StringCopy(gStringVar2, COMPOUND_STRING(""));
@@ -1938,7 +1988,7 @@ static void DebugSelectionStep_UpdateMapGroup(u8 taskId, u8 digits, u32 min, u32
 static void DebugSelectionStep_UpdateMapNum(u8 taskId, u8 digits, u32 min, u32 max)
 {
     u16 mapGroup = DebugSelection_GetData(taskId, gTasks[taskId].tStep - 1);
-    ConvertIntToDecimalStringN(gStringVar2, gTasks[taskId].tInput, STR_CONV_MODE_LEADING_ZEROS, digits);
+    Debug_InputToDecimalString(gStringVar2, taskId, digits);
     ConvertIntToDecimalStringN(gStringVar3, max, STR_CONV_MODE_LEADING_ZEROS, digits);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Map: {STR_VAR_2} / {STR_VAR_3}"));
     StringCopy(gStringVar2, COMPOUND_STRING("MapSec:"));
@@ -1956,7 +2006,7 @@ static void DebugSelectionStep_UpdateWarp(u8 taskId, u8 digits, u32 min, u32 max
 {
     u16 mapGroup = DebugSelection_GetData(taskId, gTasks[taskId].tStep - 2);
     u16 mapNum = DebugSelection_GetData(taskId, gTasks[taskId].tStep - 1);
-    ConvertIntToDecimalStringN(gStringVar2, gTasks[taskId].tInput, STR_CONV_MODE_LEADING_ZEROS, digits);
+    Debug_InputToDecimalString(gStringVar2, taskId, digits);
     ConvertIntToDecimalStringN(gStringVar3, max, STR_CONV_MODE_LEADING_ZEROS, digits);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Warp: {STR_VAR_2} / {STR_VAR_3}"));
     GetMapName(gStringVar2, Overworld_GetMapHeaderByGroupAndId(mapGroup, mapNum)->regionMapSectionId, 0);
@@ -2111,7 +2161,7 @@ static void DebugSelectionStep_UpdateWeather(u8 taskId, u8 digits, u32 min, u32 
         else
             gTasks[taskId].tInput++;
     }
-    ConvertIntToDecimalStringN(gStringVar3, gTasks[taskId].tInput, STR_CONV_MODE_LEADING_ZEROS, digits);
+    Debug_InputToDecimalString(gStringVar3, taskId, digits);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Weather ID: {STR_VAR_3}"));
     StringCopy(gStringVar2, GetWeatherName(gTasks[taskId].tInput));
     StringCopy(gStringVar3, COMPOUND_STRING(""));
@@ -2317,7 +2367,7 @@ static bool32 DebugSelection_ItemGenerator_OnComplete(u8 taskId)
 static void DebugSelectionStep_UpdateGeneratorArgs(u8 taskId, u8 digits, u32 min, u32 max)
 {
     ConvertIntToDecimalStringN(gStringVar2, gTasks[taskId].tSubstep + 1, STR_CONV_MODE_LEADING_ZEROS, 1);
-    ConvertIntToDecimalStringN(gStringVar3, gTasks[taskId].tInput, STR_CONV_MODE_LEADING_ZEROS, digits);
+    Debug_InputToDecimalString(gStringVar3, taskId, digits);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Arg {STR_VAR_2}: {STR_VAR_3}"));
     StringCopy(gStringVar2, COMPOUND_STRING(""));
     StringCopy(gStringVar3, COMPOUND_STRING(""));
@@ -2326,7 +2376,7 @@ static void DebugSelectionStep_UpdateGeneratorArgs(u8 taskId, u8 digits, u32 min
 
 static void DebugSelectionStep_UpdateGeneratorOption(u8 taskId, u8 digits, u32 min, u32 max)
 {
-    ConvertIntToDecimalStringN(gStringVar2, gTasks[taskId].tInput, STR_CONV_MODE_LEADING_ZEROS, digits);
+    Debug_InputToDecimalString(gStringVar2, taskId, digits);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Options ID: {STR_VAR_2}"));
     StringCopy(gStringVar2, COMPOUND_STRING(""));
     StringCopy(gStringVar3, COMPOUND_STRING(""));
@@ -2457,7 +2507,7 @@ static void DebugSelectionStep_UpdateMapTrainer(u8 taskId, u8 digits, u32 min, u
     if (trainerId)
         DebugSelection_SetData(taskId, 0, gTasks[taskId].tInput);
     Debug_CreateTrainerIcon(taskId);
-    ConvertIntToDecimalStringN(gStringVar3, gTasks[taskId].tInput, STR_CONV_MODE_LEADING_ZEROS, digits);
+    Debug_InputToDecimalString(gStringVar3, taskId, digits);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Local ID: {STR_VAR_3}"));
     u8 *end;
     if (trainerId == TRAINER_NONE)
@@ -2506,7 +2556,7 @@ static const struct DebugSelection sTrainerFromMapSelection = {
 
 static void DebugSelectionStep_PrepareTrainerDisplay(u8 taskId, u8 digits, u32 trainerId)
 {
-    ConvertIntToDecimalStringN(gStringVar3, gTasks[taskId].tInput, STR_CONV_MODE_LEADING_ZEROS, digits);
+    Debug_InputToDecimalString(gStringVar3, taskId, digits);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("ID: {STR_VAR_3}"));
     u8 *end;
     if (gTasks[taskId].tInput == TRAINER_NONE )
@@ -2708,7 +2758,7 @@ static void DebugAction_Outbreak_ClearActive(u8 taskId)
 static void DebugSelectionStep_PrintGenericInput(u8 taskId, u8 digits, const u8 *str)
 {
     StringCopy(gStringVar1, str);
-    ConvertIntToDecimalStringN(gStringVar2, gTasks[taskId].tInput, STR_CONV_MODE_LEADING_ZEROS, digits);
+    Debug_InputToDecimalString(gStringVar2, taskId, digits);
     StringCopy(gStringVar3, COMPOUND_STRING(""));
     DebugNativeStep_PrintWindowSelection(taskId);
 }
@@ -2943,7 +2993,7 @@ static const struct DebugSelection sDynamicMassOutbreakSelection = {
 
 static void DebugSelectionStep_UpdateStaticOutbreak(u8 taskId, u8 digits, u32 min, u32 max)
 {
-    ConvertIntToDecimalStringN(gStringVar2, gTasks[taskId].tInput, STR_CONV_MODE_LEADING_ZEROS, digits);
+    Debug_InputToDecimalString(gStringVar2, taskId, digits);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("ID: {STR_VAR_2}"));
     GetStaticOutbreakMapName(gStringVar2, gTasks[taskId].tInput);
     StringCopy(gStringVar3, COMPOUND_STRING(""));
@@ -3395,7 +3445,7 @@ static void DebugSelectionStep_UpdateGender(u8 taskId, u8 digits, u32 min, u32 m
         StringCopy(gStringVar1, COMPOUND_STRING("MALE"));
     else
         StringCopy(gStringVar1, COMPOUND_STRING("GENDERLESS"));
-    ConvertIntToDecimalStringN(gStringVar3, gTasks[taskId].tInput, STR_CONV_MODE_LEADING_ZEROS, digits);
+    Debug_InputToDecimalString(gStringVar3, taskId, digits);
     StringExpandPlaceholders(gStringVar2, COMPOUND_STRING("{STR_VAR_1} ({STR_VAR_3})"));
     StringCopy(gStringVar1, COMPOUND_STRING("Gender Value:"));
     StringCopy(gStringVar3, COMPOUND_STRING(""));
@@ -3441,7 +3491,7 @@ static void DebugSelectionStep_UpdateAbility(u8 taskId, u8 digits, u32 min, u32 
         abilities[i] = gSpeciesInfo[species].abilities[2];
     }
 
-    ConvertIntToDecimalStringN(gStringVar3, gTasks[taskId].tInput, STR_CONV_MODE_LEADING_ZEROS, digits);
+    Debug_InputToDecimalString(gStringVar3, taskId, digits);
     StringCopy(gStringVar1, COMPOUND_STRING("Ability:"));
     StringCopy(gStringVar2, gAbilitiesInfo[abilities[gTasks[taskId].tInput]].name);
     StringCopy(gStringVar3, COMPOUND_STRING(""));
@@ -3462,7 +3512,7 @@ static void DebugSelectionStep_AbilityConfirm(u8 taskId)
 
 static void DebugSelectionStep_UpdateNature(u8 taskId, u8 digits, u32 min, u32 max)
 {
-    ConvertIntToDecimalStringN(gStringVar3, gTasks[taskId].tInput, STR_CONV_MODE_LEADING_ZEROS, digits);
+    Debug_InputToDecimalString(gStringVar3, taskId, digits);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Nature: {STR_VAR_3}"));
     StringCopy(gStringVar2, gNaturesInfo[gTasks[taskId].tInput].name);
     StringCopy(gStringVar3, COMPOUND_STRING(""));
@@ -3473,7 +3523,7 @@ static void DebugSelectionStep_UpdateIVs(u8 taskId, u8 digits, u32 min, u32 max)
 {
     StringCopy(gStringVar3, gStatNamesTable[gTasks[taskId].tSubstep]);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("{STR_VAR_3} IV:"));
-    ConvertIntToDecimalStringN(gStringVar2, gTasks[taskId].tInput, STR_CONV_MODE_LEADING_ZEROS, digits);
+    Debug_InputToDecimalString(gStringVar2, taskId, digits);
     StringCopy(gStringVar3, COMPOUND_STRING(""));
     DebugNativeStep_PrintWindowSelection(taskId);
 }
@@ -3482,7 +3532,7 @@ static void DebugSelectionStep_UpdateEVs(u8 taskId, u8 digits, u32 min, u32 max)
 {
     StringCopy(gStringVar3, gStatNamesTable[gTasks[taskId].tSubstep]);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("{STR_VAR_3} EV:"));
-    ConvertIntToDecimalStringN(gStringVar2, gTasks[taskId].tInput, STR_CONV_MODE_LEADING_ZEROS, digits);
+    Debug_InputToDecimalString(gStringVar2, taskId, digits);
     StringCopy(gStringVar3, COMPOUND_STRING(""));
     DebugNativeStep_PrintWindowSelection(taskId);
 }
@@ -3506,7 +3556,7 @@ static void DebugSelectionStep_UpdateTeraType(u8 taskId, u8 digits, u32 min, u32
         else
             gTasks[taskId].tInput++;
     }
-    ConvertIntToDecimalStringN(gStringVar3, gTasks[taskId].tInput, STR_CONV_MODE_LEADING_ZEROS, digits);
+    Debug_InputToDecimalString(gStringVar3, taskId, digits);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Tera Type: {STR_VAR_3}"));
     StringCopy(gStringVar2, gTypesInfo[gTasks[taskId].tInput].name);
     StringCopy(gStringVar3, COMPOUND_STRING(""));
@@ -4818,7 +4868,7 @@ static void DebugNativeStep_DelayedSelection(u8 taskId)
 static void DebugSelectionStep_UpdateFriendship(u8 taskId, u8 digits, u32 min, u32 max)
 {
     ConvertIntToDecimalStringN(gStringVar1, DebugSelection_GetData(taskId, 0), STR_CONV_MODE_LEADING_ZEROS, digits);
-    ConvertIntToDecimalStringN(gStringVar3, gTasks[taskId].tInput, STR_CONV_MODE_LEADING_ZEROS, digits);
+    Debug_InputToDecimalString(gStringVar3, taskId, digits);
     StringExpandPlaceholders(gStringVar2, COMPOUND_STRING("{STR_VAR_1} {RIGHT_ARROW} {STR_VAR_3}"));
     StringCopy(gStringVar1, COMPOUND_STRING("Friendship:"));
     StringCopy(gStringVar3, COMPOUND_STRING(""));
@@ -4869,7 +4919,7 @@ void DebugNative_Party_SetFriendship(void)
 static void DebugSelectionStep_UpdatePokerusStrain(u8 taskId, u8 digits, u32 min, u32 max)
 {
     StringCopy(gStringVar1, COMPOUND_STRING("Strain:"));
-    ConvertIntToDecimalStringN(gStringVar2, gTasks[taskId].tInput, STR_CONV_MODE_LEADING_ZEROS, digits);
+    Debug_InputToDecimalString(gStringVar2, taskId, digits);
     StringCopy(gStringVar3, COMPOUND_STRING(""));
     DebugNativeStep_PrintWindowSelection(taskId);
 }
