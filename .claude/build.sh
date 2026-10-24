@@ -4,8 +4,7 @@
 # Usage: sh .claude/build.sh <worktree> [rom|release|debug|check [TESTS]|generated|<file.c>]
 #   rom        pokeemerald.gba (debug menus on; the default)
 #   release    pokeemerald-release.gba (debug menus off)
-#   debug      the -Og/-g build, as pokeemerald-debug.gba/.elf (plain `make debug` would overwrite
-#              pokeemerald.elf, and a later rom build would then see it as up to date and not relink)
+#   debug      the -Og/-g build, as pokeemerald-debug.gba so it can't stand in for the rom output
 #   check      make check (headless tests); an optional third argument is the TESTS name prefix
 #   generated  build tools, then generated headers (what a fresh worktree needs before a partial build)
 #   src/x.c    compile just that file (also builds tools and generated sources on a cold tree)
