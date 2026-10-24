@@ -886,6 +886,8 @@ void Debug_ShowMainMenu(void)
 #define tDigit               data[4]
 #define tSpriteId            data[5]
 #define tInputStart          data[7] // value a numeric input step started from, for Select
+// Numeric inputs run from 0 to 0xFFFF, so read the s16 task field back as unsigned
+#define DEBUG_TASK_INPUT(taskId) ((u16)gTasks[taskId].tInput)
 #define tStepsDataIndex      data[9]
 #define tSubstep             data[10]
 #define tStep                data[11]
@@ -971,11 +973,8 @@ static void Debug_GetMenuPosition(const struct DebugMenuOption *items, u32 total
     }
     if (index >= totalItems)
         index = totalItems - 1;
+    // The saved row is below the page height, so this keeps the entry on screen
     *scrollOffset = min(position->scrollOffset, maxScroll);
-    if (*scrollOffset > index)
-        *scrollOffset = index;
-    if (index - *scrollOffset >= DEBUG_MENU_HEIGHT_MAIN)
-        *scrollOffset = index - DEBUG_MENU_HEIGHT_MAIN + 1;
     *selectedRow = index - *scrollOffset;
 }
 
@@ -1217,7 +1216,7 @@ static void Debug_InputToDecimalString(u8 *dest, u8 taskId, u32 digits)
     u8 number[12];
     u32 length, position;
 
-    ConvertIntToDecimalStringN(number, gTasks[taskId].tInput, STR_CONV_MODE_LEADING_ZEROS, digits);
+    ConvertIntToDecimalStringN(number, DEBUG_TASK_INPUT(taskId), STR_CONV_MODE_LEADING_ZEROS, digits);
     length = StringLength(number);
     if (gTasks[taskId].tDigit >= length)
     {
@@ -1255,17 +1254,12 @@ static void Debug_DestroyMenu(u8 taskId)
     DestroyTask(taskId);
 }
 
-// Every way out of the debug menu must free its data: map loads don't reset the heap.
-static void Debug_FreeMenuListData(void)
-{
-    TRY_FREE_AND_SET_NULL(sDebugMenuListData);
-}
-
 // For exits that hand over to another main callback (fly map, naming screen).
+// Every way out of the debug menu must free its data: map loads don't reset the heap.
 static void Debug_DestroyMenu_Leave(u8 taskId)
 {
     Debug_DestroyMenu(taskId);
-    Debug_FreeMenuListData();
+    TRY_FREE_AND_SET_NULL(sDebugMenuListData);
 }
 
 static void Debug_DestroyMenu_Full(u8 taskId)
@@ -1283,16 +1277,17 @@ static void Debug_DestroyMenu_Full_Script(u8 taskId, const u8 *script)
     ScriptContext_SetupScript(script);
 }
 
-// Up/Down repeat while held. A step past either end stops on min/max first, then wraps to the other end.
-// L/R jump to min/max and Select goes back to the value the step started from.
+// Up/Down repeat while held. A step past either end stops on min/max, and a new press there
+// wraps to the other end (holding never wraps). L/R jump to min/max and Select goes back to
+// the value the step started from.
 static void Debug_HandleInput_Numeric(u8 taskId, s32 min, s32 max, u32 digits)
 {
-    s32 input = gTasks[taskId].tInput;
+    s32 input = DEBUG_TASK_INPUT(taskId);
     s32 step = sPowersOfTen[gTasks[taskId].tDigit];
 
     if (JOY_REPEAT(DPAD_UP))
     {
-        if (input >= max)
+        if (input >= max && JOY_NEW(DPAD_UP))
             input = min;
         else if (input + step > max)
             input = max;
@@ -1301,7 +1296,7 @@ static void Debug_HandleInput_Numeric(u8 taskId, s32 min, s32 max, u32 digits)
     }
     else if (JOY_REPEAT(DPAD_DOWN))
     {
-        if (input <= min)
+        if (input <= min && JOY_NEW(DPAD_DOWN))
             input = max;
         else if (input - step < min)
             input = min;
@@ -1318,7 +1313,7 @@ static void Debug_HandleInput_Numeric(u8 taskId, s32 min, s32 max, u32 digits)
     }
     else if (JOY_NEW(SELECT_BUTTON))
     {
-        input = gTasks[taskId].tInputStart;
+        input = (u16)gTasks[taskId].tInputStart;
     }
     gTasks[taskId].tInput = input;
 
@@ -1332,6 +1327,13 @@ static void Debug_HandleInput_Numeric(u8 taskId, s32 min, s32 max, u32 digits)
         if (gTasks[taskId].tDigit < digits - 1)
             gTasks[taskId].tDigit += 1;
     }
+}
+
+// For steps that skip invalid values: which way Debug_HandleInput_Numeric just moved.
+// R jumps to max and a Down wrap lands on max, so both search downwards from there.
+static bool32 Debug_NumericInputMovedDown(void)
+{
+    return !JOY_REPEAT(DPAD_UP) && (JOY_REPEAT(DPAD_DOWN) || JOY_NEW(R_BUTTON));
 }
 
 enum SongType { SONG_SE, SONG_MUS };
@@ -2156,7 +2158,7 @@ static void DebugSelectionStep_UpdateWeather(u8 taskId, u8 digits, u32 min, u32 
 {
     if (gTasks[taskId].tInput == WEATHER_ABNORMAL)
     {
-        if (JOY_NEW(DPAD_DOWN))
+        if (Debug_NumericInputMovedDown())
             gTasks[taskId].tInput--;
         else
             gTasks[taskId].tInput++;
@@ -2492,7 +2494,7 @@ static void DebugSelectionStep_UpdateMapTrainer(u8 taskId, u8 digits, u32 min, u
 {
     while (GetTrainerIdFromLocalId(gTasks[taskId].tInput) == TRAINER_NONE && gTasks[taskId].tInput >= min && gTasks[taskId].tInput <= max)
     {
-        if (JOY_NEW(DPAD_DOWN))
+        if (Debug_NumericInputMovedDown())
             gTasks[taskId].tInput--;
         else
             gTasks[taskId].tInput++;
@@ -2785,13 +2787,13 @@ static void DebugSelectionStep_UpdateSpecies(u8 taskId, u8 digits, u32 min, u32 
     u32 species = gTasks[taskId].tInput;
     while (!IsSpeciesEnabled(species))
     {
-        if (JOY_NEW(DPAD_DOWN))
+        if (Debug_NumericInputMovedDown())
             species--;
         else
             species++;
     }
     gTasks[taskId].tInput = species;
-    ConvertIntToDecimalStringN(gStringVar3, species, STR_CONV_MODE_LEADING_ZEROS, digits);
+    Debug_InputToDecimalString(gStringVar3, taskId, digits);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Species: {STR_VAR_3}"));
     u8 *end = StringCopy(gStringVar2, GetSpeciesName(species));
     WrapFontIdToFit(gStringVar2, end, DEBUG_MENU_FONT, WindowWidthPx(gTasks[taskId].tSubWindowId));
@@ -2804,7 +2806,7 @@ static void DebugSelectionStep_UpdateMoves(u8 taskId, u8 digits, u32 min, u32 ma
 {
     u32 moveId = gTasks[taskId].tInput;
     ConvertIntToDecimalStringN(gStringVar2, gTasks[taskId].tSubstep + 1, STR_CONV_MODE_LEADING_ZEROS, 1);
-    ConvertIntToDecimalStringN(gStringVar3, moveId, STR_CONV_MODE_LEADING_ZEROS, digits);
+    Debug_InputToDecimalString(gStringVar3, taskId, digits);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Move {STR_VAR_2}: {STR_VAR_3}"));
     u8 *end;
     if (moveId == MOVES_COUNT)
@@ -3030,7 +3032,7 @@ static const struct DebugSelection sStaticMassOutbreakSelection = {
 static void DebugSelectionStep_UpdateFlag(u8 taskId, u8 digits, u32 min, u32 max)
 {
     u32 flag = gTasks[taskId].tInput;
-    ConvertIntToDecimalStringN(gStringVar1, flag, STR_CONV_MODE_LEADING_ZEROS, digits);
+    Debug_InputToDecimalString(gStringVar1, taskId, digits);
     ConvertIntToHexStringN(gStringVar3, flag, STR_CONV_MODE_LEFT_ALIGN, 3);
     StringExpandPlaceholders(gStringVar2, COMPOUND_STRING("0x{STR_VAR_3}"));
     if (FlagGet(flag))
@@ -3086,7 +3088,7 @@ static void DebugSelectionStep_UpdateVarValue(u8 taskId, u8 digits, u32 min, u32
     u8 *end;
     DebugSelectionStep_PrepareVarDisplay(DebugSelection_GetData(taskId, gTasks[taskId].tStep - 1));
     end = StringCopy(gStringVar3, COMPOUND_STRING("New: "));
-    ConvertIntToDecimalStringN(end, gTasks[taskId].tInput, STR_CONV_MODE_LEADING_ZEROS, 5);
+    Debug_InputToDecimalString(end, taskId, 5);
     DebugNativeStep_PrintWindowSelection(taskId);
 }
 
@@ -3364,7 +3366,7 @@ static void DebugSelectionStep_UpdateItem(u8 taskId, u8 digits, u32 min, u32 max
 {
     u32 itemId = gTasks[taskId].tInput;
     Debug_DisplayItemIcon(taskId, itemId);
-    ConvertIntToDecimalStringN(gStringVar3, itemId, STR_CONV_MODE_LEADING_ZEROS, digits);
+    Debug_InputToDecimalString(gStringVar3, taskId, digits);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Item ID: {STR_VAR_3}"));
     u8* end = CopyItemName(itemId, gStringVar2);
     enum Move moveId = ItemIdToBattleMoveId(itemId);
@@ -3551,7 +3553,7 @@ static void DebugSelectionStep_UpdateTeraType(u8 taskId, u8 digits, u32 min, u32
 {
     if (gTasks[taskId].tInput == TYPE_MYSTERY)
     {
-        if (JOY_NEW(DPAD_DOWN))
+        if (Debug_NumericInputMovedDown())
             gTasks[taskId].tInput--;
         else
             gTasks[taskId].tInput++;
@@ -3733,7 +3735,7 @@ static void DebugSelectionStep_UpdateDecoration(u8 taskId, u8 digits, u32 min, u
         DEBUG_NUMBER_ICON_X + 8, DEBUG_NUMBER_ICON_Y + 10, 0,
         DEBUG_ICON_TAG, DEBUG_ICON_TAG);
 
-    ConvertIntToDecimalStringN(gStringVar3, decorationId, STR_CONV_MODE_LEADING_ZEROS, digits);
+    Debug_InputToDecimalString(gStringVar3, taskId, digits);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Decor ID: {STR_VAR_3}"));
     u8* end = StringCopy(gStringVar2, gDecorations[decorationId].name);
     WrapFontIdToFit(gStringVar2, end, DEBUG_MENU_FONT, WindowWidthPx(gTasks[taskId].tSubWindowId));
@@ -4929,7 +4931,7 @@ static void DebugSelectionStep_UpdatePokerusDaysLeft(u8 taskId, u8 digits, u32 m
     StringCopy(gStringVar1, COMPOUND_STRING("Days Left:"));
     s16 daysLeft = gTasks[taskId].tInput;
     u16 strain = DebugSelection_GetData(taskId, gTasks[taskId].tStepsDataIndex - 1);
-    ConvertIntToDecimalStringN(gStringVar2, daysLeft, STR_CONV_MODE_LEADING_ZEROS, digits);
+    Debug_InputToDecimalString(gStringVar2, taskId, digits);
 
     if (daysLeft == 0 && strain == 0)
         StringCopy(gStringVar3, COMPOUND_STRING("No Pokerus"));
