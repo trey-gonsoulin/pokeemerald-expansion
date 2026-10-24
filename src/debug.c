@@ -177,7 +177,8 @@ enum DebugMenuTypes
 #define DEBUG_MENU_FONT FONT_NORMAL
 #define DEBUG_LINE_HEIGHT (gFonts[DEBUG_MENU_FONT].maxLetterHeight + gFonts[DEBUG_MENU_FONT].lineSpacing)
 
-#define DEBUG_MENU_WIDTH_MAIN 17
+// 16 rather than 17 leaves the submenu path window 10 tiles, enough for the longest path line (79 px)
+#define DEBUG_MENU_WIDTH_MAIN 16
 #define DEBUG_MENU_HEIGHT_MAIN 9
 
 #define DEBUG_MENU_WIDTH_EXTRA 10
@@ -1063,7 +1064,7 @@ static void Debug_AddScrollArrows(u32 totalItems)
 
     // Centered over the main list, on its top and bottom frame
     sDebugMenuListData->scrollArrowsTaskId = AddScrollIndicatorArrowPairParameterized(SCROLL_ARROW_UP,
-        (sDebugMenuWindowTemplateMain.tilemapLeft + DEBUG_MENU_WIDTH_MAIN / 2) * 8 + 4,
+        sDebugMenuWindowTemplateMain.tilemapLeft * 8 + DEBUG_MENU_WIDTH_MAIN * 4,
         sDebugMenuWindowTemplateMain.tilemapTop * 8 - 4,
         (sDebugMenuWindowTemplateMain.tilemapTop + 2 * DEBUG_MENU_HEIGHT_MAIN) * 8 + 4,
         totalItems - DEBUG_MENU_HEIGHT_MAIN, DEBUG_SCROLL_ARROW_TAG, DEBUG_SCROLL_ARROW_TAG,
