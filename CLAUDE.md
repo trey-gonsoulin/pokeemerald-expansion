@@ -55,10 +55,11 @@ Area archetypes tool (standard library only, run from the repo root):
 python3 tools/area_archetypes/area_archetypes.py fetch     # once: PokeAPI CSVs -> .cache/
 python3 tools/area_archetypes/area_archetypes.py build     # classify areas, write output/
 python3 tools/area_archetypes/area_archetypes.py restock   # preview a restocked src/data/wild_encounters.json
+python3 tools/area_archetypes/area_archetypes.py baseline  # refresh output/wild_encounters.vanilla.json after upstream changes it
 python3 -m unittest discover -s tools/area_archetypes      # tests
 ```
 
-`tools/area_archetypes/README.md` documents the archetype rules and the restock options.
+`tools/area_archetypes/README.md` documents the archetype rules and the restock options. `build` and `restock` read the committed vanilla snapshot, never the live `src/data/wild_encounters.json`, so `restock --write` reruns don't compound.
 
 ## Architecture
 

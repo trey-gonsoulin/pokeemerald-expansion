@@ -6,16 +6,17 @@ These read the committed output/*.json and this repo's headers, so they don't
 need the PokeAPI cache.
 """
 
+import contextlib
+import io
 import json
 import os
-import shutil
 import tempfile
 import unittest
 
 import area_archetypes as AA
 import restock as R
 
-WILD = os.path.join(AA.REPO, 'src', 'data', 'wild_encounters.json')
+WILD = AA.VANILLA_WILD
 POOLS = os.path.join(AA.DEFAULT_OUT, 'archetype_pools.json')
 MAPS = os.path.join(AA.DEFAULT_OUT, 'emerald_maps.json')
 
@@ -305,20 +306,65 @@ class RestockTests(unittest.TestCase):
                     self.assertFalse(self.info.flags_of(sl['after']) & R.REGIONAL_FLAGS, sl)
 
 
+def read(path):
+    with open(path, encoding='utf-8') as f:
+        return f.read()
+
+
+def run_quietly(argv):
+    with contextlib.redirect_stdout(io.StringIO()):
+        return R.main(argv)
+
+
 class CliTests(unittest.TestCase):
     def test_writes_preview_and_report_without_touching_src(self):
         with tempfile.TemporaryDirectory() as tmp:
             wild = os.path.join(tmp, 'wild_encounters.json')
-            shutil.copy(WILD, wild)
             out = os.path.join(tmp, 'out')
-            R.main(['--wild', wild, '--out-dir', out, '--ratio', '0.25', '--seed', '7'])
-            with open(WILD, encoding='utf-8') as f, open(wild, encoding='utf-8') as g:
-                self.assertEqual(f.read(), g.read())
+            run_quietly(['--wild', wild, '--out-dir', out, '--ratio', '0.25', '--seed', '7'])
+            self.assertFalse(os.path.exists(wild))
             self.assertTrue(os.path.exists(os.path.join(out, 'restock_report.md')))
             preview = os.path.join(out, 'wild_encounters.json')
-            R.main(['--wild', wild, '--out-dir', out, '--ratio', '0.25', '--seed', '7', '--write'])
-            with open(preview, encoding='utf-8') as f, open(wild, encoding='utf-8') as g:
-                self.assertEqual(f.read(), g.read())
+            run_quietly(['--wild', wild, '--out-dir', out, '--ratio', '0.25', '--seed', '7', '--write'])
+            self.assertEqual(read(preview), read(wild))
+
+    def test_rerunning_write_does_not_compound(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            wild = os.path.join(tmp, 'wild_encounters.json')
+            out = os.path.join(tmp, 'out')
+            first, _ = run_quietly(['--wild', wild, '--out-dir', out, '--write'])
+            written = read(wild)
+            again, _ = run_quietly(['--wild', wild, '--out-dir', out, '--write'])
+            self.assertEqual(again, first)
+            self.assertEqual(read(wild), written)
+            self.assertIn(AA.RESTOCK_STAMP, first)
+
+    def test_restocked_base_is_refused_without_force(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            wild = os.path.join(tmp, 'wild_encounters.json')
+            out = os.path.join(tmp, 'out')
+            run_quietly(['--wild', wild, '--out-dir', out, '--write'])
+            with self.assertRaises(SystemExit):
+                run_quietly(['--base', wild, '--out-dir', out])
+            run_quietly(['--base', wild, '--out-dir', out, '--force'])
+            with self.assertRaises(SystemExit):
+                AA.refresh_baseline(wild, os.path.join(tmp, 'base.json'))
+            self.assertFalse(os.path.exists(os.path.join(tmp, 'base.json')))
+
+    def test_baseline_copies_a_vanilla_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = os.path.join(tmp, 'base.json')
+            with contextlib.redirect_stdout(io.StringIO()):
+                AA.main(['baseline', '--wild', WILD, '--base', base])
+            self.assertEqual(read(base), read(WILD))
+
+    def test_labels_missing_from_maps_are_reported(self):
+        maps = R.load_json(MAPS)
+        del maps['gRoute101']
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            R.restock(R.load_json(WILD), maps, R.load_json(POOLS), R.SpeciesInfo(AA.REPO), R.Settings())
+        self.assertIn('gRoute101', err.getvalue())
 
     def test_unknown_per_map_species_are_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
