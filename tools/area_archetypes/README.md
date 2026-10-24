@@ -81,15 +81,28 @@ Pinwheel Forest is `forest/early` in BW but `forest/endgame` in BW2.
 
 ## Limitations
 
-- PokeAPI has no wild encounter data for Scarlet/Violet, Legends: Arceus or
-  BDSP. ORAS and Sun/Moon data is partial. Gen 9 species only appear if a
-  covered game has them in the wild.
+Tracked as issues on the
+[fork](https://github.com/trey-gonsoulin/pokeemerald-expansion/issues?q=label%3Aarea-archetypes):
+
+- PokeAPI has no wild encounter data for Scarlet/Violet
+  ([#1](https://github.com/trey-gonsoulin/pokeemerald-expansion/issues/1)),
+  Legends: Arceus or BDSP
+  ([#2](https://github.com/trey-gonsoulin/pokeemerald-expansion/issues/2)).
+  Gen 9 species only appear if a covered game has them in the wild.
+- ORAS and Sun/Moon data is partial; many ORAS tables are one-species stubs
+  ([#3](https://github.com/trey-gonsoulin/pokeemerald-expansion/issues/3)).
+- Stage bands are absolute levels, so a game with a steep level curve (BW2,
+  SwSh DLC) puts more tables in `late`/`endgame`
+  ([#4](https://github.com/trey-gonsoulin/pokeemerald-expansion/issues/4)).
+- 17 archetypes draw on 3 or fewer locations. If a pool is thin, merge it with
+  the neighbouring stage
+  ([#5](https://github.com/trey-gonsoulin/pokeemerald-expansion/issues/5)).
+- Encounter conditions (time of day, season, weather, swarms) are summed, so
+  e.g. SwSh Giant's Cap mixes snow-weather Vanillite into `mountain`
+  ([#6](https://github.com/trey-gonsoulin/pokeemerald-expansion/issues/6)).
 - Gifts, statics, raids, roamers, trades and SOS allies are excluded. Hordes,
   shaking grass/rippling water "spots", ambushes and flower patches are kept
-  but weighted at ¼ inside their table.
-- Stage bands are absolute levels, so a game with a steep level curve (BW2,
-  SwSh DLC) puts more tables in `late`/`endgame`. If a pool is thin, merge it
-  with the neighbouring stage.
-- A few PokeAPI areas lump distinct zones together (e.g. Hoenn Route 111 is one
-  area, so its whole grass table counts as `desert`). Fix these with overrides
-  in `archetypes.py`.
+  but weighted at ¼ inside their table
+  ([#7](https://github.com/trey-gonsoulin/pokeemerald-expansion/issues/7)).
+- Nothing writes the pools back into `wild_encounters.json` yet
+  ([#8](https://github.com/trey-gonsoulin/pokeemerald-expansion/issues/8)).
