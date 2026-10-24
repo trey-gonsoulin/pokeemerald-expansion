@@ -1407,7 +1407,7 @@ static u16 DebugSelection_GetData(u8 taskId, u32 index)
 
 static void DebugAction_Selection_PrepareStep(u8 taskId, const struct DebugSelectionStep *selectionStep)
 {
-    u32 min, max;
+    u32 min, max, input;
     if (selectionStep->useMinFunc)
         min = selectionStep->minFunc(taskId);
     else
@@ -1417,11 +1417,13 @@ static void DebugAction_Selection_PrepareStep(u8 taskId, const struct DebugSelec
     else
         max = selectionStep->maxValue;
 
-    gTasks[taskId].tInput = DebugSelection_GetData(taskId, gTasks[taskId].tStepsDataIndex);
-    if (gTasks[taskId].tInput < min)
-        gTasks[taskId].tInput = min;
-    if (gTasks[taskId].tInput > max)
-        gTasks[taskId].tInput = max;
+    // Clamp as u32: the s16 tInput would turn stored values above 32767 negative
+    input = DebugSelection_GetData(taskId, gTasks[taskId].tStepsDataIndex);
+    if (input < min)
+        input = min;
+    if (input > max)
+        input = max;
+    gTasks[taskId].tInput = input;
 
     gTasks[taskId].tInputStart = gTasks[taskId].tInput;
     gTasks[taskId].tDigit = 0;
@@ -1475,6 +1477,8 @@ static void DebugAction_Selection_StepUpdate(u8 taskId)
     else if (JOY_REPEAT(DPAD_UP | DPAD_DOWN) || JOY_NEW(DPAD_LEFT | DPAD_RIGHT | L_BUTTON | R_BUTTON | SELECT_BUTTON))
     {
         u32 min, max;
+        s16 oldInput = gTasks[taskId].tInput;
+        s16 oldDigit = gTasks[taskId].tDigit;
         if (selectionStep->useMinFunc)
             min = selectionStep->minFunc(taskId);
         else
@@ -1484,6 +1488,9 @@ static void DebugAction_Selection_StepUpdate(u8 taskId)
         else
             max = selectionStep->maxValue;
         Debug_HandleInput_Numeric(taskId, min, max, selectionStep->digits);
+        // Holding Up/Down at min/max changes nothing, so don't beep or redraw every repeat
+        if (gTasks[taskId].tInput == oldInput && gTasks[taskId].tDigit == oldDigit)
+            return;
         PlaySE(SE_SELECT);
         selectionStep->stepUpdate(taskId, selectionStep->digits, min, max);
         return;
@@ -2785,9 +2792,15 @@ static void DebugSelectionStep_Update ## label(u8 taskId, u8 digits, u32 min, u3
 static void DebugSelectionStep_UpdateSpecies(u8 taskId, u8 digits, u32 min, u32 max)
 {
     u32 species = gTasks[taskId].tInput;
+    bool32 searchDown = Debug_NumericInputMovedDown();
     while (!IsSpeciesEnabled(species))
     {
-        if (Debug_NumericInputMovedDown())
+        // Turn round at the ends so the search never leaves min..max (SPECIES_EGG is above max)
+        if (species >= max)
+            searchDown = TRUE;
+        else if (species <= min)
+            searchDown = FALSE;
+        if (searchDown)
             species--;
         else
             species++;
