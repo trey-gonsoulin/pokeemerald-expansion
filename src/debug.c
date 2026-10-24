@@ -1285,14 +1285,8 @@ static void Debug_DestroyMenu_Full_Script(u8 taskId, const u8 *script)
     ScriptContext_SetupScript(script);
 }
 
-// Enough digits to show max (numeric inputs are u16, so this never runs out of indicators)
-static u32 Debug_CountDigits(u32 max)
-{
-    u32 digits = 1;
-    while (digits < ARRAY_COUNT(gText_DigitIndicator) && max >= (u32)sPowersOfTen[digits])
-        digits++;
-    return digits;
-}
+// Which way the last Debug_HandleInput_Numeric moved, for steps that skip invalid values
+static EWRAM_DATA bool8 sNumericInputMovedDown = FALSE;
 
 // Up/Down turn only the highlighted digit, like a combination lock: 9 wraps to 0 and back with
 // no carry into the other digits, and they repeat while held. A result past either end stops
@@ -1302,20 +1296,21 @@ static void Debug_HandleInput_Numeric(u8 taskId, u32 min, u32 max, u32 digits)
 {
     u32 input = DEBUG_TASK_INPUT(taskId);
 
+    sNumericInputMovedDown = FALSE;
     if (JOY_REPEAT(DPAD_UP | DPAD_DOWN))
     {
+        u32 oldInput = input;
         u32 place = sPowersOfTen[gTasks[taskId].tDigit];
         u32 digit = (input / place) % 10;
         input -= digit * place;
-        if (JOY_REPEAT(DPAD_UP))
-            digit = (digit + 1) % 10;
-        else
-            digit = (digit + 9) % 10;
+        digit = (digit + (JOY_REPEAT(DPAD_UP) ? 1 : 9)) % 10;
         input += digit * place;
         if (input > max)
             input = max;
         else if (input < min)
             input = min;
+        // A digit wrap can move the value against the button (Up on a 9 goes down)
+        sNumericInputMovedDown = input < oldInput;
     }
     else if (JOY_NEW(L_BUTTON))
     {
@@ -1324,6 +1319,7 @@ static void Debug_HandleInput_Numeric(u8 taskId, u32 min, u32 max, u32 digits)
     else if (JOY_NEW(R_BUTTON))
     {
         input = max;
+        sNumericInputMovedDown = TRUE; // max can be invalid, so search down from there
     }
     else if (JOY_NEW(SELECT_BUTTON))
     {
@@ -1347,7 +1343,7 @@ static void Debug_HandleInput_Numeric(u8 taskId, u32 min, u32 max, u32 digits)
 // R jumps to max, so it searches downwards from there.
 static bool32 Debug_NumericInputMovedDown(void)
 {
-    return !JOY_REPEAT(DPAD_UP) && (JOY_REPEAT(DPAD_DOWN) || JOY_NEW(R_BUTTON));
+    return sNumericInputMovedDown;
 }
 
 enum SongType { SONG_SE, SONG_MUS };
@@ -1375,7 +1371,7 @@ static bool32 Debug_HandleInput_SongId(u8 taskId, enum SongType type)
     s16 oldDigit = gTasks[taskId].tDigit;
     u32 max = Debug_GetLastSong(type);
 
-    Debug_HandleInput_Numeric(taskId, Debug_GetFirstSong(type), max, Debug_CountDigits(max));
+    Debug_HandleInput_Numeric(taskId, Debug_GetFirstSong(type), max, CountDigits(max));
     return gTasks[taskId].tInput != oldInput || gTasks[taskId].tDigit != oldDigit;
 }
 
@@ -1442,7 +1438,8 @@ static void DebugAction_Selection_PrepareStep(u8 taskId, const struct DebugSelec
 
     gTasks[taskId].tInputStart = input;
     gTasks[taskId].tDigit = 0;
-    selectionStep->stepUpdate(taskId, Debug_CountDigits(max), min, max);
+    sNumericInputMovedDown = FALSE;
+    selectionStep->stepUpdate(taskId, CountDigits(max), min, max);
     gTasks[taskId].func = DebugAction_Selection_StepUpdate;
 }
 
@@ -1507,12 +1504,13 @@ static void DebugAction_Selection_StepUpdate(u8 taskId)
             max = selectionStep->maxFunc(taskId);
         else
             max = selectionStep->maxValue;
-        Debug_HandleInput_Numeric(taskId, min, max, Debug_CountDigits(max));
+        u32 digits = CountDigits(max);
+        Debug_HandleInput_Numeric(taskId, min, max, digits);
         // Holding Up/Down at min/max changes nothing, so don't beep or redraw every repeat
         if (gTasks[taskId].tInput == oldInput && gTasks[taskId].tDigit == oldDigit)
             return;
         PlaySE(SE_SELECT);
-        selectionStep->stepUpdate(taskId, Debug_CountDigits(max), min, max);
+        selectionStep->stepUpdate(taskId, digits, min, max);
         return;
     }
 }
@@ -4027,7 +4025,7 @@ static void DebugAction_Sound_PrintId(u8 taskId, enum SongType type)
         name = sDebugText_Dashes;
     StringCopy(gStringVar2, gText_DigitIndicator[gTasks[taskId].tDigit]);
     StringCopyPadded(gStringVar1, name, CHAR_SPACE, 35);
-    Debug_InputToDecimalString(gStringVar3, taskId, Debug_CountDigits(Debug_GetLastSong(type)));
+    Debug_InputToDecimalString(gStringVar3, taskId, CountDigits(Debug_GetLastSong(type)));
     StringExpandPlaceholders(gStringVar4, type == SONG_SE ? sDebugText_Sound_SFX_ID : sDebugText_Sound_Music_ID);
     AddTextPrinterParameterized(gTasks[taskId].tSubWindowId, DEBUG_MENU_FONT, gStringVar4, 0, 0, 0, NULL);
 }
@@ -4063,12 +4061,7 @@ static void DebugAction_Sound_Start(u8 taskId, enum SongType type)
 // Returns whether B left the sound test
 static bool32 DebugAction_Sound_HandleInput(u8 taskId, enum SongType type)
 {
-    if (JOY_REPEAT(DPAD_UP | DPAD_DOWN) || JOY_NEW(DPAD_LEFT | DPAD_RIGHT | L_BUTTON | R_BUTTON | SELECT_BUTTON))
-    {
-        if (Debug_HandleInput_SongId(taskId, type))
-            DebugAction_Sound_PrintId(taskId, type);
-    }
-
+    // A comes first, as in the other numeric screens, so in L=A mode L doesn't also jump to the first song
     if (JOY_NEW(A_BUTTON))
     {
         if (Debug_IsSong(type, DEBUG_TASK_INPUT(taskId)))
@@ -4086,6 +4079,11 @@ static bool32 DebugAction_Sound_HandleInput(u8 taskId, enum SongType type)
     else if (JOY_NEW(START_BUTTON))
     {
         m4aSongNumStop(gTasks[taskId].tCurrentSong);
+    }
+    else if (JOY_REPEAT(DPAD_UP | DPAD_DOWN) || JOY_NEW(DPAD_LEFT | DPAD_RIGHT | L_BUTTON | R_BUTTON | SELECT_BUTTON))
+    {
+        if (Debug_HandleInput_SongId(taskId, type))
+            DebugAction_Sound_PrintId(taskId, type);
     }
     return FALSE;
 }
