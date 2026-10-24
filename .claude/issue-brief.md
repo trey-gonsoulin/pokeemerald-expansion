@@ -26,7 +26,7 @@ There are no automated tests for the debug menu.
 - Numeric inputs keep the value in s16 task data (`tInput`), but a max can be 0xFFFF. Every read, compare and clamp goes through u16/u32.
 - Steps that skip invalid values (species) are bounded with a `maxFunc`. `IsSpeciesEnabled(SPECIES_EGG)` is TRUE, and SPECIES_EGG == NUM_SPECIES.
 - Task data slots:
-  - tMenuTaskId=0, tWindowId=1, tSubWindowId=2, tInput=3, tDigit=4, tSpriteId=5, tInputStart=7, tStepsDataIndex=9, tSubstep=10, tStep=11.
+  - tMenuTaskId=0, tWindowId=1, tSubWindowId=2, tInput=3, tDigit=4, tSpriteId=5, tInputStart=7, tStepsDataCount=9 (the stepsData slot is derived by `DebugSelection_DataIndex`, never tracked by hand), tSubstep=10, tStep=11.
   - data[14]/[15] hold word args.
   - Free slots are scarce. Put extra state in `sDebugMenuListData`.
 - Several branches may edit `src/debug.c` in parallel. Keep diffs to the functions your issue needs, with no drive-by reformatting.
