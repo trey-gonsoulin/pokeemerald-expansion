@@ -888,7 +888,7 @@ void Debug_ShowMainMenu(void)
 #define tInputStart          data[7] // value a numeric input step started from, for Select
 // Numeric inputs run from 0 to 0xFFFF, so read the s16 task field back as unsigned
 #define DEBUG_TASK_INPUT(taskId) ((u16)gTasks[taskId].tInput)
-#define tStepsDataIndex      data[9]
+#define tStepsDataCount      data[9] // u16 slots in the selection's stepsData block
 #define tSubstep             data[10]
 #define tStep                data[11]
 #define STEPS_DATA_PTR_ARG        12
@@ -1408,16 +1408,38 @@ static void DebugNativeStep_CloseDebugWindow(u8 taskId)
     UnlockPlayerFieldControls();
 }
 
+// An out-of-range index asserts in debug builds and is otherwise ignored, so it can't touch the heap past the block
 static void DebugSelection_SetData(u8 taskId, u32 index, u16 value)
 {
     u16 *stepsData = (u16 *)GetWordTaskArg(taskId, STEPS_DATA_PTR_ARG);
-    stepsData[index] = value;
+    AGB_ASSERT(index < (u16)gTasks[taskId].tStepsDataCount);
+    if (index < (u16)gTasks[taskId].tStepsDataCount)
+        stepsData[index] = value;
 }
 
 static u16 DebugSelection_GetData(u8 taskId, u32 index)
 {
     u16 *stepsData = (u16 *)GetWordTaskArg(taskId, STEPS_DATA_PTR_ARG);
+    AGB_ASSERT(index < (u16)gTasks[taskId].tStepsDataCount);
+    if (index >= (u16)gTasks[taskId].tStepsDataCount)
+        return 0;
     return stepsData[index];
+}
+
+// stepsData holds one slot per step, or substepCount slots for a multi-value step
+static u32 DebugSelection_StepSlots(const struct DebugSelectionStep *selectionStep)
+{
+    return max(selectionStep->substepCount, 1);
+}
+
+// Slot of the value being edited, derived from tStep and tSubstep so it can't drift out of sync with them
+static u32 DebugSelection_DataIndex(u8 taskId)
+{
+    const struct DebugSelection *selection = (const struct DebugSelection *)GetWordTaskArg(taskId, DEBUG_SELECTION_PTR_ARG);
+    u32 index = gTasks[taskId].tSubstep;
+    for (s32 i = 0; i < gTasks[taskId].tStep; i++)
+        index += DebugSelection_StepSlots(selection->steps[i]);
+    return index;
 }
 
 static void DebugAction_Selection_PrepareStep(u8 taskId, const struct DebugSelectionStep *selectionStep)
@@ -1433,7 +1455,7 @@ static void DebugAction_Selection_PrepareStep(u8 taskId, const struct DebugSelec
         max = selectionStep->maxValue;
 
     // Clamp as u32: the s16 tInput would turn stored values above 32767 negative
-    input = DebugSelection_GetData(taskId, gTasks[taskId].tStepsDataIndex);
+    input = DebugSelection_GetData(taskId, DebugSelection_DataIndex(taskId));
     if (input < min)
         input = min;
     if (input > max)
@@ -1459,6 +1481,8 @@ static void DebugAction_Selection_Cancel(u8 taskId)
         return;
     }
     gTasks[taskId].tStep--;
+    // Going back lands on the previous step's last value
+    gTasks[taskId].tSubstep = DebugSelection_StepSlots(selection->steps[gTasks[taskId].tStep]) - 1;
     DebugAction_Selection_PrepareStep(taskId, selection->steps[gTasks[taskId].tStep]);
 }
 
@@ -1474,7 +1498,6 @@ static void DebugAction_Selection_StepUpdate(u8 taskId)
         }
         selectionStep->stepConfirm(taskId);
         gTasks[taskId].tSubstep++;
-        gTasks[taskId].tStepsDataIndex++;
         if (gTasks[taskId].tSubstep < selectionStep->substepCount)
         {
             DebugAction_Selection_PrepareStep(taskId, selectionStep);
@@ -1485,14 +1508,12 @@ static void DebugAction_Selection_StepUpdate(u8 taskId)
     }
     else if (JOY_NEW(B_BUTTON))
     {
-        gTasks[taskId].tStepsDataIndex--;
         if (gTasks[taskId].tSubstep > 0)
         {
             gTasks[taskId].tSubstep--;
             DebugAction_Selection_PrepareStep(taskId, selectionStep);
             return;
         }
-        gTasks[taskId].tSubstep = 0;
         gTasks[taskId].func = DebugAction_Selection_Cancel;
     }
     else if (JOY_REPEAT(DPAD_UP | DPAD_DOWN) || JOY_NEW(DPAD_LEFT | DPAD_RIGHT | L_BUTTON | R_BUTTON | SELECT_BUTTON))
@@ -1540,20 +1561,18 @@ static void Debug_Selection_StepsDataInit(u8 taskId, const struct DebugSelection
 {
     u32 dataSize = 0;
     for (u32 i = 0; i < selection->maxSteps; i++)
-    {
-        if (selection->steps[i]->substepCount)
-            dataSize += selection->steps[i]->substepCount;
-        else
-            dataSize += 1;
-    }
+        dataSize += DebugSelection_StepSlots(selection->steps[i]);
     u16 *stepsData = AllocZeroed(dataSize * sizeof(u16));
     SetWordTaskArg(taskId, STEPS_DATA_PTR_ARG, (u32) stepsData);
+    gTasks[taskId].tStepsDataCount = dataSize;
 }
 
 static void DebugAction_Selection_Init(u8 taskId, const void *params)
 {
     const struct DebugSelection *selection = (const struct DebugSelection *)params;
+    // Set Friendship re-enters here in the same task, so start every selection from a known state
     gTasks[taskId].tStep = -1;
+    gTasks[taskId].tSubstep = 0;
     SetWordTaskArg(taskId, DEBUG_SELECTION_PTR_ARG, (u32) selection);
     Debug_Selection_StepsDataInit(taskId, selection);
     selection->onInit(taskId);
@@ -1562,7 +1581,7 @@ static void DebugAction_Selection_Init(u8 taskId, const void *params)
 
 static void DebugSelectionStep_GenericInputConfirm(u8 taskId)
 {
-    DebugSelection_SetData(taskId, gTasks[taskId].tStepsDataIndex, gTasks[taskId].tInput);
+    DebugSelection_SetData(taskId, DebugSelection_DataIndex(taskId), gTasks[taskId].tInput);
 }
 
 static void DebugSelectionStep_GenericInputConfirmAndDestroyIcon(u8 taskId)
@@ -2863,12 +2882,12 @@ static void DebugSelectionStep_MovesConfirm(u8 taskId)
     u32 moveId = gTasks[taskId].tInput;
     if (moveId != MOVE_NONE && moveId != MOVES_COUNT)
     {
-        DebugSelection_SetData(taskId, gTasks[taskId].tStepsDataIndex, moveId);
+        DebugSelection_SetData(taskId, DebugSelection_DataIndex(taskId), moveId);
         return;
     }
     while (++gTasks[taskId].tSubstep < MAX_MON_MOVES)
     {
-        DebugSelection_SetData(taskId, ++gTasks[taskId].tStepsDataIndex, moveId);
+        DebugSelection_SetData(taskId, DebugSelection_DataIndex(taskId), moveId);
     }
 }
 
@@ -3092,7 +3111,6 @@ static bool32 DebugSelection_ToggleFlag_Complete(u8 taskId)
 {
     FlagToggle(gTasks[taskId].tInput);
     gTasks[taskId].tStep = 0;
-    gTasks[taskId].tStepsDataIndex = 0;
     return FALSE;
 }
 
@@ -3143,7 +3161,6 @@ static bool32 DebugSelection_SetVar_Complete(u8 taskId)
     u32 varValue = DebugSelection_GetData(taskId, 1);
     VarSet(varId, varValue);
     gTasks[taskId].tStep = 0;
-    gTasks[taskId].tStepsDataIndex = 0;
     return FALSE;
 }
 
@@ -4896,6 +4913,10 @@ static bool32 DebugSelection_SetFriendship_OnComplete(u8 taskId)
 {
     u16 friendship = DebugSelection_GetData(taskId, 0);
     SetMonData(&gParties[B_TRAINER_PLAYER][gTasks[taskId].tPartyId], MON_DATA_FRIENDSHIP, &friendship);
+    // The editor reopens for another edit, and OnInit adds a fresh window, so remove this one.
+    // No VRAM copy: OnInit redraws the same area next frame.
+    ClearStdWindowAndFrame(gTasks[taskId].tSubWindowId, FALSE);
+    RemoveWindow(gTasks[taskId].tSubWindowId);
     gTasks[taskId].func = DebugNativeStep_DelayedSelection;
     return TRUE;
 }
@@ -4938,7 +4959,7 @@ static void DebugSelectionStep_UpdatePokerusDaysLeft(u8 taskId, u8 digits, u32 m
 {
     StringCopy(gStringVar1, COMPOUND_STRING("Days Left:"));
     s16 daysLeft = gTasks[taskId].tInput;
-    u16 strain = DebugSelection_GetData(taskId, gTasks[taskId].tStepsDataIndex - 1);
+    u16 strain = DebugSelection_GetData(taskId, DebugSelection_DataIndex(taskId) - 1);
     Debug_InputToDecimalString(gStringVar2, taskId, digits);
 
     if (daysLeft == 0 && strain == 0)
