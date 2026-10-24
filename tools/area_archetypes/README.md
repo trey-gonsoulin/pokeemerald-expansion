@@ -123,7 +123,7 @@ python3 tools/area_archetypes/area_archetypes.py restock --ratio 0.4 --write
 
 ### The vanilla baseline
 
-`restock` never reads `src/data/wild_encounters.json`. Its natives (and the
+`restock` never takes natives from `src/data/wild_encounters.json`. They (and the
 report's "before" column) come from `--base`, by default
 `output/wild_encounters.vanilla.json`, a committed copy of the unrestocked
 file. `build` classifies the same file into `emerald_maps.json`. So rerunning
@@ -167,7 +167,7 @@ python3 tools/area_archetypes/area_archetypes.py baseline --wild /tmp/wild_encou
 | `--new-species N` | scales | new species per table; default `round(own * R / (1 - R))`, or the own count at `R = 1` |
 | `--config FILE` | none | JSON with any of the above (snake_case) plus per-map overrides; flags win |
 | `--base FILE` | `output/wild_encounters.vanilla.json` | vanilla file the natives come from |
-| `--wild FILE` | `src/data/wild_encounters.json` | file `--write` overwrites; never read |
+| `--wild FILE` | `src/data/wild_encounters.json` | file `--write` overwrites; not a source of natives |
 | `--write` | off | also overwrite `--wild` |
 | `--force` | off | accept a `--base` that `restock` wrote, and `--write` over a `--wild` that differs from it in more than species |
 

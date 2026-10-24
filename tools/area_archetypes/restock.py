@@ -639,7 +639,7 @@ def main(argv=None):
                                     'flags win over it. See README.')
     p.add_argument('--base', default=AA.VANILLA_WILD,
                    help='vanilla wild_encounters.json the natives come from (default: the committed snapshot)')
-    p.add_argument('--wild', default=AA.SRC_WILD, help='file --write overwrites (never read)')
+    p.add_argument('--wild', default=AA.SRC_WILD, help='file --write overwrites (not a source of natives)')
     p.add_argument('--pools', default=os.path.join(AA.DEFAULT_OUT, 'archetype_pools.json'))
     p.add_argument('--maps', default=os.path.join(AA.DEFAULT_OUT, 'emerald_maps.json'))
     p.add_argument('--out-dir', default=DEFAULT_OUT_DIR, help='where the preview JSON and report go')
