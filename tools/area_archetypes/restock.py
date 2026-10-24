@@ -39,10 +39,10 @@ DEFAULT_SEED = 1
 DEFAULT_REGIONS = ('hoenn',)
 # Pool species with any of these flags are never placed (unless
 # --allow-legendaries for the legendary ones; battle-only forms never).
-LEGENDARY_FLAGS = ('isRestrictedLegendary', 'isSubLegendary', 'isMythical',
-                   'isUltraBeast', 'isParadox')
-BATTLE_ONLY_FLAGS = ('isMegaEvolution', 'isGigantamax', 'isPrimalReversion',
-                     'isTotem', 'isUltraBurst', 'isTeraForm')
+LEGENDARY_FLAGS = frozenset({'isRestrictedLegendary', 'isSubLegendary', 'isMythical',
+                             'isUltraBeast', 'isParadox'})
+BATTLE_ONLY_FLAGS = frozenset({'isMegaEvolution', 'isGigantamax', 'isPrimalReversion',
+                               'isTotem', 'isUltraBurst', 'isTeraForm'})
 # Below ratio 1, every species a table already has keeps at least one slot,
 # so rare natives (Ralts, Seedot, Kecleon) don't vanish.
 KEEP_EVERY_NATIVE = True
@@ -71,7 +71,7 @@ def parse_defines(repo):
             continue
         with open(os.path.join(cfg, name), encoding='utf-8') as f:
             for line in f:
-                m = re.match(r'\s*#\s*define\s+([A-Za-z_]\w*)(?!\()\s*(.*)', line)
+                m = re.match(r'\s*#\s*define\s+([A-Za-z_]\w*)(?![\w(])\s*(.*)', line)
                 if m:
                     defines[m[1]] = re.sub(r'//.*|/\*.*?\*/', '', m[2]).strip()
     return defines
@@ -171,7 +171,7 @@ class SpeciesInfo:
         self.enabled |= {a for a in self.alias if self.canon(a) in self.enabled}
         self.flags = {}
         self.pre_evos = collections.defaultdict(list)  # species -> [(from, method, param)]
-        baby = set()
+        self.baby = set()
         for sp, lines in entries.items():
             text = ''.join(lines)
             self.flags[sp] = set(re.findall(r'\.(is\w+)\s*=\s*TRUE', text))
@@ -179,12 +179,11 @@ class SpeciesInfo:
             if not m:
                 continue
             if 'EGG_GROUP_NO_EGGS_DISCOVERED' in text:
-                baby.add(sp)
+                self.baby.add(sp)
             for method, param, target in re.findall(
                     r'\{\s*(EVO_\w+)\s*,\s*([^,{}]+?)\s*,\s*(SPECIES_\w+)', balanced(text, m.end())):
                 if target in self.enabled:
                     self.pre_evos[self.canon(target)].append((sp, method, param))
-        self.baby = baby
         self._min_level = {}
 
     def canon(self, species):
@@ -202,7 +201,6 @@ class SpeciesInfo:
         species = self.canon(species)
         if species in self._min_level:
             return self._min_level[species]
-        best = 1
         options = []
         for src, method, param in self.pre_evos.get(species, ()):
             if src in _seen:
@@ -216,8 +214,7 @@ class SpeciesInfo:
                 options.append(base)
             else:
                 options.append(max(base + NONLEVEL_EVO_GAP, NONLEVEL_EVO_FLOOR))
-        if options:
-            best = min(options)
+        best = min(options, default=1)
         self._min_level[species] = best
         return best
 
@@ -346,9 +343,9 @@ def candidates(pool, info, settings, allow, deny, natives):
         if settings.gens and e['introduced_gen'] not in settings.gens:
             continue
         flags = info.flags_of(sp)
-        if flags & set(BATTLE_ONLY_FLAGS):
+        if flags & BATTLE_ONLY_FLAGS:
             continue
-        if not settings.allow_legendaries and flags & set(LEGENDARY_FLAGS):
+        if not settings.allow_legendaries and flags & LEGENDARY_FLAGS:
             continue
         w = e['share'] * settings.gen_weight.get(e['introduced_gen'], 1.0)
         if w > 0:
@@ -387,6 +384,8 @@ def restock_table(mons, rates, pool, info, settings, label, field):
     picked_total = sum(cands[s] for s in picked)
     for s in picked:
         targets[s] += ratio * cands[s] / picked_total
+    if not targets:
+        return None
     slots = assign_slots(targets, rates, kept if keep_all else ())
     return [s if s in natives else info.devolve(s, m['max_level'])
             for s, m in zip(slots, mons)]
@@ -450,12 +449,16 @@ def short(sp):
     return sp.removeprefix('SPECIES_')
 
 
+def fmt_shares(shares):
+    return ', '.join(f'{short(k)} {v}%' for k, v in sorted(shares.items(), key=lambda kv: (-kv[1], kv[0])))
+
+
 def summarize(changes):
     added = collections.Counter()
     removed = collections.Counter()
     for ch in changes:
-        before = set(species_shares(ch['slots'], 'before'))
-        after = set(species_shares(ch['slots'], 'after'))
+        before = {sl['before'] for sl in ch['slots']}
+        after = {sl['after'] for sl in ch['slots']}
         added.update(after - before)
         removed.update(before - after)
     return {'tables_changed': len(changes),
@@ -477,10 +480,9 @@ def write_report(path, changes, settings):
              f'- {s["distinct_species_added"]} species added somewhere, '
              f'{s["distinct_species_removed"]} removed somewhere', '']
     for ch in changes:
-        b, a = species_shares(ch['slots'], 'before'), species_shares(ch['slots'], 'after')
-        fmt = lambda c: ', '.join(f'{short(k)} {v}%' for k, v in sorted(c.items(), key=lambda kv: (-kv[1], kv[0])))  # noqa: E731
         lines += [f'## {ch["label"]} {ch["table"]} ({ch["archetype"]})', '',
-                  f'before: {fmt(b)}  ', f'after: {fmt(a)}', '',
+                  f'before: {fmt_shares(species_shares(ch["slots"], "before"))}  ',
+                  f'after: {fmt_shares(species_shares(ch["slots"], "after"))}', '',
                   '| slot | rate | levels | before | after |', '|---|---|---|---|---|']
         for i, sl in enumerate(ch['slots']):
             lv = sl['levels'][0] if sl['levels'][0] == sl['levels'][1] else f'{sl["levels"][0]}-{sl["levels"][1]}'
@@ -550,7 +552,7 @@ def main(argv=None):
     regions = opt('regions', ','.join(DEFAULT_REGIONS))
     settings = Settings(
         ratio=float(opt('ratio', DEFAULT_RATIO)), seed=int(opt('seed', DEFAULT_SEED)),
-        regions=regions.split(',') if isinstance(regions, str) else regions,
+        regions=[r.strip() for r in regions.split(',')] if isinstance(regions, str) else regions,
         gens=parse_gens(gens) if isinstance(gens, str) else gens, gen_weight=gen_weight,
         allow=parse_species_list(args.allow or cfg.get('allow')),
         deny=parse_species_list(args.deny or cfg.get('deny')),
@@ -559,7 +561,10 @@ def main(argv=None):
         keep_every_native=not (args.drop_rare_natives or cfg.get('drop_rare_natives')))
 
     info = SpeciesInfo(args.repo)
-    unknown = sorted((settings.allow | settings.deny) - info.constants)
+    named = settings.allow | settings.deny
+    for o in settings.maps.values():
+        named |= parse_species_list(o.get('allow')) | parse_species_list(o.get('deny'))
+    unknown = sorted(named - info.constants)
     if unknown:
         sys.exit(f'unknown species: {", ".join(unknown)}')
     wild = load_json(args.wild)
