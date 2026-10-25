@@ -1464,7 +1464,10 @@ static u32 Debug_GenerateListTrainerMenu(const struct DebugMenuOption *items)
         switch (i)
         {
         case 1:
-            ConvertIntToDecimalStringN(gStringVar1, trainer1Id, STR_CONV_MODE_LEADING_ZEROS, 3);
+            if (trainer1Id == TRAINER_NONE)
+                StringCopy(gStringVar1, COMPOUND_STRING("None"));
+            else
+                ConvertIntToDecimalStringN(gStringVar1, trainer1Id, STR_CONV_MODE_LEADING_ZEROS, 3);
             break;
         case 2:
             if (trainer2Id == TRAINER_NONE)
@@ -2665,6 +2668,12 @@ static void DebugAction_Trainers_TryBattle(u8 taskId)
         if (lastMatch == REMATCHES_COUNT || gRematchTable[rematchId].trainerIds[lastMatch] == 0)
             lastMatch -= 1;
         trainer1Id = gRematchTable[rematchId].trainerIds[lastMatch];
+    }
+    // Opponent A is required, even with a Trainer 2 or partner set
+    if (trainer1Id == TRAINER_NONE)
+    {
+        PlaySE(SE_FAILURE);
+        return;
     }
     gBattleTypeFlags = BATTLE_TYPE_TRAINER;
     TRAINER_BATTLE_PARAM.opponentA = trainer1Id;
