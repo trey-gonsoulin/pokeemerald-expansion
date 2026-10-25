@@ -56,11 +56,11 @@ CSV_FILES = [
 ]
 # Species whose share of a pool is below this are dropped from the output.
 MIN_POOL_SHARE = 0.001
+MD_TOP_N = 15
 # Generation each region's forms debuted in. A regional form's introduced_gen
 # is its form's, not its base species' (SPECIES_RATTATA_ALOLA is Gen 7).
 REGIONAL_FORM_GENS = {'ALOLA': 7, 'GALAR': 8, 'HISUI': 8, 'PALDEA': 9}
 REGIONAL_FORM_RE = re.compile(r'_(' + '|'.join(REGIONAL_FORM_GENS) + r')(?:_|$)')
-MD_TOP_N = 15
 
 
 # ---------------------------------------------------------------------------

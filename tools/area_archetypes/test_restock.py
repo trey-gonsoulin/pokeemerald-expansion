@@ -328,8 +328,8 @@ class RestockTests(unittest.TestCase):
     def test_gens_use_the_regional_form_generation(self):
         def added(settings):
             _, changes = R.restock(self.wild, self.maps, self.pools, self.info, settings)
-            return {sl['after'] for ch in changes for sl in ch['slots']} - \
-                {sl['before'] for ch in changes for sl in ch['slots']}
+            slots = [sl for ch in changes for sl in ch['slots']]
+            return {sl['after'] for sl in slots} - {sl['before'] for sl in slots}
 
         early = added(R.Settings(ratio=1.0, gens={1, 2, 3}))
         self.assertTrue(early)
