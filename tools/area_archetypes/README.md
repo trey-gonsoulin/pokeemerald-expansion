@@ -16,7 +16,9 @@ python3 tools/area_archetypes/area_archetypes.py baseline # refresh the vanilla 
 python3 -m unittest discover -s tools/area_archetypes    # tests
 ```
 
-Standard library only.
+Standard library only. The tests run the whole build on the tiny hand-written
+PokeAPI CSV set in `testdata/`, so they need no network; the end-to-end tests
+on the full data run only once `fetch` has filled `.cache/`.
 
 ## Archetypes
 
