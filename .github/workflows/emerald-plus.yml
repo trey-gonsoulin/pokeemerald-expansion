@@ -16,7 +16,8 @@ permissions:
 
 concurrency:
   group: emerald-plus-${{ github.ref }}
-  cancel-in-progress: true
+  # Superseded issue-* runs are cancelled; every emerald-plus commit gets a full run.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/emerald-plus' }}
 
 jobs:
   build:
