@@ -335,7 +335,10 @@ def parse_gens(text):
     gens = set()
     for part in filter(None, (p.strip() for p in text.split(','))):
         lo, _, hi = part.partition('-')
-        span = range(int(lo), int(hi or lo) + 1)
+        try:
+            span = range(int(lo), int(hi or lo) + 1)
+        except ValueError:
+            raise ValueError(f'not a generation or range: {part!r}') from None
         if not span:  # '9-4': an empty set would mean every generation
             raise ValueError(f'empty generation range {part!r}')
         gens.update(span)
@@ -450,14 +453,15 @@ def as_species(v):
 
 
 def as_gens(v):
+    detail = ''
     if isinstance(v, str):
         try:
             return parse_gens(v)
-        except ValueError:
-            pass
+        except ValueError as e:
+            detail = f' ({e})'
     elif isinstance(v, list) and all(isinstance(g, int) and not isinstance(g, bool) for g in v):
         return set(v)
-    raise ValueError(f"expected generations like '4-9' or a list of numbers, got {v!r}")
+    raise ValueError(f"expected generations like '4-9' or a list of numbers, got {v!r}{detail}")
 
 
 def as_gen_weight(v):

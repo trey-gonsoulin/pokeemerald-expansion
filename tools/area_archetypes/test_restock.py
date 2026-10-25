@@ -491,8 +491,10 @@ class CliTests(unittest.TestCase):
         self.assertEqual(R.parse_gens('5-5'), {5})
         with self.assertRaisesRegex(ValueError, "empty generation range '9-4'"):
             R.parse_gens('1,9-4')
-        self.assertIn('--gens', self.restock_error(['--gens', '9-4']))
-        self.assertIn('gens:', self.restock_error(config={'gens': '9-4'}))
+        self.assertIn("got '9-4' (empty generation range '9-4')", self.restock_error(['--gens', '9-4']))
+        self.assertIn("gens: expected generations like '4-9' or a list of numbers, got '1,9-4' (empty",
+                      self.restock_error(config={'gens': '1,9-4'}))
+        self.assertIn("(not a generation or range: '4-x')", self.restock_error(['--gens', '4-x']))
 
     def test_bad_option_values_are_rejected(self):
         for config, message in (({'gens': 4}, 'gens:'), ({'gens': '4-x'}, 'gens:'),
