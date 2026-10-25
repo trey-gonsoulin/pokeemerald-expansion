@@ -36,6 +36,10 @@
          "water_mons": {"encounter_rate": 4, "mons": [
            {"min_level": 25, "max_level": 25, "species": "SPECIES_CLAMPERL"},
            {"min_level": 25, "max_level": 25, "species": "SPECIES_CLAMPERL"}]}},
+        {"map": "MAP_ROUTE124", "base_label": "gRoute124",
+         "water_mons": {"encounter_rate": 4, "mons": [
+           {"min_level": 25, "max_level": 25, "species": "SPECIES_TENTACOOL"},
+           {"min_level": 25, "max_level": 25, "species": "SPECIES_WINGULL"}]}},
         {"map": "MAP_LILYCOVE_CITY", "base_label": "gLilycoveCity",
          "land_mons": {"encounter_rate": 20, "mons": [
            {"min_level": 20, "max_level": 20, "species": "SPECIES_ABRA"},

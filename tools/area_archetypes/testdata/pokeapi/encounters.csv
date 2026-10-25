@@ -16,3 +16,5 @@ id,version_id,location_area_id,encounter_slot_id,pokemon_id,min_level,max_level
 15,9,4,9,10901,5,10
 16,9,4,10,366,20,30
 17,9,5,4,265,2,3
+18,1,2,3,10902,3,5
+19,9,7,10,366,20,30
