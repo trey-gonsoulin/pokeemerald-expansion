@@ -9948,8 +9948,9 @@ void BS_TryRevivalBlessing(void)
         PREPARE_SPECIES_BUFFER(gBattleTextBuff1, GetMonData(&party[gSelectedMonPartyId], MON_DATA_SPECIES));
 
         // If an on-field battler is revived, it needs to be sent out again.
-        if (IsDoubleBattle() &&
-            gBattlerPartyIndexes[GetPartnerBattler(gBattlerAttacker)] == gSelectedMonPartyId)
+        if (IsDoubleBattle()
+         && BattlersShareParty(gBattlerAttacker, GetPartnerBattler(gBattlerAttacker))
+         && gBattlerPartyIndexes[GetPartnerBattler(gBattlerAttacker)] == gSelectedMonPartyId)
         {
             enum BattlerId i = GetPartnerBattler(gBattlerAttacker);
             gAbsentBattlerFlags &= ~(1u << i);
