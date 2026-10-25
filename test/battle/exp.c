@@ -154,8 +154,7 @@ WILD_BATTLE_TEST("Transformed Pokemon gives the experience points of the copied 
     }
 }
 
-#if I_EXP_SHARE_ITEM < GEN_6
-
+// The held effect works whatever I_EXP_SHARE_ITEM is: in Gen 6+ the item is a key item, but holding it still works.
 WILD_BATTLE_TEST("Exp Share(held) gives Experience to mons which did not participate in battle")
 {
     enum Item item = ITEM_NONE;
@@ -173,7 +172,7 @@ WILD_BATTLE_TEST("Exp Share(held) gives Experience to mons which did not partici
         MESSAGE("Wobbuffet used Scratch!");
         MESSAGE("The wild Caterpie fainted!");
         // This message should appear only for gen6> exp share.
-        NOT MESSAGE("The rest of your team gained EXP. Points thanks to the Exp. Share!");
+        NOT MESSAGE("The rest of your team gained Exp. Points thanks to the Exp. Share!");
     } THEN {
         if (item == ITEM_EXP_SHARE)
             EXPECT_GT(GetMonData(&gParties[B_TRAINER_PLAYER][1], MON_DATA_EXP), gExperienceTables[gSpeciesInfo[SPECIES_WYNAUT].growthRate][40]);
@@ -181,8 +180,6 @@ WILD_BATTLE_TEST("Exp Share(held) gives Experience to mons which did not partici
             EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][1], MON_DATA_EXP), gExperienceTables[gSpeciesInfo[SPECIES_WYNAUT].growthRate][40]);
     }
 }
-
-#endif // I_EXP_SHARE_ITEM
 
 AI_DOUBLE_BATTLE_TEST("Both player Pokemon gain experience in double battles")
 {
@@ -235,7 +232,12 @@ AI_ONE_VS_TWO_BATTLE_TEST("Both opponent's Pokemon give experience in battle aga
     }
 }
 
-AI_SINGLE_BATTLE_TEST("Pokemon gain experience when the opponent's last Pokemon faints from end-of-turn damage")
+// "Exp award:" tests cover the fork's exp fixes (end-of-turn faints, opponent B's party) and the Gen 6 Exp. Share flag.
+// With B_SCALED_EXP at GEN_3 and B_UNEVOLVED_EXP_MULTIPLIER at GEN_3, a participant gains expYield * level / 7.
+#define EXP_YIELD(species, level) (gSpeciesInfo[species].expYield * (level) / 7)
+#define EXP_AT_LEVEL(species, level) (gExperienceTables[gSpeciesInfo[species].growthRate][level])
+
+AI_SINGLE_BATTLE_TEST("Exp award: Pokemon gain experience once when the opponent's last Pokemon faints from end-of-turn damage")
 {
     u32 status, playerSpeed;
     PARAMETRIZE { status = STATUS1_POISON; playerSpeed = 1; }
@@ -243,6 +245,8 @@ AI_SINGLE_BATTLE_TEST("Pokemon gain experience when the opponent's last Pokemon 
     PARAMETRIZE { status = STATUS1_BURN;   playerSpeed = 1; }
     PARAMETRIZE { status = STATUS1_BURN;   playerSpeed = 100; }
     GIVEN {
+        WITH_CONFIG(B_SCALED_EXP, GEN_3);
+        WITH_CONFIG(B_UNEVOLVED_EXP_MULTIPLIER, GEN_3);
         PLAYER(SPECIES_WOBBUFFET) { Level(15); Speed(playerSpeed); }
         OPPONENT(SPECIES_TREECKO) { Level(15); HP(1); Speed(50); Status1(status); Moves(MOVE_CELEBRATE); }
     } WHEN {
@@ -250,17 +254,164 @@ AI_SINGLE_BATTLE_TEST("Pokemon gain experience when the opponent's last Pokemon 
     } SCENE {
         MESSAGE("The opposing Treecko fainted!");
         EXPERIENCE_BAR(player);
+        NOT EXPERIENCE_BAR(player);
     } THEN {
-        EXPECT_GT(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_EXP), gExperienceTables[gSpeciesInfo[SPECIES_WOBBUFFET].growthRate][15]);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WOBBUFFET, 15) + EXP_YIELD(SPECIES_TREECKO, 15));
     }
 }
 
-AI_ONE_VS_TWO_BATTLE_TEST("Every Pokemon of opponent B gives experience in battle against two opponents", s32 exp)
+WILD_BATTLE_TEST("Exp award: Pokemon gain experience once when the wild Pokemon faints from end-of-turn damage")
+{
+    u32 status;
+    PARAMETRIZE { status = STATUS1_POISON; }
+    PARAMETRIZE { status = STATUS1_BURN; }
+    GIVEN {
+        WITH_CONFIG(B_SCALED_EXP, GEN_3);
+        WITH_CONFIG(B_UNEVOLVED_EXP_MULTIPLIER, GEN_3);
+        PLAYER(SPECIES_WOBBUFFET) { Level(15); }
+        OPPONENT(SPECIES_TREECKO) { Level(15); HP(1); Status1(status); Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_CELEBRATE); }
+    } SCENE {
+        MESSAGE("The wild Treecko fainted!");
+        EXPERIENCE_BAR(player);
+        NOT EXPERIENCE_BAR(player);
+    } THEN {
+        EXPECT_EQ(gBattleOutcome, B_OUTCOME_WON);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WOBBUFFET, 15) + EXP_YIELD(SPECIES_TREECKO, 15));
+    }
+}
+
+AI_DOUBLE_BATTLE_TEST("Exp award: Both player Pokemon gain experience once from each opponent fainting from end-of-turn damage")
+{
+    GIVEN {
+        WITH_CONFIG(B_SCALED_EXP, GEN_3);
+        WITH_CONFIG(B_UNEVOLVED_EXP_MULTIPLIER, GEN_3);
+        PLAYER(SPECIES_WOBBUFFET) { Level(20); }
+        PLAYER(SPECIES_WYNAUT) { Level(20); }
+        OPPONENT(SPECIES_TREECKO) { Level(10); HP(1); Status1(STATUS1_POISON); Moves(MOVE_CELEBRATE); }
+        OPPONENT(SPECIES_MUDKIP) { Level(12); HP(1); Status1(STATUS1_POISON); Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        TURN { MOVE(playerLeft, MOVE_CELEBRATE); MOVE(playerRight, MOVE_CELEBRATE); }
+    } SCENE {
+        MESSAGE("The opposing Treecko fainted!");
+        MESSAGE("The opposing Mudkip fainted!");
+    } THEN {
+        u32 gain = EXP_YIELD(SPECIES_TREECKO, 10) + EXP_YIELD(SPECIES_MUDKIP, 12);
+        EXPECT_EQ(gBattleOutcome, B_OUTCOME_WON);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WOBBUFFET, 20) + gain);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][1], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WYNAUT, 20) + gain);
+    }
+}
+
+AI_SINGLE_BATTLE_TEST("Exp award: No experience is given when the player's last Pokemon faints from end-of-turn damage")
+{
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET) { Level(15); HP(1); Status1(STATUS1_POISON); }
+        OPPONENT(SPECIES_TREECKO) { Level(15); Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_CELEBRATE); }
+    } SCENE {
+        MESSAGE("Wobbuffet fainted!");
+        NONE_OF {
+            MESSAGE("Wobbuffet fainted!");
+            EXPERIENCE_BAR(player);
+        }
+    } THEN {
+        EXPECT_EQ(gBattleOutcome, B_OUTCOME_LOST);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WOBBUFFET, 15));
+    }
+}
+
+// A win decided at the end of the turn now runs ENDTURN_DYNAMAX (the fork's jump lands on ENDTURN_FAINTED_MON_ACTIONS, just before it),
+// so the Dynamaxed winner reverts once. A win decided by a move skips the end-of-turn events, so nothing reverts on screen.
+// Player Dynamax is off in-game (B_FLAG_DYNAMAX_BATTLE is 0 and there is no Dynamax Band), but tests skip those checks.
+AI_SINGLE_BATTLE_TEST("Exp award: Dynamax ends once after an end-of-turn win, and not after a win by a move")
+{
+    u32 endTurnFaint;
+    PARAMETRIZE { endTurnFaint = FALSE; }
+    PARAMETRIZE { endTurnFaint = TRUE; }
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET) { Level(50); Speed(100); }
+        OPPONENT(SPECIES_TREECKO) { Level(15); HP(1); Speed(50); Status1(endTurnFaint ? STATUS1_POISON : STATUS1_NONE); Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        TURN { MOVE(player, endTurnFaint ? MOVE_CELEBRATE : MOVE_SCRATCH, gimmick: GIMMICK_DYNAMAX); }
+    } SCENE {
+        ANIMATION(ANIM_TYPE_GENERAL, B_ANIM_DYNAMAX_GROWTH, player);
+        MESSAGE("The opposing Treecko fainted!");
+        EXPERIENCE_BAR(player);
+        if (endTurnFaint)
+            ANIMATION(ANIM_TYPE_GENERAL, B_ANIM_FORM_CHANGE, player);
+        NONE_OF {
+            ANIMATION(ANIM_TYPE_GENERAL, B_ANIM_FORM_CHANGE, player);
+            EXPERIENCE_BAR(player);
+        }
+    } THEN {
+        EXPECT_EQ(gBattleOutcome, B_OUTCOME_WON);
+    }
+}
+
+WILD_BATTLE_TEST("Exp award: Gen 6 Exp. Share gives the rest of the team half experience and prints its message once")
+{
+    GIVEN {
+        ASSUME(I_EXP_SHARE_FLAG > TEMP_FLAGS_END);
+        WITH_CONFIG(B_SCALED_EXP, GEN_3);
+        WITH_CONFIG(B_UNEVOLVED_EXP_MULTIPLIER, GEN_3);
+        FLAG_SET(I_EXP_SHARE_FLAG);
+        PLAYER(SPECIES_WOBBUFFET) { Level(20); }
+        PLAYER(SPECIES_WYNAUT) { Level(20); }
+        PLAYER(SPECIES_WYNAUT) { Level(25); }
+        OPPONENT(SPECIES_CATERPIE) { Level(10); HP(1); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_SCRATCH); }
+    } SCENE {
+        MESSAGE("The wild Caterpie fainted!");
+        EXPERIENCE_BAR(player);
+        MESSAGE("The rest of your team gained Exp. Points thanks to the Exp. Share!");
+        NOT MESSAGE("The rest of your team gained Exp. Points thanks to the Exp. Share!");
+    } THEN {
+        u32 gain = EXP_YIELD(SPECIES_CATERPIE, 10);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WOBBUFFET, 20) + gain);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][1], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WYNAUT, 20) + gain / 2);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][2], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WYNAUT, 25) + gain / 2);
+    }
+}
+
+AI_SINGLE_BATTLE_TEST("Exp award: Gen 6 Exp. Share gives experience once when the opponent's last Pokemon faints from end-of-turn damage")
+{
+    GIVEN {
+        ASSUME(I_EXP_SHARE_FLAG > TEMP_FLAGS_END);
+        WITH_CONFIG(B_SCALED_EXP, GEN_3);
+        WITH_CONFIG(B_UNEVOLVED_EXP_MULTIPLIER, GEN_3);
+        FLAG_SET(I_EXP_SHARE_FLAG);
+        PLAYER(SPECIES_WOBBUFFET) { Level(15); }
+        PLAYER(SPECIES_WYNAUT) { Level(15); }
+        OPPONENT(SPECIES_TREECKO) { Level(15); HP(1); Status1(STATUS1_POISON); Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_CELEBRATE); }
+    } SCENE {
+        MESSAGE("The opposing Treecko fainted!");
+        EXPERIENCE_BAR(player);
+        MESSAGE("The rest of your team gained Exp. Points thanks to the Exp. Share!");
+        NONE_OF {
+            MESSAGE("The rest of your team gained Exp. Points thanks to the Exp. Share!");
+            EXPERIENCE_BAR(player);
+        }
+    } THEN {
+        u32 gain = EXP_YIELD(SPECIES_TREECKO, 15);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WOBBUFFET, 15) + gain);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][1], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WYNAUT, 15) + gain / 2);
+    }
+}
+
+AI_ONE_VS_TWO_BATTLE_TEST("Exp award: Every Pokemon of opponent B gives experience in battle against two opponents")
 {
     u32 koBoth;
     PARAMETRIZE { koBoth = FALSE; }
     PARAMETRIZE { koBoth = TRUE; }
     GIVEN {
+        WITH_CONFIG(B_SCALED_EXP, GEN_3);
+        WITH_CONFIG(B_UNEVOLVED_EXP_MULTIPLIER, GEN_3);
         PLAYER(SPECIES_WOBBUFFET) { Level(20); Speed(100); }
         PLAYER(SPECIES_WYNAUT) { Level(20); Speed(100); }
         OPPONENT_A(SPECIES_WOBBUFFET) { Level(10); Speed(50); Moves(MOVE_CELEBRATE); }
@@ -271,9 +422,42 @@ AI_ONE_VS_TWO_BATTLE_TEST("Every Pokemon of opponent B gives experience in battl
         if (koBoth)
             TURN { MOVE(playerLeft, MOVE_SCRATCH, target: opponentRight); MOVE(playerRight, MOVE_CELEBRATE); }
     } THEN {
-        results[i].exp = GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_EXP) - gExperienceTables[gSpeciesInfo[SPECIES_WOBBUFFET].growthRate][20];
-    } FINALLY {
-        EXPECT_GT(results[0].exp, 0);
-        EXPECT_EQ(results[1].exp, results[0].exp * 2);
+        u32 gain = EXP_YIELD(SPECIES_CATERPIE, 10) * (koBoth ? 2 : 1);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WOBBUFFET, 20) + gain);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][1], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WYNAUT, 20) + gain);
+    }
+}
+
+AI_ONE_VS_TWO_BATTLE_TEST("Exp award: Gen 6 Exp. Share gives experience once for every Pokemon of opponent B")
+{
+    u32 koBoth;
+    PARAMETRIZE { koBoth = FALSE; }
+    PARAMETRIZE { koBoth = TRUE; }
+    GIVEN {
+        ASSUME(I_EXP_SHARE_FLAG > TEMP_FLAGS_END);
+        WITH_CONFIG(B_SCALED_EXP, GEN_3);
+        WITH_CONFIG(B_UNEVOLVED_EXP_MULTIPLIER, GEN_3);
+        FLAG_SET(I_EXP_SHARE_FLAG);
+        PLAYER(SPECIES_WOBBUFFET) { Level(20); Speed(100); }
+        PLAYER(SPECIES_WYNAUT) { Level(20); Speed(100); }
+        PLAYER(SPECIES_WYNAUT) { Level(25); Speed(100); }
+        OPPONENT_A(SPECIES_WOBBUFFET) { Level(10); Speed(50); Moves(MOVE_CELEBRATE); }
+        OPPONENT_B(SPECIES_CATERPIE) { Level(10); HP(1); Speed(50); Moves(MOVE_CELEBRATE); }
+        OPPONENT_B(SPECIES_CATERPIE) { Level(10); HP(1); Speed(50); Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        TURN { MOVE(playerLeft, MOVE_SCRATCH, target: opponentRight); MOVE(playerRight, MOVE_CELEBRATE); }
+        if (koBoth)
+            TURN { MOVE(playerLeft, MOVE_SCRATCH, target: opponentRight); MOVE(playerRight, MOVE_CELEBRATE); }
+    } SCENE {
+        MESSAGE("The rest of your team gained Exp. Points thanks to the Exp. Share!");
+        if (koBoth)
+            MESSAGE("The rest of your team gained Exp. Points thanks to the Exp. Share!");
+        NOT MESSAGE("The rest of your team gained Exp. Points thanks to the Exp. Share!");
+    } THEN {
+        u32 kos = koBoth ? 2 : 1;
+        u32 gain = EXP_YIELD(SPECIES_CATERPIE, 10);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WOBBUFFET, 20) + gain * kos);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][1], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WYNAUT, 20) + gain * kos);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][2], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WYNAUT, 25) + (gain / 2) * kos);
     }
 }
