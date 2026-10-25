@@ -2929,45 +2929,44 @@ static void DebugSelectionStep_MovesConfirm(u8 taskId)
 }
 
 // The Moves step's "Default" is MOVES_COUNT, which is also MOVE_BREAKNECK_BLITZ, so it must never
-// reach a mon or the save. From the first Default on, the slots get the latest moves of the species'
-// default moveset at that level that weren't chosen already, so Default in Move 1 gives the whole
-// default moveset. Reads the MAX_MON_MOVES slots from firstSlot.
+// reach a mon or the save. The Default slots get the species' latest level-up moves up to level that
+// weren't chosen in another slot, in the order they're learned, the way GiveBoxMonInitialMoveset picks
+// them. So Default in Move 1 gives the whole default moveset. Reads the MAX_MON_MOVES slots from firstSlot.
 static void Debug_ResolveSelectedMoves(u8 taskId, u32 firstSlot, enum Species species, u32 level, u16 *moves)
 {
-    struct BoxPokemon boxMon;
+    const struct LevelUpMove *learnset = GetSpeciesLevelUpLearnset(species);
     u16 defaultMoves[MAX_MON_MOVES];
-    u32 chosen, count = 0;
+    u32 i, j, defaultSlots = 0, count = 0;
 
-    for (chosen = 0; chosen < MAX_MON_MOVES; chosen++)
+    for (i = 0; i < MAX_MON_MOVES; i++)
     {
-        u32 moveId = DebugSelection_GetData(taskId, firstSlot + chosen);
-        if (moveId >= MOVES_COUNT)
-            break;
-        moves[chosen] = moveId;
+        moves[i] = DebugSelection_GetData(taskId, firstSlot + i);
+        if (moves[i] >= MOVES_COUNT)
+            defaultSlots++;
     }
-    if (chosen == MAX_MON_MOVES)
-        return;
 
-    CreateBoxMon(&boxMon, species, level, 0, OTID_STRUCT_PLAYER_ID);
-    GiveBoxMonInitialMoveset(&boxMon);
-    for (u32 i = 0; i < MAX_MON_MOVES; i++)
+    for (i = 0; defaultSlots > 0 && learnset[i].move != LEVEL_UP_MOVE_END && learnset[i].level <= level; i++)
     {
-        u32 moveId = GetBoxMonData(&boxMon, MON_DATA_MOVE1 + i);
-        bool32 alreadyChosen = FALSE;
-        for (u32 j = 0; j < chosen; j++)
+        bool32 known = (learnset[i].level == 0);
+        for (j = 0; j < MAX_MON_MOVES; j++)
+            known |= (moves[j] == learnset[i].move || (j < count && defaultMoves[j] == learnset[i].move));
+        if (known)
+            continue;
+        // Full: forget the oldest
+        if (count == defaultSlots)
         {
-            if (moves[j] == moveId)
-                alreadyChosen = TRUE;
+            for (j = 0; j < count - 1; j++)
+                defaultMoves[j] = defaultMoves[j + 1];
+            count--;
         }
-        if (moveId != MOVE_NONE && !alreadyChosen)
-            defaultMoves[count++] = moveId;
+        defaultMoves[count++] = learnset[i].move;
     }
 
-    // Keep the latest-learned moves when not all of them fit, in the order they're learned
-    for (u32 i = (count > MAX_MON_MOVES - chosen) ? count - (MAX_MON_MOVES - chosen) : 0; i < count; i++)
-        moves[chosen++] = defaultMoves[i];
-    while (chosen < MAX_MON_MOVES)
-        moves[chosen++] = MOVE_NONE;
+    for (i = 0, j = 0; i < MAX_MON_MOVES; i++)
+    {
+        if (moves[i] >= MOVES_COUNT)
+            moves[i] = (j < count) ? defaultMoves[j++] : MOVE_NONE;
+    }
 }
 
 UPDATE_GENERIC_INPUT(Level, Level)
