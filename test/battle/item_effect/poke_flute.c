@@ -41,3 +41,23 @@ DOUBLE_BATTLE_TEST("Poke Flute does not heal battlers with Soundproof from being
         EXPECT_NE(opponentRight->status1, STATUS1_NONE);
     }
 }
+
+SINGLE_BATTLE_TEST("Poke Flute wakes the active and benched Pokémon in a single battle")
+{
+    GIVEN {
+        ASSUME(gItemsInfo[ITEM_POKE_FLUTE].battleUsage == EFFECT_ITEM_USE_POKE_FLUTE);
+        PLAYER(SPECIES_WOBBUFFET) { Status1(STATUS1_SLEEP); }
+        PLAYER(SPECIES_WYNAUT) { Status1(STATUS1_SLEEP); }
+        OPPONENT(SPECIES_WOBBUFFET) { Status1(STATUS1_SLEEP); }
+    } WHEN {
+        TURN { USE_ITEM(player, ITEM_POKE_FLUTE, partyIndex: 0); }
+        TURN { MOVE(player, MOVE_CELEBRATE); }
+    } SCENE {
+        MESSAGE("The Pokémon hearing the flute awoke!");
+        MESSAGE("Wobbuffet used Celebrate!");
+    } THEN {
+        EXPECT_EQ(player->status1, STATUS1_NONE);
+        EXPECT_EQ(opponent->status1, STATUS1_NONE);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][1], MON_DATA_STATUS), STATUS1_NONE);
+    }
+}

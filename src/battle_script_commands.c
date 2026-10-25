@@ -10026,7 +10026,8 @@ void BS_CheckPokeFlute(void)
         }
     }
 
-    for (enum BattlerPosition position = B_POSITION_PLAYER_LEFT; position < MAX_POSITION_COUNT; position++)
+    // Only positions with a battler: a single battle has no battler at the right positions to run the update.
+    for (enum BattlerPosition position = B_POSITION_PLAYER_LEFT; position < gBattlersCount; position++)
     {
         enum BattleTrainer trainer = GetBattlerTrainer(GetBattlerAtPosition(position));
         UpdatePokeFlutePartyStatus(gParties[trainer], position);
