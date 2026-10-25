@@ -1468,9 +1468,9 @@ static void UpdateSubmenuOneOptionValue(u8 taskId, bool8 increment)
             data->animIdFront = gSpeciesInfo[modArrows->currValue].frontAnimId;
             UpdateMonAnimNames(taskId);
             ResetOffsetSpriteValues(data);
-            ResetShadowSettings(data);
 
             UpdateBattlerValue(data);
+            ResetShadowSettings(data);
             ValueToCharDigits(modArrows->charDigits, modArrows->currValue, modArrows->maxDigits);
             PrintDigitChars(data);
             ReloadPokemonSprites(data);
