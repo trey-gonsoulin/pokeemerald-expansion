@@ -202,7 +202,6 @@ enum DebugMenuTypes
 
 #define DEBUG_OPTION_CANT_BE_TOGGLED 0xFF
 
-#define DEBUG_ICON_TAG 0xFDF3
 // *******************************
 struct DebugMenuOption;
 

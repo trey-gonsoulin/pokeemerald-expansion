@@ -1,6 +1,6 @@
 // The fork's overworld debug-menu engine, used by src/debug.c. See include/debug_menu_ui.h.
-// A release build (DEBUG_OVERWORLD_MENU off) drops it at link, except Debug_InputToDecimalString and
-// gText_DigitIndicator, which the native party-menu debug entries still use.
+// A release build (DEBUG_OVERWORLD_MENU off) keeps only the numeric input and its digit rendering,
+// because the native party-menu debug entries (Set Friendship, Set Pokerus) run the selection engine.
 #include "global.h"
 #include "debug_menu_ui.h"
 #include "list_menu.h"
@@ -11,7 +11,6 @@
 #include "text.h"
 #include "window.h"
 
-#define DEBUG_SCROLL_ARROW_TAG 0xFDF4
 
 #define tInput      data[DEBUG_DATA_INPUT]
 #define tDigit      data[DEBUG_DATA_DIGIT]
