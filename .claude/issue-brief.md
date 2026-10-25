@@ -23,7 +23,8 @@ There are no automated tests for the debug menu.
 - In the report, give a short in-game test plan the user can run in an emulator: steps and the expected result.
 - Reason through task-scheduler and frame-order effects explicitly. In `src/task.c`, CreateTask reuses the first free slot, and RunTasks follows `.next` after each func returns.
 
-## Gotchas (src/debug.c)
+## Gotchas (src/debug.c, src/debug_menu_ui.c)
+- The generic menu engine (numeric input and digit rendering, paging, scroll arrows, path window, position restore) lives in `src/debug_menu_ui.c`, with its API in `include/debug_menu_ui.h` (#60). Put new generic UX there; `src/debug.c` keeps the menus, their state and the hooks. The header owns the numeric-input slots (`DEBUG_DATA_INPUT`/`DIGIT`/`INPUT_START`) and the sprite tags. Start an input with `Debug_StartNumericInput`, and print it with `Debug_InputToDecimalString`.
 - Numeric inputs keep the value in s16 task data (`tInput`), but a max can be 0xFFFF. Every read, compare and clamp goes through u16/u32.
 - Steps that skip invalid values (species) are bounded with a `maxFunc`. `IsSpeciesEnabled(SPECIES_EGG)` is TRUE, and SPECIES_EGG == NUM_SPECIES.
 - Task data slots:
