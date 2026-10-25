@@ -6,6 +6,7 @@ These read the committed output/*.json and this repo's headers, so they don't
 need the PokeAPI cache.
 """
 
+import argparse
 import contextlib
 import io
 import json
@@ -170,6 +171,14 @@ class ConfigTests(unittest.TestCase):
                                           R.Settings(deny={'SPECIES_NOCTOWL'}, maps={'gX': {'skip': True}}),
                                           'gX', 'land_mons'))
 
+    def test_all_natives_denied_and_nothing_to_draw_warns(self):
+        mons = [{'species': 'SPECIES_NOCTOWL', 'min_level': 25, 'max_level': 25}] * 2
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            self.assertIsNone(R.restock_table(mons, [70, 30], [], self.info,
+                                              R.Settings(deny={'SPECIES_NOCTOWL'}), 'gX', 'land_mons'))
+        self.assertIn('gX land_mons: every native is denied', err.getvalue())
+
 
 class RestockTests(unittest.TestCase):
     @classmethod
@@ -298,7 +307,7 @@ class RestockTests(unittest.TestCase):
 
     def test_regional_forms_can_be_excluded(self):
         _, changes = R.restock(self.wild, self.maps, self.pools, self.info,
-                               R.Settings(ratio=1.0, regional_forms=False))
+                               R.Settings(ratio=1.0, no_regional_forms=True))
         for ch in changes:
             natives = {sl['before'] for sl in ch['slots']}
             for sl in ch['slots']:
@@ -393,6 +402,63 @@ class CliTests(unittest.TestCase):
                 json.dump({'maps': {'gRoute101': {'deny': ['NOT_A_MON']}}}, f)
             with self.assertRaises(SystemExit):
                 R.main(['--config', cfg, '--out-dir', os.path.join(tmp, 'out')])
+
+    def restock_error(self, argv=(), config=None):
+        """main()'s usage error for argv (plus a --config with ``config``), with no output written."""
+        with tempfile.TemporaryDirectory() as tmp:
+            out = os.path.join(tmp, 'out')
+            argv = list(argv) + ['--out-dir', out]
+            if config is not None:
+                argv += ['--config', os.path.join(tmp, 'cfg.json')]
+                with open(argv[-1], 'w', encoding='utf-8') as f:
+                    json.dump(config, f)
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as cm:
+                run_quietly(argv)
+            self.assertEqual(cm.exception.code, 2)
+            self.assertFalse(os.path.exists(out))
+            return err.getvalue()
+
+    def test_unknown_config_keys_are_rejected(self):
+        self.assertIn("unknown key 'ration'", self.restock_error(config={'ration': 0.0}))
+        self.assertIn("unknown key 'allow-legendaries'", self.restock_error(config={'allow-legendaries': True}))
+        self.assertIn("gRoute101: unknown per-map key 'gens'",
+                      self.restock_error(config={'maps': {'gRoute101': {'gens': '9'}}}))
+        self.assertIn("unknown key 'force'", self.restock_error(config={'force': True}))  # command line only
+
+    def test_unknown_map_labels_and_regions_are_rejected(self):
+        self.assertIn('gRoute1O1', self.restock_error(config={'maps': {'gRoute1O1': {'skip': True}}}))
+        self.assertIn('unknown region: hoen', self.restock_error(config={'regions': 'hoen'}))
+        self.assertIn('unknown region: jotho', self.restock_error(['--regions', 'hoenn,jotho']))
+
+    def test_bad_option_values_are_rejected(self):
+        for config, message in (({'gens': 4}, 'gens:'), ({'gens': '4-x'}, 'gens:'),
+                                ({'ratio': 1.5}, 'ratio:'), ({'ratio': '0.5'}, 'ratio:'),
+                                ({'seed': True}, 'seed:'), ({'gen_weight': {'four': 2}}, 'gen_weight:'),
+                                ({'allow_legendaries': 1}, 'allow_legendaries:'),
+                                ({'maps': {'gRoute101': {'ratio': -1}}}, 'gRoute101: ratio:'),
+                                ({'maps': {'gRoute101': True}}, 'gRoute101:'), ([], 'JSON object')):
+            with self.subTest(config=config):
+                self.assertIn(message, self.restock_error(config=config))
+        for argv, message in ((['--gen-weight', '4'], 'expected GEN=FACTOR'), (['--ratio', '2'], '--ratio'),
+                              (['--new-species', '-1'], '--new-species'), (['--gens', 'x'], '--gens')):
+            with self.subTest(argv=argv):
+                self.assertIn(message, self.restock_error(argv))
+
+    def test_flags_and_config_merge_into_settings(self):
+        args = argparse.ArgumentParser()
+        R.add_options(args)
+        cfg, errors = R.parse_keys({'ratio': 0.4, 'gens': [4, 5], 'gen_weight': {'4': 2, '5': 3},
+                                    'deny': 'zubat', 'allow_legendaries': True,
+                                    'maps': {'gRoute101': {'ratio': 0.25, 'allow': ['ODDISH']}}},
+                                   R.CONFIG_OPTIONS, 'key')
+        self.assertEqual(errors, [])
+        s = R.settings_from(args.parse_args(['--seed', '7', '--gen-weight', '5=0.5', '--deny', 'golbat']), cfg)
+        self.assertEqual((s.ratio, s.seed, s.gens, s.gen_weight, s.deny, s.allow_legendaries),
+                         (0.4, 7, {4, 5}, {4: 2.0, 5: 0.5}, {'SPECIES_GOLBAT'}, True))
+        self.assertEqual(s.for_map('gRoute101'),
+                         R.MapSettings(0.25, {'SPECIES_ODDISH'}, {'SPECIES_GOLBAT'}, None, False))
+        self.assertEqual(R.settings_from(args.parse_args([]), {}), R.Settings())
 
     def test_species_list_accepts_a_string(self):
         self.assertEqual(R.parse_species_list('ZUBAT, golbat'), {'SPECIES_ZUBAT', 'SPECIES_GOLBAT'})

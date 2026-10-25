@@ -167,7 +167,7 @@ python3 tools/area_archetypes/area_archetypes.py baseline --wild /tmp/wild_encou
 | `--no-regional-forms` | off | never draw Alolan, Galarian, Hisuian or Paldean forms |
 | `--drop-rare-natives` | off | let a table's own rare species lose their only slot |
 | `--new-species N` | scales | new species per table; default `round(own * R / (1 - R))`, or the own count at `R = 1` |
-| `--config FILE` | none | JSON with any of the above (snake_case) plus per-map overrides; flags win |
+| `--config FILE` | none | JSON with any of the options above (snake_case, `--ratio` through `--new-species`) plus per-map overrides; flags win |
 | `--base FILE` | `output/wild_encounters.vanilla.json` | vanilla file the natives come from |
 | `--wild FILE` | `src/data/wild_encounters.json` | file `--write` overwrites; not a source of natives |
 | `--write` | off | also overwrite `--wild` |
@@ -182,9 +182,22 @@ Per-map overrides go under `maps`, keyed by base label:
           "gGraniteCave_1F": {"allow": ["SPECIES_ROGGENROLA", "SPECIES_WOOBAT"], "deny": ["SPECIES_ABRA"]}}}
 ```
 
-A map's `allow` replaces the global list, its `deny` adds to it. Denied
-natives are dropped even at ratio 0 or when nothing can be drawn (the table's
-other species take their slots); only `skip` leaves a map exactly as it is.
+A map takes `ratio`, `allow`, `deny`, `new_species` and `skip`; `gens` and
+`gen_weight` are global only. A map's `allow` replaces the global list, its
+`deny` adds to it. Denied natives are dropped even at ratio 0 or when nothing
+can be drawn (the table's other species take their slots); only `skip` leaves
+a map exactly as it is. A table whose natives are all denied, with nothing
+left to draw, has nothing to fill its slots with: it is left as it is, with
+a warning.
+
+`restock` checks the config before it writes anything, and stops with an error
+on an unknown key (top-level or per-map), a label that isn't a
+`gWildMonHeaders` base label in `--base`, a region that isn't in
+`emerald_maps.json`, an unknown species, or a value of the wrong type: `ratio`
+is a number from 0 to 1, `seed` and `new_species` whole numbers, `gens` a
+string like `"4-9"` or a list of numbers, `gen_weight` an object like
+`{"4": 2}`, `regions`, `allow` and `deny` a comma-separated string or a list
+of strings, and the switches `true` or `false`.
 
 ## Limitations
 
