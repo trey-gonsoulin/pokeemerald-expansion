@@ -886,7 +886,7 @@ void Debug_ShowMainMenu(void)
 #define tDigit               data[4]
 #define tSpriteId            data[5]
 #define tInputStart          data[7] // value a numeric input step started from, for Select
-// Numeric inputs run from 0 to 0xFFFF, so read the s16 task field back as unsigned
+// Numeric input values fit in a u16 (a max can be 0xFFFF), so read the s16 task field back as unsigned
 #define DEBUG_TASK_INPUT(taskId) ((u16)gTasks[taskId].tInput)
 #define tStepsDataCount      data[9] // u16 slots in the selection's stepsData block
 #define tSubstep             data[10]
@@ -1292,6 +1292,19 @@ static void Debug_DestroyMenu_Full_Script(u8 taskId, const u8 *script)
 // Which way the last Debug_HandleInput_Numeric moved, for steps that skip invalid values
 static EWRAM_DATA bool8 sNumericInputMovedDown = FALSE;
 
+// Digits shown for a numeric input up to max. Clamped to 1..ARRAY_COUNT(gText_DigitIndicator),
+// so tDigit always indexes gText_DigitIndicator and sPowersOfTen (tv.c's CountDigits gives 0 for 0)
+static u32 Debug_CountDigits(u32 max)
+{
+    u32 digits = 1;
+    while (digits < ARRAY_COUNT(gText_DigitIndicator) && max >= (u32)sPowersOfTen[digits])
+        digits++;
+    return digits;
+}
+
+// Any button Debug_HandleInput_Numeric acts on
+#define DEBUG_NUMERIC_INPUT_PRESSED() (JOY_REPEAT(DPAD_UP | DPAD_DOWN) || JOY_NEW(DPAD_LEFT | DPAD_RIGHT | L_BUTTON | R_BUTTON | SELECT_BUTTON))
+
 // Up/Down turn only the highlighted digit, like a combination lock: 9 wraps to 0 and back with
 // no carry into the other digits, and they repeat while held. A result past either end stops
 // on min/max. L/R jump to min/max and Select goes back to the value the step started from.
@@ -1375,7 +1388,7 @@ static bool32 Debug_HandleInput_SongId(u8 taskId, enum SongType type)
     s16 oldDigit = gTasks[taskId].tDigit;
     u32 max = Debug_GetLastSong(type);
 
-    Debug_HandleInput_Numeric(taskId, Debug_GetFirstSong(type), max, CountDigits(max));
+    Debug_HandleInput_Numeric(taskId, Debug_GetFirstSong(type), max, Debug_CountDigits(max));
     return gTasks[taskId].tInput != oldInput || gTasks[taskId].tDigit != oldDigit;
 }
 
@@ -1437,27 +1450,40 @@ static u32 DebugSelection_StepSlots(const struct DebugSelectionStep *selectionSt
     return max(selectionStep->substepCount, 1);
 }
 
+// First slot of the selection's step number `step`, for steps that read or preset another step's value
+static u32 DebugSelection_StepDataIndex(u8 taskId, s32 step)
+{
+    const struct DebugSelection *selection = (const struct DebugSelection *)GetWordTaskArg(taskId, DEBUG_SELECTION_PTR_ARG);
+    u32 index = 0;
+    for (s32 i = 0; i < step; i++)
+        index += DebugSelection_StepSlots(selection->steps[i]);
+    return index;
+}
+
 // Slot of the value being edited, derived from tStep and tSubstep so it can't drift out of sync with them
 static u32 DebugSelection_DataIndex(u8 taskId)
 {
-    const struct DebugSelection *selection = (const struct DebugSelection *)GetWordTaskArg(taskId, DEBUG_SELECTION_PTR_ARG);
-    u32 index = gTasks[taskId].tSubstep;
-    for (s32 i = 0; i < gTasks[taskId].tStep; i++)
-        index += DebugSelection_StepSlots(selection->steps[i]);
-    return index;
+    return DebugSelection_StepDataIndex(taskId, gTasks[taskId].tStep) + gTasks[taskId].tSubstep;
+}
+
+// Value of an earlier single-value step, e.g. the map group while the map number is dialed
+static u16 DebugSelection_GetStepData(u8 taskId, s32 step)
+{
+    return DebugSelection_GetData(taskId, DebugSelection_StepDataIndex(taskId, step));
+}
+
+// Resolves the step's min and max, and returns how many digits its input shows
+static u32 DebugSelection_GetRange(u8 taskId, const struct DebugSelectionStep *selectionStep, u32 *min, u32 *max)
+{
+    *min = selectionStep->useMinFunc ? selectionStep->minFunc(taskId) : selectionStep->minValue;
+    *max = selectionStep->useMaxFunc ? selectionStep->maxFunc(taskId) : selectionStep->maxValue;
+    return Debug_CountDigits(*max);
 }
 
 static void DebugAction_Selection_PrepareStep(u8 taskId, const struct DebugSelectionStep *selectionStep)
 {
     u32 min, max, input;
-    if (selectionStep->useMinFunc)
-        min = selectionStep->minFunc(taskId);
-    else
-        min = selectionStep->minValue;
-    if (selectionStep->useMaxFunc)
-        max = selectionStep->maxFunc(taskId);
-    else
-        max = selectionStep->maxValue;
+    u32 digits = DebugSelection_GetRange(taskId, selectionStep, &min, &max);
 
     // Clamp as u32: the s16 tInput would turn stored values above 32767 negative
     input = DebugSelection_GetData(taskId, DebugSelection_DataIndex(taskId));
@@ -1470,7 +1496,7 @@ static void DebugAction_Selection_PrepareStep(u8 taskId, const struct DebugSelec
     gTasks[taskId].tInputStart = input;
     gTasks[taskId].tDigit = 0;
     sNumericInputMovedDown = FALSE;
-    selectionStep->stepUpdate(taskId, CountDigits(max), min, max);
+    selectionStep->stepUpdate(taskId, digits, min, max);
     gTasks[taskId].func = DebugAction_Selection_StepUpdate;
 }
 
@@ -1521,20 +1547,12 @@ static void DebugAction_Selection_StepUpdate(u8 taskId)
         }
         gTasks[taskId].func = DebugAction_Selection_Cancel;
     }
-    else if (JOY_REPEAT(DPAD_UP | DPAD_DOWN) || JOY_NEW(DPAD_LEFT | DPAD_RIGHT | L_BUTTON | R_BUTTON | SELECT_BUTTON))
+    else if (DEBUG_NUMERIC_INPUT_PRESSED())
     {
         u32 min, max;
         s16 oldInput = gTasks[taskId].tInput;
         s16 oldDigit = gTasks[taskId].tDigit;
-        if (selectionStep->useMinFunc)
-            min = selectionStep->minFunc(taskId);
-        else
-            min = selectionStep->minValue;
-        if (selectionStep->useMaxFunc)
-            max = selectionStep->maxFunc(taskId);
-        else
-            max = selectionStep->maxValue;
-        u32 digits = CountDigits(max);
+        u32 digits = DebugSelection_GetRange(taskId, selectionStep, &min, &max);
         Debug_HandleInput_Numeric(taskId, min, max, digits);
         // Holding Up/Down at min/max changes nothing, so don't beep or redraw every repeat
         if (gTasks[taskId].tInput == oldInput && gTasks[taskId].tDigit == oldDigit)
@@ -2042,7 +2060,7 @@ static void DebugSelectionStep_UpdateMapGroup(u8 taskId, u8 digits, u32 min, u32
 
 static void DebugSelectionStep_UpdateMapNum(u8 taskId, u8 digits, u32 min, u32 max)
 {
-    u16 mapGroup = DebugSelection_GetData(taskId, gTasks[taskId].tStep - 1);
+    u16 mapGroup = DebugSelection_GetStepData(taskId, gTasks[taskId].tStep - 1);
     Debug_InputToDecimalString(gStringVar2, taskId, digits);
     ConvertIntToDecimalStringN(gStringVar3, max, STR_CONV_MODE_LEADING_ZEROS, digits);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Map: {STR_VAR_2} / {STR_VAR_3}"));
@@ -2053,28 +2071,43 @@ static void DebugSelectionStep_UpdateMapNum(u8 taskId, u8 digits, u32 min, u32 m
 
 static u32 DebugSelectionStep_GetLastMapNum(u8 taskId)
 {
-    u16 mapGroup = DebugSelection_GetData(taskId, gTasks[taskId].tStep - 1);
+    u16 mapGroup = DebugSelection_GetStepData(taskId, gTasks[taskId].tStep - 1);
     return (MAP_GROUP_COUNT[mapGroup] - 1);
+}
+
+// The map dialed in the two steps before the Warp step
+static const struct MapHeader *DebugSelectionStep_GetWarpMapHeader(u8 taskId)
+{
+    u16 mapGroup = DebugSelection_GetStepData(taskId, gTasks[taskId].tStep - 2);
+    u16 mapNum = DebugSelection_GetStepData(taskId, gTasks[taskId].tStep - 1);
+    return Overworld_GetMapHeaderByGroupAndId(mapGroup, mapNum);
 }
 
 static void DebugSelectionStep_UpdateWarp(u8 taskId, u8 digits, u32 min, u32 max)
 {
-    u16 mapGroup = DebugSelection_GetData(taskId, gTasks[taskId].tStep - 2);
-    u16 mapNum = DebugSelection_GetData(taskId, gTasks[taskId].tStep - 1);
-    Debug_InputToDecimalString(gStringVar2, taskId, digits);
-    ConvertIntToDecimalStringN(gStringVar3, max, STR_CONV_MODE_LEADING_ZEROS, digits);
-    StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Warp: {STR_VAR_2} / {STR_VAR_3}"));
-    GetMapName(gStringVar2, Overworld_GetMapHeaderByGroupAndId(mapGroup, mapNum)->regionMapSectionId, 0);
-    StringCopy(gStringVar3, COMPOUND_STRING(""));
+    const struct MapHeader *mapHeader = DebugSelectionStep_GetWarpMapHeader(taskId);
+    if (mapHeader->events->warpCount == 0)
+    {
+        // Warp 0 doesn't exist, so SetPlayerCoordsFromWarp puts the player in the middle of the map
+        StringCopy(gStringVar1, COMPOUND_STRING("Warp: none"));
+        StringCopy(gStringVar3, COMPOUND_STRING("To map center"));
+    }
+    else
+    {
+        Debug_InputToDecimalString(gStringVar2, taskId, digits);
+        ConvertIntToDecimalStringN(gStringVar3, max, STR_CONV_MODE_LEADING_ZEROS, digits);
+        StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Warp: {STR_VAR_2} / {STR_VAR_3}"));
+        StringCopy(gStringVar3, COMPOUND_STRING(""));
+    }
+    GetMapName(gStringVar2, mapHeader->regionMapSectionId, 0);
     DebugNativeStep_PrintWindowSelection(taskId);
 }
 
+// A map with no warps has only warp 0, which lands in the middle of the map
 static u32 DebugSelectionStep_GetLastWarp(u8 taskId)
 {
-    u16 mapGroup = DebugSelection_GetData(taskId, gTasks[taskId].tStep - 2);
-    u16 mapNum = DebugSelection_GetData(taskId, gTasks[taskId].tStep - 1);
-    u32 count = Overworld_GetMapHeaderByGroupAndId(mapGroup, mapNum)->events->warpCount;
-    return (count - 1);
+    u32 count = DebugSelectionStep_GetWarpMapHeader(taskId)->events->warpCount;
+    return count > 0 ? count - 1 : 0;
 }
 
 static bool32 DebugSelection_SetWarp_OnComplete(u8 taskId)
@@ -2882,18 +2915,59 @@ static void DebugSelectionStep_UpdateMoves(u8 taskId, u8 digits, u32 min, u32 ma
     DebugNativeStep_PrintWindowSelection(taskId);
 }
 
+// None or Default ends the moveset: it goes in this slot and the ones after it, which are skipped
 static void DebugSelectionStep_MovesConfirm(u8 taskId)
 {
     u32 moveId = gTasks[taskId].tInput;
+    DebugSelection_SetData(taskId, DebugSelection_DataIndex(taskId), moveId);
     if (moveId != MOVE_NONE && moveId != MOVES_COUNT)
-    {
-        DebugSelection_SetData(taskId, DebugSelection_DataIndex(taskId), moveId);
         return;
-    }
     while (++gTasks[taskId].tSubstep < MAX_MON_MOVES)
     {
         DebugSelection_SetData(taskId, DebugSelection_DataIndex(taskId), moveId);
     }
+}
+
+// The Moves step's "Default" is MOVES_COUNT, which is also MOVE_BREAKNECK_BLITZ, so it must never
+// reach a mon or the save. From the first Default on, the slots get the latest moves of the species'
+// default moveset at that level that weren't chosen already, so Default in Move 1 gives the whole
+// default moveset. Reads the MAX_MON_MOVES slots from firstSlot.
+static void Debug_ResolveSelectedMoves(u8 taskId, u32 firstSlot, enum Species species, u32 level, u16 *moves)
+{
+    struct BoxPokemon boxMon;
+    u16 defaultMoves[MAX_MON_MOVES];
+    u32 chosen, count = 0;
+
+    for (chosen = 0; chosen < MAX_MON_MOVES; chosen++)
+    {
+        u32 moveId = DebugSelection_GetData(taskId, firstSlot + chosen);
+        if (moveId >= MOVES_COUNT)
+            break;
+        moves[chosen] = moveId;
+    }
+    if (chosen == MAX_MON_MOVES)
+        return;
+
+    CreateBoxMon(&boxMon, species, level, 0, OTID_STRUCT_PLAYER_ID);
+    GiveBoxMonInitialMoveset(&boxMon);
+    for (u32 i = 0; i < MAX_MON_MOVES; i++)
+    {
+        u32 moveId = GetBoxMonData(&boxMon, MON_DATA_MOVE1 + i);
+        bool32 alreadyChosen = FALSE;
+        for (u32 j = 0; j < chosen; j++)
+        {
+            if (moves[j] == moveId)
+                alreadyChosen = TRUE;
+        }
+        if (moveId != MOVE_NONE && !alreadyChosen)
+            defaultMoves[count++] = moveId;
+    }
+
+    // Keep the latest-learned moves when not all of them fit, in the order they're learned
+    for (u32 i = (count > MAX_MON_MOVES - chosen) ? count - (MAX_MON_MOVES - chosen) : 0; i < count; i++)
+        moves[chosen++] = defaultMoves[i];
+    while (chosen < MAX_MON_MOVES)
+        moves[chosen++] = MOVE_NONE;
 }
 
 UPDATE_GENERIC_INPUT(Level, Level)
@@ -3001,14 +3075,8 @@ static void DebugSelection_SetMassOutbreakMoves_Init(u8 taskId) {
 };
 
 static bool32 DebugSelection_SetMassOutbreakMoves_Complete(u8 taskId) {
-    for (u32 i = 0; i < MAX_MON_MOVES; i++)
-    {
-        u16 moveId = DebugSelection_GetData(taskId, i);
-        if (moveId < MOVES_COUNT)
-            gSaveBlock1Ptr->outbreakPokemonMoves[i] = moveId;
-        else
-            gSaveBlock1Ptr->outbreakPokemonMoves[i] = MOVE_NONE;
-    }
+    Debug_ResolveSelectedMoves(taskId, 0, gSaveBlock1Ptr->outbreakPokemonSpecies,
+        gSaveBlock1Ptr->outbreakPokemonLevel, gSaveBlock1Ptr->outbreakPokemonMoves);
     DebugSelectionStep_ReturnToOutbreakMenu(taskId);
     return TRUE;
 };
@@ -3040,8 +3108,8 @@ static bool32 DebugSelection_SetDynamicMassOutbreak_Complete(u8 taskId)
     gSaveBlock1Ptr->outbreakLocationMapGroup = DebugSelection_GetData(taskId, 1);
     gSaveBlock1Ptr->outbreakLocationMapNum = DebugSelection_GetData(taskId, 2);
     gSaveBlock1Ptr->outbreakPokemonLevel = DebugSelection_GetData(taskId, 3);
-    for (u32 j = 0; j < MAX_MON_MOVES; j++)
-        gSaveBlock1Ptr->outbreakPokemonMoves[j] = DebugSelection_GetData(taskId, 4 + j);
+    Debug_ResolveSelectedMoves(taskId, 4, gSaveBlock1Ptr->outbreakPokemonSpecies,
+        gSaveBlock1Ptr->outbreakPokemonLevel, gSaveBlock1Ptr->outbreakPokemonMoves);
     gSaveBlock1Ptr->outbreakPokemonProbability = DebugSelection_GetData(taskId, 8);
     gSaveBlock1Ptr->outbreakDaysLeft = DebugSelection_GetData(taskId, 9);
     DebugSelectionStep_ReturnToOutbreakMenu(taskId);
@@ -3148,13 +3216,13 @@ static void DebugSelectionStep_UpdateVarId(u8 taskId, u8 digits, u32 min, u32 ma
     DebugSelectionStep_PrepareVarDisplay(gTasks[taskId].tInput);
     StringCopy(gStringVar3, COMPOUND_STRING(""));
     DebugNativeStep_PrintWindowSelection(taskId);
-    DebugSelection_SetData(taskId, gTasks[taskId].tStep + 1, VarGet(gTasks[taskId].tInput));
+    DebugSelection_SetData(taskId, DebugSelection_StepDataIndex(taskId, gTasks[taskId].tStep + 1), VarGet(gTasks[taskId].tInput));
 }
 
 static void DebugSelectionStep_UpdateVarValue(u8 taskId, u8 digits, u32 min, u32 max)
 {
     u8 *end;
-    DebugSelectionStep_PrepareVarDisplay(DebugSelection_GetData(taskId, gTasks[taskId].tStep - 1));
+    DebugSelectionStep_PrepareVarDisplay(DebugSelection_GetStepData(taskId, gTasks[taskId].tStep - 1));
     end = StringCopy(gStringVar3, COMPOUND_STRING("New: "));
     Debug_InputToDecimalString(end, taskId, digits);
     DebugNativeStep_PrintWindowSelection(taskId);
@@ -3711,9 +3779,11 @@ static bool32 DebugSelection_GiveComplexPokemon_OnComplete(u8 taskId)
     }
     else
     {
+        u16 moves[MAX_MON_MOVES];
+        Debug_ResolveSelectedMoves(taskId, 6, species, level, moves);
         for (u32 i = 0; i < MAX_MON_MOVES; i++)
         {
-            SetMonMoveSlot(&mon, monData[6 + i], i);
+            SetMonMoveSlot(&mon, moves[i], i);
         }
     }
 
@@ -4065,7 +4135,7 @@ static void DebugAction_Sound_PrintId(u8 taskId, enum SongType type)
         name = sDebugText_Dashes;
     StringCopy(gStringVar2, gText_DigitIndicator[gTasks[taskId].tDigit]);
     StringCopyPadded(gStringVar1, name, CHAR_SPACE, 35);
-    Debug_InputToDecimalString(gStringVar3, taskId, CountDigits(Debug_GetLastSong(type)));
+    Debug_InputToDecimalString(gStringVar3, taskId, Debug_CountDigits(Debug_GetLastSong(type)));
     StringExpandPlaceholders(gStringVar4, type == SONG_SE ? sDebugText_Sound_SFX_ID : sDebugText_Sound_Music_ID);
     AddTextPrinterParameterized(gTasks[taskId].tSubWindowId, DEBUG_MENU_FONT, gStringVar4, 0, 0, 0, NULL);
 }
@@ -4120,7 +4190,7 @@ static bool32 DebugAction_Sound_HandleInput(u8 taskId, enum SongType type)
     {
         m4aSongNumStop(gTasks[taskId].tCurrentSong);
     }
-    else if (JOY_REPEAT(DPAD_UP | DPAD_DOWN) || JOY_NEW(DPAD_LEFT | DPAD_RIGHT | L_BUTTON | R_BUTTON | SELECT_BUTTON))
+    else if (DEBUG_NUMERIC_INPUT_PRESSED())
     {
         if (Debug_HandleInput_SongId(taskId, type))
             DebugAction_Sound_PrintId(taskId, type);
