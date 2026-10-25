@@ -60,8 +60,13 @@ BABY_SPECIES = frozenset('SPECIES_' + s for s in (
     'PICHU', 'CLEFFA', 'IGGLYBUFF', 'TOGEPI', 'TYROGUE', 'SMOOCHUM', 'ELEKID', 'MAGBY',
     'AZURILL', 'WYNAUT', 'BUDEW', 'CHINGLING', 'BONSLY', 'MIME_JR', 'HAPPINY', 'MUNCHLAX',
     'RIOLU', 'MANTYKE', 'TOXEL'))
-# Alolan, Galarian, Hisuian and Paldean forms (skipped with --no-regional-forms).
-REGIONAL_FLAGS = frozenset({'isAlolanForm', 'isGalarianForm', 'isHisuianForm', 'isPaldeanForm'})
+# Alolan, Galarian, Hisuian and Paldean forms (skipped with --no-regional-forms),
+# each with the generation its forms debuted in, which --gens and --gen-weight use.
+REGIONAL_FORM_GEN = {'isAlolanForm': AA.REGIONAL_FORM_GENS['ALOLA'],
+                     'isGalarianForm': AA.REGIONAL_FORM_GENS['GALAR'],
+                     'isHisuianForm': AA.REGIONAL_FORM_GENS['HISUI'],
+                     'isPaldeanForm': AA.REGIONAL_FORM_GENS['PALDEA']}
+REGIONAL_FLAGS = frozenset(REGIONAL_FORM_GEN)
 # Config headers that aren't part of a normal build.
 SKIPPED_CONFIGS = ('test.h',)
 
@@ -253,6 +258,10 @@ class SpeciesInfo:
                     r'\{\s*(EVO_\w+)\s*,\s*([^,{}]+?)\s*,\s*(SPECIES_\w+)', balanced(text, m.end())):
                 if target in self.enabled:
                     self.pre_evos[self.canon(target)].append((sp, method, param))
+        # A regional form counts as its form's generation, not its family file's.
+        for sp, flags in self.flags.items():
+            for flag in flags & REGIONAL_FLAGS:
+                self.gen[sp] = REGIONAL_FORM_GEN[flag]
         self._min_level = {}
 
     def canon(self, species):
@@ -620,7 +629,8 @@ def main(argv=None):
                    help=f'share of each table given to pool species, 0-1 (default {DEFAULT_RATIO})')
     p.add_argument('--seed', type=int, help=f'RNG seed (default {DEFAULT_SEED})')
     p.add_argument('--regions', help=f'comma list of regions to restock (default {",".join(DEFAULT_REGIONS)})')
-    p.add_argument('--gens', help="generations new species may come from, e.g. '4-9' (default all)")
+    p.add_argument('--gens', help="generations new species may come from, e.g. '4-9' (default all); "
+                   "a regional form counts as its form's: Alola 7, Galar and Hisui 8, Paldea 9")
     p.add_argument('--gen-weight', action='append', default=[], metavar='GEN=FACTOR',
                    help="multiply the draw weight of a generation's species, e.g. 4=2 (repeatable)")
     p.add_argument('--allow', action='append', metavar='SPECIES,...',
