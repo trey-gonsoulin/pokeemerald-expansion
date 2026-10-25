@@ -33,15 +33,18 @@ esac
 status=$?
 
 echo "exit $status, log $log"
+# The logs hold non-UTF-8 bytes (tool and test output), which BSD sed/awk reject in a UTF-8 locale.
+LC_ALL=C
+export LC_ALL
 # Known warnings, one whole line each, so a new warning in the same file (or an error) still shows.
-# The src/ and include/ ones come from the LTO link and appear only in `release`; `rom`, `debug` and
-# `check` emit only the RWX one. json.hpp is the tool build, libpng the asset conversion. The note:
+# The src/ and include/ ones come from the LTO link and appear only in `release`; besides them, every
+# ROM link gives the RWX one, the tool build json.hpp and the asset conversion libpng. The note:
 # lines that follow a warning are never printed (only error/warning/make *** lines are).
 expected="^\.\./\.\./src/pokedex\.c:4507: warning: writing 1 byte into a region of size 0 \[-Wstringop-overflow=\]\$
 ^\.\./\.\./src/mystery_gift_client\.c:102: warning: '(__builtin_)?memcpy' reading 1024 bytes from a region of size 16 \[-Wstringop-overread\]\$
 ^\.\./\.\./src/intro_frlg\.c:249: warning: type of 'gMultiBootProgram_PokemonColosseum_Start' does not match original declaration \[-Wlto-type-mismatch\]\$
 ^\.\./\.\./include/faraway_island\.h:4: warning: type of 'GetMewMoveDirection' does not match original declaration \[-Wlto-type-mismatch\]\$
-^[^ ]*ld: warning: \.\./\.\./[^ ]*\.elf has a LOAD segment with RWX permissions\$
+^[^ ]*ld: warning: [^ ]*\.elf has a LOAD segment with RWX permissions\$
 ^\./nlohmann/json\.hpp:[0-9:]* warning: identifier '_json(_pointer)?' preceded by whitespace in a literal operator declaration is deprecated \[-Wdeprecated-literal-operator\]\$
 ^libpng warning: bKGD: invalid index\$"
 problems='error:|Error:|warning:|\*\*\*'
@@ -52,15 +55,25 @@ filtered=$(grep -aE "$problems" "$log" | grep -cE "$expected")
 # For check, also print mgba-rom-test-hydra's end-of-run summary without its colour codes: the
 # per-test lists ("  - file:line: test name: first output line", at most 15 per list here) under the
 # FAILED / ASSUMPTIONS_FAILED / KNOWN_FAILING-passing headings, then the counts per result. Hydra
-# leaves out the FAILED count when it's 0, so print it then too.
-[ "$target" = check ] && sed -n '/mgba-rom-test-hydra /,$p' "$log" | sed "s/$(printf '\033')\[[0-9;]*m//g" | awk '
+# leaves out the FAILED count when it's 0, so print it then too (only when it printed a TOTAL, so
+# "No tests found." doesn't read as a pass).
+[ "$target" = check ] && awk '
     function more() { if (n > 15) printf "  ... %d more, see the log\n", n - 15; n = 0 }
-    /^  (FAILED tests|Tests with ASSUMPTIONS_FAILED|KNOWN_FAILING tests PASSING):$/ { more(); print; next }
-    /^  - / { if (++n <= 15) print; next }
-    /^- / || /^No tests found\.$/ { counts = counts $0 "\n"; if (/^- Tests FAILED:/) failed = 1 }
+    /mgba-rom-test-hydra / { on = 1; next }
+    !on { next }
+    { gsub(/\033\[[0-9;]*m/, "") }
+    /^  (FAILED tests|Tests with ASSUMPTIONS_FAILED|KNOWN_FAILING tests PASSING):$/ { more(); inlist = 1; print; next }
+    /^$/ { inlist = 0; next }
+    inlist && /^  - / { if (++n <= 15) print; next }
+    /^No tests found\.$/ { print; next }
+    /^- (Tests )?(FAILED|EXPECTED_FAIL_PASSING|KNOWN_FAILING|ASSUMPTIONS_FAILED|TO_DO|KNOWN_FAILING_PASSING|EXPECT_FAILING|PASSED|TOTAL): / {
+        counts = counts $0 "\n"
+        if (/^- Tests FAILED:/) failed = 1
+        if (/^- Tests TOTAL:/) total = 1
+    }
     END {
         more()
-        if (counts != "" && !failed) print "- Tests FAILED:          0"
+        if (total && !failed) print "- Tests FAILED:          0"
         printf "%s", counts
-    }'
+    }' "$log"
 exit $status

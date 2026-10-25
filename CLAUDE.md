@@ -40,7 +40,7 @@ make -j16 build/emerald/src/debug.o TOOLCHAIN=/opt/devkitpro/devkitARM  # compil
 - `make firered` / `make leafgreen` build other games through `GAME_VERSION`.
 - Warnings that are expected and not regressions (build.sh allowlists each exact line, so a new warning in the same file still shows):
   - `release` only, from the LTO link: pokedex.c:4507 stringop-overflow (x6), mystery_gift_client.c:102 stringop-overread, and the `-Wlto-type-mismatch` on intro_frlg.c:249 (`gMultiBootProgram_PokemonColosseum_Start`) and faraway_island.h:4 (`GetMewMoveDirection`).
-  - Every ROM build: the RWX segment linker warning. Plain `make`, `debug` and `check` emit only this one.
+  - Every ROM build: the RWX segment linker warning. Plain `make`, `debug` and `check` emit only this one (plus the tool and asset ones below on a cold tree).
   - Tool and asset builds: json.hpp `-Wdeprecated-literal-operator` and `libpng warning: bKGD: invalid index`.
 
 ## Tests
