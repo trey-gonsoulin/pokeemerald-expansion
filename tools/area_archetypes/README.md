@@ -130,7 +130,10 @@ python3 tools/area_archetypes/area_archetypes.py restock --ratio 0.4 --write
 The committed `src/data/wild_encounters.json` is the default restock (#28):
 `python3 tools/area_archetypes/area_archetypes.py restock --write`, with no
 flags or `--config` (ratio 0.5, seed 1, Hoenn only). Rerun that command to
-regenerate it, for example after refreshing the baseline.
+regenerate it, for example after refreshing the baseline. A unittest fails
+when the committed file is no longer what that command gives (#96), so a
+change to `restock.py`, the pools or the baseline also commits the
+regenerated table.
 
 ### The vanilla baseline
 
@@ -200,9 +203,11 @@ a warning.
 `restock` checks the config before it writes anything, and stops with an error
 on an unknown key (top-level or per-map), a label that isn't a
 `gWildMonHeaders` base label in `--base`, a region that isn't in
-`emerald_maps.json`, an unknown species, or a value of the wrong type: `ratio`
+`emerald_maps.json`, an unknown species, a `gens` set with no pool species,
+or a value of the wrong type: `ratio`
 is a number from 0 to 1, `seed` and `new_species` whole numbers, `gens` a
-string like `"4-9"` or a list of numbers, `gen_weight` an object like
+non-empty string like `"4-9"` or list of numbers (leave it out for every
+generation), `gen_weight` an object like
 `{"4": 2}`, `regions`, `allow` and `deny` a comma-separated string or a list
 of strings, and the switches `true` or `false`.
 
