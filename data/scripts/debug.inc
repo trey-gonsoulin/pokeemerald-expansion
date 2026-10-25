@@ -474,6 +474,7 @@ Debug_EventScript_SetHiddenNature::
 
 Debug_EventScript_SetAbility::
 	special ChoosePartyMon
+	goto_if_ge VAR_0x8004, PARTY_SIZE, Debug_EventScript_SetAbilityClose
 	callnative DebugNative_GetAbilityNames
 	dynmultipush gStringVar1, 0
 	dynmultipush gStringVar2, 1
