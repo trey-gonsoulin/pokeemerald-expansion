@@ -1,0 +1,77 @@
+# Fork-only CI for Emerald Plus. Upstream's build.yml only runs on pushes to master/upcoming,
+# and the fork pushes emerald-plus and issue-* branches directly.
+name: Emerald Plus
+
+on:
+  push:
+    branches:
+      - emerald-plus
+      - 'issue-*'
+  pull_request:
+    branches:
+      - emerald-plus
+
+permissions:
+  contents: read
+
+concurrency:
+  group: emerald-plus-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # check: the full test suite. KNOWN_FAILING and TO_DO results don't fail it; FAILED ones do.
+        # all: the ROM with the debug menus. release: the ROM without them.
+        target: [check, all, release]
+    env:
+      GAME_VERSION: EMERALD
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends binutils-arm-none-eabi gcc-arm-none-eabi libnewlib-arm-none-eabi libpng-dev python3
+
+      - name: Cache build tools
+        uses: actions/cache@v5
+        with:
+          path: |
+            tools/bin2c/bin2c
+            tools/gbafix/gbafix
+            tools/gbagfx/gbagfx
+            tools/jsonproc/jsonproc
+            tools/mapjson/mapjson
+            tools/mid2agb/mid2agb
+            tools/preproc/preproc
+            tools/ramscrgen/ramscrgen
+            tools/rsfont/rsfont
+            tools/scaninc/scaninc
+            tools/trainerproc/trainerproc
+            tools/compresSmol/compresSmol
+            tools/compresSmol/compresSmolTilemap
+            tools/wav2agb/wav2agb
+            tools/patchelf/patchelf
+            tools/mgba-rom-test-hydra/mgba-rom-test-hydra
+          key: emerald-plus-tools-${{ matrix.target }}-${{ runner.os }}-${{ hashFiles('tools/*/Makefile', 'tools/**/*.c', 'tools/**/*.cpp', 'tools/**/*.h') }}
+
+      # The unset keeps host compiler variables out of the build, as .claude/build.sh does (#42).
+      - name: make ${{ matrix.target }}
+        run: |
+          unset CPATH C_INCLUDE_PATH CPLUS_INCLUDE_PATH OBJC_INCLUDE_PATH LIBRARY_PATH LDFLAGS CFLAGS CPPFLAGS
+          make -j$(nproc) ${{ matrix.target }}
+
+  area-archetypes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      # The EndToEnd tests skip without a PokeAPI cache; the rest run offline.
+      - name: Unit tests
+        run: python3 -m unittest discover -s tools/area_archetypes
