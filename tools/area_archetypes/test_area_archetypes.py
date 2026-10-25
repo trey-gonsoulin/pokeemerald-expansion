@@ -28,6 +28,15 @@ class RuleTests(unittest.TestCase):
         self.assertEqual(A.stage_for_level(40), 'late')
         self.assertEqual(A.stage_for_level(60), 'endgame')
 
+    def test_regional_forms_count_as_their_form_generation(self):
+        self.assertEqual(AA.introduced_gen('SPECIES_RATTATA_ALOLA', 1), 7)
+        self.assertEqual(AA.introduced_gen('SPECIES_ZIGZAGOON_GALAR', 3), 8)
+        self.assertEqual(AA.introduced_gen('SPECIES_DARMANITAN_GALAR_ZEN', 5), 8)
+        self.assertEqual(AA.introduced_gen('SPECIES_SNEASEL_HISUI', 2), 8)
+        self.assertEqual(AA.introduced_gen('SPECIES_TAUROS_PALDEA_COMBAT', 1), 9)
+        self.assertEqual(AA.introduced_gen('SPECIES_RATTATA', 1), 1)
+        self.assertEqual(AA.introduced_gen('SPECIES_GALARIAN_TEST', 4), 4)  # whole tokens only
+
     def test_area_tokens_drop_neighbour_names(self):
         self.assertEqual(A.area_tokens('south-towards-viridian-city'), ['south'])
         self.assertEqual(A.area_tokens('violet-city-entrance'), [])

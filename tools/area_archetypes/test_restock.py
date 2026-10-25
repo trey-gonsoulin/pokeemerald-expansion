@@ -101,6 +101,26 @@ class SpeciesInfoTests(unittest.TestCase):
         self.assertIn('SPECIES_BURMY', self.info.enabled)  # = SPECIES_BURMY_PLANT
         self.assertIn('isRestrictedLegendary', self.info.flags_of('SPECIES_MEWTWO'))
 
+    def test_regional_forms_count_as_their_form_generation(self):
+        i = self.info
+        self.assertEqual(i.gen_of('SPECIES_RATTATA'), 1)
+        self.assertEqual(i.gen_of('SPECIES_RATTATA_ALOLA'), 7)
+        self.assertEqual(i.gen_of('SPECIES_SANDSLASH_ALOLA'), 7)  # in no pool
+        self.assertEqual(i.gen_of('SPECIES_MEOWTH_GALAR'), 8)
+        self.assertEqual(i.gen_of('SPECIES_SNEASEL_HISUI'), 8)
+        self.assertEqual(i.gen_of('SPECIES_WOOPER_PALDEA'), 9)
+
+    def test_pools_tag_regional_forms_like_their_flags(self):
+        """build's name-based tag agrees with species_info's REGIONAL_FLAGS."""
+        pools = R.load_json(POOLS)
+        tagged = {e['species']: e['introduced_gen'] for a in pools['archetypes'].values()
+                  for p in a['pools'].values() for e in p}
+        forms = {sp: gen for sp, gen in tagged.items() if self.info.flags_of(sp) & R.REGIONAL_FLAGS}
+        self.assertGreaterEqual(len(forms), 20)
+        for sp, gen in forms.items():
+            self.assertEqual(gen, self.info.gen_of(sp), sp)
+        self.assertEqual({sp for sp in tagged if AA.REGIONAL_FORM_RE.search(sp)}, set(forms))
+
 
 class ConfigTests(unittest.TestCase):
     """A family disabled by P_GEN_* / P_FAMILY_* config is never placed."""
@@ -304,6 +324,26 @@ class RestockTests(unittest.TestCase):
             for sl in ch['slots']:
                 if sl['after'] not in natives:
                     self.assertFalse(self.info.flags_of(sl['after']) & R.REGIONAL_FLAGS, sl)
+
+    def test_gens_use_the_regional_form_generation(self):
+        def added(settings):
+            _, changes = R.restock(self.wild, self.maps, self.pools, self.info, settings)
+            return {sl['after'] for ch in changes for sl in ch['slots']} - \
+                {sl['before'] for ch in changes for sl in ch['slots']}
+
+        early = added(R.Settings(ratio=1.0, gens={1, 2, 3}))
+        self.assertTrue(early)
+        self.assertFalse({sp for sp in early if self.info.flags_of(sp) & R.REGIONAL_FLAGS})
+        # Alolan forms are Gen 7, and so are their devolved stages (Raticate -> Rattata).
+        alola = added(R.Settings(ratio=1.0, gens={7}))
+        self.assertIn('SPECIES_RATTATA_ALOLA', alola)
+        self.assertTrue(all(self.info.gen_of(sp) == 7 for sp in alola), alola)
+
+    def test_gen_weight_boosts_regional_forms(self):
+        pool = [{'species': 'SPECIES_ZIGZAGOON_GALAR', 'share': 0.5, 'introduced_gen': 8},
+                {'species': 'SPECIES_ZIGZAGOON', 'share': 0.5, 'introduced_gen': 3}]
+        got = R.candidates(pool, self.info, R.Settings(gen_weight={8: 2}), set(), set(), set(), [5])
+        self.assertEqual(got, {'SPECIES_ZIGZAGOON_GALAR': 1.0, 'SPECIES_ZIGZAGOON': 0.5})
 
 
 def read(path):
