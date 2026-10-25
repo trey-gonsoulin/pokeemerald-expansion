@@ -1,0 +1,6 @@
+id,region_id,identifier
+1,1,kanto-route-1
+2,1,viridian-forest
+3,3,hoenn-route-101
+4,3,hoenn-route-105
+5,,unknown-all-bugs
