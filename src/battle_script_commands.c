@@ -9279,6 +9279,16 @@ void ApplyExperienceMultipliers(s32 *expAmount, u8 expGetterMonId, u8 faintedBat
     }
 }
 
+// Whether the party mon an item is used on is the user's partner's active battler.
+// In multi and 2v1 battles the partner has its own party, so a matching party index means nothing.
+static bool32 IsItemTargetActivePartner(enum BattlerId battler)
+{
+    enum BattlerId partner = GetPartnerBattler(battler);
+    return IsDoubleBattle()
+        && BattlersShareParty(battler, partner)
+        && gBattleStruct->itemPartyIndex[battler] == gBattlerPartyIndexes[partner];
+}
+
 void BS_ItemRestoreHP(void)
 {
     NATIVE_ARGS(const u8 *alreadyMaxHpInstr, const u8 *restoreBattlerInstr);
@@ -9303,7 +9313,7 @@ void BS_ItemRestoreHP(void)
         // Check if the recipient is an active battler.
         if (gBattleStruct->itemPartyIndex[gBattlerAttacker] == gBattlerPartyIndexes[gBattlerAttacker])
             battler = gBattlerAttacker;
-        else if (IsDoubleBattle() && gBattleStruct->itemPartyIndex[gBattlerAttacker] == gBattlerPartyIndexes[GetPartnerBattler(gBattlerAttacker)])
+        else if (IsItemTargetActivePartner(gBattlerAttacker))
             battler = GetPartnerBattler(gBattlerAttacker);
 
         // Get amount to heal.
@@ -9340,8 +9350,8 @@ void BS_ItemRestoreHP(void)
             SetMonData(&party[gBattleStruct->itemPartyIndex[gBattlerAttacker]], MON_DATA_HP, &hp);
 
             enum BattlerId partner = GetPartnerBattler(gBattlerAttacker);
-            // Absent battlers on the field need to be replaced
-            if (IsDoubleBattle() && (gAbsentBattlerFlags & (1u << partner)))
+            // Absent battlers on the field need to be replaced, but only from their own party
+            if (IsDoubleBattle() && BattlersShareParty(gBattlerAttacker, partner) && (gAbsentBattlerFlags & (1u << partner)))
             {
                 gAbsentBattlerFlags &= ~(1u << partner);
                 gBattleCommunication[MULTIUSE_STATE] = TRUE;
@@ -9366,8 +9376,7 @@ void BS_ItemCureStatus(void)
         statusChanged = ItemHealMonVolatile(gBattlerAttacker, gLastUsedItem);
         targetBattler = gBattlerAttacker;
     }
-    else if (IsDoubleBattle()
-     && gBattleStruct->itemPartyIndex[gBattlerAttacker] == gBattlerPartyIndexes[GetPartnerBattler(gBattlerAttacker)])
+    else if (IsItemTargetActivePartner(gBattlerAttacker))
     {
         statusChanged = ItemHealMonVolatile(GetPartnerBattler(gBattlerAttacker), gLastUsedItem);
         targetBattler = GetPartnerBattler(gBattlerAttacker);
@@ -9452,8 +9461,7 @@ void BS_ItemRestorePP(void)
     // Check if the recipient is an active battler.
     if (gBattleStruct->itemPartyIndex[gBattlerAttacker] == gBattlerPartyIndexes[gBattlerAttacker])
         battler = gBattlerAttacker;
-    else if (IsDoubleBattle()
-                && gBattleStruct->itemPartyIndex[gBattlerAttacker] == gBattlerPartyIndexes[GetPartnerBattler(gBattlerAttacker)])
+    else if (IsItemTargetActivePartner(gBattlerAttacker))
         battler = GetPartnerBattler(gBattlerAttacker);
 
     // Heal PP!
