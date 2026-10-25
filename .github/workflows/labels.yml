@@ -8,7 +8,7 @@ on:
 
 jobs:
   label:
-    if: ${{ github.actor != 'allcontributors[bot]' && github.event.review.state == 'approved' }}
+    if: ${{ github.actor != 'allcontributors[bot]' && github.event.review.state == 'approved' && github.base_ref != 'emerald-plus' }}
     runs-on: ubuntu-latest
     steps:
       - name: check labels
