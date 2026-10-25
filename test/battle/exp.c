@@ -472,3 +472,29 @@ AI_ONE_VS_TWO_BATTLE_TEST("Exp award: Gen 6 Exp. Share gives experience once for
         EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][2], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WYNAUT, 25) + (gain / 2) * kos);
     }
 }
+
+// The partner's first Pokemon has party index 0 too, so matching on gBattlerPartyIndexes alone handed it the move as well.
+// The forget-a-move path (Cmd_yesnoboxlearnmove) had the same check, but tests always decline to learn there.
+AI_TWO_VS_ONE_BATTLE_TEST("Exp award: A move learned on level up is not given to the partner's Pokemon")
+{
+    GIVEN {
+        PLAYER(SPECIES_CATERPIE) { Level(8); Moves(MOVE_TACKLE); }
+        PARTNER(SPECIES_WOBBUFFET) { Level(8); Moves(MOVE_CELEBRATE); }
+        OPPONENT(SPECIES_BRELOOM) { Level(15); Moves(MOVE_MEMENTO); }
+        OPPONENT(SPECIES_BRELOOM) { Level(15); Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        TURN { }
+    } THEN {
+        enum BattlerId player = GetBattlerAtPosition(B_POSITION_PLAYER_LEFT);
+        enum BattlerId partner = GetBattlerAtPosition(B_POSITION_PLAYER_RIGHT);
+        u32 playerKnows = 0, partnerKnows = 0;
+        for (u32 i = 0; i < MAX_MON_MOVES; i++)
+        {
+            playerKnows += gBattleMons[player].moves[i] == MOVE_BUG_BITE;
+            partnerKnows += gBattleMons[partner].moves[i] == MOVE_BUG_BITE;
+        }
+        EXPECT_EQ(gBattlerPartyIndexes[partner], 0);
+        EXPECT_EQ(playerKnows, 1);
+        EXPECT_EQ(partnerKnows, 0);
+    }
+}
