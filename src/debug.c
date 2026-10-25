@@ -1049,7 +1049,7 @@ static void Debug_ShowMenuTitle(void)
         u32 indent = (i - 1) * 4;
         Debug_GetSubMenuName(gStringVar4, i);
         // A line too long for the window drops to a narrower font instead of clipping
-        u32 fontId = GetFontIdToFit(gStringVar4, FONT_NARROW, 0, template.width * 8 - indent);
+        u32 fontId = GetFontIdToFit(gStringVar4, FONT_NARROW, 0, WindowWidthPx(windowId) - indent);
         AddTextPrinterParameterized(windowId, fontId, gStringVar4, indent, (i - 1) * 16, 0, NULL);
     }
     CopyWindowToVram(windowId, COPYWIN_FULL);
@@ -1142,7 +1142,7 @@ static void Debug_ShowMenu(DebugFunc HandleInput, const struct DebugMenuOption *
     menuTemplate.header_X = 0;
     menuTemplate.item_X = 8;
     // Labels too long for the list drop to a narrower font instead of clipping
-    menuTemplate.textNarrowWidth = sDebugMenuWindowTemplateMain.width * 8 - menuTemplate.item_X;
+    menuTemplate.textNarrowWidth = WindowWidthPx(windowId) - menuTemplate.item_X;
     menuTemplate.cursor_X = 0;
     menuTemplate.upText_Y = 1;
     menuTemplate.cursorPal = 2;
