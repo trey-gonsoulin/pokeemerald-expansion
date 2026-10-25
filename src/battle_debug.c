@@ -217,6 +217,7 @@ enum
     VAL_BITFIELD_8,
     VAL_BITFIELD_16,
     VAL_BITFIELD_32,
+    VAL_BITFIELD_64,
     VAL_VOLATILE,
     VAL_HAZARDS,
     VAR_SIDE_STATUS,
@@ -303,10 +304,10 @@ static const struct BitfieldInfo sAIBitfield[] =
     {/*Prefer Highest Damage Move*/ 1, 22},
     {/*Predict Switch*/ 1, 23},
     {/*Predict Incoming Mon*/ 1, 24},
-    {/*Dynamic Func*/ 1, 28},
-    {/*Roaming*/ 1, 29},
-    {/*Safari*/ 1, 30},
-    {/*First Battle*/ 1, 31},
+    {/*Dynamic Func*/ 1, 60},
+    {/*Roaming*/ 1, 61},
+    {/*Safari*/ 1, 62},
+    {/*First Battle*/ 1, 63},
 };
 
 static const struct ListMenuItem sMainListItems[] =
@@ -1561,9 +1562,9 @@ static const u32 GetBitfieldToAndValue(u32 currBit, u32 bitsCount)
     return toAnd;
 }
 
-static const u32 GetBitfieldValue(u32 value, u32 currBit, u32 bitsCount)
+static const u32 GetBitfieldValue(u64 value, u32 currBit, u32 bitsCount)
 {
-    return (value & (GetBitfieldToAndValue(currBit, bitsCount))) >> currBit;
+    return (value >> currBit) & GetBitfieldToAndValue(0, bitsCount);
 }
 
 static void UpdateBattlerValue(struct BattleDebugMenu *data)
@@ -1597,6 +1598,10 @@ static void UpdateBattlerValue(struct BattleDebugMenu *data)
         *(u32 *)(data->modifyArrows.modifiedValPtr) &= ~(GetBitfieldToAndValue(data->bitfield[data->currentSecondaryListItemId].currBit, data->bitfield[data->currentSecondaryListItemId].bitsCount));
         *(u32 *)(data->modifyArrows.modifiedValPtr) |= (data->modifyArrows.currValue << data->bitfield[data->currentSecondaryListItemId].currBit);
         break;
+    case VAL_BITFIELD_64:
+        *(u64 *)(data->modifyArrows.modifiedValPtr) &= ~((u64)GetBitfieldToAndValue(0, data->bitfield[data->currentSecondaryListItemId].bitsCount) << data->bitfield[data->currentSecondaryListItemId].currBit);
+        *(u64 *)(data->modifyArrows.modifiedValPtr) |= ((u64)data->modifyArrows.currValue << data->bitfield[data->currentSecondaryListItemId].currBit);
+        break;
     case VAL_VOLATILE:
         SetMonVolatile(data->battlerId, data->currentSecondaryListItemId, data->modifyArrows.currValue);
         break;
@@ -1610,8 +1615,8 @@ static void UpdateBattlerValue(struct BattleDebugMenu *data)
         (*(struct BattleSpriteInfo*)(data->modifyArrows.modifiedValPtr)).hpNumbersNoBars = data->modifyArrows.currValue;
         break;
     case VAR_SUBSTITUTE:
-        *(u8 *)(data->modifyArrows.modifiedValPtr) = data->modifyArrows.currValue;
-        if (*(u8 *)(data->modifyArrows.modifiedValPtr) == 0)
+        gBattleMons[data->battlerId].volatiles.substituteHP = data->modifyArrows.currValue;
+        if (data->modifyArrows.currValue == 0)
         {
             gBattleMons[data->battlerId].volatiles.substitute = FALSE;
             gBattleSpritesDataPtr->battlerData[data->battlerId].behindSubstitute = 0;
@@ -1978,12 +1983,10 @@ static void SetUpModifyArrows(struct BattleDebugMenu *data)
         }
         else if (data->currentSecondaryListItemId == VARIOUS_SUBSTITUTE_HP)
         {
-            u32 subHp = gBattleMons[data->battlerId].volatiles.substituteHP;
             data->modifyArrows.minValue = 0;
             data->modifyArrows.maxValue = 255;
             data->modifyArrows.maxDigits = 3;
-            data->modifyArrows.modifiedValPtr = &subHp;
-            gBattleMons[data->battlerId].volatiles.substituteHP = subHp;
+            data->modifyArrows.modifiedValPtr = NULL;
             data->modifyArrows.typeOfVal = VAR_SUBSTITUTE;
             data->modifyArrows.currValue = gBattleMons[data->battlerId].volatiles.substituteHP;
         }
@@ -1994,7 +1997,7 @@ static void SetUpModifyArrows(struct BattleDebugMenu *data)
             data->modifyArrows.maxDigits = 1;
             data->modifyArrows.modifiedValPtr = NULL;
             data->modifyArrows.typeOfVal = VAR_IN_LOVE;
-            data->modifyArrows.currValue = gBattleMons[data->battlerId].volatiles.infatuation;
+            data->modifyArrows.currValue = (gBattleMons[data->battlerId].volatiles.infatuation != 0);
         }
         break;
     case LIST_ITEM_STATUS1:
@@ -2027,7 +2030,7 @@ static void SetUpModifyArrows(struct BattleDebugMenu *data)
     case LIST_ITEM_AI:
         data->modifyArrows.modifiedValPtr = &gAiThinkingStruct->aiFlags[data->battlerId];
         data->modifyArrows.currValue = GetBitfieldValue(gAiThinkingStruct->aiFlags[data->battlerId], data->bitfield[data->currentSecondaryListItemId].currBit, data->bitfield[data->currentSecondaryListItemId].bitsCount);
-        data->modifyArrows.typeOfVal = VAL_BITFIELD_32;
+        data->modifyArrows.typeOfVal = VAL_BITFIELD_64;
         goto CASE_ITEM_STATUS;
     CASE_ITEM_STATUS:
         data->modifyArrows.minValue = 0;
