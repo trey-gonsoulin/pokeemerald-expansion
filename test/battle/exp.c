@@ -233,7 +233,14 @@ AI_ONE_VS_TWO_BATTLE_TEST("Both opponent's Pokemon give experience in battle aga
 }
 
 // "Exp award:" tests cover the fork's exp fixes (end-of-turn faints, opponent B's party) and the Gen 6 Exp. Share flag.
-// With B_SCALED_EXP at GEN_3 and B_UNEVOLVED_EXP_MULTIPLIER at GEN_3, a participant gains expYield * level / 7.
+// Under WITH_EXP_AWARD_CONFIGS, every participant gains expYield * level / 7 (Cmd_getexp, no level scaling or bonus multipliers)
+// and every Gen 6 Exp. Share mon gains half that. Cmd_getexp also reads the raw B_SPLIT_EXP macro, hence the ASSUME.
+#define WITH_EXP_AWARD_CONFIGS()                        \
+    ASSUME(B_SPLIT_EXP >= GEN_6);                       \
+    WITH_CONFIG(B_SPLIT_EXP, GEN_6);                    \
+    WITH_CONFIG(B_SCALED_EXP, GEN_3);                   \
+    WITH_CONFIG(B_UNEVOLVED_EXP_MULTIPLIER, GEN_3);     \
+    WITH_CONFIG(B_TRAINER_EXP_MULTIPLIER, GEN_8)
 #define EXP_YIELD(species, level) (gSpeciesInfo[species].expYield * (level) / 7)
 #define EXP_AT_LEVEL(species, level) (gExperienceTables[gSpeciesInfo[species].growthRate][level])
 
@@ -245,8 +252,7 @@ AI_SINGLE_BATTLE_TEST("Exp award: Pokemon gain experience once when the opponent
     PARAMETRIZE { status = STATUS1_BURN;   playerSpeed = 1; }
     PARAMETRIZE { status = STATUS1_BURN;   playerSpeed = 100; }
     GIVEN {
-        WITH_CONFIG(B_SCALED_EXP, GEN_3);
-        WITH_CONFIG(B_UNEVOLVED_EXP_MULTIPLIER, GEN_3);
+        WITH_EXP_AWARD_CONFIGS();
         PLAYER(SPECIES_WOBBUFFET) { Level(15); Speed(playerSpeed); }
         OPPONENT(SPECIES_TREECKO) { Level(15); HP(1); Speed(50); Status1(status); Moves(MOVE_CELEBRATE); }
     } WHEN {
@@ -266,8 +272,7 @@ WILD_BATTLE_TEST("Exp award: Pokemon gain experience once when the wild Pokemon 
     PARAMETRIZE { status = STATUS1_POISON; }
     PARAMETRIZE { status = STATUS1_BURN; }
     GIVEN {
-        WITH_CONFIG(B_SCALED_EXP, GEN_3);
-        WITH_CONFIG(B_UNEVOLVED_EXP_MULTIPLIER, GEN_3);
+        WITH_EXP_AWARD_CONFIGS();
         PLAYER(SPECIES_WOBBUFFET) { Level(15); }
         OPPONENT(SPECIES_TREECKO) { Level(15); HP(1); Status1(status); Moves(MOVE_CELEBRATE); }
     } WHEN {
@@ -285,8 +290,7 @@ WILD_BATTLE_TEST("Exp award: Pokemon gain experience once when the wild Pokemon 
 AI_DOUBLE_BATTLE_TEST("Exp award: Both player Pokemon gain experience once from each opponent fainting from end-of-turn damage")
 {
     GIVEN {
-        WITH_CONFIG(B_SCALED_EXP, GEN_3);
-        WITH_CONFIG(B_UNEVOLVED_EXP_MULTIPLIER, GEN_3);
+        WITH_EXP_AWARD_CONFIGS();
         PLAYER(SPECIES_WOBBUFFET) { Level(20); }
         PLAYER(SPECIES_WYNAUT) { Level(20); }
         OPPONENT(SPECIES_TREECKO) { Level(10); HP(1); Status1(STATUS1_POISON); Moves(MOVE_CELEBRATE); }
@@ -306,19 +310,30 @@ AI_DOUBLE_BATTLE_TEST("Exp award: Both player Pokemon gain experience once from 
 
 AI_SINGLE_BATTLE_TEST("Exp award: No experience is given when the player's last Pokemon faints from end-of-turn damage")
 {
+    u32 opponentFaints;
+    PARAMETRIZE { opponentFaints = FALSE; }
+    PARAMETRIZE { opponentFaints = TRUE; }
     GIVEN {
-        PLAYER(SPECIES_WOBBUFFET) { Level(15); HP(1); Status1(STATUS1_POISON); }
-        OPPONENT(SPECIES_TREECKO) { Level(15); Moves(MOVE_CELEBRATE); }
+        WITH_EXP_AWARD_CONFIGS();
+        PLAYER(SPECIES_WOBBUFFET) { Level(15); HP(1); Speed(1); Status1(STATUS1_POISON); }
+        OPPONENT(SPECIES_TREECKO) { Level(15); HP(1); Speed(50); Status1(opponentFaints ? STATUS1_POISON : STATUS1_NONE); Moves(MOVE_CELEBRATE); }
+        OPPONENT(SPECIES_WOBBUFFET) { Speed(50); Moves(MOVE_CELEBRATE); }
     } WHEN {
         TURN { MOVE(player, MOVE_CELEBRATE); }
     } SCENE {
+        if (opponentFaints)
+            MESSAGE("The opposing Treecko fainted!");
+        NOT EXPERIENCE_BAR(player);
         MESSAGE("Wobbuffet fainted!");
         NONE_OF {
             MESSAGE("Wobbuffet fainted!");
             EXPERIENCE_BAR(player);
         }
     } THEN {
+        // The opposing Treecko faints first, but the battle is lost by the time the fainted mons are handled,
+        // and the fainted Wobbuffet gets no exp for it.
         EXPECT_EQ(gBattleOutcome, B_OUTCOME_LOST);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_OPPONENT_A][0], MON_DATA_HP) == 0, opponentFaints);
         EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WOBBUFFET, 15));
     }
 }
@@ -355,8 +370,7 @@ WILD_BATTLE_TEST("Exp award: Gen 6 Exp. Share gives the rest of the team half ex
 {
     GIVEN {
         ASSUME(I_EXP_SHARE_FLAG > TEMP_FLAGS_END);
-        WITH_CONFIG(B_SCALED_EXP, GEN_3);
-        WITH_CONFIG(B_UNEVOLVED_EXP_MULTIPLIER, GEN_3);
+        WITH_EXP_AWARD_CONFIGS();
         FLAG_SET(I_EXP_SHARE_FLAG);
         PLAYER(SPECIES_WOBBUFFET) { Level(20); }
         PLAYER(SPECIES_WYNAUT) { Level(20); }
@@ -381,8 +395,7 @@ AI_SINGLE_BATTLE_TEST("Exp award: Gen 6 Exp. Share gives experience once when th
 {
     GIVEN {
         ASSUME(I_EXP_SHARE_FLAG > TEMP_FLAGS_END);
-        WITH_CONFIG(B_SCALED_EXP, GEN_3);
-        WITH_CONFIG(B_UNEVOLVED_EXP_MULTIPLIER, GEN_3);
+        WITH_EXP_AWARD_CONFIGS();
         FLAG_SET(I_EXP_SHARE_FLAG);
         PLAYER(SPECIES_WOBBUFFET) { Level(15); }
         PLAYER(SPECIES_WYNAUT) { Level(15); }
@@ -410,8 +423,7 @@ AI_ONE_VS_TWO_BATTLE_TEST("Exp award: Every Pokemon of opponent B gives experien
     PARAMETRIZE { koBoth = FALSE; }
     PARAMETRIZE { koBoth = TRUE; }
     GIVEN {
-        WITH_CONFIG(B_SCALED_EXP, GEN_3);
-        WITH_CONFIG(B_UNEVOLVED_EXP_MULTIPLIER, GEN_3);
+        WITH_EXP_AWARD_CONFIGS();
         PLAYER(SPECIES_WOBBUFFET) { Level(20); Speed(100); }
         PLAYER(SPECIES_WYNAUT) { Level(20); Speed(100); }
         OPPONENT_A(SPECIES_WOBBUFFET) { Level(10); Speed(50); Moves(MOVE_CELEBRATE); }
@@ -435,8 +447,7 @@ AI_ONE_VS_TWO_BATTLE_TEST("Exp award: Gen 6 Exp. Share gives experience once for
     PARAMETRIZE { koBoth = TRUE; }
     GIVEN {
         ASSUME(I_EXP_SHARE_FLAG > TEMP_FLAGS_END);
-        WITH_CONFIG(B_SCALED_EXP, GEN_3);
-        WITH_CONFIG(B_UNEVOLVED_EXP_MULTIPLIER, GEN_3);
+        WITH_EXP_AWARD_CONFIGS();
         FLAG_SET(I_EXP_SHARE_FLAG);
         PLAYER(SPECIES_WOBBUFFET) { Level(20); Speed(100); }
         PLAYER(SPECIES_WYNAUT) { Level(20); Speed(100); }
