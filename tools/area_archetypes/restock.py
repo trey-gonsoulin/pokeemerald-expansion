@@ -282,10 +282,8 @@ class SpeciesInfo:
     def learn_gens(self, pools):
         """Take each pool species' generation from the pools (PokeAPI), which,
         unlike the family files, put Pichu in Gen 2."""
-        for arch in pools['archetypes'].values():
-            for pool in arch.get('pools', {}).values():
-                for e in pool:
-                    self.gen[self.canon(e['species'])] = e['introduced_gen']
+        for e in pool_entries(pools):
+            self.gen[self.canon(e['species'])] = e['introduced_gen']
 
     def min_level(self, species, _seen=()):
         """Earliest level a species can have through its evolution line."""
@@ -324,6 +322,13 @@ class SpeciesInfo:
             species = min(pres, key=lambda s: (self.min_level(s), s))
             seen.add(species)
         return species
+
+
+def pool_entries(pools):
+    """Every species entry of every archetype pool."""
+    for arch in pools['archetypes'].values():
+        for pool in arch.get('pools', {}).values():
+            yield from pool
 
 
 # ---------------------------------------------------------------------------
@@ -919,8 +924,7 @@ def main(argv=None):
     if unknown:
         p.error(f'unknown region: {", ".join(unknown)} {regions_in}')
     pools = load_json(args.pools)
-    pool_gens = {e['introduced_gen'] for arch in pools['archetypes'].values()
-                 for pool in arch.get('pools', {}).values() for e in pool}
+    pool_gens = {e['introduced_gen'] for e in pool_entries(pools)}
     if settings.gens and not settings.gens & pool_gens:
         p.error(f'gens: {",".join(map(str, sorted(settings.gens)))} matches no pool species, so nothing '
                 f'would be restocked (generations in {args.pools}: {",".join(map(str, sorted(pool_gens)))})')

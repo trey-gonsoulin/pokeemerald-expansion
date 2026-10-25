@@ -565,7 +565,7 @@ class CliTests(unittest.TestCase):
 
 class FixtureRestockTests(unittest.TestCase):
     def test_rerunning_write_changes_nothing(self):
-        """restock --write twice on the testdata/ fixture build: the second run is a no-op (#43)."""
+        """restock --write twice on the testdata/ fixture build: the second run is a no-op (#43, #90)."""
         fixture = os.path.join(TESTDATA, 'wild_encounters.json')
         with tempfile.TemporaryDirectory() as tmp:
             build = os.path.join(tmp, 'build')
@@ -573,7 +573,7 @@ class FixtureRestockTests(unittest.TestCase):
                 AA.build(os.path.join(TESTDATA, 'pokeapi'), build, AA.REPO, base=fixture)
             base = shutil.copy(fixture, os.path.join(tmp, 'base.json'))
             wild = shutil.copy(fixture, os.path.join(tmp, 'wild.json'))
-            # The fixture tables have two slots, so with every native keeping one nothing changes.
+            # The fixture tables have two slots: they only change once natives can lose theirs.
             argv = ['--base', base, '--wild', wild, '--out-dir', os.path.join(tmp, 'out'), '--write',
                     '--drop-rare-natives', '--pools', os.path.join(build, 'archetype_pools.json'),
                     '--maps', os.path.join(build, 'emerald_maps.json')]
