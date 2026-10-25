@@ -9,6 +9,10 @@
 struct DebugMenuOption;
 struct WindowTemplate;
 
+// Sprite tags, kept together so a new one doesn't collide
+#define DEBUG_ICON_TAG          0xFDF3 // src/debug.c's species/item/object icon
+#define DEBUG_SCROLL_ARROW_TAG  0xFDF4
+
 // Task data slots the numeric input reads and writes (src/debug.c's tInput, tDigit, tInputStart)
 #define DEBUG_DATA_INPUT        3
 #define DEBUG_DATA_DIGIT        4 // highlighted digit, counted from the ones place
@@ -42,6 +46,7 @@ void Debug_InputToDecimalString(u8 *dest, u8 taskId, u32 digits);
 s32 Debug_ListMenu_ProcessInput(u8 listTaskId);
 u8 Debug_AddListScrollArrows(const struct WindowTemplate *listWindow, u32 totalItems, u32 maxShowed, u16 *scrollOffset);
 void Debug_RemoveListScrollArrows(u8 *arrowsTaskId);
+// Builds each level's name in gStringVar4, so it overwrites gStringVar4
 u8 Debug_ShowPathWindow(const struct WindowTemplate *pathWindow, u32 levels, void (*getLevelName)(u8 *dest, u32 level));
 void Debug_RestoreMenuPosition(struct DebugMenuPosition *position, const struct DebugMenuOption *items, u32 totalItems, u32 maxShowed, u16 *scrollOffset, u16 *selectedRow);
 
