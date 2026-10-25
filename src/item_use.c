@@ -1325,10 +1325,18 @@ bool32 CannotUseItemsInBattle(enum Item itemId, struct Pokemon *mon)
     return cannotUse;
 }
 
+// Items used from the bag target the battler in the menu. CannotUseItemsInBattle reads gPartyMenu.slotId
+// as a party menu slot, where the active battlers are slots 0 and 1, not as a party index.
+bool32 CannotUseItemFromBagInBattle(enum Item itemId)
+{
+    gBattleStruct->itemPartyIndex[gBattlerInMenuId] = gBattlerPartyIndexes[gBattlerInMenuId];
+    gPartyMenu.slotId = (GetBattlerPosition(gBattlerInMenuId) == B_POSITION_PLAYER_RIGHT) ? 1 : 0;
+    return CannotUseItemsInBattle(itemId, GetBattlerMon(gBattlerInMenuId));
+}
+
 void ItemUseInBattle_BagMenu(u8 taskId)
 {
-    gPartyMenu.slotId = gBattleStruct->itemPartyIndex[gBattlerInMenuId] = gBattlerPartyIndexes[gBattlerInMenuId];
-    if (CannotUseItemsInBattle(gSpecialVar_ItemId, NULL))
+    if (CannotUseItemFromBagInBattle(gSpecialVar_ItemId))
     {
         if (CurrentBattlePyramidLocation() == PYRAMID_LOCATION_NONE)
             DisplayItemMessage(taskId, FONT_NORMAL, gStringVar4, CloseItemMessage);
