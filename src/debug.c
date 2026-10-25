@@ -232,6 +232,7 @@ struct DebugMenuListData
     enum DebugMenuTypes menuType:2;
     u32 padding:30;
     s16 data[8];
+    s16 savedData[8]; // data as Choose trainer from map found it, restored when B cancels the picker
 };
 
 struct DebugSelectionStep
@@ -284,6 +285,7 @@ static void DebugNativeStep_CloseDebugWindow(u8 taskId);
 
 static void DebugAction_OpenSubMenu(u8 taskId, const struct DebugMenuOption *items);
 static void DebugAction_OpenSubMenuTrainers(u8 taskId, const struct DebugMenuOption *items);
+static void Debug_Trainers_ResetTrainersData(void);
 static void DebugAction_OpenSubMenuFlagsVars(u8 taskId, const struct DebugMenuOption *items);
 static void DebugAction_OpenOutbreakMenu(u8 taskId, const struct DebugMenuOption *items);
 static void DebugAction_OpenSubMenuFakeRTC(u8 taskId, const struct DebugMenuOption *items);
@@ -846,6 +848,8 @@ void Debug_ShowMainMenu(void)
     sDebugMenuListData->iconTileTag = TAG_NONE;
     sDebugMenuListData->iconPaletteTag = TAG_NONE;
     sDebugMenuListData->positions[0] = sDebugMainMenuPosition;
+    // AllocZeroed leaves the rematch id at 0, a valid gRematchTable index
+    Debug_Trainers_ResetTrainersData();
     Debug_ShowMenu(DebugTask_HandleMenuInput_General, sDebugMenu_Actions_Main);
 }
 
@@ -1752,17 +1756,18 @@ static void DebugTask_HandleMenuInput_General(u8 taskId)
 {
     const struct DebugMenuOption *options = Debug_GetCurrentCallbackMenu();
     u32 input = Debug_ListMenu_ProcessInput(gTasks[taskId].tMenuTaskId);
-    struct DebugMenuOption option = options[input];
 
     if (JOY_NEW(A_BUTTON))
     {
+        // input is only an item index on an A press
+        const struct DebugMenuOption *option = &options[input];
         PlaySE(SE_SELECT);
-        if (option.action != NULL)
+        if (option->action != NULL)
         {
-            if (option.actionParams  != NULL)
-                 ((DebugFuncWithParams)option.action)(taskId, option.actionParams);
+            if (option->actionParams  != NULL)
+                 ((DebugFuncWithParams)option->action)(taskId, option->actionParams);
             else
-                ((DebugFunc)option.action)(taskId);
+                ((DebugFunc)option->action)(taskId);
         }
     }
     else if (JOY_NEW(B_BUTTON))
@@ -1791,7 +1796,10 @@ static void DebugAction_OpenSubMenuWithType(u8 taskId, const struct DebugMenuOpt
 
 static void DebugAction_OpenSubMenuTrainers(u8 taskId, const struct DebugMenuOption *items)
 {
+    // Trainer 1 starts over, with its rematch id and map-fight flag. Trainer 2, the partner and doubles stay.
     sDebugMenuListData->data[0] = TRAINER_NONE;
+    sDebugMenuListData->data[1] = -1;
+    sDebugMenuListData->data[3] = FALSE;
     DebugAction_OpenSubMenuWithType(taskId, items, DEBUG_TRAINERS_MENU);
 }
 
@@ -2328,7 +2336,7 @@ static void Debug_Trainers_ResetTrainersData(void)
     sDebugMenuListData->data[0] = TRAINER_NONE;
     sDebugMenuListData->data[1] = -1;
     sDebugMenuListData->data[2] = TRAINER_NONE;
-    sDebugMenuListData->data[3] = -1;
+    sDebugMenuListData->data[3] = FALSE;
     sDebugMenuListData->data[4] = PARTNER_NONE;
     sDebugMenuListData->data[5] = FALSE;
 }
@@ -2464,16 +2472,24 @@ static u32 DebugSelectionStep_GetObjectEventCount(u8 taskId)
     return gMapHeader.events->objectEventCount;
 }
 
+// The picker overwrites data[] for every local id it shows, so keep the Trainers menu's selection for B
+static void DebugSelection_SetTrainerFromMap_Init(u8 taskId)
+{
+    Debug_CreateInputDisplayWindow(taskId);
+    memcpy(sDebugMenuListData->savedData, sDebugMenuListData->data, sizeof(sDebugMenuListData->savedData));
+}
+
 static void DebugSelection_SetTrainerFromMap_OnCancel(u8 taskId)
 {
-    sDebugMenuListData->data[1] = FirstBattleTrainerIdToRematchTableId(gRematchTable, sDebugMenuListData->data[0]);
-    sDebugMenuListData->data[3] = TRUE;
+    memcpy(sDebugMenuListData->data, sDebugMenuListData->savedData, sizeof(sDebugMenuListData->data));
     DebugSelectionStep_ReturnToTrainersMenu(taskId);
 }
 
 static bool32 DebugSelection_SetTrainerFromMap_OnComplete(u8 taskId)
 {
-    DebugSelection_SetTrainerFromMap_OnCancel(taskId);
+    sDebugMenuListData->data[1] = FirstBattleTrainerIdToRematchTableId(gRematchTable, sDebugMenuListData->data[0]);
+    sDebugMenuListData->data[3] = TRUE;
+    DebugSelectionStep_ReturnToTrainersMenu(taskId);
     return TRUE;
 }
 
@@ -2493,7 +2509,7 @@ static const struct DebugSelectionStep sMapTrainerSelectionStep = {
 };
 
 static const struct DebugSelection sTrainerFromMapSelection = {
-    .onInit = Debug_CreateInputDisplayWindow,
+    .onInit = DebugSelection_SetTrainerFromMap_Init,
     .onCancel = DebugSelection_SetTrainerFromMap_OnCancel,
     .onComplete = DebugSelection_SetTrainerFromMap_OnComplete,
     .steps = {&sMapTrainerSelectionStep},
@@ -2783,16 +2799,18 @@ static void DebugSelectionStep_MovesConfirm(u8 taskId)
 // The Moves step's "Default" is MOVES_COUNT, which is also MOVE_BREAKNECK_BLITZ, so it must never
 // reach a mon or the save. The Default slots get the species' latest level-up moves up to level that
 // weren't chosen in another slot, in the order they're learned, the way GiveBoxMonInitialMoveset picks
-// them. So Default in Move 1 gives the whole default moveset. Reads the MAX_MON_MOVES slots from firstSlot.
+// them. So Default in Move 1 gives the whole default moveset, and so does None in Move 1, as it does
+// in Give Pokemon (Complex). Reads the MAX_MON_MOVES slots from firstSlot.
 static void Debug_ResolveSelectedMoves(u8 taskId, u32 firstSlot, enum Species species, u32 level, u16 *moves)
 {
     const struct LevelUpMove *learnset = GetSpeciesLevelUpLearnset(species);
     u16 defaultMoves[MAX_MON_MOVES];
     u32 i, j, defaultSlots = 0, count = 0;
+    bool32 noMovesChosen = (DebugSelection_GetData(taskId, firstSlot) == MOVE_NONE);
 
     for (i = 0; i < MAX_MON_MOVES; i++)
     {
-        moves[i] = DebugSelection_GetData(taskId, firstSlot + i);
+        moves[i] = noMovesChosen ? MOVES_COUNT : DebugSelection_GetData(taskId, firstSlot + i);
         if (moves[i] >= MOVES_COUNT)
             defaultSlots++;
     }
