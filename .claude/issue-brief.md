@@ -7,13 +7,14 @@ Binding rules for workflow agents, on top of the repo CLAUDE.md.
 - Commit messages are a plain imperative sentence with `(#N)` appended, e.g. `Keep the debug menu open when B leaves a short submenu (#31)`. Don't use `type(scope):` prefixes.
 - Match the surrounding C style in `src/debug.c`: 4-space indent, braces on their own line, `static` helpers, and task-data `#define`s like tInput/tDigit.
 
-## Build (the only automated check)
+## Build and tests
 Use `.claude/build.sh`. It sets the devkitARM PATH and TOOLCHAIN, unsets the host compiler variables (`CPATH`, `LDFLAGS`, …), logs to `<worktree>/build/<target>.log`, and prints only the exit code plus unexpected errors and warnings. Pass your worktree's absolute path as the first argument. Run it as a plain command, not inside `cd …;` or `export …;` chains.
 
 - `sh .claude/build.sh <worktree> src/debug.c` compiles one file. On a cold tree it builds the tools and generated sources too, in about 20 s. Use it for quick checks while iterating.
 - `sh .claude/build.sh <worktree> rom` builds the ROM with the debug menu: about 1 min cold alone, about 4.5 min when four agents build at once. `… release` builds the ROM with the debug menus off.
 - `sh .claude/build.sh <worktree> generated` builds the tools, then the generated headers. Plain `make generated` fails on a fresh worktree (`No rule to make target tools/mapjson/mapjson`), and `make tools` fails too. You only need this before a partial build that isn't a `src/*.c` file.
-- **Implementers:** before you finish, both `rom` and `release` must exit 0 with no new warnings in the files you changed.
+- **Implementers:** before you finish, both `rom` and `release` must exit 0 with no new warnings in the files you changed. If you change battle code or anything under `test/`, `sh .claude/build.sh <worktree> check` must also report 0 FAILED. If you change `tools/area_archetypes/`, run its unittests too.
+- CI (`.github/workflows/emerald-plus.yml`) runs `check`, both ROMs and the area_archetypes unittests when your `issue-*` branch is pushed. Check it with `gh run list --branch issue-<N>`.
 - **Reviewers:** don't rebuild the ROMs, because the implementer already did. Compile each changed `src/*.c` file in your own worktree with the single-file target.
 - `… debug` builds the -Og/-g ROM and `… check ["TESTS prefix"]` runs the headless tests (it prints the PASSED/TOTAL summary). Both link because build.sh unsets the host `CPATH`/`LDFLAGS`; that leak, not gcc 16.1, was the cause of #27. Always build through build.sh: a plain `make` from an agent shell inherits the leak, and the `unset …;` chain in CLAUDE.md's manual recipe is refused here. The debug build is written to `pokeemerald-debug.gba`/`.elf`, so it doesn't clobber the `rom` output. `make check` doesn't cover `src/debug.c`.
 
