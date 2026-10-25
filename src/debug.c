@@ -1046,8 +1046,11 @@ static void Debug_ShowMenuTitle(void)
     FillWindowPixelBuffer(windowId, PIXEL_FILL(1));
     for (u32 i = 1; i <= level; i++)
     {
+        u32 indent = (i - 1) * 4;
         Debug_GetSubMenuName(gStringVar4, i);
-        AddTextPrinterParameterized(windowId, FONT_NARROW, gStringVar4, (i - 1) * 4, (i - 1) * 16, 0, NULL);
+        // A line too long for the window drops to a narrower font instead of clipping
+        u32 fontId = GetFontIdToFit(gStringVar4, FONT_NARROW, 0, WindowWidthPx(windowId) - indent);
+        AddTextPrinterParameterized(windowId, fontId, gStringVar4, indent, (i - 1) * 16, 0, NULL);
     }
     CopyWindowToVram(windowId, COPYWIN_FULL);
     sDebugMenuListData->titleWindowId = windowId;
@@ -1138,6 +1141,8 @@ static void Debug_ShowMenu(DebugFunc HandleInput, const struct DebugMenuOption *
     menuTemplate.windowId = windowId;
     menuTemplate.header_X = 0;
     menuTemplate.item_X = 8;
+    // Labels too long for the list drop to a narrower font instead of clipping
+    menuTemplate.textNarrowWidth = WindowWidthPx(windowId) - menuTemplate.item_X;
     menuTemplate.cursor_X = 0;
     menuTemplate.upText_Y = 1;
     menuTemplate.cursorPal = 2;
