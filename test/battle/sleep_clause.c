@@ -1027,6 +1027,8 @@ SINGLE_BATTLE_TEST("Sleep Clause: Sleep clause is deactivated when a benched sle
         MESSAGE("The opposing Zigzagoon used Spore!");
         ANIMATION(ANIM_TYPE_STATUS, B_ANIM_STATUS_SLP, player);
         MESSAGE("Wynaut fell asleep!");
+    } THEN {
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_STATUS), STATUS1_NONE);
     }
 }
 
