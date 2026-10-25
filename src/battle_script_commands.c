@@ -9377,8 +9377,13 @@ void BS_ItemCureStatus(void)
     if (!HealStatusConditions(&party[gBattleStruct->itemPartyIndex[gBattlerAttacker]], GetItemStatus1Mask(gLastUsedItem), targetBattler))
     {
         statusChanged = TRUE;
-        if (targetBattler != MAX_BATTLERS_COUNT && (GetItemStatus1Mask(gLastUsedItem) & STATUS1_SLEEP))
-            gBattleMons[targetBattler].volatiles.nightmare = FALSE;
+        if (GetItemStatus1Mask(gLastUsedItem) & STATUS1_SLEEP)
+        {
+            if (targetBattler != MAX_BATTLERS_COUNT)
+                gBattleMons[targetBattler].volatiles.nightmare = FALSE;
+            else // HealStatusConditions only releases Sleep Clause for an active battler.
+                TryDeactivateSleepClause(gBattlerAttacker, gBattleStruct->itemPartyIndex[gBattlerAttacker]);
+        }
     }
 
     if (!statusChanged)
