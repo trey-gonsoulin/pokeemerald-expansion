@@ -2666,6 +2666,12 @@ static void DebugAction_Trainers_TryBattle(u8 taskId)
             lastMatch -= 1;
         trainer1Id = gRematchTable[rematchId].trainerIds[lastMatch];
     }
+    // Opponent A is required, even with a Trainer 2 or partner set
+    if (trainer1Id == TRAINER_NONE)
+    {
+        PlaySE(SE_FAILURE);
+        return;
+    }
     gBattleTypeFlags = BATTLE_TYPE_TRAINER;
     TRAINER_BATTLE_PARAM.opponentA = trainer1Id;
     TRAINER_BATTLE_PARAM.opponentB = 0xFFFF;
