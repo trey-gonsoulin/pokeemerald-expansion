@@ -12,8 +12,11 @@ Emerald Plus is a personal fork of [rh-hideout/pokeemerald-expansion](https://gi
 
 What the fork adds over upstream (`git diff origin/master...origin/emerald-plus --stat`):
 - Personal-playthrough config flips in `include/config/` (reusable TMs, Gen 6 Exp. Share on `FLAG_UNUSED_0x264`, followers, HGSS Pokédex, IV/EV summary, forgettable HMs).
-- Two exp-gain fixes in battle code, covered by `test/battle/exp.c`.
-- Overworld debug menu improvements in `src/debug.c`: memory, paging, scroll arrows, path title, faster numeric input.
+- Three carried upstream fixes. Upstream has none of them yet, so on every upstream sync check each one and drop it once upstream fixes the bug:
+  - Exp from opponent B's Pokémon in two-trainer battles: `GetGivenExpMonsIndex` in `src/battle_util.c`. Covered by `test/battle/exp.c`.
+  - Exp when the last foe faints from end-of-turn damage: the `ENDTURN_FAINTED_MON_ACTIONS` check in `DoEndTurnEffects`, `src/battle_end_turn.c`. Covered by `test/battle/exp.c`.
+  - TV soft-lock when a regular show is on the air: `specialvar VAR_RESULT, GetSelectedTVShow` in `data/scripts/tv.inc` (10403ef6). No test.
+- Overworld debug menu improvements. The engine is fork-owned, in `src/debug_menu_ui.c` (API in `include/debug_menu_ui.h`): odometer numeric input and its digit highlight, list paging, scroll arrows, the submenu path window and the menu-position restore. `src/debug.c` keeps the menus, their state (`sDebugMenuListData`) and the hooks that call the engine.
 - `tools/area_archetypes/`, a standalone Python tool (see below).
 
 ## Build
@@ -90,8 +93,9 @@ python3 -m unittest discover -s tools/area_archetypes      # tests
   - `CreateTask` takes the first free slot, and `RunTasks` follows `.next` after each func returns. So a task created in the same frame can run in that frame when it reuses an earlier slot.
   - Per-task state lives in `gTasks[id].data[0..15]` (s16), usually aliased with `#define tFoo data[N]`.
 
-### `src/debug.c` gotchas
-- Numeric inputs store the value in s16 task data (`tInput`), but a max can be 0xFFFF. Every read, compare and clamp has to go through u16/u32.
+### `src/debug.c` and `src/debug_menu_ui.c` gotchas
+- Put new generic menu UX in `src/debug_menu_ui.c`, not inline in `src/debug.c`. Its helpers take the window template, counts and state pointers as arguments. The numeric input is the exception: it works on the task data slots `DEBUG_DATA_INPUT`/`DIGIT`/`INPUT_START` from `include/debug_menu_ui.h`, which `src/debug.c` names `tInput`/`tDigit`/`tInputStart`.
+- Numeric inputs store the value in s16 task data (`tInput`), but a max can be 0xFFFF. Every read, compare and clamp has to go through u16/u32: read it with `DEBUG_TASK_INPUT`, print it with `Debug_InputToDecimalString` (not `ConvertIntToDecimalStringN` on `tInput`, which loses the digit highlight and the u16 read), and size it with the bounded `Debug_CountDigits`.
 - Steps that skip invalid values (species) are bounded with a `maxFunc`, such as the last enabled species.
   - `IsSpeciesEnabled(SPECIES_EGG)` is TRUE, and `SPECIES_EGG == NUM_SPECIES`, so an upward search can land one past the max.
 - Almost all of the task data slots are in use. Extra menu state goes in the heap-allocated `sDebugMenuListData`, which is freed on every exit path.
