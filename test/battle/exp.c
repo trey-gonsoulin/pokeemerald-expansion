@@ -473,6 +473,30 @@ AI_ONE_VS_TWO_BATTLE_TEST("Exp award: Gen 6 Exp. Share gives experience once for
     }
 }
 
+// The partner's replacement has party index 1 in its own party, which used to mark the player's benched second Pokemon as sent in.
+AI_TWO_VS_ONE_BATTLE_TEST("Exp award: The partner's replacement does not give experience to the player's benched Pokemon")
+{
+    GIVEN {
+        WITH_EXP_AWARD_CONFIGS();
+        PLAYER(SPECIES_WOBBUFFET) { Level(50); Speed(50); }
+        PLAYER(SPECIES_WYNAUT) { Level(20); Speed(50); }
+        PARTNER(SPECIES_WOBBUFFET) { Level(50); Speed(100); Moves(MOVE_MEMENTO); }
+        PARTNER(SPECIES_WOBBUFFET) { Level(50); Speed(100); Moves(MOVE_CELEBRATE); }
+        OPPONENT(SPECIES_TREECKO) { Level(10); HP(1); Speed(10); Moves(MOVE_CELEBRATE); }
+        OPPONENT(SPECIES_TREECKO) { Level(10); Speed(10); Moves(MOVE_CELEBRATE); }
+        OPPONENT(SPECIES_TREECKO) { Level(10); Speed(10); Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        TURN { MOVE(playerLeft, MOVE_CELEBRATE); MOVE(playerRight, MOVE_MEMENTO, target: opponentRight); SEND_OUT(playerRight, 1); }
+        TURN { MOVE(playerLeft, MOVE_SCRATCH, target: opponentLeft); MOVE(playerRight, MOVE_CELEBRATE); }
+    } SCENE {
+        MESSAGE("The opposing Treecko fainted!");
+    } THEN {
+        EXPECT_EQ(gBattlerPartyIndexes[GetBattlerAtPosition(B_POSITION_PLAYER_RIGHT)], 1);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WOBBUFFET, 50) + EXP_YIELD(SPECIES_TREECKO, 10));
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][1], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WYNAUT, 20));
+    }
+}
+
 // The partner's first Pokemon has party index 0 too, so matching on gBattlerPartyIndexes alone handed it the move as well.
 // The forget-a-move path (Cmd_yesnoboxlearnmove) had the same check, but tests always decline to learn there.
 AI_TWO_VS_ONE_BATTLE_TEST("Exp award: A move learned on level up is not given to the partner's Pokemon")

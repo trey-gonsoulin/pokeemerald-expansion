@@ -12,13 +12,14 @@ Emerald Plus is a personal fork of [rh-hideout/pokeemerald-expansion](https://gi
 
 What the fork adds over upstream (`git diff origin/master...origin/emerald-plus --stat`):
 - Personal-playthrough config flips in `include/config/` (reusable TMs, Gen 6 Exp. Share on `FLAG_UNUSED_0x264`, followers, HGSS Pokédex, IV/EV summary, forgettable HMs).
-- Six carried upstream fixes. Upstream has none of them yet, so on every upstream sync check each one and drop it once upstream fixes the bug:
+- Seven carried upstream fixes. Upstream has none of them yet, so on every upstream sync check each one and drop it once upstream fixes the bug:
   - Exp from opponent B's Pokémon in two-trainer battles: `GetGivenExpMonsIndex` in `src/battle_util.c`. Covered by `test/battle/exp.c`.
   - Exp when the last foe faints from end-of-turn damage: the `ENDTURN_FAINTED_MON_ACTIONS` check in `DoEndTurnEffects`, `src/battle_end_turn.c`. Covered by `test/battle/exp.c`.
   - TV soft-lock when a regular show is on the air: `specialvar VAR_RESULT, GetSelectedTVShow` in `data/scripts/tv.inc` (10403ef6). No test.
   - Out-of-bounds `gBattleMons[MAX_BATTLERS_COUNT]` write when a sleep-curing item is used on a benched Pokémon: the `targetBattler != MAX_BATTLERS_COUNT` guard on the nightmare clear in `BS_ItemCureStatus`, `src/battle_script_commands.c`, and the `battler != MAX_BATTLERS_COUNT` guard on `PREPARE_MON_NICK_BUFFER` in `HealStatusConditions`, `src/pokemon.c` (#57). `test/battle/item_effect/heal_and_cure_status.c` runs the benched path, but nothing on GBA can detect the stray write.
   - Sleep Clause stays active after a sleep-curing item is used on a benched sleeper: the `TryDeactivateSleepClause` call for a benched target (`targetBattler == MAX_BATTLERS_COUNT`) in `BS_ItemCureStatus`, `src/battle_script_commands.c` (#98). Covered by the benched-mon item test in `test/battle/sleep_clause.c`.
   - A move the player's Pokémon learns on level up also lands on the in-game partner's active Pokémon with the same party index (multi battles such as Steven's): the `GetBattlerTrainer(battler) == B_TRAINER_PLAYER` checks in `Cmd_handlelearnnewmove` and `Cmd_yesnoboxlearnmove`, `src/battle_script_commands.c` (#64). `test/battle/exp.c` covers the first; tests always decline the forget-a-move prompt, so nothing covers the second.
+  - Exp for the player's benched Pokémon whose party index matches the in-game partner's active Pokémon (the partner's party indexes were OR'ed into the player's sent-in bits): the `GetBattlerTrainer(...) == B_TRAINER_PLAYER` checks in `ResetSentPokesToOpponentValue`, `OpponentSwitchInResetSentPokesToOpponentValue` and `UpdateSentPokesToOpponentValue`, `src/battle_util.c` (#64). Covered by `test/battle/exp.c`.
 - Overworld debug menu improvements. The engine is fork-owned, in `src/debug_menu_ui.c` (API in `include/debug_menu_ui.h`): odometer numeric input and its digit highlight, list paging, scroll arrows, the submenu path window and the menu-position restore. `src/debug.c` keeps the menus, their state (`sDebugMenuListData`) and the hooks that call the engine.
 - `tools/area_archetypes/`, a standalone Python tool (see below).
 
