@@ -110,7 +110,7 @@ class FixtureBuildTests(unittest.TestCase):
         cls.log = io.StringIO()
         try:
             with contextlib.redirect_stdout(cls.log):
-                cls.data, cls.smap, tables, cls.pools, cls.emerald = AA.build(
+                _, cls.smap, tables, cls.pools, cls.emerald = AA.build(
                     os.path.join(TESTDATA, 'pokeapi'), cls.out.name, AA.REPO,
                     base=os.path.join(TESTDATA, 'wild_encounters.json'))
         except SystemExit as e:  # keep a broken fixture from ending the whole test run
@@ -209,15 +209,14 @@ class FixtureBuildTests(unittest.TestCase):
 
     def test_written_outputs(self):
         doc = json.loads(self.read_output('archetype_pools.json'))
-        self.assertEqual({a: (v['generations'], v['sources']) for a, v in doc['archetypes'].items()}, {
-            'route/beginner': ([1, 3], ['emerald:hoenn-route-101', 'red-blue:kanto-route-1']),
-            'forest/beginner': ([1], ['red-blue:viridian-forest']),
-            'sea/early': ([3], ['emerald:hoenn-route-105']),
-            'sea/mid': ([3], ['emerald:hoenn-route-105']),
-            'underwater/mid': ([3], ['emerald:hoenn-route-105', 'emerald:hoenn-route-124']),
-        })
-        self.assertEqual(list(doc['archetypes']), ['route/beginner', 'forest/beginner',
-                                                   'sea/early', 'sea/mid', 'underwater/mid'])
+        # A list, so the archetype order (habitat, then stage) is checked too.
+        self.assertEqual([(a, v['generations'], v['sources']) for a, v in doc['archetypes'].items()], [
+            ('route/beginner', [1, 3], ['emerald:hoenn-route-101', 'red-blue:kanto-route-1']),
+            ('forest/beginner', [1], ['red-blue:viridian-forest']),
+            ('sea/early', [3], ['emerald:hoenn-route-105']),
+            ('sea/mid', [3], ['emerald:hoenn-route-105']),
+            ('underwater/mid', [3], ['emerald:hoenn-route-105', 'emerald:hoenn-route-124']),
+        ])
         self.assertEqual({a: v['pools'] for a, v in doc['archetypes'].items()}, self.pools)
         self.assertEqual(json.loads(self.read_output('emerald_maps.json')), self.emerald)
         rows = list(csv.DictReader(io.StringIO(self.read_output('area_classification.csv'))))
