@@ -52,6 +52,7 @@ make pokeemerald-test.elf TESTS="Lucky Egg" TOOLCHAIN=/opt/devkitpro/devkitARM  
 
 - Tests live in `test/` (mostly battle mechanics). They use `ASSUMPTIONS` / `GIVEN` / `WHEN` / `SCENE` blocks; see `docs/tutorials/how_to_testing_system.md`.
 - Name related tests with a shared prefix so `TESTS=` can select them.
+- CI: `.github/workflows/emerald-plus.yml` runs the full `make check`, `make release` and the area_archetypes unittests on pushes to `emerald-plus` and `issue-*` and on PRs into `emerald-plus`. KNOWN_FAILING tests don't fail it. Upstream's `build.yml` doesn't run on fork pushes.
 - **Nothing covers `src/debug.c` or other overworld UI.** Verify those changes by building both ROMs (no new warnings in the changed file) and with a written in-game test plan.
 
 Area archetypes tool (standard library only, run from the repo root):
