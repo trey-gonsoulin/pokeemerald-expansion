@@ -2,10 +2,15 @@
 
     python3 -m unittest discover -s tools/area_archetypes
 
-The end-to-end tests need the PokeAPI cache (`area_archetypes.py fetch`) and
-are skipped without it.
+FixtureBuildTests run the whole build on the small hand-written data set in
+testdata/, so they need no network. The end-to-end tests need the full
+PokeAPI cache (`area_archetypes.py fetch`) and are skipped without it.
 """
 
+import contextlib
+import csv
+import io
+import json
 import os
 import tempfile
 import unittest
@@ -84,6 +89,162 @@ class RuleTests(unittest.TestCase):
             with self.subTest(map=map_const):
                 self.assertEqual(AA.emerald_location(map_const, region, known), (want, True))
         self.assertEqual(AA.emerald_location('MAP_NOWHERE_1F', 'hoenn', known), ('nowhere-1f', False))
+
+
+TESTDATA = os.path.join(AA.HERE, 'testdata')
+
+
+class FixtureBuildTests(unittest.TestCase):
+    """The whole build on testdata/: a hand-written PokeAPI CSV set and Emerald map list.
+
+    Two version groups (red-blue, emerald) and five locations, plus rows each
+    build_tables filter should drop: an unlisted method (gift), a rarity-0
+    slot, a skipped area (gym) and a skipped location (unknown-*). The
+    species constants come from this repo's species.h.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.out = tempfile.TemporaryDirectory()
+        cls.addClassCleanup(cls.out.cleanup)
+        cls.log = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(cls.log):
+                _, cls.smap, tables, cls.pools, cls.emerald = AA.build(
+                    os.path.join(TESTDATA, 'pokeapi'), cls.out.name, AA.REPO,
+                    base=os.path.join(TESTDATA, 'wild_encounters.json'))
+        except SystemExit as e:  # keep a broken fixture from ending the whole test run
+            raise RuntimeError(f'build exited: {e}') from e
+        cls.arch = {(t.vg, t.location, t.area, t.group): t.archetype for t in tables}
+
+    def read_output(self, name):
+        with open(os.path.join(self.out.name, name), encoding='utf-8') as f:
+            return f.read()
+
+    def test_species_map(self):
+        # A form with no constant of its own falls back to its species; the
+        # lowest pokemon id is the one a constant maps back to.
+        self.assertEqual(self.smap.to_const['10901'], 'SPECIES_TENTACOOL')
+        self.assertEqual(self.smap.from_const['SPECIES_TENTACOOL'], '72')
+        self.assertEqual(self.smap.unmapped, {'fixture-unmapped'})
+
+    def test_tables_and_archetypes(self):
+        self.assertEqual(self.arch, {
+            ('red-blue', 'kanto-route-1', '', 'land'): 'route/beginner',
+            ('red-blue', 'viridian-forest', '', 'land'): 'forest/beginner',
+            ('emerald', 'hoenn-route-101', '', 'land'): 'route/beginner',
+            ('emerald', 'hoenn-route-105', '', 'surf'): 'sea/mid',
+            ('emerald', 'hoenn-route-105', '', 'fish_old'): 'sea/early',
+            ('emerald', 'hoenn-route-105', 'underwater', 'surf'): 'underwater/mid',
+            ('emerald', 'hoenn-route-124', 'underwater', 'surf'): 'underwater/mid',
+        })
+
+    def test_pools(self):
+        self.assertEqual({a: set(p) for a, p in self.pools.items()}, {
+            'route/beginner': {'land'},
+            'forest/beginner': {'land'},
+            'sea/mid': {'surf'},
+            'sea/early': {'fish_old'},
+            'underwater/mid': {'surf'},
+        })
+        for arch, groups in self.pools.items():
+            for group, entries in groups.items():
+                with self.subTest(arch=arch, group=group):
+                    # Viridian Forest's third is a form with no SPECIES_ constant,
+                    # which pools leave out.
+                    want = 2 / 3 if arch == 'forest/beginner' else 1.0
+                    self.assertAlmostEqual(sum(e['share'] for e in entries), want, places=3)
+        self.assertIn('wild forms with no SPECIES_ constant (left out of pools): fixture-unmapped',
+                      self.log.getvalue())
+        # Each version group counts equally: red-blue's route 1 (both versions)
+        # and emerald's route 101 each contribute half.
+        route = {e['species']: e for e in self.pools['route/beginner']['land']}
+        self.assertEqual({sp: e['share'] for sp, e in route.items()},
+                         {'SPECIES_PIDGEY': 0.3, 'SPECIES_POOCHYENA': 0.3,
+                          'SPECIES_RATTATA': 0.2, 'SPECIES_WURMPLE': 0.2})
+        self.assertEqual(route['SPECIES_PIDGEY'], {
+            'species': 'SPECIES_PIDGEY', 'share': 0.3, 'games': 1, 'introduced_gen': 1,
+            'types': ['normal', 'flying'], 'levels': [2, 4]})
+        fish = {e['species']: e['share'] for e in self.pools['sea/early']['fish_old']}
+        self.assertEqual(fish, {'SPECIES_MAGIKARP': 0.7, 'SPECIES_TENTACOOL': 0.3})
+
+    def test_emerald_maps(self):
+        fields = {label: {k: m[k]['archetype'] for k in AA.EMERALD_FIELDS if k in m}
+                  for label, m in self.emerald.items()}
+        self.assertEqual(fields, {
+            'gRoute101': {'land_mons': 'route/beginner'},
+            'gRoute1_FireRed': {'land_mons': 'route/beginner'},
+            'gPetalburgWoods': {'land_mons': 'forest/beginner'},
+            'gRoute105': {'water_mons': 'sea/mid'},
+            'gUnderwater_Route124': {'water_mons': 'underwater/mid'},
+            'gRoute124': {'water_mons': 'sea/mid'},
+            # Its land table has no species the fixture knows, so it's dropped.
+            'gLilycoveCity': {'water_mons': 'sea/mid'},
+            'gGraniteCave_1F': {'rock_smash_mons': 'cave/early'},
+        })
+        # Super rod only has a species the fixture doesn't know.
+        self.assertEqual(self.emerald['gRoute105']['fishing_mons'], {
+            'old_rod': {'archetype': 'sea/beginner', 'pool': 'fish_old', 'level': 5.0},
+            'good_rod': {'archetype': 'sea/early', 'pool': 'fish_good', 'level': 10.0},
+        })
+
+    def test_emerald_location_and_region(self):
+        where = {label: (m['location'], m['matched_pokeapi'], m['region'])
+                 for label, m in self.emerald.items()}
+        self.assertEqual(where['gRoute101'], ('hoenn-route-101', True, 'hoenn'))
+        self.assertEqual(where['gRoute1_FireRed'], ('kanto-route-1', True, 'kanto'))
+        self.assertEqual(where['gPetalburgWoods'], ('petalburg-woods', False, 'hoenn'))
+        self.assertEqual(where['gUnderwater_Route124'], ('hoenn-route-124', True, 'hoenn'))
+
+    def test_emerald_water_reasons(self):
+        reason = {label: m['reason']['water'] for label, m in self.emerald.items()}
+        self.assertEqual(reason['gRoute105'], 'pokeapi-majority:hoenn-route-105')
+        self.assertEqual(reason['gUnderwater_Route124'], 'area:underwater')
+        # Route 124's only PokeAPI water table is underwater, which doesn't vote,
+        # so its surface water falls back to the rules.
+        self.assertEqual(reason['gRoute124'], 'species:marine1.00>fresh0.00')
+        self.assertEqual(reason['gLilycoveCity'], 'species:marine1.00>fresh0.00')
+        self.assertIsNone(reason['gRoute101'])
+        self.assertEqual(self.emerald['gLilycoveCity']['reason']['land'], 'keyword:lilycove-city')
+
+    def test_written_outputs(self):
+        doc = json.loads(self.read_output('archetype_pools.json'))
+        # A list, so the archetype order (habitat, then stage) is checked too.
+        self.assertEqual([(a, v['generations'], v['sources']) for a, v in doc['archetypes'].items()], [
+            ('route/beginner', [1, 3], ['emerald:hoenn-route-101', 'red-blue:kanto-route-1']),
+            ('forest/beginner', [1], ['red-blue:viridian-forest']),
+            ('sea/early', [3], ['emerald:hoenn-route-105']),
+            ('sea/mid', [3], ['emerald:hoenn-route-105']),
+            ('underwater/mid', [3], ['emerald:hoenn-route-105', 'emerald:hoenn-route-124']),
+        ])
+        self.assertEqual({a: v['pools'] for a, v in doc['archetypes'].items()}, self.pools)
+        self.assertEqual(json.loads(self.read_output('emerald_maps.json')), self.emerald)
+        rows = list(csv.DictReader(io.StringIO(self.read_output('area_classification.csv'))))
+        self.assertEqual({(r['version_group'], r['location'], r['area'], r['method_group']): r['archetype']
+                          for r in rows}, self.arch)
+        self.assertIn('## underwater/mid', self.read_output('archetype_pools.md'))
+
+
+def map_labels(path):
+    with open(path, encoding='utf-8') as f:
+        wild = json.load(f)
+    group = next(g for g in wild['wild_encounter_groups'] if g['label'] == 'gWildMonHeaders')
+    return sorted(e['base_label'] for e in group['encounters'])
+
+
+class CommittedOutputTests(unittest.TestCase):
+    """output/ stays in step with the maps in src/data/wild_encounters.json."""
+
+    def test_vanilla_snapshot_has_every_wild_map(self):
+        self.assertEqual(map_labels(AA.VANILLA_WILD), map_labels(AA.SRC_WILD),
+                         'output/wild_encounters.vanilla.json is stale; refresh it with '
+                         'area_archetypes.py baseline, then run build')
+
+    def test_emerald_maps_has_every_snapshot_map(self):
+        with open(os.path.join(AA.DEFAULT_OUT, 'emerald_maps.json'), encoding='utf-8') as f:
+            emerald = json.load(f)
+        self.assertEqual(sorted(emerald), map_labels(AA.VANILLA_WILD),
+                         'output/emerald_maps.json is stale; run area_archetypes.py build')
 
 
 @unittest.skipUnless(os.path.exists(os.path.join(AA.DEFAULT_CACHE, 'encounters.csv')),
