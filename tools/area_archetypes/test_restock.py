@@ -11,6 +11,7 @@ import contextlib
 import io
 import json
 import os
+import shutil
 import tempfile
 import unittest
 
@@ -20,6 +21,7 @@ import restock as R
 WILD = AA.VANILLA_WILD
 POOLS = os.path.join(AA.DEFAULT_OUT, 'archetype_pools.json')
 MAPS = os.path.join(AA.DEFAULT_OUT, 'emerald_maps.json')
+TESTDATA = os.path.join(AA.HERE, 'testdata')
 
 
 class PreprocessorTests(unittest.TestCase):
@@ -496,6 +498,16 @@ class CliTests(unittest.TestCase):
                       self.restock_error(config={'gens': '1,9-4'}))
         self.assertIn("(not a generation or range: '4-x')", self.restock_error(['--gens', '4-x']))
 
+    def test_empty_or_unmatched_gens_are_rejected(self):
+        # Leaving gens out is the only way to ask for every generation.
+        self.assertIn("got '' (no generations; leave gens out", self.restock_error(['--gens', '']))
+        self.assertIn("got ' , ' (no generations", self.restock_error(['--gens', ' , ']))
+        self.assertIn('gens: expected generations', self.restock_error(config={'gens': ''}))
+        self.assertIn('got [] (no generations', self.restock_error(config={'gens': []}))
+        # A set with no pool species would restock nothing, and --write would revert to vanilla.
+        self.assertIn('gens: 10,11,12 matches no pool species', self.restock_error(['--gens', '10-12']))
+        self.assertIn('gens: 0 matches no pool species', self.restock_error(config={'gens': [0]}))
+
     def test_bad_option_values_are_rejected(self):
         for config, message in (({'gens': 4}, 'gens:'), ({'gens': '4-x'}, 'gens:'),
                                 ({'ratio': 1.5}, 'ratio:'), ({'ratio': '0.5'}, 'ratio:'),
@@ -538,6 +550,40 @@ class CliTests(unittest.TestCase):
             R.dump_wild(R.load_json(WILD), path)
             with open(WILD, encoding='utf-8') as f, open(path, encoding='utf-8') as g:
                 self.assertEqual(f.read(), g.read())
+
+    def test_committed_wild_encounters_is_the_default_restock(self):
+        # Since #28 src/data/wild_encounters.json is `restock --write` with the defaults. restock
+        # reads only committed files, so this needs no PokeAPI cache.
+        with tempfile.TemporaryDirectory() as tmp:
+            out = os.path.join(tmp, 'out')
+            run_quietly(['--out-dir', out])
+            self.assertTrue(read(os.path.join(out, 'wild_encounters.json')) == read(AA.SRC_WILD),
+                            f'{AA.SRC_WILD} is no longer what the default restock gives. If the change '
+                            f'is intended, rerun `python3 tools/area_archetypes/area_archetypes.py '
+                            f'restock --write` and commit the result.')
+
+
+class FixtureRestockTests(unittest.TestCase):
+    def test_rerunning_write_changes_nothing(self):
+        """restock --write twice on the testdata/ fixture build: the second run is a no-op (#43)."""
+        fixture = os.path.join(TESTDATA, 'wild_encounters.json')
+        with tempfile.TemporaryDirectory() as tmp:
+            build = os.path.join(tmp, 'build')
+            with contextlib.redirect_stdout(io.StringIO()):
+                AA.build(os.path.join(TESTDATA, 'pokeapi'), build, AA.REPO, base=fixture)
+            base = shutil.copy(fixture, os.path.join(tmp, 'base.json'))
+            wild = shutil.copy(fixture, os.path.join(tmp, 'wild.json'))
+            # The fixture tables have two slots, so with every native keeping one nothing changes.
+            argv = ['--base', base, '--wild', wild, '--out-dir', os.path.join(tmp, 'out'), '--write',
+                    '--drop-rare-natives', '--pools', os.path.join(build, 'archetype_pools.json'),
+                    '--maps', os.path.join(build, 'emerald_maps.json')]
+            first, changes = run_quietly(argv)
+            self.assertTrue(changes)
+            written = read(wild)
+            again, changes_again = run_quietly(argv)
+            self.assertEqual((again, changes_again), (first, changes))
+            self.assertEqual(read(wild), written)
+            self.assertEqual(read(base), read(fixture))
 
 
 if __name__ == '__main__':

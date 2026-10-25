@@ -453,14 +453,18 @@ def as_species(v):
 
 
 def as_gens(v):
-    detail = ''
+    gens, detail = None, ''
     if isinstance(v, str):
         try:
-            return parse_gens(v)
+            gens = parse_gens(v)
         except ValueError as e:
             detail = f' ({e})'
     elif isinstance(v, list) and all(isinstance(g, int) and not isinstance(g, bool) for g in v):
-        return set(v)
+        gens = set(v)
+    if gens:
+        return gens
+    if gens is not None:  # an empty set would mean every generation: that's leaving gens out
+        detail = ' (no generations; leave gens out to allow every generation)'
     raise ValueError(f"expected generations like '4-9' or a list of numbers, got {v!r}{detail}")
 
 
@@ -914,12 +918,18 @@ def main(argv=None):
     unknown = sorted(settings.regions - known)
     if unknown:
         p.error(f'unknown region: {", ".join(unknown)} {regions_in}')
+    pools = load_json(args.pools)
+    pool_gens = {e['introduced_gen'] for arch in pools['archetypes'].values()
+                 for pool in arch.get('pools', {}).values() for e in pool}
+    if settings.gens and not settings.gens & pool_gens:
+        p.error(f'gens: {",".join(map(str, sorted(settings.gens)))} matches no pool species, so nothing '
+                f'would be restocked (generations in {args.pools}: {",".join(map(str, sorted(pool_gens)))})')
     if (args.write and not args.force and os.path.exists(args.wild)
             and skeleton(load_json(args.wild)) != skeleton(base)):
         sys.exit(f'{args.wild} differs from {args.base} in more than species (an upstream merge or '
                  f'a hand edit?), and --write would lose that; refresh the baseline (README), '
                  f'or --force to overwrite anyway')
-    new, changes = restock(base, emerald_maps, load_json(args.pools), info, settings)
+    new, changes = restock(base, emerald_maps, pools, info, settings)
     stamp = {'base_sha256': base_sha256, 'seed': settings.seed, 'ratio': settings.ratio}
     if AA.RESTOCK_STAMP in base:  # --force on a restocked base: keep its history
         stamp['base_restocked_by'] = base[AA.RESTOCK_STAMP]
