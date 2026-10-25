@@ -232,6 +232,9 @@ struct DebugMenuListData
     u8 scrollArrowsTaskId;
     s16 titleWindowId;
     u16 scrollArrowsOffset;
+    // Object tile and palette tags the trainer icon loaded itself (TAG_NONE if they were already loaded)
+    u16 iconTileTag;
+    u16 iconPaletteTag;
     DebugFunc pendingInputFunc; // input handler that takes over from DebugTask_StartMenuInput
     struct ListMenuItem listItems[DEBUG_MAX_MENU_ITEMS + 1];
     u8 itemNames[DEBUG_MAX_MENU_ITEMS + 1][26];
@@ -875,6 +878,8 @@ void Debug_ShowMainMenu(void)
 {
     sDebugMenuListData = AllocZeroed(sizeof(*sDebugMenuListData));
     sDebugMenuListData->menuType = DEBUG_BASIC_MENU;
+    sDebugMenuListData->iconTileTag = TAG_NONE;
+    sDebugMenuListData->iconPaletteTag = TAG_NONE;
     sDebugMenuListData->positions[0] = sDebugMainMenuPosition;
     Debug_ShowMenu(DebugTask_HandleMenuInput_General, sDebugMenu_Actions_Main);
 }
@@ -1206,6 +1211,16 @@ static void DestroyDebugIcon(u8 taskId)
         if (gTasks[taskId].tSpriteId < MAX_SPRITES)
             DestroySprite(&gSprites[gTasks[taskId].tSpriteId]);
         gTasks[taskId].tSpriteId = SPRITE_NONE;
+        // Native party-menu tasks run without sDebugMenuListData. Only the trainer icon, a menu one, sets these tags.
+        if (sDebugMenuListData != NULL)
+        {
+            if (sDebugMenuListData->iconTileTag != TAG_NONE)
+                FreeSpriteTilesByTag(sDebugMenuListData->iconTileTag);
+            if (sDebugMenuListData->iconPaletteTag != TAG_NONE)
+                FreeSpritePaletteByTag(sDebugMenuListData->iconPaletteTag);
+            sDebugMenuListData->iconTileTag = TAG_NONE;
+            sDebugMenuListData->iconPaletteTag = TAG_NONE;
+        }
     }
 }
 
@@ -1213,6 +1228,12 @@ static void Debug_ResetInputDisplayMonIcon(u8 taskId, enum Species species)
 {
     DestroyDebugIcon(taskId);
     gTasks[taskId].tSpriteId = CreateTaggedMonIcon(DEBUG_ICON_TAG, DEBUG_ICON_TAG, species);
+    if (gTasks[taskId].tSpriteId == MAX_SPRITES)
+    {
+        // Frees what the failed creator loaded and leaves tSpriteId = SPRITE_NONE
+        DestroyDebugIcon(taskId);
+        return;
+    }
     gSprites[gTasks[taskId].tSpriteId].callback = SpriteCB_MonIcon;
     gSprites[gTasks[taskId].tSpriteId].x = DEBUG_NUMBER_ICON_X;
     gSprites[gTasks[taskId].tSpriteId].y = DEBUG_NUMBER_ICON_Y;
@@ -2538,6 +2559,8 @@ void SetMultiTrainerBattle(struct ScriptContext *ctx);
 
 static void ParseObjectEventScript(const u8 *script)
 {
+    if (script == NULL)
+        return;
     struct ScriptContext *ctx = AllocZeroed(sizeof(struct ScriptContext));
     if (script[0] == SCR_OP_TRAINERBATTLE)
     {
@@ -2567,25 +2590,62 @@ static void ParseObjectEventScript(const u8 *script)
 static u32 GetTrainerIdFromLocalId(u32 localId)
 {
     Debug_Trainers_ResetTrainersData();
+    // Object-less maps have objectEvents == NULL
+    if (localId == 0 || localId > gMapHeader.events->objectEventCount || gMapHeader.events->objectEvents == NULL)
+        return TRAINER_NONE;
     ParseObjectEventScript(gMapHeader.events->objectEvents[localId - 1].script);
     if (GetTrainerBattleType(sDebugMenuListData->data[0]) == TRAINER_BATTLE_TYPE_DOUBLES)
         sDebugMenuListData->data[5] = TRUE;
     return sDebugMenuListData->data[0];
 }
 
+// The caller makes sure tInput is a valid local id, 1 to objectEventCount
 static void Debug_CreateTrainerIcon(u8 taskId)
 {
     DestroyDebugIcon(taskId);
     u32 graphicsId = gMapHeader.events->objectEvents[gTasks[taskId].tInput - 1].graphicsId;
+    const struct ObjectEventGraphicsInfo *graphicsInfo = GetObjectEventGraphicsInfo(graphicsId);
+    u32 paletteTag = graphicsInfo->paletteTag;
+    u32 tileTag = TAG_NONE;
+
+    // CreateObjectGraphicsSpriteWithTag loads the sheet and palette under the object's own tags, which
+    // NPCs on the map may share. Note the ones it is about to load, so only those get freed with the icon.
+    // The sheet tag follows LoadSheetGraphicsInfo.
+    if (OW_GFX_COMPRESS && graphicsInfo->compressed)
+    {
+        tileTag = graphicsInfo->tileTag != TAG_NONE ? graphicsInfo->tileTag : COMP_OW_TILE_TAG_BASE + graphicsId;
+        if (GetSpriteTileStartByTag(tileTag) != TAG_NONE)
+            tileTag = TAG_NONE;
+    }
+    sDebugMenuListData->iconTileTag = tileTag;
+    if (paletteTag != OBJ_EVENT_PAL_TAG_DYNAMIC && IndexOfSpritePaletteTag(paletteTag) == 0xFF)
+        sDebugMenuListData->iconPaletteTag = paletteTag;
+    else
+        sDebugMenuListData->iconPaletteTag = TAG_NONE;
+
     gTasks[taskId].tSpriteId = CreateObjectGraphicsSpriteWithTag(graphicsId, SpriteCallbackDummy, DEBUG_NUMBER_ICON_X, DEBUG_NUMBER_ICON_Y, 4, DEBUG_ICON_TAG);
+    if (gTasks[taskId].tSpriteId == MAX_SPRITES)
+    {
+        // Frees what the failed creator loaded and leaves tSpriteId = SPRITE_NONE
+        DestroyDebugIcon(taskId);
+        return;
+    }
     StartSpriteAnim(&gSprites[gTasks[taskId].tSpriteId], ANIM_STD_GO_SOUTH);
     gSprites[gTasks[taskId].tSpriteId].oam.priority = 0;
-    gSprites[gTasks[taskId].tSpriteId].oam.paletteNum =  LoadObjectEventPaletteCopy(gSprites[gTasks[taskId].tSpriteId].template->paletteTag, DEBUG_ICON_TAG);
+    // The sprite's template is freed by now, so take the tag from the graphics info.
+    // A dynamic (follower) palette isn't an object event palette, so the sprite keeps its own,
+    // as it does when the copy finds no free palette slot.
+    if (paletteTag != OBJ_EVENT_PAL_TAG_DYNAMIC)
+    {
+        u32 paletteNum = LoadObjectEventPaletteCopy(paletteTag, DEBUG_ICON_TAG);
+        if (paletteNum != 0xFF)
+            gSprites[gTasks[taskId].tSpriteId].oam.paletteNum = paletteNum;
+    }
 }
 
 static void DebugSelectionStep_UpdateMapTrainer(u8 taskId, u8 digits, u32 min, u32 max)
 {
-    while (GetTrainerIdFromLocalId(gTasks[taskId].tInput) == TRAINER_NONE && gTasks[taskId].tInput >= min && gTasks[taskId].tInput <= max)
+    while (gTasks[taskId].tInput >= min && gTasks[taskId].tInput <= max && GetTrainerIdFromLocalId(gTasks[taskId].tInput) == TRAINER_NONE)
     {
         if (Debug_NumericInputMovedDown())
             gTasks[taskId].tInput--;
@@ -2594,19 +2654,26 @@ static void DebugSelectionStep_UpdateMapTrainer(u8 taskId, u8 digits, u32 min, u
     }
     if (gTasks[taskId].tInput < min || gTasks[taskId].tInput > max)
     {
+        // Back to the last trainer shown. Its slot stays 0 until one is found, which means the map has none.
         gTasks[taskId].tInput = DebugSelection_GetData(taskId, 0);
         GetTrainerIdFromLocalId(gTasks[taskId].tInput);
     }
 
     u32 trainerId = sDebugMenuListData->data[0];
-    if (trainerId)
+    if (trainerId != TRAINER_NONE)
+    {
         DebugSelection_SetData(taskId, 0, gTasks[taskId].tInput);
-    Debug_CreateTrainerIcon(taskId);
+        Debug_CreateTrainerIcon(taskId);
+    }
+    else
+    {
+        DestroyDebugIcon(taskId);
+    }
     Debug_InputToDecimalString(gStringVar3, taskId, digits);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Local ID: {STR_VAR_3}"));
     u8 *end;
     if (trainerId == TRAINER_NONE)
-        end = StringCopy(gStringVar2, COMPOUND_STRING("Not a Trainer"));
+        end = StringCopy(gStringVar2, COMPOUND_STRING("No trainers on this map"));
     else
         end = StringCopy(gStringVar2, GetTrainerNameFromId(trainerId));
     WrapFontIdToFit(gStringVar2, end, DEBUG_MENU_FONT, WindowWidthPx(gTasks[taskId].tSubWindowId));
@@ -2632,9 +2699,16 @@ static bool32 DebugSelection_SetTrainerFromMap_OnComplete(u8 taskId)
     return TRUE;
 }
 
+// data[0] holds the trainer found for the local id on screen
+static bool32 DebugSelectionStep_CanConfirmMapTrainer(u8 taskId)
+{
+    return sDebugMenuListData->data[0] != TRAINER_NONE;
+}
+
 static const struct DebugSelectionStep sMapTrainerSelectionStep = {
     .stepUpdate = DebugSelectionStep_UpdateMapTrainer,
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
+    .canConfirm = DebugSelectionStep_CanConfirmMapTrainer,
     .minValue = 1,
     .maxFunc = DebugSelectionStep_GetObjectEventCount,
     .useMaxFunc = TRUE,
@@ -5016,6 +5090,7 @@ void DebugNative_Party_SetFriendship(void)
     {
         u32 taskId = CreateTask(DebugNativeStep_DelayedSelection, 1);
         SetWordTaskArg(taskId, DEBUG_SELECTION_PTR_ARG, (u32) &sFriendshipSelection);
+        gTasks[taskId].tSpriteId = SPRITE_NONE;
     }
 }
 
@@ -5090,6 +5165,7 @@ void DebugNative_Party_SetPokerus(void)
     {
         u32 taskId = CreateTask(DebugNativeStep_DelayedSelection, 1);
         SetWordTaskArg(taskId, DEBUG_SELECTION_PTR_ARG, (u32) &sPokerusSelection);
+        gTasks[taskId].tSpriteId = SPRITE_NONE;
     }
 }
 
