@@ -335,7 +335,10 @@ def parse_gens(text):
     gens = set()
     for part in filter(None, (p.strip() for p in text.split(','))):
         lo, _, hi = part.partition('-')
-        gens.update(range(int(lo), int(hi or lo) + 1))
+        span = range(int(lo), int(hi or lo) + 1)
+        if not span:  # '9-4': an empty set would mean every generation
+            raise ValueError(f'empty generation range {part!r}')
+        gens.update(span)
     return gens
 
 
@@ -718,7 +721,7 @@ def restock_table(mons, rates, pool, info, settings, label, field):
     cands, picked = {}, []
     if ratio > 0 and room > 0:
         cands = candidates(pool, info, settings, allow, deny, set(natives),
-                           {m['max_level'] for m in mons})
+                           {m['min_level'] for m in mons})
         rng = random.Random(f'{settings.seed}/{label}/{field}')
         picked = weighted_sample(rng, cands, min(int(new_species), room), info.family)
     if not picked and not denied:
@@ -735,7 +738,7 @@ def restock_table(mons, rates, pool, info, settings, label, field):
               f'left as is', file=sys.stderr)
         return None
     slots = assign_slots(targets, rates, kept if keep_all else ())
-    return [s if s in natives else info.devolve(s, m['max_level'])
+    return [s if s in natives else info.devolve(s, m['min_level'])
             for s, m in zip(slots, mons)]
 
 
@@ -901,6 +904,9 @@ def main(argv=None):
     if unknown:
         p.error(f'maps: not a gWildMonHeaders base label in {args.base}: {", ".join(unknown)}')
     known = {m['region'] for m in emerald_maps.values() if m.get('region')}
+    if not settings.regions:
+        p.error(f'regions: empty, so nothing would be restocked (regions in {args.maps}: '
+                f'{", ".join(sorted(known))})')
     unknown = sorted(settings.regions - known)
     if unknown:
         p.error(f'unknown region: {", ".join(unknown)} (regions in {args.maps}: {", ".join(sorted(known))})')

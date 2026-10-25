@@ -164,6 +164,16 @@ class ConfigTests(unittest.TestCase):
         self.assertIsNone(R.restock_table(mons, [70, 30], pool, self.info,
                                           R.Settings(ratio=1.0, new_species=0), 'gX', 'land_mons'))
 
+    def test_devolves_against_the_slot_min_level(self):
+        # A 5-25 slot can roll L5, where Noctowl isn't attainable yet.
+        pool = [{'species': 'SPECIES_NOCTOWL', 'share': 1.0, 'introduced_gen': 2}]
+        wide = [{'species': 'SPECIES_NONE', 'min_level': 5, 'max_level': 25}] * 2
+        self.assertEqual(R.restock_table(wide, [70, 30], pool, self.info, R.Settings(ratio=1.0), 'gX', 'land_mons'),
+                         ['SPECIES_HOOTHOOT', 'SPECIES_HOOTHOOT'])
+        # So a denied Hoothoot keeps Noctowl out of it too.
+        self.assertIsNone(R.restock_table(wide, [70, 30], pool, self.info,
+                                          R.Settings(ratio=1.0, deny={'SPECIES_HOOTHOOT'}), 'gX', 'land_mons'))
+
     def test_deny_covers_devolved_stages(self):
         pool = [{'species': 'SPECIES_NOCTOWL', 'share': 1.0, 'introduced_gen': 2}]
         low = [{'species': 'SPECIES_NONE', 'min_level': 5, 'max_level': 5}] * 2
@@ -278,7 +288,7 @@ class RestockTests(unittest.TestCase):
                     sp = s['after']
                     if sp in natives:
                         continue
-                    self.assertTrue(self.info.min_level(sp) <= s['levels'][1]
+                    self.assertTrue(self.info.min_level(sp) <= s['levels'][0]
                                     or not self.info.pre_evos.get(self.info.canon(sp)), (ch['label'], s))
                     self.assertFalse(self.info.flags_of(sp) & set(R.LEGENDARY_FLAGS), sp)
 
@@ -470,6 +480,19 @@ class CliTests(unittest.TestCase):
         self.assertIn('gRoute1O1', self.restock_error(config={'maps': {'gRoute1O1': {'skip': True}}}))
         self.assertIn('unknown region: hoen', self.restock_error(config={'regions': 'hoen'}))
         self.assertIn('unknown region: jotho', self.restock_error(['--regions', 'hoenn,jotho']))
+
+    def test_empty_regions_are_rejected(self):
+        self.assertIn('regions: empty', self.restock_error(['--regions', '']))
+        self.assertIn('regions: empty', self.restock_error(['--regions', ' , ']))
+        self.assertIn('regions: empty', self.restock_error(config={'regions': []}))
+
+    def test_reversed_gens_ranges_are_rejected(self):
+        self.assertEqual(R.parse_gens('4-9, 1'), {1, 4, 5, 6, 7, 8, 9})
+        self.assertEqual(R.parse_gens('5-5'), {5})
+        with self.assertRaisesRegex(ValueError, "empty generation range '9-4'"):
+            R.parse_gens('1,9-4')
+        self.assertIn('--gens', self.restock_error(['--gens', '9-4']))
+        self.assertIn('gens:', self.restock_error(config={'gens': '9-4'}))
 
     def test_bad_option_values_are_rejected(self):
         for config, message in (({'gens': 4}, 'gens:'), ({'gens': '4-x'}, 'gens:'),
