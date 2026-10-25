@@ -908,12 +908,12 @@ def main(argv=None):
     if unknown:
         p.error(f'maps: not a gWildMonHeaders base label in {args.base}: {", ".join(unknown)}')
     known = {m['region'] for m in emerald_maps.values() if m.get('region')}
+    regions_in = f'(regions in {args.maps}: {", ".join(sorted(known))})'
     if not settings.regions:
-        p.error(f'regions: empty, so nothing would be restocked (regions in {args.maps}: '
-                f'{", ".join(sorted(known))})')
+        p.error(f'regions: empty, so nothing would be restocked {regions_in}')
     unknown = sorted(settings.regions - known)
     if unknown:
-        p.error(f'unknown region: {", ".join(unknown)} (regions in {args.maps}: {", ".join(sorted(known))})')
+        p.error(f'unknown region: {", ".join(unknown)} {regions_in}')
     if (args.write and not args.force and os.path.exists(args.wild)
             and skeleton(load_json(args.wild)) != skeleton(base)):
         sys.exit(f'{args.wild} differs from {args.base} in more than species (an upstream merge or '
