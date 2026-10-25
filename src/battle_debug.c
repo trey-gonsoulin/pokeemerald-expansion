@@ -1599,9 +1599,12 @@ static void UpdateBattlerValue(struct BattleDebugMenu *data)
         *(u32 *)(data->modifyArrows.modifiedValPtr) |= (data->modifyArrows.currValue << data->bitfield[data->currentSecondaryListItemId].currBit);
         break;
     case VAL_BITFIELD_64:
-        *(u64 *)(data->modifyArrows.modifiedValPtr) &= ~((u64)GetBitfieldToAndValue(0, data->bitfield[data->currentSecondaryListItemId].bitsCount) << data->bitfield[data->currentSecondaryListItemId].currBit);
-        *(u64 *)(data->modifyArrows.modifiedValPtr) |= ((u64)data->modifyArrows.currValue << data->bitfield[data->currentSecondaryListItemId].currBit);
+    {
+        const struct BitfieldInfo *field = &data->bitfield[data->currentSecondaryListItemId];
+        *(u64 *)(data->modifyArrows.modifiedValPtr) &= ~((u64)GetBitfieldToAndValue(0, field->bitsCount) << field->currBit);
+        *(u64 *)(data->modifyArrows.modifiedValPtr) |= ((u64)data->modifyArrows.currValue << field->currBit);
         break;
+    }
     case VAL_VOLATILE:
         SetMonVolatile(data->battlerId, data->currentSecondaryListItemId, data->modifyArrows.currValue);
         break;
