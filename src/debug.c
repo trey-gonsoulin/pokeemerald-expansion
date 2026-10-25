@@ -1464,7 +1464,10 @@ static u32 Debug_GenerateListTrainerMenu(const struct DebugMenuOption *items)
         switch (i)
         {
         case 1:
-            ConvertIntToDecimalStringN(gStringVar1, trainer1Id, STR_CONV_MODE_LEADING_ZEROS, 3);
+            if (trainer1Id == TRAINER_NONE)
+                StringCopy(gStringVar1, COMPOUND_STRING("None"));
+            else
+                ConvertIntToDecimalStringN(gStringVar1, trainer1Id, STR_CONV_MODE_LEADING_ZEROS, 3);
             break;
         case 2:
             if (trainer2Id == TRAINER_NONE)
