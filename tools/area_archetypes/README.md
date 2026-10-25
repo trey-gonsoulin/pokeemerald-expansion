@@ -101,8 +101,9 @@ need the PokeAPI cache. For each table of each selected map it:
    furthest below its share, so the most common species take the 20% (or 60%)
    slots. Below ratio 1, each of the table's own species keeps at least one
    slot; if they already fill every slot, the table is left alone.
-4. Devolves each new species to the stage that fits its slot's max level,
-   using the `.evolutions` in `src/data/pokemon/species_info/`. Level
+4. Devolves each new species to the stage that fits its slot's min level, so
+   it is attainable at every level the slot can roll (Wooper, not Quagsire,
+   in a 5-35 slot), using the `.evolutions` in `src/data/pokemon/species_info/`. Level
    evolutions use their level; stone, trade and friendship evolutions count
    as `max(pre-evolution + 10, 30)`, except out of babies (Pichu -> Pikachu).
    The stage a species is devolved to must pass the same filters (deny,
@@ -125,6 +126,11 @@ python3 tools/area_archetypes/area_archetypes.py restock --ratio 0.4 --write
 ```
 
 `restock_report.md` lists every changed table slot by slot (`=` = unchanged).
+
+The committed `src/data/wild_encounters.json` is the default restock (#28):
+`python3 tools/area_archetypes/area_archetypes.py restock --write`, with no
+flags or `--config` (ratio 0.5, seed 1, Hoenn only). Rerun that command to
+regenerate it, for example after refreshing the baseline.
 
 ### The vanilla baseline
 
@@ -150,9 +156,7 @@ Refresh the snapshot when upstream changes `src/data/wild_encounters.json`,
 then rerun `build` and `restock --write`:
 
 ```sh
-# src/data/wild_encounters.json still vanilla (nothing restocked committed yet):
-python3 tools/area_archetypes/area_archetypes.py baseline
-# Already restocked: take upstream's copy instead.
+# src/data/wild_encounters.json is restocked (committed since #28): take upstream's copy.
 git show upstream/master:src/data/wild_encounters.json > /tmp/wild_encounters.json
 python3 tools/area_archetypes/area_archetypes.py baseline --wild /tmp/wild_encounters.json
 ```
