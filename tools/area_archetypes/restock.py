@@ -480,7 +480,7 @@ def as_map_overrides(v):
     return v
 
 
-def cli_type(parse, convert):
+def cli_type(parse, convert=str):
     """argparse type= that runs ``parse(convert(text))``."""
     def to_value(text):
         try:
@@ -491,14 +491,12 @@ def cli_type(parse, convert):
     return to_value
 
 
-def gen_weight_arg(text):
+def gen_weight_pair(text):
+    """'4=2' -> (4, 2.0)."""
     gen, eq, factor = text.partition('=')
     if not eq:
-        raise argparse.ArgumentTypeError(f'expected GEN=FACTOR, e.g. 4=2, got {text!r}')
-    try:
-        return gen_factor(gen, float(factor))
-    except ValueError as e:
-        raise argparse.ArgumentTypeError(str(e)) from None
+        raise ValueError(f'expected GEN=FACTOR, e.g. 4=2, got {text!r}')
+    return gen_factor(gen, float(factor))
 
 
 def cli_wins(cli, cfg):
@@ -511,16 +509,16 @@ def cli_lists_win(cli, cfg):
 
 
 def cli_gen_weights_win(cli, cfg):
-    return {**(cfg or {}), **dict(cli or ())} or None
+    return {**(cfg or {}), **dict(cli or ())}
 
 
 class Option(NamedTuple):
-    name: str          # Settings field and --config key; the flag is --name-with-dashes
+    name: str          # the flag is --name-with-dashes; with a parse, also the Settings field and config key
     flag: dict | None  # argparse keywords, or None for config only
-    parse: Callable | None = None  # None: command line only
+    parse: Callable | None = None  # None: command line only (so the --maps file isn't the config's maps)
     per_map: bool = False  # also a per-map override
     top: bool = True       # also a top-level --config key
-    merge: Callable = cli_wins
+    merge: Callable = cli_wins  # (flag value or None, config value or None) -> Settings value
 
 
 OPTIONS = (
@@ -528,18 +526,18 @@ OPTIONS = (
                          help=f'share of each table given to pool species, 0-1 (default {DEFAULT_RATIO})'),
            as_ratio, per_map=True),
     Option('seed', dict(type=int, help=f'RNG seed (default {DEFAULT_SEED})'), as_int),
-    Option('regions', dict(type=cli_type(as_names, str),
+    Option('regions', dict(type=cli_type(as_names),
                            help=f'comma list of regions to restock (default {",".join(DEFAULT_REGIONS)})'),
            as_names),
-    Option('gens', dict(type=cli_type(as_gens, str),
+    Option('gens', dict(type=cli_type(as_gens),
                         help="generations new species may come from, e.g. '4-9' (default all)"), as_gens),
-    Option('gen_weight', dict(type=gen_weight_arg, action='append', metavar='GEN=FACTOR',
+    Option('gen_weight', dict(type=cli_type(gen_weight_pair), action='append', metavar='GEN=FACTOR',
                               help="multiply the draw weight of a generation's species, e.g. 4=2 (repeatable)"),
            as_gen_weight, merge=cli_gen_weights_win),
-    Option('allow', dict(type=cli_type(as_species, str), action='append', metavar='SPECIES,...',
+    Option('allow', dict(type=cli_type(as_species), action='append', metavar='SPECIES,...',
                          help='only draw new species from this list (repeatable)'),
            as_species, per_map=True, merge=cli_lists_win),
-    Option('deny', dict(type=cli_type(as_species, str), action='append', metavar='SPECIES,...',
+    Option('deny', dict(type=cli_type(as_species), action='append', metavar='SPECIES,...',
                         help='never place these species, and drop them where they are native (repeatable)'),
            as_species, per_map=True, merge=cli_lists_win),
     Option('allow_legendaries', dict(action='store_true', default=None,
@@ -741,10 +739,14 @@ def tables_of(enc, emerald, field_defs):
                 yield 'fishing_mons', rod, idxs, emerald['fishing_mons'][rod]
 
 
+def wild_headers(wild):
+    return next(g for g in wild['wild_encounter_groups'] if g['label'] == 'gWildMonHeaders')
+
+
 def restock(wild, emerald_maps, pools, info, settings):
     """Restocked copy of wild_encounters.json, plus a list of changed tables."""
     wild = copy.deepcopy(wild)
-    group = next(g for g in wild['wild_encounter_groups'] if g['label'] == 'gWildMonHeaders')
+    group = wild_headers(wild)
     field_defs = {fd['type']: fd for fd in group['fields']}
     archetypes = pools['archetypes']
     info.learn_gens(pools)
@@ -884,8 +886,7 @@ def main(argv=None):
         sys.exit(f'unknown species: {", ".join(unknown)}')
     base, base_sha256 = AA.load_base(args.base, args.force)
     emerald_maps = load_json(args.maps)
-    group = next(g for g in base['wild_encounter_groups'] if g['label'] == 'gWildMonHeaders')
-    unknown = sorted(set(settings.maps) - {e['base_label'] for e in group['encounters']})
+    unknown = sorted(set(settings.maps) - {e['base_label'] for e in wild_headers(base)['encounters']})
     if unknown:
         p.error(f'maps: not a gWildMonHeaders base label in {args.base}: {", ".join(unknown)}')
     known = {m['region'] for m in emerald_maps.values() if m.get('region')}
