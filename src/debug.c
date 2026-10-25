@@ -1142,7 +1142,7 @@ static void Debug_ShowMenu(DebugFunc HandleInput, const struct DebugMenuOption *
     menuTemplate.header_X = 0;
     menuTemplate.item_X = 8;
     // Labels too long for the list drop to a narrower font instead of clipping
-    menuTemplate.textNarrowWidth = DEBUG_MENU_WIDTH_MAIN * 8 - menuTemplate.item_X;
+    menuTemplate.textNarrowWidth = sDebugMenuWindowTemplateMain.width * 8 - menuTemplate.item_X;
     menuTemplate.cursor_X = 0;
     menuTemplate.upText_Y = 1;
     menuTemplate.cursorPal = 2;
