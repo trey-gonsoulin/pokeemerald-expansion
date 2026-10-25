@@ -57,6 +57,10 @@ CSV_FILES = [
 # Species whose share of a pool is below this are dropped from the output.
 MIN_POOL_SHARE = 0.001
 MD_TOP_N = 15
+# Generation each region's forms debuted in. A regional form's introduced_gen
+# is its form's, not its base species' (SPECIES_RATTATA_ALOLA is Gen 7).
+REGIONAL_FORM_GENS = {'ALOLA': 7, 'GALAR': 8, 'HISUI': 8, 'PALDEA': 9}
+REGIONAL_FORM_RE = re.compile(r'_(' + '|'.join(REGIONAL_FORM_GENS) + r')(?:_|$)')
 
 
 # ---------------------------------------------------------------------------
@@ -125,6 +129,12 @@ class PokeData:
 
     def species_gen(self, pokemon_id):
         return int(self.species[self.pokemon[pokemon_id]['species_id']]['generation_id'])
+
+
+def introduced_gen(const, species_gen):
+    """A regional form's own generation, else its species' (``species_gen``)."""
+    m = REGIONAL_FORM_RE.search(const)
+    return REGIONAL_FORM_GENS[m[1]] if m else species_gen
 
 
 def load_species_constants(repo):
@@ -319,7 +329,7 @@ def build_pools(data, smap, tables):
                 'species': const,
                 'share': round(s, 4),
                 'games': len(games[const]),
-                'introduced_gen': data.species_gen(pid),
+                'introduced_gen': introduced_gen(const, data.species_gen(pid)),
                 'types': data.types[pid],
                 'levels': levels[const],
             })

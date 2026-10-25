@@ -376,7 +376,7 @@
       "species": "SPECIES_RATTATA_ALOLA",
       "share": 0.0155,
       "games": 2,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "dark",
        "normal"
@@ -525,7 +525,7 @@
       "species": "SPECIES_MEOWTH_ALOLA",
       "share": 0.0094,
       "games": 2,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "dark"
       ],
@@ -944,7 +944,7 @@
       "species": "SPECIES_GRIMER_ALOLA",
       "share": 0.003,
       "games": 2,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "poison",
        "dark"
@@ -2323,7 +2323,7 @@
       "species": "SPECIES_MEOWTH_GALAR",
       "share": 0.0051,
       "games": 1,
-      "introduced_gen": 1,
+      "introduced_gen": 8,
       "types": [
        "steel"
       ],
@@ -2350,7 +2350,7 @@
       "species": "SPECIES_RATTATA_ALOLA",
       "share": 0.0048,
       "games": 2,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "dark",
        "normal"
@@ -2643,7 +2643,7 @@
       "species": "SPECIES_ZIGZAGOON_GALAR",
       "share": 0.0033,
       "games": 1,
-      "introduced_gen": 3,
+      "introduced_gen": 8,
       "types": [
        "dark",
        "normal"
@@ -3465,7 +3465,7 @@
       "species": "SPECIES_MEOWTH_ALOLA",
       "share": 0.0011,
       "games": 2,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "dark"
       ],
@@ -4396,7 +4396,7 @@
       "species": "SPECIES_RATICATE_ALOLA",
       "share": 0.0132,
       "games": 2,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "dark",
        "normal"
@@ -4758,7 +4758,7 @@
       "species": "SPECIES_RATTATA_ALOLA",
       "share": 0.0058,
       "games": 2,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "dark",
        "normal"
@@ -6790,7 +6790,7 @@
       "species": "SPECIES_RATICATE_ALOLA",
       "share": 0.018,
       "games": 2,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "dark",
        "normal"
@@ -7677,7 +7677,7 @@
       "species": "SPECIES_EXEGGUTOR_ALOLA",
       "share": 0.0036,
       "games": 2,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "grass",
        "dragon"
@@ -8213,7 +8213,7 @@
       "species": "SPECIES_ZIGZAGOON_GALAR",
       "share": 0.0021,
       "games": 1,
-      "introduced_gen": 3,
+      "introduced_gen": 8,
       "types": [
        "dark",
        "normal"
@@ -8536,7 +8536,7 @@
       "species": "SPECIES_GRAVELER_ALOLA",
       "share": 0.0015,
       "games": 2,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "rock",
        "electric"
@@ -9304,7 +9304,7 @@
       "species": "SPECIES_RATICATE_ALOLA",
       "share": 0.0168,
       "games": 2,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "dark",
        "normal"
@@ -11354,7 +11354,7 @@
       "species": "SPECIES_LINOONE_GALAR",
       "share": 0.0013,
       "games": 2,
-      "introduced_gen": 3,
+      "introduced_gen": 8,
       "types": [
        "dark",
        "normal"
@@ -14937,7 +14937,7 @@
       "species": "SPECIES_PONYTA_GALAR",
       "share": 0.0031,
       "games": 1,
-      "introduced_gen": 1,
+      "introduced_gen": 8,
       "types": [
        "psychic"
       ],
@@ -15341,7 +15341,7 @@
       "species": "SPECIES_STUNFISK_GALAR",
       "share": 0.0583,
       "games": 1,
-      "introduced_gen": 5,
+      "introduced_gen": 8,
       "types": [
        "ground",
        "steel"
@@ -15355,7 +15355,7 @@
       "species": "SPECIES_WEEZING_GALAR",
       "share": 0.0444,
       "games": 1,
-      "introduced_gen": 1,
+      "introduced_gen": 8,
       "types": [
        "poison",
        "fairy"
@@ -15586,7 +15586,7 @@
       "species": "SPECIES_RATICATE_ALOLA",
       "share": 0.0192,
       "games": 1,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "dark",
        "normal"
@@ -17214,7 +17214,7 @@
       "species": "SPECIES_MEOWTH_ALOLA",
       "share": 0.0286,
       "games": 1,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "dark"
       ],
@@ -18144,7 +18144,7 @@
       "species": "SPECIES_MEOWTH_ALOLA",
       "share": 0.0208,
       "games": 1,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "dark"
       ],
@@ -18625,7 +18625,7 @@
       "species": "SPECIES_DIGLETT_ALOLA",
       "share": 0.0193,
       "games": 2,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "ground",
        "steel"
@@ -19424,7 +19424,7 @@
       "species": "SPECIES_DIGLETT_ALOLA",
       "share": 0.0324,
       "games": 2,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "ground",
        "steel"
@@ -19451,7 +19451,7 @@
       "species": "SPECIES_STUNFISK_GALAR",
       "share": 0.0294,
       "games": 1,
-      "introduced_gen": 5,
+      "introduced_gen": 8,
       "types": [
        "ground",
        "steel"
@@ -20998,7 +20998,7 @@
       "species": "SPECIES_DIGLETT_ALOLA",
       "share": 0.0039,
       "games": 1,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "ground",
        "steel"
@@ -21755,7 +21755,7 @@
       "species": "SPECIES_DUGTRIO_ALOLA",
       "share": 0.0281,
       "games": 2,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "ground",
        "steel"
@@ -23676,7 +23676,7 @@
       "species": "SPECIES_GEODUDE_ALOLA",
       "share": 0.0286,
       "games": 1,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "rock",
        "electric"
@@ -24620,7 +24620,7 @@
       "species": "SPECIES_DUGTRIO_ALOLA",
       "share": 0.0286,
       "games": 2,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "ground",
        "steel"
@@ -24701,7 +24701,7 @@
       "species": "SPECIES_GRAVELER_ALOLA",
       "share": 0.0238,
       "games": 1,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "rock",
        "electric"
@@ -26113,7 +26113,7 @@
       "species": "SPECIES_ZIGZAGOON_GALAR",
       "share": 0.0022,
       "games": 1,
-      "introduced_gen": 3,
+      "introduced_gen": 8,
       "types": [
        "dark",
        "normal"
@@ -26877,7 +26877,7 @@
       "species": "SPECIES_YAMASK_GALAR",
       "share": 0.025,
       "games": 1,
-      "introduced_gen": 5,
+      "introduced_gen": 8,
       "types": [
        "ground",
        "ghost"
@@ -27420,7 +27420,7 @@
       "species": "SPECIES_DUGTRIO_ALOLA",
       "share": 0.25,
       "games": 2,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "ground",
        "steel"
@@ -29996,7 +29996,7 @@
       "species": "SPECIES_SANDSHREW_ALOLA",
       "share": 0.0167,
       "games": 2,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "ice",
        "steel"
@@ -30010,7 +30010,7 @@
       "species": "SPECIES_VULPIX_ALOLA",
       "share": 0.0167,
       "games": 2,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "ice"
       ],
@@ -30050,7 +30050,7 @@
       "species": "SPECIES_RATICATE_ALOLA",
       "share": 0.0139,
       "games": 1,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "dark",
        "normal"
@@ -30520,7 +30520,7 @@
       "species": "SPECIES_DARUMAKA_GALAR",
       "share": 0.001,
       "games": 1,
-      "introduced_gen": 5,
+      "introduced_gen": 8,
       "types": [
        "ice"
       ],
@@ -30638,7 +30638,7 @@
       "species": "SPECIES_MR_MIME_GALAR",
       "share": 0.0292,
       "games": 1,
-      "introduced_gen": 1,
+      "introduced_gen": 8,
       "types": [
        "ice",
        "psychic"
@@ -30803,7 +30803,7 @@
       "species": "SPECIES_SANDSHREW_ALOLA",
       "share": 0.0125,
       "games": 1,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "ice",
        "steel"
@@ -30817,7 +30817,7 @@
       "species": "SPECIES_VULPIX_ALOLA",
       "share": 0.0125,
       "games": 1,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "ice"
       ],
@@ -31211,7 +31211,7 @@
       "species": "SPECIES_DARUMAKA_GALAR",
       "share": 0.0021,
       "games": 2,
-      "introduced_gen": 5,
+      "introduced_gen": 8,
       "types": [
        "ice"
       ],
@@ -33181,7 +33181,7 @@
       "species": "SPECIES_RATTATA_ALOLA",
       "share": 0.2308,
       "games": 2,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "dark",
        "normal"
@@ -33295,7 +33295,7 @@
       "species": "SPECIES_GRIMER_ALOLA",
       "share": 0.0688,
       "games": 2,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "poison",
        "dark"
@@ -33446,7 +33446,7 @@
       "species": "SPECIES_RATICATE_ALOLA",
       "share": 0.0208,
       "games": 1,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "dark",
        "normal"
@@ -36154,7 +36154,7 @@
       "species": "SPECIES_RAPIDASH_GALAR",
       "share": 0.0154,
       "games": 1,
-      "introduced_gen": 1,
+      "introduced_gen": 8,
       "types": [
        "psychic",
        "fairy"
@@ -36408,7 +36408,7 @@
       "species": "SPECIES_PONYTA_GALAR",
       "share": 0.0015,
       "games": 1,
-      "introduced_gen": 1,
+      "introduced_gen": 8,
       "types": [
        "psychic"
       ],
@@ -36480,7 +36480,7 @@
       "species": "SPECIES_RATTATA_ALOLA",
       "share": 0.1667,
       "games": 1,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "dark",
        "normal"
@@ -36508,7 +36508,7 @@
       "species": "SPECIES_MEOWTH_ALOLA",
       "share": 0.0833,
       "games": 1,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "dark"
       ],
@@ -36521,7 +36521,7 @@
       "species": "SPECIES_GRIMER_ALOLA",
       "share": 0.0833,
       "games": 1,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "poison",
        "dark"
@@ -36893,7 +36893,7 @@
       "species": "SPECIES_MEOWTH_ALOLA",
       "share": 0.02,
       "games": 1,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "dark"
       ],
@@ -36906,7 +36906,7 @@
       "species": "SPECIES_GRIMER_ALOLA",
       "share": 0.02,
       "games": 1,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "poison",
        "dark"
@@ -37664,7 +37664,7 @@
       "species": "SPECIES_RATICATE_ALOLA",
       "share": 0.0256,
       "games": 1,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "dark",
        "normal"
@@ -37916,7 +37916,7 @@
       "species": "SPECIES_SANDSHREW_ALOLA",
       "share": 0.0043,
       "games": 1,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "ice",
        "steel"
@@ -37930,7 +37930,7 @@
       "species": "SPECIES_VULPIX_ALOLA",
       "share": 0.0043,
       "games": 1,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "ice"
       ],
@@ -38197,7 +38197,7 @@
       "species": "SPECIES_RATICATE_ALOLA",
       "share": 0.0577,
       "games": 1,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "dark",
        "normal"
@@ -38371,7 +38371,7 @@
       "species": "SPECIES_SANDSHREW_ALOLA",
       "share": 0.0096,
       "games": 1,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "ice",
        "steel"
@@ -38385,7 +38385,7 @@
       "species": "SPECIES_VULPIX_ALOLA",
       "share": 0.0096,
       "games": 1,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "ice"
       ],
@@ -42289,7 +42289,7 @@
       "species": "SPECIES_DIGLETT_ALOLA",
       "share": 0.0136,
       "games": 2,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "ground",
        "steel"
@@ -45261,7 +45261,7 @@
       "species": "SPECIES_DUGTRIO_ALOLA",
       "share": 0.25,
       "games": 2,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "ground",
        "steel"
@@ -46541,7 +46541,7 @@
       "species": "SPECIES_RATTATA_ALOLA",
       "share": 0.0172,
       "games": 1,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "dark",
        "normal"
@@ -47574,7 +47574,7 @@
       "species": "SPECIES_DIGLETT_ALOLA",
       "share": 0.0407,
       "games": 2,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "ground",
        "steel"
@@ -47842,7 +47842,7 @@
       "species": "SPECIES_DUGTRIO_ALOLA",
       "share": 0.0037,
       "games": 1,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "ground",
        "steel"
@@ -48560,7 +48560,7 @@
       "species": "SPECIES_DUGTRIO_ALOLA",
       "share": 0.0528,
       "games": 2,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "ground",
        "steel"
@@ -49710,7 +49710,7 @@
       "species": "SPECIES_RATICATE_ALOLA",
       "share": 0.0247,
       "games": 2,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "dark",
        "normal"
@@ -50525,7 +50525,7 @@
       "species": "SPECIES_RATTATA_ALOLA",
       "share": 0.125,
       "games": 2,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "dark",
        "normal"
@@ -51252,7 +51252,7 @@
       "species": "SPECIES_DIGLETT_ALOLA",
       "share": 0.15,
       "games": 2,
-      "introduced_gen": 1,
+      "introduced_gen": 7,
       "types": [
        "ground",
        "steel"

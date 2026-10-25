@@ -70,6 +70,9 @@ Pinwheel Forest is `forest/early` in BW but `forest/endgame` in BW2.
   - `games` is how many version groups have the species in that archetype.
   - Species names are this repo's `SPECIES_*` constants, regional forms
     included (`SPECIES_DIGLETT_ALOLA`).
+  - `introduced_gen` is the generation the species debuted in. For a
+    regional form it's the form's generation, not its base species':
+    Alola 7, Galar and Hisui 8, Paldea 9 (`SPECIES_DIGLETT_ALOLA` is 7).
 - **`archetype_pools.md`**: the top 15 of every pool, for skimming.
 - **`emerald_maps.json`**: an archetype for every table of every map in
   the vanilla baseline (`wild_encounters.vanilla.json`, see
@@ -159,7 +162,7 @@ python3 tools/area_archetypes/area_archetypes.py baseline --wild /tmp/wild_encou
 | `--ratio R` | `0.5` | share of each table given to new species; `0` = unchanged, `1` = replace all |
 | `--seed N` | `1` | RNG seed; each table also seeds from its label, so tables don't shift when others change |
 | `--regions` | `hoenn` | `hoenn,kanto` to restock the FRLG tables too |
-| `--gens 4-9` | all | generations new species may come from |
+| `--gens 4-9` | all | generations new species may come from; a regional form counts as the generation its form debuted in (Alola 7, Galar and Hisui 8, Paldea 9), so `--gens 1-3` leaves out Alolan Rattata |
 | `--gen-weight 4=2` | none | multiply a generation's draw weight ("favour Gen 4+"); repeatable |
 | `--allow SPECIES,...` | none | draw new species only from these |
 | `--deny SPECIES,...` | none | never place these, and drop them where they're native |
