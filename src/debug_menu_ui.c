@@ -1,5 +1,6 @@
 // The fork's overworld debug-menu engine, used by src/debug.c. See include/debug_menu_ui.h.
-// Nothing outside the debug menu calls it, so a release build (DEBUG_OVERWORLD_MENU off) drops it at link.
+// A release build (DEBUG_OVERWORLD_MENU off) drops it at link, except Debug_InputToDecimalString and
+// gText_DigitIndicator, which the native party-menu debug entries still use.
 #include "global.h"
 #include "debug_menu_ui.h"
 #include "list_menu.h"
