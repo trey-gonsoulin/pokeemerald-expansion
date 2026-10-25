@@ -1211,13 +1211,16 @@ static void DestroyDebugIcon(u8 taskId)
         if (gTasks[taskId].tSpriteId < MAX_SPRITES)
             DestroySprite(&gSprites[gTasks[taskId].tSpriteId]);
         gTasks[taskId].tSpriteId = SPRITE_NONE;
-        // Only menu tasks get here: native party-menu tasks never show an icon, and they run without sDebugMenuListData
-        if (sDebugMenuListData->iconTileTag != TAG_NONE)
-            FreeSpriteTilesByTag(sDebugMenuListData->iconTileTag);
-        if (sDebugMenuListData->iconPaletteTag != TAG_NONE)
-            FreeSpritePaletteByTag(sDebugMenuListData->iconPaletteTag);
-        sDebugMenuListData->iconTileTag = TAG_NONE;
-        sDebugMenuListData->iconPaletteTag = TAG_NONE;
+        // Native party-menu tasks run without sDebugMenuListData. Only the trainer icon, a menu one, sets these tags.
+        if (sDebugMenuListData != NULL)
+        {
+            if (sDebugMenuListData->iconTileTag != TAG_NONE)
+                FreeSpriteTilesByTag(sDebugMenuListData->iconTileTag);
+            if (sDebugMenuListData->iconPaletteTag != TAG_NONE)
+                FreeSpritePaletteByTag(sDebugMenuListData->iconPaletteTag);
+            sDebugMenuListData->iconTileTag = TAG_NONE;
+            sDebugMenuListData->iconPaletteTag = TAG_NONE;
+        }
     }
 }
 
@@ -2574,6 +2577,7 @@ static void Debug_CreateTrainerIcon(u8 taskId)
 
     // CreateObjectGraphicsSpriteWithTag loads the sheet and palette under the object's own tags, which
     // NPCs on the map may share. Note the ones it is about to load, so only those get freed with the icon.
+    // The sheet tag follows LoadSheetGraphicsInfo.
     if (OW_GFX_COMPRESS && graphicsInfo->compressed)
     {
         tileTag = graphicsInfo->tileTag != TAG_NONE ? graphicsInfo->tileTag : COMP_OW_TILE_TAG_BASE + graphicsId;
@@ -2596,9 +2600,14 @@ static void Debug_CreateTrainerIcon(u8 taskId)
     StartSpriteAnim(&gSprites[gTasks[taskId].tSpriteId], ANIM_STD_GO_SOUTH);
     gSprites[gTasks[taskId].tSpriteId].oam.priority = 0;
     // The sprite's template is freed by now, so take the tag from the graphics info.
-    // A dynamic (follower) palette isn't an object event palette, so the sprite keeps its own.
+    // A dynamic (follower) palette isn't an object event palette, so the sprite keeps its own,
+    // as it does when the copy finds no free palette slot.
     if (paletteTag != OBJ_EVENT_PAL_TAG_DYNAMIC)
-        gSprites[gTasks[taskId].tSpriteId].oam.paletteNum = LoadObjectEventPaletteCopy(paletteTag, DEBUG_ICON_TAG);
+    {
+        u32 paletteNum = LoadObjectEventPaletteCopy(paletteTag, DEBUG_ICON_TAG);
+        if (paletteNum != 0xFF)
+            gSprites[gTasks[taskId].tSpriteId].oam.paletteNum = paletteNum;
+    }
 }
 
 static void DebugSelectionStep_UpdateMapTrainer(u8 taskId, u8 digits, u32 min, u32 max)
