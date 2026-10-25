@@ -9,6 +9,7 @@
 #include "data.h"
 #include "daycare.h"
 #include "debug.h"
+#include "debug_menu_ui.h"
 #include "decoration.h"
 #include "decoration_inventory.h"
 #include "event_data.h"
@@ -201,8 +202,6 @@ enum DebugMenuTypes
 
 #define DEBUG_OPTION_CANT_BE_TOGGLED 0xFF
 
-#define DEBUG_ICON_TAG 0xFDF3
-#define DEBUG_SCROLL_ARROW_TAG 0xFDF4
 // *******************************
 struct DebugMenuOption;
 
@@ -214,14 +213,6 @@ struct DebugMenuOption
     const u8 *text;
     const void *action;
     const void *actionParams;
-};
-
-// Where the cursor was in a menu, so returning to it lands on the same entry
-struct DebugMenuPosition
-{
-    const struct DebugMenuOption *items;
-    u16 scrollOffset;
-    u16 selectedRow;
 };
 
 struct DebugMenuListData
@@ -504,32 +495,6 @@ static const u8 sDebugText_EVs[] =                      _("EV {STR_VAR_1}:{CLEAR
 // Sound Menu
 static const u8 sDebugText_Sound_SFX_ID[] =             _("SFX ID: {STR_VAR_3}   {START_BUTTON} Stop\n{STR_VAR_1}    \n{STR_VAR_2}");
 static const u8 sDebugText_Sound_Music_ID[] =           _("Music ID: {STR_VAR_3}   {START_BUTTON} Stop\n{STR_VAR_1}    \n{STR_VAR_2}");
-
-const u8 *const gText_DigitIndicator[] =
-{
-    COMPOUND_STRING("{LEFT_ARROW}+1{RIGHT_ARROW}        "),
-    COMPOUND_STRING("{LEFT_ARROW}+10{RIGHT_ARROW}       "),
-    COMPOUND_STRING("{LEFT_ARROW}+100{RIGHT_ARROW}      "),
-    COMPOUND_STRING("{LEFT_ARROW}+1000{RIGHT_ARROW}     "),
-    COMPOUND_STRING("{LEFT_ARROW}+10000{RIGHT_ARROW}    "),
-    COMPOUND_STRING("{LEFT_ARROW}+100000{RIGHT_ARROW}   "),
-    COMPOUND_STRING("{LEFT_ARROW}+1000000{RIGHT_ARROW}  "),
-    COMPOUND_STRING("{LEFT_ARROW}+10000000{RIGHT_ARROW} "),
-};
-
-static const s32 sPowersOfTen[] =
-{
-             1,
-            10,
-           100,
-          1000,
-         10000,
-        100000,
-       1000000,
-      10000000,
-     100000000,
-    1000000000,
-};
 
 static u32 (*const generateListFunctions[])(const struct DebugMenuOption *) =
 {
@@ -887,12 +852,10 @@ void Debug_ShowMainMenu(void)
 #define tMenuTaskId          data[0]
 #define tWindowId            data[1]
 #define tSubWindowId         data[2]
-#define tInput               data[3]
-#define tDigit               data[4]
+#define tInput               data[DEBUG_DATA_INPUT] // read it with DEBUG_TASK_INPUT (u16)
+#define tDigit               data[DEBUG_DATA_DIGIT]
 #define tSpriteId            data[5]
-#define tInputStart          data[7] // value a numeric input step started from, for Select
-// Numeric input values fit in a u16 (a max can be 0xFFFF), so read the s16 task field back as unsigned
-#define DEBUG_TASK_INPUT(taskId) ((u16)gTasks[taskId].tInput)
+#define tInputStart          data[DEBUG_DATA_INPUT_START] // value a numeric input step started from, for Select
 #define tStepsDataCount      data[9] // u16 slots in the selection's stepsData block
 #define tSubstep             data[10]
 #define tStep                data[11]
@@ -962,27 +925,6 @@ static void Debug_SaveMenuPosition(u8 listTaskId)
         sDebugMainMenuPosition = *position;
 }
 
-// Returns the saved position for this level if it belongs to the same menu and still fits it
-static void Debug_GetMenuPosition(const struct DebugMenuOption *items, u32 totalItems, u16 *scrollOffset, u16 *selectedRow)
-{
-    struct DebugMenuPosition *position = &sDebugMenuListData->positions[sDebugMenuListData->shownLevel];
-    u32 maxScroll = (totalItems > DEBUG_MENU_HEIGHT_MAIN) ? totalItems - DEBUG_MENU_HEIGHT_MAIN : 0;
-    u32 index = position->scrollOffset + position->selectedRow;
-
-    *scrollOffset = 0;
-    *selectedRow = 0;
-    if (position->items != items || totalItems == 0)
-    {
-        position->items = items;
-        return;
-    }
-    if (index >= totalItems)
-        index = totalItems - 1;
-    // The saved row is below the page height, so this keeps the entry on screen
-    *scrollOffset = min(position->scrollOffset, maxScroll);
-    *selectedRow = index - *scrollOffset;
-}
-
 static bool32 IsSubMenuAction(const void *action)
 {
     return action == DebugAction_OpenSubMenu
@@ -1030,75 +972,11 @@ static void Debug_GetSubMenuName(u8 *dest, u32 level)
         dest[length - 1] = EOS;
 }
 
-static void Debug_ShowMenuTitle(void)
-{
-    struct WindowTemplate template = sDebugMenuWindowTemplateTitle;
-    u32 level = sDebugMenuListData->shownLevel;
-    u8 windowId;
-
-    sDebugMenuListData->titleWindowId = WINDOW_NONE;
-    if (level == 0)
-        return;
-
-    template.height = 2 * level;
-    windowId = AddWindow(&template);
-    DrawStdWindowFrame(windowId, FALSE);
-    FillWindowPixelBuffer(windowId, PIXEL_FILL(1));
-    for (u32 i = 1; i <= level; i++)
-    {
-        u32 indent = (i - 1) * 4;
-        Debug_GetSubMenuName(gStringVar4, i);
-        // A line too long for the window drops to a narrower font instead of clipping
-        u32 fontId = GetFontIdToFit(gStringVar4, FONT_NARROW, 0, WindowWidthPx(windowId) - indent);
-        AddTextPrinterParameterized(windowId, fontId, gStringVar4, indent, (i - 1) * 16, 0, NULL);
-    }
-    CopyWindowToVram(windowId, COPYWIN_FULL);
-    sDebugMenuListData->titleWindowId = windowId;
-}
-
+// Keeps the scroll arrows in step with the list
 static void Debug_ListMenuMoveCursor(s32 itemIndex, bool8 onInit, struct ListMenu *list)
 {
     ListMenuDefaultCursorMoveFunc(itemIndex, onInit, list);
     sDebugMenuListData->scrollArrowsOffset = list->scrollOffset;
-}
-
-static void Debug_AddScrollArrows(u32 totalItems)
-{
-    sDebugMenuListData->scrollArrowsTaskId = TASK_NONE;
-    if (totalItems <= DEBUG_MENU_HEIGHT_MAIN)
-        return;
-
-    // Centered over the main list, on its top and bottom frame
-    sDebugMenuListData->scrollArrowsTaskId = AddScrollIndicatorArrowPairParameterized(SCROLL_ARROW_UP,
-        sDebugMenuWindowTemplateMain.tilemapLeft * 8 + DEBUG_MENU_WIDTH_MAIN * 4,
-        sDebugMenuWindowTemplateMain.tilemapTop * 8 - 4,
-        (sDebugMenuWindowTemplateMain.tilemapTop + 2 * DEBUG_MENU_HEIGHT_MAIN) * 8 + 4,
-        totalItems - DEBUG_MENU_HEIGHT_MAIN, DEBUG_SCROLL_ARROW_TAG, DEBUG_SCROLL_ARROW_TAG,
-        &sDebugMenuListData->scrollArrowsOffset);
-}
-
-// ListMenu_ProcessInput plus L/R paging and wrapping between the first and last entries.
-// L/R only act on a new press: R is often still held from the R+Start combo that opens the menu.
-static s32 Debug_ListMenu_ProcessInput(u8 listTaskId)
-{
-    struct ListMenu *list = (void *)gTasks[listTaskId].data;
-    u32 lastIndex = list->template.totalItems - 1;
-    u32 index = list->scrollOffset + list->selectedRow;
-
-    if (JOY_NEW(A_BUTTON | B_BUTTON) || lastIndex == 0)
-        return ListMenu_ProcessInput(listTaskId);
-
-    if (JOY_NEW(DPAD_UP) && index == 0)
-        ListMenuChangeSelection(list, TRUE, lastIndex, TRUE);
-    else if (JOY_NEW(DPAD_DOWN) && index == lastIndex)
-        ListMenuChangeSelection(list, TRUE, lastIndex, FALSE);
-    else if (JOY_NEW(L_BUTTON))
-        ListMenuChangeSelection(list, TRUE, list->template.maxShowed, FALSE);
-    else if (JOY_NEW(R_BUTTON))
-        ListMenuChangeSelection(list, TRUE, list->template.maxShowed, TRUE);
-    else
-        return ListMenu_ProcessInput(listTaskId);
-    return LIST_NOTHING_CHOSEN;
 }
 
 // Runs for the first frame of a newly shown menu, so the button press that opened it
@@ -1129,7 +1007,7 @@ static void Debug_ShowMenu(DebugFunc HandleInput, const struct DebugMenuOption *
     windowId = AddWindow(&sDebugMenuWindowTemplateMain);
     DrawStdWindowFrame(windowId, FALSE);
     CopyWindowToVram(windowId, COPYWIN_GFX);
-    Debug_ShowMenuTitle();
+    sDebugMenuListData->titleWindowId = Debug_ShowPathWindow(&sDebugMenuWindowTemplateTitle, sDebugMenuListData->shownLevel, Debug_GetSubMenuName);
 
     u32 totalItems = generateListFunctions[sDebugMenuListData->menuType](items);
 
@@ -1153,9 +1031,9 @@ static void Debug_ShowMenu(DebugFunc HandleInput, const struct DebugMenuOption *
     menuTemplate.scrollMultiple = LIST_MULTIPLE_SCROLL_DPAD;
     menuTemplate.fontId = DEBUG_MENU_FONT;
     menuTemplate.cursorKind = 0;
-    Debug_GetMenuPosition(items, totalItems, &scrollOffset, &selectedRow);
+    Debug_RestoreMenuPosition(&sDebugMenuListData->positions[sDebugMenuListData->shownLevel], items, totalItems, DEBUG_MENU_HEIGHT_MAIN, &scrollOffset, &selectedRow);
     menuTaskId = ListMenuInit(&menuTemplate, scrollOffset, selectedRow);
-    Debug_AddScrollArrows(totalItems);
+    sDebugMenuListData->scrollArrowsTaskId = Debug_AddListScrollArrows(&sDebugMenuWindowTemplateMain, totalItems, DEBUG_MENU_HEIGHT_MAIN, &sDebugMenuListData->scrollArrowsOffset);
 
     // create input handler task
     sDebugMenuListData->pendingInputFunc = HandleInput;
@@ -1184,11 +1062,7 @@ static void Debug_RemoveWindowIfShown(s16 *windowId)
 // Closes the main list window together with its scroll arrows and title
 static void Debug_RemoveMainWindow(u8 taskId)
 {
-    if (sDebugMenuListData->scrollArrowsTaskId != TASK_NONE)
-    {
-        RemoveScrollIndicatorArrowPair(sDebugMenuListData->scrollArrowsTaskId);
-        sDebugMenuListData->scrollArrowsTaskId = TASK_NONE;
-    }
+    Debug_RemoveListScrollArrows(&sDebugMenuListData->scrollArrowsTaskId);
     Debug_RemoveWindowIfShown(&sDebugMenuListData->titleWindowId);
     Debug_RemoveWindowIfShown(&gTasks[taskId].tWindowId);
 }
@@ -1246,29 +1120,6 @@ static void Debug_ResetInputDisplayMonIcon(u8 taskId, enum Species species)
     gSprites[gTasks[taskId].tSpriteId].oam.priority = 0;
 }
 
-// Prints the numeric input with the digit that Up/Down changes highlighted
-static void Debug_InputToDecimalString(u8 *dest, u8 taskId, u32 digits)
-{
-    static const u8 sColor_Digit[] = _("{COLOR BLUE}{SHADOW LIGHT_BLUE}");
-    static const u8 sColor_Default[] = _("{COLOR DARK_GRAY}{SHADOW LIGHT_GRAY}");
-    u8 number[12];
-    u32 length, position;
-
-    ConvertIntToDecimalStringN(number, DEBUG_TASK_INPUT(taskId), STR_CONV_MODE_LEADING_ZEROS, digits);
-    length = StringLength(number);
-    if (gTasks[taskId].tDigit >= length)
-    {
-        StringCopy(dest, number);
-        return;
-    }
-    position = length - 1 - gTasks[taskId].tDigit;
-    dest = StringCopyN(dest, number, position);
-    dest = StringCopy(dest, sColor_Digit);
-    *dest++ = number[position];
-    dest = StringCopy(dest, sColor_Default);
-    StringCopy(dest, &number[position + 1]);
-}
-
 static void DebugNativeStep_PrintWindowSelection(u8 taskId)
 {
     u32 windowId = gTasks[taskId].tSubWindowId;
@@ -1313,80 +1164,6 @@ static void Debug_DestroyMenu_Full_Script(u8 taskId, const u8 *script)
     LockPlayerFieldControls();
     FreezeObjectEvents();
     ScriptContext_SetupScript(script);
-}
-
-// Which way the last Debug_HandleInput_Numeric moved, for steps that skip invalid values
-static EWRAM_DATA bool8 sNumericInputMovedDown = FALSE;
-
-// Digits shown for a numeric input up to max. Clamped to 1..ARRAY_COUNT(gText_DigitIndicator),
-// so tDigit always indexes gText_DigitIndicator and sPowersOfTen (tv.c's CountDigits gives 0 for 0)
-static u32 Debug_CountDigits(u32 max)
-{
-    u32 digits = 1;
-    while (digits < ARRAY_COUNT(gText_DigitIndicator) && max >= (u32)sPowersOfTen[digits])
-        digits++;
-    return digits;
-}
-
-// Any button Debug_HandleInput_Numeric acts on
-#define DEBUG_NUMERIC_INPUT_PRESSED() (JOY_REPEAT(DPAD_UP | DPAD_DOWN) || JOY_NEW(DPAD_LEFT | DPAD_RIGHT | L_BUTTON | R_BUTTON | SELECT_BUTTON))
-
-// Up/Down turn only the highlighted digit, like a combination lock: 9 wraps to 0 and back with
-// no carry into the other digits, and they repeat while held. A result past either end stops
-// on min/max. L/R jump to min/max and Select goes back to the value the step started from.
-// Left/Right move the highlight the way they point (tDigit counts from the ones place).
-static void Debug_HandleInput_Numeric(u8 taskId, u32 min, u32 max, u32 digits)
-{
-    u32 input = DEBUG_TASK_INPUT(taskId);
-
-    sNumericInputMovedDown = FALSE;
-    if (JOY_REPEAT(DPAD_UP | DPAD_DOWN))
-    {
-        u32 oldInput = input;
-        u32 place = sPowersOfTen[gTasks[taskId].tDigit];
-        u32 digit = (input / place) % 10;
-        input -= digit * place;
-        digit = (digit + (JOY_REPEAT(DPAD_UP) ? 1 : 9)) % 10;
-        input += digit * place;
-        if (input > max)
-            input = max;
-        else if (input < min)
-            input = min;
-        // A digit wrap can move the value against the button (Up on a 9 goes down)
-        sNumericInputMovedDown = input < oldInput;
-    }
-    else if (JOY_NEW(L_BUTTON))
-    {
-        input = min;
-    }
-    else if (JOY_NEW(R_BUTTON))
-    {
-        input = max;
-        sNumericInputMovedDown = TRUE; // max can be invalid, so search down from there
-    }
-    else if (JOY_NEW(SELECT_BUTTON))
-    {
-        input = (u16)gTasks[taskId].tInputStart;
-    }
-    gTasks[taskId].tInput = input;
-
-    if (JOY_NEW(DPAD_LEFT))
-    {
-        if (gTasks[taskId].tDigit < digits - 1)
-            gTasks[taskId].tDigit += 1;
-    }
-    if (JOY_NEW(DPAD_RIGHT))
-    {
-        if (gTasks[taskId].tDigit > 0)
-            gTasks[taskId].tDigit -= 1;
-    }
-}
-
-// For steps that skip invalid values: which way Debug_HandleInput_Numeric just moved.
-// R jumps to max, so it searches downwards from there.
-static bool32 Debug_NumericInputMovedDown(void)
-{
-    return sNumericInputMovedDown;
 }
 
 enum SongType { SONG_SE, SONG_MUS };
@@ -1517,11 +1294,7 @@ static void DebugAction_Selection_PrepareStep(u8 taskId, const struct DebugSelec
         input = min;
     if (input > max)
         input = max;
-    gTasks[taskId].tInput = input;
-
-    gTasks[taskId].tInputStart = input;
-    gTasks[taskId].tDigit = 0;
-    sNumericInputMovedDown = FALSE;
+    Debug_StartNumericInput(taskId, input);
     selectionStep->stepUpdate(taskId, digits, min, max);
     gTasks[taskId].func = DebugAction_Selection_StepUpdate;
 }
@@ -4238,9 +4011,7 @@ static void DebugAction_Sound_Start(u8 taskId, enum SongType type)
     else
         gTasks[taskId].func = DebugAction_Sound_MUS_SelectId;
     gTasks[taskId].tSubWindowId = windowId;
-    gTasks[taskId].tInput = Debug_GetFirstSong(type);
-    gTasks[taskId].tInputStart = gTasks[taskId].tInput;
-    gTasks[taskId].tDigit = 0;
+    Debug_StartNumericInput(taskId, Debug_GetFirstSong(type));
     gTasks[taskId].tCurrentSong = gTasks[taskId].tInput;
 
     DebugAction_Sound_PrintId(taskId, type);
