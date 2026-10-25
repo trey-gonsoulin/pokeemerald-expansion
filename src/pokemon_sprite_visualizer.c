@@ -1471,6 +1471,8 @@ static void UpdateSubmenuOneOptionValue(u8 taskId, bool8 increment)
             ResetShadowSettings(data);
 
             UpdateBattlerValue(data);
+            ValueToCharDigits(modArrows->charDigits, modArrows->currValue, modArrows->maxDigits);
+            PrintDigitChars(data);
             ReloadPokemonSprites(data);
             VBlankIntrWait();
             PlaySE(SE_DEX_SCROLL);
@@ -1773,6 +1775,7 @@ static void HandleInput_PokemonSpriteVisualizer(u8 taskId)
                 data->isFemale = FALSE;
                 PrintDigitChars(data);
                 UpdateBattlerValue(data);
+                species = IsSpeciesEnabled(data->currentmonId) ? SanitizeSpeciesId(data->currentmonId) : SPECIES_NONE;
                 ResetShadowSettings(data);
                 ReloadPokemonSprites(data);
                 data->animIdBack = GetSpeciesBackAnimSet(species) + 1;
@@ -1790,6 +1793,7 @@ static void HandleInput_PokemonSpriteVisualizer(u8 taskId)
                 data->isFemale = FALSE;
                 PrintDigitChars(data);
                 UpdateBattlerValue(data);
+                species = IsSpeciesEnabled(data->currentmonId) ? SanitizeSpeciesId(data->currentmonId) : SPECIES_NONE;
                 ResetShadowSettings(data);
                 ReloadPokemonSprites(data);
                 data->animIdBack = GetSpeciesBackAnimSet(species) + 1;
