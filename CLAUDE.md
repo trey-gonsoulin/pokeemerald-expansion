@@ -33,12 +33,15 @@ make -j16 build/emerald/src/debug.o TOOLCHAIN=/opt/devkitpro/devkitARM  # compil
 - These all work on a fresh checkout or worktree, because they build the tools and generated sources first.
   - `make generated` and `make tools` don't: `generated` skips the tool prebuild, so a cold run fails with `No rule to make target tools/mapjson/mapjson`.
   - To get the generated headers alone, run `make -j16 -f make_tools.mk` first.
-- `.claude/build.sh <worktree> [rom|release|debug|check [TESTS]|generated|src/x.c]` wraps all of this. It sets PATH, unsets the host compiler variables, logs to `build/`, and prints only the exit code and unexpected warnings (plus the test summary for `check`).
+- `.claude/build.sh <worktree> [rom|release|debug|check [TESTS]|generated|src/x.c]` wraps all of this. It sets PATH, unsets the host compiler variables, logs to `build/`, and prints only the exit code, errors and unexpected warnings, and how many expected warning lines it filtered. For `check` it also prints the failing tests and the counts per result.
 
 - The debug menus are `DISABLED_ON_RELEASE` (`include/config/debug.h`), so plain `make` gives the ROM with the debug menus. In the overworld, open the menu by holding R and pressing Start.
 - `make debug` (the -Og/-g build) links once the env is clean. Its old link failure (#27: undefined `__getreent`, `_getpid_r`, `_kill_r`, `_write_r`) came from the `CPATH` leak, not gcc 16.1.
 - `make firered` / `make leafgreen` build other games through `GAME_VERSION`.
-- Warnings that are expected and not regressions: pokedex.c stringop-overflow, LTO type mismatches and the RWX segment linker warning.
+- Warnings that are expected and not regressions (build.sh allowlists each exact line, so a new warning in the same file still shows):
+  - `release` only, from the LTO link: pokedex.c:4507 stringop-overflow (x6), mystery_gift_client.c:102 stringop-overread, and the `-Wlto-type-mismatch` on intro_frlg.c:249 (`gMultiBootProgram_PokemonColosseum_Start`) and faraway_island.h:4 (`GetMewMoveDirection`).
+  - Every ROM build: the RWX segment linker warning. Plain `make`, `debug` and `check` emit only this one.
+  - Tool and asset builds: json.hpp `-Wdeprecated-literal-operator` and `libpng warning: bKGD: invalid index`.
 
 ## Tests
 
