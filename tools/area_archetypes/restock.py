@@ -25,11 +25,13 @@ are settled. Each is also a command-line flag.
 import argparse
 import collections
 import copy
+import dataclasses
 import json
 import os
 import random
 import re
 import sys
+from typing import Callable, NamedTuple
 
 import area_archetypes as AA
 
@@ -336,32 +338,274 @@ def parse_species_list(values):
     return out
 
 
+class MapSettings(NamedTuple):
+    ratio: float
+    allow: frozenset
+    deny: frozenset
+    new_species: int | None
+    skip: bool
+
+
+@dataclasses.dataclass(frozen=True)
 class Settings:
-    def __init__(self, ratio=DEFAULT_RATIO, seed=DEFAULT_SEED, regions=DEFAULT_REGIONS,
-                 gens=None, gen_weight=None, allow=(), deny=(), allow_legendaries=False,
-                 maps=None, new_species=None, keep_every_native=KEEP_EVERY_NATIVE,
-                 regional_forms=True):
-        self.ratio = ratio
-        self.seed = seed
-        self.regions = set(regions)
-        self.gens = set(gens) if gens else None
-        self.gen_weight = dict(gen_weight or {})
-        self.allow = set(allow)
-        self.deny = set(deny)
-        self.allow_legendaries = allow_legendaries
-        self.maps = maps or {}  # base_label -> {ratio, allow, deny, skip, new_species}
-        self.new_species = new_species
-        self.keep_every_native = keep_every_native
-        self.regional_forms = regional_forms
+    """Restock options; the fields are the --config keys (see OPTIONS)."""
+    ratio: float = DEFAULT_RATIO
+    seed: int = DEFAULT_SEED
+    regions: frozenset = frozenset(DEFAULT_REGIONS)
+    gens: frozenset | None = None
+    gen_weight: dict = dataclasses.field(default_factory=dict)
+    allow: frozenset = frozenset()
+    deny: frozenset = frozenset()
+    allow_legendaries: bool = False
+    maps: dict = dataclasses.field(default_factory=dict)  # base_label -> per-map options
+    new_species: int | None = None
+    drop_rare_natives: bool = not KEEP_EVERY_NATIVE
+    no_regional_forms: bool = False
+
+    def __post_init__(self):
+        for name, value in (('ratio', min(max(float(self.ratio), 0.0), 1.0)),
+                            ('regions', frozenset(self.regions)),
+                            ('gens', frozenset(self.gens) if self.gens else None),
+                            ('gen_weight', dict(self.gen_weight or {})),
+                            ('allow', frozenset(self.allow)), ('deny', frozenset(self.deny)),
+                            ('maps', dict(self.maps or {}))):
+            object.__setattr__(self, name, value)
+
+    @property
+    def keep_every_native(self):
+        return not self.drop_rare_natives
+
+    @property
+    def regional_forms(self):
+        return not self.no_regional_forms
 
     def for_map(self, label):
-        """(ratio, allow, deny, new_species, skip) with per-map overrides applied."""
+        """The table options for one map, with its per-map overrides applied."""
         o = self.maps.get(label, {})
-        return (float(o.get('ratio', self.ratio)),
-                parse_species_list(o['allow']) if 'allow' in o else self.allow,
-                self.deny | parse_species_list(o.get('deny')),
-                o.get('new_species', self.new_species),
-                bool(o.get('skip')))
+        return MapSettings(float(o.get('ratio', self.ratio)),
+                           frozenset(parse_species_list(o['allow'])) if 'allow' in o else self.allow,
+                           self.deny | parse_species_list(o.get('deny')),
+                           o.get('new_species', self.new_species),
+                           bool(o.get('skip')))
+
+
+# ---------------------------------------------------------------------------
+# Options: one table for the command line, --config and per-map overrides
+# ---------------------------------------------------------------------------
+# Each ``parse`` checks a --config value (any JSON type) and returns the
+# Settings value, raising ValueError with what it expected. The command-line
+# types go through the same functions.
+
+def is_number(v):
+    return isinstance(v, (int, float)) and not isinstance(v, bool)
+
+
+def as_ratio(v):
+    if not is_number(v) or not 0 <= v <= 1:
+        raise ValueError(f'expected a number from 0 to 1, got {v!r}')
+    return float(v)
+
+
+def as_int(v):
+    if not isinstance(v, int) or isinstance(v, bool):
+        raise ValueError(f'expected a whole number, got {v!r}')
+    return v
+
+
+def as_count(v):
+    if as_int(v) < 0:
+        raise ValueError(f'expected 0 or more, got {v!r}')
+    return v
+
+
+def as_bool(v):
+    if not isinstance(v, bool):
+        raise ValueError(f'expected true or false, got {v!r}')
+    return v
+
+
+def as_names(v):
+    """'a,b' or ['a', 'b'] -> ['a', 'b']."""
+    if isinstance(v, str):
+        return [s.strip() for s in v.split(',') if s.strip()]
+    if isinstance(v, list) and all(isinstance(s, str) for s in v):
+        return v
+    raise ValueError(f'expected a comma-separated string or a list of strings, got {v!r}')
+
+
+def as_species(v):
+    return frozenset(parse_species_list(as_names(v)))
+
+
+def as_gens(v):
+    if isinstance(v, str):
+        try:
+            return parse_gens(v)
+        except ValueError:
+            pass
+    elif isinstance(v, list) and all(isinstance(g, int) and not isinstance(g, bool) for g in v):
+        return set(v)
+    raise ValueError(f"expected generations like '4-9' or a list of numbers, got {v!r}")
+
+
+def as_gen_weight(v):
+    """{'4': 2} -> {4: 2.0}."""
+    if not isinstance(v, dict):
+        raise ValueError(f'expected an object of generation: factor, got {v!r}')
+    return dict(gen_factor(g, f) for g, f in v.items())
+
+
+def gen_factor(gen, factor):
+    try:
+        gen = int(gen)
+    except ValueError:
+        raise ValueError(f'expected a generation number, got {gen!r}') from None
+    if not is_number(factor) or factor < 0:
+        raise ValueError(f'expected a factor of 0 or more for gen {gen}, got {factor!r}')
+    return gen, float(factor)
+
+
+def as_map_overrides(v):
+    """{label: {per-map key: value}}; labels are checked against the base later."""
+    if not isinstance(v, dict):
+        raise ValueError(f'expected an object of map label: overrides, got {v!r}')
+    errors = []
+    for label, o in v.items():
+        if not isinstance(o, dict):
+            errors.append(f'{label}: expected an object, got {o!r}')
+            continue
+        errors += [f'{label}: {e}' for e in parse_keys(o, MAP_OPTIONS, 'per-map key')[1]]
+    if errors:
+        raise ValueError('; '.join(errors))
+    return v
+
+
+def cli_type(parse, convert):
+    """argparse type= that runs ``parse(convert(text))``."""
+    def to_value(text):
+        try:
+            return parse(convert(text))
+        except ValueError as e:
+            raise argparse.ArgumentTypeError(str(e)) from None
+    to_value.__name__ = parse.__name__
+    return to_value
+
+
+def gen_weight_arg(text):
+    gen, eq, factor = text.partition('=')
+    if not eq:
+        raise argparse.ArgumentTypeError(f'expected GEN=FACTOR, e.g. 4=2, got {text!r}')
+    try:
+        return gen_factor(gen, float(factor))
+    except ValueError as e:
+        raise argparse.ArgumentTypeError(str(e)) from None
+
+
+def cli_wins(cli, cfg):
+    return cfg if cli is None else cli
+
+
+def cli_lists_win(cli, cfg):
+    """Repeated --allow/--deny replace the config list."""
+    return frozenset().union(*cli) if cli else cfg
+
+
+def cli_gen_weights_win(cli, cfg):
+    return {**(cfg or {}), **dict(cli or ())} or None
+
+
+class Option(NamedTuple):
+    name: str          # Settings field and --config key; the flag is --name-with-dashes
+    flag: dict | None  # argparse keywords, or None for config only
+    parse: Callable | None = None  # None: command line only
+    per_map: bool = False  # also a per-map override
+    top: bool = True       # also a top-level --config key
+    merge: Callable = cli_wins
+
+
+OPTIONS = (
+    Option('ratio', dict(type=cli_type(as_ratio, float),
+                         help=f'share of each table given to pool species, 0-1 (default {DEFAULT_RATIO})'),
+           as_ratio, per_map=True),
+    Option('seed', dict(type=int, help=f'RNG seed (default {DEFAULT_SEED})'), as_int),
+    Option('regions', dict(type=cli_type(as_names, str),
+                           help=f'comma list of regions to restock (default {",".join(DEFAULT_REGIONS)})'),
+           as_names),
+    Option('gens', dict(type=cli_type(as_gens, str),
+                        help="generations new species may come from, e.g. '4-9' (default all)"), as_gens),
+    Option('gen_weight', dict(type=gen_weight_arg, action='append', metavar='GEN=FACTOR',
+                              help="multiply the draw weight of a generation's species, e.g. 4=2 (repeatable)"),
+           as_gen_weight, merge=cli_gen_weights_win),
+    Option('allow', dict(type=cli_type(as_species, str), action='append', metavar='SPECIES,...',
+                         help='only draw new species from this list (repeatable)'),
+           as_species, per_map=True, merge=cli_lists_win),
+    Option('deny', dict(type=cli_type(as_species, str), action='append', metavar='SPECIES,...',
+                        help='never place these species, and drop them where they are native (repeatable)'),
+           as_species, per_map=True, merge=cli_lists_win),
+    Option('allow_legendaries', dict(action='store_true', default=None,
+                                     help='let legendary, mythical, Ultra Beast and Paradox species into the draw'),
+           as_bool),
+    Option('drop_rare_natives', dict(action='store_true', default=None,
+                                     help="let a table's own rare species lose their only slot "
+                                          "(default: each keeps one)"),
+           as_bool),
+    Option('no_regional_forms', dict(action='store_true', default=None,
+                                     help='never draw Alolan, Galarian, Hisuian or Paldean forms'),
+           as_bool),
+    Option('new_species', dict(type=cli_type(as_count, int),
+                               help="new species per table (default: scales with ratio and the table's "
+                                    "own species count)"),
+           as_count, per_map=True),
+    Option('maps', None, as_map_overrides),
+    Option('skip', None, as_bool, per_map=True, top=False),
+    Option('config', dict(help='JSON file with any of the options above plus per-map overrides; '
+                               'flags win over it. See README.')),
+    Option('base', dict(default=AA.VANILLA_WILD,
+                        help='vanilla wild_encounters.json the natives come from (default: the committed '
+                             'snapshot)')),
+    Option('wild', dict(default=AA.SRC_WILD, help='file --write overwrites (not a source of natives)')),
+    Option('pools', dict(default=os.path.join(AA.DEFAULT_OUT, 'archetype_pools.json'))),
+    Option('maps', dict(default=os.path.join(AA.DEFAULT_OUT, 'emerald_maps.json'))),
+    Option('out_dir', dict(default=DEFAULT_OUT_DIR, help='where the preview JSON and report go')),
+    Option('write', dict(action='store_true', help='also overwrite --wild with the result')),
+    Option('force', dict(action='store_true',
+                         help='accept a --base that restock wrote, and --write over a --wild that differs '
+                              'from --base in more than species')),
+    Option('repo', dict(default=AA.REPO, help=argparse.SUPPRESS)),
+)
+CONFIG_OPTIONS = {o.name: o for o in OPTIONS if o.parse and o.top}
+MAP_OPTIONS = {o.name: o for o in OPTIONS if o.per_map}
+
+
+def parse_keys(obj, options, what):
+    """Parsed values of a config object, and one message per bad key or value."""
+    values, errors = {}, []
+    for key, v in obj.items():
+        o = options.get(key)
+        if o is None:
+            errors.append(f'unknown {what} {key!r} (expected one of: {", ".join(options)})')
+            continue
+        try:
+            values[key] = o.parse(v)
+        except ValueError as e:
+            errors.append(f'{key}: {e}')
+    return values, errors
+
+
+def add_options(p):
+    for o in OPTIONS:
+        if o.flag is not None:
+            p.add_argument('--' + o.name.replace('_', '-'), **o.flag)
+
+
+def settings_from(args, cfg):
+    """Settings from parsed flags and parsed --config values; flags win."""
+    values = {}
+    for o in CONFIG_OPTIONS.values():
+        v = o.merge(getattr(args, o.name) if o.flag else None, cfg.get(o.name))
+        if v is not None:
+            values[o.name] = v
+    return Settings(**values)
 
 
 # ---------------------------------------------------------------------------
@@ -477,7 +721,9 @@ def restock_table(mons, rates, pool, info, settings, label, field):
     picked_total = sum(cands[s] for s in picked)
     for s in picked:
         targets[s] += ratio * cands[s] / picked_total
-    if not targets:
+    if not targets:  # every native denied and nothing to draw: no species left to fill with
+        print(f'warning: {label} {field}: every native is denied and nothing can be drawn; '
+              f'left as is', file=sys.stderr)
         return None
     slots = assign_slots(targets, rates, kept if keep_all else ())
     return [s if s in natives else info.devolve(s, m['max_level'])
@@ -616,62 +862,18 @@ def skeleton(wild):
 def main(argv=None):
     p = argparse.ArgumentParser(prog='area_archetypes.py restock', description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument('--ratio', type=float,
-                   help=f'share of each table given to pool species, 0-1 (default {DEFAULT_RATIO})')
-    p.add_argument('--seed', type=int, help=f'RNG seed (default {DEFAULT_SEED})')
-    p.add_argument('--regions', help=f'comma list of regions to restock (default {",".join(DEFAULT_REGIONS)})')
-    p.add_argument('--gens', help="generations new species may come from, e.g. '4-9' (default all)")
-    p.add_argument('--gen-weight', action='append', default=[], metavar='GEN=FACTOR',
-                   help="multiply the draw weight of a generation's species, e.g. 4=2 (repeatable)")
-    p.add_argument('--allow', action='append', metavar='SPECIES,...',
-                   help='only draw new species from this list (repeatable)')
-    p.add_argument('--deny', action='append', metavar='SPECIES,...',
-                   help='never place these species, and drop them where they are native (repeatable)')
-    p.add_argument('--allow-legendaries', action='store_true',
-                   help='let legendary, mythical, Ultra Beast and Paradox species into the draw')
-    p.add_argument('--drop-rare-natives', action='store_true',
-                   help="let a table's own rare species lose their only slot (default: each keeps one)")
-    p.add_argument('--no-regional-forms', action='store_true',
-                   help='never draw Alolan, Galarian, Hisuian or Paldean forms')
-    p.add_argument('--new-species', type=int,
-                   help='new species per table (default: scales with ratio and the table\'s own species count)')
-    p.add_argument('--config', help='JSON file with any of the options above plus per-map overrides; '
-                                    'flags win over it. See README.')
-    p.add_argument('--base', default=AA.VANILLA_WILD,
-                   help='vanilla wild_encounters.json the natives come from (default: the committed snapshot)')
-    p.add_argument('--wild', default=AA.SRC_WILD, help='file --write overwrites (not a source of natives)')
-    p.add_argument('--pools', default=os.path.join(AA.DEFAULT_OUT, 'archetype_pools.json'))
-    p.add_argument('--maps', default=os.path.join(AA.DEFAULT_OUT, 'emerald_maps.json'))
-    p.add_argument('--out-dir', default=DEFAULT_OUT_DIR, help='where the preview JSON and report go')
-    p.add_argument('--write', action='store_true', help='also overwrite --wild with the result')
-    p.add_argument('--force', action='store_true',
-                   help='accept a --base that restock wrote, and --write over a --wild that differs '
-                        'from --base in more than species')
-    p.add_argument('--repo', default=AA.REPO, help=argparse.SUPPRESS)
+    add_options(p)
     args = p.parse_args(argv)
 
-    cfg = load_json(args.config) if args.config else {}
-
-    def opt(name, default):
-        v = getattr(args, name)
-        return v if v is not None else cfg.get(name, default)
-
-    gen_weight = {int(k): float(v) for k, v in cfg.get('gen_weight', {}).items()}
-    for gw in args.gen_weight:
-        g, _, f = gw.partition('=')
-        gen_weight[int(g)] = float(f)
-    gens = opt('gens', None)
-    regions = opt('regions', ','.join(DEFAULT_REGIONS))
-    settings = Settings(
-        ratio=float(opt('ratio', DEFAULT_RATIO)), seed=int(opt('seed', DEFAULT_SEED)),
-        regions=[r.strip() for r in regions.split(',')] if isinstance(regions, str) else regions,
-        gens=parse_gens(gens) if isinstance(gens, str) else gens, gen_weight=gen_weight,
-        allow=parse_species_list(args.allow or cfg.get('allow')),
-        deny=parse_species_list(args.deny or cfg.get('deny')),
-        allow_legendaries=args.allow_legendaries or bool(cfg.get('allow_legendaries')),
-        maps=cfg.get('maps'), new_species=opt('new_species', None),
-        keep_every_native=not (args.drop_rare_natives or cfg.get('drop_rare_natives')),
-        regional_forms=not (args.no_regional_forms or cfg.get('no_regional_forms')))
+    cfg = {}
+    if args.config:
+        raw = load_json(args.config)
+        if not isinstance(raw, dict):
+            p.error(f'--config {args.config}: expected a JSON object')
+        cfg, errors = parse_keys(raw, CONFIG_OPTIONS, 'key')
+        if errors:
+            p.error(f'--config {args.config}: ' + '; '.join(errors))
+    settings = settings_from(args, cfg)
 
     info = SpeciesInfo(args.repo)
     named = settings.allow | settings.deny
@@ -681,12 +883,21 @@ def main(argv=None):
     if unknown:
         sys.exit(f'unknown species: {", ".join(unknown)}')
     base, base_sha256 = AA.load_base(args.base, args.force)
+    emerald_maps = load_json(args.maps)
+    group = next(g for g in base['wild_encounter_groups'] if g['label'] == 'gWildMonHeaders')
+    unknown = sorted(set(settings.maps) - {e['base_label'] for e in group['encounters']})
+    if unknown:
+        p.error(f'maps: not a gWildMonHeaders base label in {args.base}: {", ".join(unknown)}')
+    known = {m['region'] for m in emerald_maps.values() if m.get('region')}
+    unknown = sorted(settings.regions - known)
+    if unknown:
+        p.error(f'unknown region: {", ".join(unknown)} (regions in {args.maps}: {", ".join(sorted(known))})')
     if (args.write and not args.force and os.path.exists(args.wild)
             and skeleton(load_json(args.wild)) != skeleton(base)):
         sys.exit(f'{args.wild} differs from {args.base} in more than species (an upstream merge or '
                  f'a hand edit?), and --write would lose that; refresh the baseline (README), '
                  f'or --force to overwrite anyway')
-    new, changes = restock(base, load_json(args.maps), load_json(args.pools), info, settings)
+    new, changes = restock(base, emerald_maps, load_json(args.pools), info, settings)
     stamp = {'base_sha256': base_sha256, 'seed': settings.seed, 'ratio': settings.ratio}
     if AA.RESTOCK_STAMP in base:  # --force on a restocked base: keep its history
         stamp['base_restocked_by'] = base[AA.RESTOCK_STAMP]
