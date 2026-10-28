@@ -141,6 +141,25 @@ SINGLE_BATTLE_TEST("Eject Pack will not activate if Parting Shot user can switch
     }
 }
 
+SINGLE_BATTLE_TEST("Eject Pack activates if the Parting Shot user can't switch out (Gen7+)")
+{
+    GIVEN {
+        WITH_CONFIG(B_PARTING_SHOT_SWITCH, GEN_7);
+        PLAYER(SPECIES_WOBBUFFET) { Item(ITEM_EJECT_PACK); }
+        PLAYER(SPECIES_WYNAUT);
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(opponent, MOVE_PARTING_SHOT); SEND_OUT(player, 1); }
+    } SCENE {
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_PARTING_SHOT, opponent);
+        ANIMATION(ANIM_TYPE_GENERAL, B_ANIM_HELD_ITEM_EFFECT, player);
+        MESSAGE("Wobbuffet is switched out with the Eject Pack!");
+    } THEN {
+        EXPECT_EQ(player->species, SPECIES_WYNAUT);
+        EXPECT_EQ(opponent->species, SPECIES_WOBBUFFET);
+    }
+}
+
 DOUBLE_BATTLE_TEST("Eject Pack will not trigger if the conditions are not met")
 {
     GIVEN {
