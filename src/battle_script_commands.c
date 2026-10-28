@@ -9281,7 +9281,8 @@ void ApplyExperienceMultipliers(s32 *expAmount, u8 expGetterMonId, u8 faintedBat
 }
 
 // Whether the party mon an item is used on is the user's partner's active battler.
-// In multi and 2v1 battles the partner has its own party, so a matching party index means nothing.
+// Whenever the two don't share a party (multi, 2v1, two-opponent and link multi battles),
+// a matching party index means nothing.
 static bool32 IsItemTargetActivePartner(enum BattlerId battler)
 {
     enum BattlerId partner = GetPartnerBattler(battler);
