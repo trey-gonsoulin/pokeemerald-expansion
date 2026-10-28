@@ -12,7 +12,7 @@ Emerald Plus is a personal fork of [rh-hideout/pokeemerald-expansion](https://gi
 
 What the fork adds over upstream (`git diff origin/master...origin/emerald-plus --stat`):
 - Personal-playthrough config flips in `include/config/` (reusable TMs, Gen 6 Exp. Share on `FLAG_UNUSED_0x264`, followers, HGSS Pokédex, IV/EV summary, forgettable HMs).
-- Ten carried upstream fixes. Upstream has none of them yet, so on every upstream sync check each one and drop it once upstream fixes the bug:
+- Nine carried upstream fixes. Upstream has none of them yet, so on every upstream sync check each one and drop it once upstream fixes the bug:
   - Exp from opponent B's Pokémon in two-trainer battles: `GetGivenExpMonsIndex` in `src/battle_util.c`. Covered by `test/battle/exp.c`.
   - Exp when the last foe faints from end-of-turn damage: the `ENDTURN_FAINTED_MON_ACTIONS` check in `DoEndTurnEffects`, `src/battle_end_turn.c`. Covered by `test/battle/exp.c`.
   - TV soft-lock when a regular show is on the air: `specialvar VAR_RESULT, GetSelectedTVShow` in `data/scripts/tv.inc` (10403ef6). No test.
@@ -21,9 +21,7 @@ What the fork adds over upstream (`git diff origin/master...origin/emerald-plus 
   - Multi battle items used on a benched mon act on the partner's battler when the party indexes match: `IsItemTargetActivePartner` (a `BattlersShareParty` check) in `BS_ItemRestoreHP`, `BS_ItemCureStatus` and `BS_ItemRestorePP`, plus the `BattlersShareParty` guard on the absent-partner Revive send-out, `src/battle_script_commands.c` (#65). Covered by `test/battle/item_effect/multi_battle_party.c`.
   - Revival Blessing in a multi battle sends the partner's battler out again: the `BattlersShareParty` guard in `BS_TryRevivalBlessing`, `src/battle_script_commands.c` (#65). Covered by the multi test in `test/battle/move_effect/revival_blessing.c`.
   - Poke Flute soft-lock in single battles: the `position < gBattlersCount` loop bound in `BS_CheckPokeFlute`, `src/battle_script_commands.c` (#65). Covered by the single-battle test in `test/battle/item_effect/poke_flute.c`.
-  - X items used from the bag are checked against the wrong party slot: `CannotUseItemFromBagInBattle` in `src/item_use.c`, called by `ItemUseInBattle_BagMenu` (#65). Covered by the bag tests in `test/battle/item_effect/increase_stat.c`.
-  - Roar, Whirlwind, Dragon Tail and Red Card fail on a right-flank battler, and skip a valid mon on the left, in two-trainer and in-game multi battles: the own-party branch (`!BattlersShareParty`) in `Cmd_forcerandomswitch`, `src/battle_script_commands.c` (#65). Covered by the "Roar in a two-trainer battle" tests in `test/battle/move_effect/roar.c`.
-- Overworld debug menu improvements. The engine is fork-owned, in `src/debug_menu_ui.c` (API in `include/debug_menu_ui.h`): odometer numeric input and its digit highlight, list paging, scroll arrows, the submenu path window and the menu-position restore. `src/debug.c` keeps the menus, their state (`sDebugMenuListData`) and the hooks that call the engine.
+  - X items used from the bag are checked against the wrong party slot: `CannotUseItemFromBagInBattle` in `src/item_use.c`, called by `ItemUseInBattle_BagMenu` (#65). Covered by the bag tests in `test/battle/item_effect/increase_stat.c`.- Overworld debug menu improvements. The engine is fork-owned, in `src/debug_menu_ui.c` (API in `include/debug_menu_ui.h`): odometer numeric input and its digit highlight, list paging, scroll arrows, the submenu path window and the menu-position restore. `src/debug.c` keeps the menus, their state (`sDebugMenuListData`) and the hooks that call the engine.
 - `tools/area_archetypes/`, a standalone Python tool (see below).
 
 ## Build
