@@ -390,14 +390,17 @@ void MapHeaderRunScriptType(u8 tag)
 {
     const u8 *ptr = MapHeaderGetScriptTable(tag);
     if (ptr)
-    {
-        // The map script's `end` clears FLAG_SAFE_FOLLOWER_MOVEMENT. Keep it for a script
-        // that is still running, such as a trainer's post-battle script back on the field.
-        bool32 safeFollowerMovement = FlagGet(FLAG_SAFE_FOLLOWER_MOVEMENT);
         RunScriptImmediately(ptr);
-        if (safeFollowerMovement)
-            FlagSet(FLAG_SAFE_FOLLOWER_MOVEMENT);
-    }
+}
+
+// The map script's `end` clears FLAG_SAFE_FOLLOWER_MOVEMENT. On the way back to the field
+// keep it for a script that is still running, such as a trainer's post-battle script.
+static void MapHeaderRunScriptTypeKeepSafeFollower(u8 tag)
+{
+    bool32 safeFollowerMovement = FlagGet(FLAG_SAFE_FOLLOWER_MOVEMENT);
+    MapHeaderRunScriptType(tag);
+    if (safeFollowerMovement)
+        FlagSet(FLAG_SAFE_FOLLOWER_MOVEMENT);
 }
 
 const u8 *MapHeaderCheckScriptTable(u8 tag)
@@ -446,12 +449,12 @@ void RunOnTransitionMapScript(void)
 
 void RunOnResumeMapScript(void)
 {
-    MapHeaderRunScriptType(MAP_SCRIPT_ON_RESUME);
+    MapHeaderRunScriptTypeKeepSafeFollower(MAP_SCRIPT_ON_RESUME);
 }
 
 void RunOnReturnToFieldMapScript(void)
 {
-    MapHeaderRunScriptType(MAP_SCRIPT_ON_RETURN_TO_FIELD);
+    MapHeaderRunScriptTypeKeepSafeFollower(MAP_SCRIPT_ON_RETURN_TO_FIELD);
 }
 
 void RunOnDiveWarpMapScript(void)
