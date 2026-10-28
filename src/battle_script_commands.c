@@ -6481,7 +6481,8 @@ static void Cmd_healpartystatus(void)
         {
             enum Ability ability;
             bool32 isAttacker = gBattlerPartyIndexes[gBattlerAttacker] == i;
-            bool32 isDoublesPartner = gBattlerPartyIndexes[partner] == i && IsBattlerAlive(partner);
+            bool32 isDoublesPartner = gBattlerPartyIndexes[partner] == i && IsBattlerAlive(partner)
+                                   && BattlersShareParty(gBattlerAttacker, partner);
 
             if (GetConfig(B_HEAL_BELL_SOUNDPROOF) == GEN_5
              || (GetConfig(B_HEAL_BELL_SOUNDPROOF) >= GEN_8 && isAttacker))
