@@ -1948,3 +1948,30 @@ MULTI_BATTLE_TEST("Sleep Clause remains active when a partner's Chesto Berry cur
         }
     }
 }
+
+// The sleeping partner's Pokemon belongs to the partner trainer, not to the Heal Bell user.
+MULTI_BATTLE_TEST("Sleep Clause: Sleep clause is deactivated when Heal Bell cures the partner's sleeping mon in a multi battle")
+{
+    GIVEN {
+        FLAG_SET(B_FLAG_SLEEP_CLAUSE);
+        ASSUME(GetMoveEffect(MOVE_SPORE) == EFFECT_NON_VOLATILE_STATUS);
+        ASSUME(GetMoveNonVolatileStatus(MOVE_SPORE) == MOVE_EFFECT_SLEEP);
+        ASSUME(GetMoveEffect(MOVE_HEAL_BELL) == EFFECT_HEAL_BELL);
+        PLAYER(SPECIES_WOBBUFFET) { Speed(100); }
+        PARTNER(SPECIES_WOBBUFFET) { Speed(1); }
+        OPPONENT_A(SPECIES_WOBBUFFET) { Speed(50); }
+        OPPONENT_B(SPECIES_WOBBUFFET) { Speed(50); }
+    } WHEN {
+        TURN { MOVE(opponentLeft, MOVE_SPORE, target: playerRight); }
+        TURN { MOVE(playerLeft, MOVE_HEAL_BELL); }
+        TURN { MOVE(opponentLeft, MOVE_SPORE, target: playerLeft); }
+    } SCENE {
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_SPORE, opponentLeft);
+        STATUS_ICON(playerRight, sleep: TRUE);
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_HEAL_BELL, playerLeft);
+        STATUS_ICON(playerRight, sleep: FALSE);
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_SPORE, opponentLeft);
+        ANIMATION(ANIM_TYPE_STATUS, B_ANIM_STATUS_SLP, playerLeft);
+        STATUS_ICON(playerLeft, sleep: TRUE);
+    }
+}
