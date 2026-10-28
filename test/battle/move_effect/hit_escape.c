@@ -237,3 +237,110 @@ SINGLE_BATTLE_TEST("Hit Escape: U-turn will switch if the target is behind a Sub
         ANIMATION(ANIM_TYPE_MOVE, MOVE_U_TURN, opponent);
     }
 }
+
+SINGLE_BATTLE_TEST("Hit Escape: User that can't switch still triggers the target's Pickpocket")
+{
+    enum Move move;
+
+    PARAMETRIZE { move = MOVE_U_TURN; }
+    PARAMETRIZE { move = MOVE_FLIP_TURN; }
+
+    GIVEN {
+        ASSUME(GetMoveEffect(move) == EFFECT_HIT_ESCAPE);
+        ASSUME(MoveMakesContact(move));
+        PLAYER(SPECIES_WOBBUFFET) { Item(ITEM_POTION); }
+        OPPONENT(SPECIES_SNEASEL) { Ability(ABILITY_PICKPOCKET); }
+    } WHEN {
+        TURN { MOVE(player, move); }
+    } SCENE {
+        ANIMATION(ANIM_TYPE_MOVE, move, player);
+        HP_BAR(opponent);
+        ABILITY_POPUP(opponent, ABILITY_PICKPOCKET);
+        MESSAGE("The opposing Sneasel stole Wobbuffet's Potion!");
+    } THEN {
+        EXPECT(opponent->item == ITEM_POTION);
+        EXPECT(player->item == ITEM_NONE);
+    }
+}
+
+SINGLE_BATTLE_TEST("Hit Escape: User that can't switch hits again with U-turn on the next turn")
+{
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET);
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(player, MOVE_U_TURN); }
+        TURN { MOVE(player, MOVE_U_TURN); }
+    } SCENE {
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_U_TURN, player);
+        HP_BAR(opponent);
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_U_TURN, player);
+        HP_BAR(opponent);
+    }
+}
+
+SINGLE_BATTLE_TEST("Hit Escape: User that can't switch still loses Charge after Volt Switch")
+{
+    s16 damage[3] = {0};
+    GIVEN {
+        ASSUME(GetMoveEffect(MOVE_VOLT_SWITCH) == EFFECT_HIT_ESCAPE);
+        ASSUME(GetMoveType(MOVE_VOLT_SWITCH) == TYPE_ELECTRIC);
+        PLAYER(SPECIES_WOBBUFFET);
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(player, MOVE_VOLT_SWITCH); }
+        TURN { MOVE(player, MOVE_CHARGE); }
+        TURN { MOVE(player, MOVE_VOLT_SWITCH); }
+        TURN { MOVE(player, MOVE_VOLT_SWITCH); }
+    } SCENE {
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_VOLT_SWITCH, player);
+        HP_BAR(opponent, captureDamage: &damage[0]);
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_CHARGE, player);
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_VOLT_SWITCH, player);
+        HP_BAR(opponent, captureDamage: &damage[1]);
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_VOLT_SWITCH, player);
+        HP_BAR(opponent, captureDamage: &damage[2]);
+    } THEN {
+        EXPECT_MUL_EQ(damage[0], Q_4_12(2.0), damage[1]);
+        EXPECT_EQ(damage[0], damage[2]);
+    }
+}
+
+DOUBLE_BATTLE_TEST("Hit Escape: User that can't switch because of Commander still triggers the target's Pickpocket")
+{
+    GIVEN {
+        PLAYER(SPECIES_TATSUGIRI) { Ability(ABILITY_COMMANDER); Speed(3); }
+        PLAYER(SPECIES_DONDOZO) { Speed(2); Item(ITEM_POTION); }
+        PLAYER(SPECIES_WYNAUT) { Speed(1); }
+        OPPONENT(SPECIES_SNEASEL) { Ability(ABILITY_PICKPOCKET); MaxHP(999); HP(999); Speed(1); }
+        OPPONENT(SPECIES_WOBBUFFET) { Speed(1); }
+    } WHEN {
+        TURN { MOVE(playerRight, MOVE_U_TURN, target: opponentLeft); }
+    } SCENE {
+        ABILITY_POPUP(playerLeft, ABILITY_COMMANDER);
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_U_TURN, playerRight);
+        HP_BAR(opponentLeft);
+        ABILITY_POPUP(opponentLeft, ABILITY_PICKPOCKET);
+        MESSAGE("The opposing Sneasel stole Dondozo's Potion!");
+    } THEN {
+        EXPECT_EQ(playerLeft->species, SPECIES_TATSUGIRI);
+        EXPECT_EQ(playerRight->species, SPECIES_DONDOZO);
+        EXPECT_EQ(opponentLeft->item, ITEM_POTION);
+    }
+}
+
+AI_SINGLE_BATTLE_TEST("Hit Escape: User that can't switch gains exp once when the target faints")
+{
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET) { Level(15); }
+        OPPONENT(SPECIES_TREECKO) { Level(15); HP(1); Moves(MOVE_CELEBRATE); }
+        OPPONENT(SPECIES_TREECKO) { Level(15); Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_U_TURN); }
+    } SCENE {
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_U_TURN, player);
+        MESSAGE("The opposing Treecko fainted!");
+        EXPERIENCE_BAR(player);
+        NOT EXPERIENCE_BAR(player);
+    }
+}
