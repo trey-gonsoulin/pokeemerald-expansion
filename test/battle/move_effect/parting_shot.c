@@ -397,3 +397,25 @@ DOUBLE_BATTLE_TEST("Parting Shot: Flower Veil prevents stat drops and switches (
         EXPECT_EQ(playerLeft->species, SPECIES_PIKACHU);
     }
 }
+
+SINGLE_BATTLE_TEST("Parting Shot: User that can't switch still ends its Destiny Bond (Gen7+)")
+{
+    GIVEN {
+        WITH_CONFIG(B_PARTING_SHOT_SWITCH, GEN_7);
+        ASSUME(GetMoveEffect(MOVE_DESTINY_BOND) == EFFECT_DESTINY_BOND);
+        PLAYER(SPECIES_WOBBUFFET) { HP(1); Speed(2); }
+        OPPONENT(SPECIES_WOBBUFFET) { Speed(1); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_DESTINY_BOND); MOVE(opponent, MOVE_CELEBRATE); }
+        TURN { MOVE(player, MOVE_PARTING_SHOT); MOVE(opponent, MOVE_SCRATCH); }
+    } SCENE {
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_DESTINY_BOND, player);
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_PARTING_SHOT, player);
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_SCRATCH, opponent);
+        MESSAGE("Wobbuffet fainted!");
+        NONE_OF {
+            MESSAGE("Wobbuffet took its attacker down with it!");
+            MESSAGE("The opposing Wobbuffet fainted!");
+        }
+    }
+}

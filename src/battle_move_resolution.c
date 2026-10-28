@@ -4783,6 +4783,19 @@ static bool32 CanPartingShotTrigger(enum BattlerId battlerAtk)
     return FALSE;
 }
 
+// The checks BattleScript_MoveSwitchPursuitRet makes before switching. Its
+// can't-switch paths end the action, which skips the rest of move end, so the
+// switch scripts only run when they will switch.
+static bool32 CanPivotUserSwitch(enum BattlerId battler)
+{
+    if (gBattleTypeFlags & BATTLE_TYPE_ARENA)
+        return FALSE;
+    if (gBattleStruct->battlerState[battler].commanderSpecies != SPECIES_NONE
+     || gBattleMons[battler].volatiles.semiInvulnerable == STATE_COMMANDER)
+        return FALSE;
+    return CanBattlerSwitch(battler);
+}
+
 static enum MoveEndResult MoveEndHitEscape(struct BattleCalcValues *cv)
 {
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
@@ -4795,7 +4808,8 @@ static enum MoveEndResult MoveEndHitEscape(struct BattleCalcValues *cv)
          && !gBattleStruct->unableToUseMove
          && IsAnyTargetTurnDamaged(cv->battlerAtk, INCLUDING_SUBSTITUTES)
          && IsBattlerAlive(cv->battlerAtk)
-         && !NoAliveMonsForBattlerSide(cv->battlerDef))
+         && !NoAliveMonsForBattlerSide(cv->battlerDef)
+         && CanPivotUserSwitch(cv->battlerAtk))
         {
             result = MOVEEND_RESULT_RUN_SCRIPT;
             gSpecialStatuses[cv->battlerAtk].queuedSwitch = QUEUED_SWITCH_OPEN_PARTY_SCREEN;
@@ -4808,8 +4822,11 @@ static enum MoveEndResult MoveEndHitEscape(struct BattleCalcValues *cv)
             for (enum BattlerId battler = 0; battler < gBattlersCount; battler++)
                 gBattleMons[battler].volatiles.tryEjectPack = FALSE;
 
-            result = MOVEEND_RESULT_RUN_SCRIPT;
-            BattleScriptCall(BattleScript_PartingShotEscape);
+            if (CanPivotUserSwitch(cv->battlerAtk))
+            {
+                result = MOVEEND_RESULT_RUN_SCRIPT;
+                BattleScriptCall(BattleScript_PartingShotEscape);
+            }
         }
         break;
     default:
