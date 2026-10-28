@@ -14,7 +14,8 @@ static EWRAM_DATA u16 sOtIdDigit = 0;
 static const u16 sLotteryPrizes[] =
 {
     ITEM_PP_UP,
-    ITEM_EXP_SHARE,
+    // The Gen 6+ Exp. Share is a key item from Devon Corp, so a second copy is useless
+    I_EXP_SHARE_ITEM >= GEN_6 ? ITEM_LUCKY_EGG : ITEM_EXP_SHARE,
     ITEM_MAX_REVIVE,
     ITEM_MASTER_BALL,
 };
