@@ -4817,16 +4817,13 @@ static enum MoveEndResult MoveEndHitEscape(struct BattleCalcValues *cv)
         }
         break;
     case EFFECT_PARTING_SHOT:
-        if (CanPartingShotTrigger(cv->battlerAtk))
+        if (CanPartingShotTrigger(cv->battlerAtk) && CanPivotUserSwitch(cv->battlerAtk))
         {
             for (enum BattlerId battler = 0; battler < gBattlersCount; battler++)
                 gBattleMons[battler].volatiles.tryEjectPack = FALSE;
 
-            if (CanPivotUserSwitch(cv->battlerAtk))
-            {
-                result = MOVEEND_RESULT_RUN_SCRIPT;
-                BattleScriptCall(BattleScript_PartingShotEscape);
-            }
+            result = MOVEEND_RESULT_RUN_SCRIPT;
+            BattleScriptCall(BattleScript_PartingShotEscape);
         }
         break;
     default:
@@ -5032,7 +5029,7 @@ static inline bool32 TryEjectPack(enum BattlerId battlerAtk, enum BattlerId ejec
      || gBattleMons[ejectPackBattler].volatiles.semiInvulnerable == STATE_COMMANDER
      || gBattleStruct->battlerState[ejectPackBattler].commanderSpecies != SPECIES_NONE
      || !CanBattlerSwitch(ejectPackBattler)
-     || (GetMoveEffect(gCurrentMove) == EFFECT_PARTING_SHOT && CanBattlerSwitch(battlerAtk)))
+     || (GetMoveEffect(gCurrentMove) == EFFECT_PARTING_SHOT && CanPivotUserSwitch(battlerAtk)))
         return FALSE;
 
     gBattleScripting.battler = ejectPackBattler;
