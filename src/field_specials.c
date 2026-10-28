@@ -1640,7 +1640,7 @@ u8 GetLeadMonIndex(void)
 
 enum Species ScriptGetPartyMonSpecies(void)
 {
-    return GetMonData(&gParties[B_TRAINER_PLAYER][gSpecialVar_0x8004], MON_DATA_SPECIES_OR_EGG, NULL);
+    return GetBoxMonData(GetSelectedBoxMonFromPcOrParty(), MON_DATA_SPECIES_OR_EGG, NULL);
 }
 
 // Removed for Emerald
