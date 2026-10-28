@@ -390,7 +390,14 @@ void MapHeaderRunScriptType(u8 tag)
 {
     const u8 *ptr = MapHeaderGetScriptTable(tag);
     if (ptr)
+    {
+        // The map script's `end` clears FLAG_SAFE_FOLLOWER_MOVEMENT. Keep it for a script
+        // that is still running, such as a trainer's post-battle script back on the field.
+        bool32 safeFollowerMovement = FlagGet(FLAG_SAFE_FOLLOWER_MOVEMENT);
         RunScriptImmediately(ptr);
+        if (safeFollowerMovement)
+            FlagSet(FLAG_SAFE_FOLLOWER_MOVEMENT);
+    }
 }
 
 const u8 *MapHeaderCheckScriptTable(u8 tag)
