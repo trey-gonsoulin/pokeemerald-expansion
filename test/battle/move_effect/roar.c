@@ -44,6 +44,58 @@ DOUBLE_BATTLE_TEST("Roar switches the target with a random non-battler, non-fain
     }
 }
 
+// In a multi battle each trainer's Pokemon sit at the start of that trainer's own party.
+MULTI_BATTLE_TEST("Roar switches opponent B's Pokemon with opponent B's replacement in a multi battle")
+{
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET);
+        PARTNER(SPECIES_WOBBUFFET);
+        OPPONENT_A(SPECIES_WOBBUFFET);
+        OPPONENT_B(SPECIES_WOBBUFFET);
+        OPPONENT_B(SPECIES_BULBASAUR);
+    } WHEN {
+        TURN { MOVE(playerLeft, MOVE_ROAR, target: opponentRight); }
+    } SCENE {
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_ROAR, playerLeft);
+        MESSAGE("The opposing Bulbasaur was dragged out!");
+    }
+}
+
+MULTI_BATTLE_TEST("Roar switches the partner's Pokemon with the partner's replacement in a multi battle")
+{
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET);
+        PARTNER(SPECIES_WOBBUFFET);
+        PARTNER(SPECIES_WYNAUT);
+        OPPONENT_A(SPECIES_WOBBUFFET);
+        OPPONENT_B(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(opponentLeft, MOVE_ROAR, target: playerRight); }
+    } SCENE {
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_ROAR, opponentLeft);
+        MESSAGE("Wynaut was dragged out!");
+    }
+}
+
+// Opponent A's active party index belongs to opponent A's party, so it doesn't rule out opponent B's Pokemon at that index.
+MULTI_BATTLE_TEST("Roar can drag out opponent B's Pokemon at the party index of opponent A's active Pokemon")
+{
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET);
+        PARTNER(SPECIES_WOBBUFFET);
+        OPPONENT_A(SPECIES_WOBBUFFET) { HP(1); }
+        OPPONENT_A(SPECIES_WYNAUT);
+        OPPONENT_B(SPECIES_WOBBUFFET);
+        OPPONENT_B(SPECIES_BULBASAUR);
+    } WHEN {
+        TURN { MOVE(playerLeft, MOVE_SCRATCH, target: opponentLeft); SEND_OUT(opponentLeft, 1); }
+        TURN { MOVE(playerLeft, MOVE_ROAR, target: opponentRight); }
+    } SCENE {
+        MESSAGE("The opposing Wobbuffet fainted!");
+        MESSAGE("The opposing Bulbasaur was dragged out!");
+    }
+}
+
 SINGLE_BATTLE_TEST("Roar fails if no replacements")
 {
     GIVEN {
