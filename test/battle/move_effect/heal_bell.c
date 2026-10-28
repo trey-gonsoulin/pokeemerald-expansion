@@ -294,3 +294,41 @@ MULTI_BATTLE_TEST("Heal Bell in a multi battle cures opponent A's benched Pokemo
         EXPECT_EQ(GetMonData(&gParties[B_TRAINER_OPPONENT_A][0], MON_DATA_STATUS), STATUS1_NONE);
     }
 }
+
+// The partner's active Pokemon is in its own party, which the user's party update doesn't reach.
+MULTI_BATTLE_TEST("Heal Bell in a multi battle cures the partner's party copy of its active Pokemon")
+{
+    enum Ability ability;
+    PARAMETRIZE { ability = ABILITY_SCRAPPY; }
+    PARAMETRIZE { ability = ABILITY_SOUNDPROOF; }
+    GIVEN {
+        ASSUME(IsSoundMove(MOVE_HEAL_BELL));
+        WITH_CONFIG(B_HEAL_BELL_SOUNDPROOF, GEN_8);
+        PLAYER(SPECIES_WOBBUFFET);
+        PARTNER(SPECIES_EXPLOUD) { Ability(ability); Status1(STATUS1_POISON); }
+        OPPONENT_A(SPECIES_WOBBUFFET);
+        OPPONENT_B(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(playerLeft, MOVE_HEAL_BELL); }
+    } THEN {
+        u32 status = ability == ABILITY_SOUNDPROOF ? STATUS1_POISON : STATUS1_NONE;
+        EXPECT_EQ(gBattleMons[B_BATTLER_2].status1, status);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PARTNER][0], MON_DATA_STATUS), status);
+    }
+}
+
+MULTI_BATTLE_TEST("Heal Bell in a multi battle cures opponent B's party copy of its active Pokemon")
+{
+    GIVEN {
+        ASSUME(IsSoundMove(MOVE_HEAL_BELL));
+        PLAYER(SPECIES_WOBBUFFET);
+        PARTNER(SPECIES_WOBBUFFET);
+        OPPONENT_A(SPECIES_WOBBUFFET);
+        OPPONENT_B(SPECIES_WOBBUFFET) { Status1(STATUS1_POISON); }
+    } WHEN {
+        TURN { MOVE(opponentLeft, MOVE_HEAL_BELL); }
+    } THEN {
+        EXPECT_EQ(gBattleMons[B_BATTLER_3].status1, STATUS1_NONE);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_OPPONENT_B][0], MON_DATA_STATUS), STATUS1_NONE);
+    }
+}

@@ -4713,12 +4713,8 @@ static void SpriteCB_MonIconOnLvlUpBanner(struct Sprite *sprite)
 
 static bool32 IsMonGettingExpSentOut(void)
 {
-    if (gBattlerPartyIndexes[0] == gBattleStruct->expGetterMonId)
-        return TRUE;
-    if (IsDoubleBattle() && gBattlerPartyIndexes[2] == gBattleStruct->expGetterMonId)
-        return TRUE;
-
-    return FALSE;
+    // Battler 2 can be the in-game partner's Pokémon, whose party index is in its own party.
+    return GetBattlerFromPlayerPartyId(gBattleStruct->expGetterMonId) != MAX_BATTLERS_COUNT;
 }
 
 static void Cmd_resetsentmonsvalue(void)
@@ -6408,6 +6404,13 @@ static void Cmd_healpartystatus(void)
         {
             gBattleMons[partner].status1 = 0;
             gBattleMons[partner].volatiles.nightmare = FALSE;
+            // In a multi battle the partner's Pokémon is in its own party, which the loop below doesn't reach.
+            if (!BattlersShareParty(gBattlerAttacker, partner))
+            {
+                TryDeactivateSleepClause(partner, gBattlerPartyIndexes[partner]);
+                BtlController_EmitSetMonData(partner, B_COMM_TO_CONTROLLER, REQUEST_STATUS_BATTLE, 1u << gBattlerPartyIndexes[partner], sizeof(zero), &zero);
+                MarkBattlerForControllerExec(partner);
+            }
         }
         else
         {
