@@ -472,3 +472,73 @@ AI_ONE_VS_TWO_BATTLE_TEST("Exp award: Gen 6 Exp. Share gives experience once for
         EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][2], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WYNAUT, 25) + (gain / 2) * kos);
     }
 }
+
+// The partner's replacement has party index 1 in its own party, which used to mark the player's benched second Pokemon as sent in.
+AI_TWO_VS_ONE_BATTLE_TEST("Exp award: The partner's replacement does not give experience to the player's benched Pokemon")
+{
+    GIVEN {
+        WITH_EXP_AWARD_CONFIGS();
+        PLAYER(SPECIES_WOBBUFFET) { Level(50); Speed(50); }
+        PLAYER(SPECIES_WYNAUT) { Level(20); Speed(50); }
+        PARTNER(SPECIES_WOBBUFFET) { Level(50); Speed(100); Moves(MOVE_MEMENTO); }
+        PARTNER(SPECIES_WOBBUFFET) { Level(50); Speed(100); Moves(MOVE_CELEBRATE); }
+        OPPONENT(SPECIES_TREECKO) { Level(10); HP(1); Speed(10); Moves(MOVE_CELEBRATE); }
+        OPPONENT(SPECIES_TREECKO) { Level(10); Speed(10); Moves(MOVE_CELEBRATE); }
+        OPPONENT(SPECIES_TREECKO) { Level(10); Speed(10); Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        TURN { MOVE(playerLeft, MOVE_CELEBRATE); MOVE(playerRight, MOVE_MEMENTO, target: opponentRight); SEND_OUT(playerRight, 1); }
+        TURN { MOVE(playerLeft, MOVE_SCRATCH, target: opponentLeft); MOVE(playerRight, MOVE_CELEBRATE); }
+    } SCENE {
+        MESSAGE("The opposing Treecko fainted!");
+    } THEN {
+        EXPECT_EQ(gBattlerPartyIndexes[GetBattlerAtPosition(B_POSITION_PLAYER_RIGHT)], 1);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WOBBUFFET, 50) + EXP_YIELD(SPECIES_TREECKO, 10));
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][1], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WYNAUT, 20));
+    }
+}
+
+// The partner's first Pokemon has party index 0 too, so matching on gBattlerPartyIndexes alone handed it the move as well.
+// The forget-a-move path (Cmd_yesnoboxlearnmove) had the same check, but tests always decline to learn there.
+AI_TWO_VS_ONE_BATTLE_TEST("Exp award: A move learned on level up is not given to the partner's Pokemon")
+{
+    GIVEN {
+        PLAYER(SPECIES_CATERPIE) { Level(8); Moves(MOVE_TACKLE); }
+        PARTNER(SPECIES_WOBBUFFET) { Level(8); Moves(MOVE_CELEBRATE); }
+        OPPONENT(SPECIES_BRELOOM) { Level(15); Moves(MOVE_MEMENTO); }
+        OPPONENT(SPECIES_BRELOOM) { Level(15); Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        TURN { }
+    } THEN {
+        enum BattlerId player = GetBattlerAtPosition(B_POSITION_PLAYER_LEFT);
+        enum BattlerId partner = GetBattlerAtPosition(B_POSITION_PLAYER_RIGHT);
+        u32 playerKnows = 0, partnerKnows = 0;
+        for (u32 i = 0; i < MAX_MON_MOVES; i++)
+        {
+            playerKnows += gBattleMons[player].moves[i] == MOVE_BUG_BITE;
+            partnerKnows += gBattleMons[partner].moves[i] == MOVE_BUG_BITE;
+        }
+        EXPECT_EQ(gBattlerPartyIndexes[partner], 0);
+        EXPECT_EQ(playerKnows, 1);
+        EXPECT_EQ(partnerKnows, 0);
+    }
+}
+
+// The partner's first Pokemon has party index 0 too, so the player controller used to play the
+// level-up animation on it and refresh its healthbox with the player's Pokemon.
+AI_TWO_VS_ONE_BATTLE_TEST("Exp award: The level-up animation plays on the player's Pokemon, not the partner's")
+{
+    GIVEN {
+        PLAYER(SPECIES_CATERPIE) { Level(5); Moves(MOVE_TACKLE); }
+        PARTNER(SPECIES_WOBBUFFET) { Level(50); Moves(MOVE_CELEBRATE); }
+        OPPONENT(SPECIES_TREECKO) { Level(20); HP(1); Moves(MOVE_CELEBRATE); }
+        OPPONENT(SPECIES_TREECKO) { Level(20); Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        TURN { MOVE(playerLeft, MOVE_TACKLE, target: opponentLeft); }
+    } SCENE {
+        MESSAGE("The opposing Treecko fainted!");
+        ANIMATION(ANIM_TYPE_SPECIAL, B_ANIM_LVL_UP, playerLeft);
+    } THEN {
+        EXPECT_EQ(gBattlerPartyIndexes[GetBattlerAtPosition(B_POSITION_PLAYER_RIGHT)], 0);
+        EXPECT_GT(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_LEVEL), 5);
+    }
+}

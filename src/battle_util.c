@@ -1289,7 +1289,10 @@ void ResetSentPokesToOpponentValue(void)
     gSentPokesToOpponent[1] = 0;
 
     for (i = 0; i < gBattlersCount; i += 2)
-        bits |= 1u << gBattlerPartyIndexes[i];
+    {
+        if (GetBattlerTrainer(i) == B_TRAINER_PLAYER)
+            bits |= 1u << gBattlerPartyIndexes[i];
+    }
 
     for (i = 1; i < gBattlersCount; i += 2)
         gSentPokesToOpponent[(i & BIT_FLANK) >> 1] = bits;
@@ -1307,7 +1310,7 @@ void OpponentSwitchInResetSentPokesToOpponentValue(enum BattlerId battler)
 
         for (i = 0; i < gBattlersCount; i += 2)
         {
-            if (!(gAbsentBattlerFlags & (1u << i)))
+            if (!(gAbsentBattlerFlags & (1u << i)) && GetBattlerTrainer(i) == B_TRAINER_PLAYER)
                 bits |= 1u << gBattlerPartyIndexes[i];
         }
         gSentPokesToOpponent[flank] = bits;
@@ -1320,7 +1323,7 @@ void UpdateSentPokesToOpponentValue(enum BattlerId battler)
     {
         OpponentSwitchInResetSentPokesToOpponentValue(battler);
     }
-    else
+    else if (GetBattlerTrainer(battler) == B_TRAINER_PLAYER) // The partner's party indexes are not the player's
     {
         s32 i;
         for (i = 1; i < gBattlersCount; i++)
