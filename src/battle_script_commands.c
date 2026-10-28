@@ -6427,7 +6427,8 @@ static void Cmd_healpartystatus(void)
         {
             enum Ability ability;
             bool32 isAttacker = gBattlerPartyIndexes[gBattlerAttacker] == i;
-            bool32 isDoublesPartner = gBattlerPartyIndexes[partner] == i && IsBattlerAlive(partner);
+            bool32 isDoublesPartner = gBattlerPartyIndexes[partner] == i && IsBattlerAlive(partner)
+                                   && BattlersShareParty(gBattlerAttacker, partner);
 
             if (GetConfig(B_HEAL_BELL_SOUNDPROOF) == GEN_5
              || (GetConfig(B_HEAL_BELL_SOUNDPROOF) >= GEN_8 && isAttacker))
@@ -9225,6 +9226,17 @@ void ApplyExperienceMultipliers(s32 *expAmount, u8 expGetterMonId, u8 faintedBat
     }
 }
 
+// Whether the party mon an item is used on is the user's partner's active battler.
+// Whenever the two don't share a party (multi, 2v1, two-opponent and link multi battles),
+// a matching party index means nothing.
+static bool32 IsItemTargetActivePartner(enum BattlerId battler)
+{
+    enum BattlerId partner = GetPartnerBattler(battler);
+    return IsDoubleBattle()
+        && BattlersShareParty(battler, partner)
+        && gBattleStruct->itemPartyIndex[battler] == gBattlerPartyIndexes[partner];
+}
+
 void BS_ItemRestoreHP(void)
 {
     NATIVE_ARGS(const u8 *alreadyMaxHpInstr, const u8 *restoreBattlerInstr);
@@ -9249,7 +9261,7 @@ void BS_ItemRestoreHP(void)
         // Check if the recipient is an active battler.
         if (gBattleStruct->itemPartyIndex[gBattlerAttacker] == gBattlerPartyIndexes[gBattlerAttacker])
             battler = gBattlerAttacker;
-        else if (IsDoubleBattle() && gBattleStruct->itemPartyIndex[gBattlerAttacker] == gBattlerPartyIndexes[GetPartnerBattler(gBattlerAttacker)])
+        else if (IsItemTargetActivePartner(gBattlerAttacker))
             battler = GetPartnerBattler(gBattlerAttacker);
 
         // Get amount to heal.
@@ -9286,8 +9298,8 @@ void BS_ItemRestoreHP(void)
             SetMonData(&party[gBattleStruct->itemPartyIndex[gBattlerAttacker]], MON_DATA_HP, &hp);
 
             enum BattlerId partner = GetPartnerBattler(gBattlerAttacker);
-            // Absent battlers on the field need to be replaced
-            if (IsDoubleBattle() && (gAbsentBattlerFlags & (1u << partner)))
+            // Absent battlers on the field need to be replaced, but only from their own party
+            if (IsDoubleBattle() && BattlersShareParty(gBattlerAttacker, partner) && (gAbsentBattlerFlags & (1u << partner)))
             {
                 gAbsentBattlerFlags &= ~(1u << partner);
                 gBattleCommunication[MULTIUSE_STATE] = TRUE;
@@ -9312,8 +9324,7 @@ void BS_ItemCureStatus(void)
         statusChanged = ItemHealMonVolatile(gBattlerAttacker, gLastUsedItem);
         targetBattler = gBattlerAttacker;
     }
-    else if (IsDoubleBattle()
-     && gBattleStruct->itemPartyIndex[gBattlerAttacker] == gBattlerPartyIndexes[GetPartnerBattler(gBattlerAttacker)])
+    else if (IsItemTargetActivePartner(gBattlerAttacker))
     {
         statusChanged = ItemHealMonVolatile(GetPartnerBattler(gBattlerAttacker), gLastUsedItem);
         targetBattler = GetPartnerBattler(gBattlerAttacker);
@@ -9398,8 +9409,7 @@ void BS_ItemRestorePP(void)
     // Check if the recipient is an active battler.
     if (gBattleStruct->itemPartyIndex[gBattlerAttacker] == gBattlerPartyIndexes[gBattlerAttacker])
         battler = gBattlerAttacker;
-    else if (IsDoubleBattle()
-                && gBattleStruct->itemPartyIndex[gBattlerAttacker] == gBattlerPartyIndexes[GetPartnerBattler(gBattlerAttacker)])
+    else if (IsItemTargetActivePartner(gBattlerAttacker))
         battler = GetPartnerBattler(gBattlerAttacker);
 
     // Heal PP!
@@ -9886,8 +9896,9 @@ void BS_TryRevivalBlessing(void)
         PREPARE_SPECIES_BUFFER(gBattleTextBuff1, GetMonData(&party[gSelectedMonPartyId], MON_DATA_SPECIES));
 
         // If an on-field battler is revived, it needs to be sent out again.
-        if (IsDoubleBattle() &&
-            gBattlerPartyIndexes[GetPartnerBattler(gBattlerAttacker)] == gSelectedMonPartyId)
+        if (IsDoubleBattle()
+         && BattlersShareParty(gBattlerAttacker, GetPartnerBattler(gBattlerAttacker))
+         && gBattlerPartyIndexes[GetPartnerBattler(gBattlerAttacker)] == gSelectedMonPartyId)
         {
             enum BattlerId i = GetPartnerBattler(gBattlerAttacker);
             gAbsentBattlerFlags &= ~(1u << i);
@@ -9963,7 +9974,8 @@ void BS_CheckPokeFlute(void)
         }
     }
 
-    for (enum BattlerPosition position = B_POSITION_PLAYER_LEFT; position < MAX_POSITION_COUNT; position++)
+    // Only positions with a battler: a single battle has no battler at the right positions to run the update.
+    for (enum BattlerPosition position = B_POSITION_PLAYER_LEFT; position < gBattlersCount; position++)
     {
         enum BattleTrainer trainer = GetBattlerTrainer(GetBattlerAtPosition(position));
         UpdatePokeFlutePartyStatus(gParties[trainer], position);

@@ -124,3 +124,23 @@ SINGLE_BATTLE_TEST("Revival Blessing keeps Mimikyu Busted forms and Eiscue Noice
         HP_BAR(player);
     }
 }
+
+MULTI_BATTLE_TEST("Revival Blessing in a multi battle doesn't send the partner's battler out again")
+{
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET) { HP(1); }
+        PLAYER(SPECIES_WYNAUT);
+        PARTNER(SPECIES_WOBBUFFET);
+        OPPONENT_A(SPECIES_WOBBUFFET);
+        OPPONENT_B(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(opponentLeft, MOVE_SCRATCH, target: playerLeft); MOVE(playerRight, MOVE_SWORDS_DANCE); SEND_OUT(playerLeft, 1); }
+        TURN { MOVE(playerLeft, MOVE_REVIVAL_BLESSING, partyIndex: 0); }
+    } SCENE {
+        MESSAGE("Wobbuffet was revived and is ready to fight again!");
+    } THEN {
+        // The player's revived mon shares party index 0 with the partner's active battler.
+        EXPECT_EQ(gBattlerPartyIndexes[B_BATTLER_2], 0);
+        EXPECT_EQ(playerRight->statStages[STAT_ATK], DEFAULT_STAT_STAGE + 2);
+    }
+}

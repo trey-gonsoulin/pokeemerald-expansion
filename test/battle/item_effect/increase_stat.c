@@ -1,4 +1,5 @@
 #include "global.h"
+#include "item_use.h"
 #include "overworld.h"
 #include "test/battle.h"
 #include "constants/item_effects.h"
@@ -332,5 +333,40 @@ SINGLE_BATTLE_TEST("Using X items in battle where Pokemon was met raises Friends
             EXPECT_EQ(player->friendship, X_ITEM_MAX_FRIENDSHIP);
         else
             EXPECT_EQ(player->friendship, (ITEM_FRIENDSHIP_MAPSEC_BONUS + X_ITEM_FRIENDSHIP_INCREASE));
+    }
+}
+
+SINGLE_BATTLE_TEST("X Attack can be used from the bag on a Pokemon switched in from a later party slot")
+{
+    GIVEN {
+        ASSUME(gItemsInfo[ITEM_X_ATTACK].battleUsage == EFFECT_ITEM_INCREASE_STAT);
+        ASSUME(gItemsInfo[ITEM_X_ATTACK].type == ITEM_USE_BATTLER);
+        PLAYER(SPECIES_WOBBUFFET);
+        PLAYER(SPECIES_WOBBUFFET);
+        PLAYER(SPECIES_WYNAUT);
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { SWITCH(player, 2); }
+    } THEN {
+        gBattlerInMenuId = B_BATTLER_0;
+        EXPECT_EQ(CannotUseItemFromBagInBattle(ITEM_X_ATTACK), FALSE);
+        EXPECT_EQ(gBattleStruct->itemPartyIndex[B_BATTLER_0], 2);
+    }
+}
+
+SINGLE_BATTLE_TEST("X Attack can't be used from the bag on a Pokemon switched in from a later party slot at +6 Attack")
+{
+    GIVEN {
+        ASSUME(gItemsInfo[ITEM_X_ATTACK].battleUsage == EFFECT_ITEM_INCREASE_STAT);
+        PLAYER(SPECIES_WOBBUFFET);
+        PLAYER(SPECIES_WYNAUT);
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { SWITCH(player, 1); }
+        TURN { MOVE(player, MOVE_BELLY_DRUM); }
+    } THEN {
+        gBattlerInMenuId = B_BATTLER_0;
+        EXPECT_EQ(player->statStages[STAT_ATK], MAX_STAT_STAGE);
+        EXPECT_EQ(CannotUseItemFromBagInBattle(ITEM_X_ATTACK), TRUE);
     }
 }

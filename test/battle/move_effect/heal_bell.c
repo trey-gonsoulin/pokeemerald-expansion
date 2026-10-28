@@ -255,3 +255,42 @@ DOUBLE_BATTLE_TEST("Aromatherapy will be blocked on ally by Sap Sipper but not u
         EXPECT_EQ(playerRight->statStages[STAT_ATK], DEFAULT_STAT_STAGE + 1);
     }
 }
+
+MULTI_BATTLE_TEST("Heal Bell in a multi battle cures a benched Pokemon that shares a party index with the partner's Soundproof battler")
+{
+    GIVEN {
+        ASSUME(IsSoundMove(MOVE_HEAL_BELL));
+        WITH_CONFIG(B_HEAL_BELL_SOUNDPROOF, GEN_8);
+        PLAYER(SPECIES_WOBBUFFET) { Status1(STATUS1_POISON); }
+        PLAYER(SPECIES_WYNAUT);
+        PARTNER(SPECIES_EXPLOUD) { Ability(ABILITY_SOUNDPROOF); }
+        OPPONENT_A(SPECIES_WOBBUFFET);
+        OPPONENT_B(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { SWITCH(playerLeft, 1); }
+        TURN { MOVE(playerLeft, MOVE_HEAL_BELL); }
+    } THEN {
+        // The partner's active battler is at its own party index 0, like the benched Wobbuffet.
+        EXPECT_EQ(gBattlerPartyIndexes[B_BATTLER_2], 0);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_STATUS), STATUS1_NONE);
+    }
+}
+
+MULTI_BATTLE_TEST("Heal Bell in a multi battle cures opponent A's benched Pokemon that shares a party index with opponent B's Soundproof battler")
+{
+    GIVEN {
+        ASSUME(IsSoundMove(MOVE_HEAL_BELL));
+        WITH_CONFIG(B_HEAL_BELL_SOUNDPROOF, GEN_8);
+        PLAYER(SPECIES_WOBBUFFET);
+        PARTNER(SPECIES_WOBBUFFET);
+        OPPONENT_A(SPECIES_WOBBUFFET) { Status1(STATUS1_POISON); }
+        OPPONENT_A(SPECIES_WYNAUT);
+        OPPONENT_B(SPECIES_EXPLOUD) { Ability(ABILITY_SOUNDPROOF); }
+    } WHEN {
+        TURN { SWITCH(opponentLeft, 1); }
+        TURN { MOVE(opponentLeft, MOVE_HEAL_BELL); }
+    } THEN {
+        EXPECT_EQ(gBattlerPartyIndexes[B_BATTLER_3], 0);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_OPPONENT_A][0], MON_DATA_STATUS), STATUS1_NONE);
+    }
+}
