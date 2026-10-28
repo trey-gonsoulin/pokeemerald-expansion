@@ -5520,6 +5520,15 @@ static void Cmd_forcerandomswitch(void)
             battler2PartyId = gBattlerPartyIndexes[gBattlerTarget];
             battler1PartyId = gBattlerPartyIndexes[GetPartnerBattler(gBattlerTarget)];
         }
+        else if (!(gBattleTypeFlags & BATTLE_TYPE_LINK) && !BattlersShareParty(gBattlerTarget, GetPartnerBattler(gBattlerTarget)))
+        {
+            // The target's trainer has a party of its own (in-game multi and two-trainer battles),
+            // so the whole party is theirs and the partner's party index means nothing here.
+            firstMonId = 0;
+            lastMonId = PARTY_SIZE;
+            battler2PartyId = gBattlerPartyIndexes[gBattlerTarget];
+            battler1PartyId = PARTY_SIZE;
+        }
         else if ((gBattleTypeFlags & BATTLE_TYPE_BATTLE_TOWER && gBattleTypeFlags & BATTLE_TYPE_LINK)
             || (gBattleTypeFlags & BATTLE_TYPE_BATTLE_TOWER && gBattleTypeFlags & BATTLE_TYPE_RECORDED_LINK)
             || (gBattleTypeFlags & BATTLE_TYPE_INGAME_PARTNER))
