@@ -1177,6 +1177,7 @@ static void BattleSetup_ConfigureFacilityTrainerBattle(TrainerBattleParameter *b
     PUSH(EventSnippet_Lock)
     PUSH(EventSnippet_FacePlayer)
     PUSH(EventSnippet_RevealTrainer)
+    PUSH_IF_SET(EventSnippet_ClearSafeFollowerMovement, !OW_FOLLOWERS_SCRIPT_MOVEMENT)
 
     if (GetTrainerFlag()) {
         PUSH(EventSnippet_GotoPostBattleScript)
@@ -1223,6 +1224,7 @@ static void BattleSetup_ConfigureTrainerBattle(TrainerBattleParameter *battlePar
     PUSH       (EventSnippet_Lock)
     PUSH_IF_SET(EventSnippet_FacePlayer, battleParams->params.facePlayer)
     PUSH       (EventSnippet_RevealTrainer)
+    PUSH_IF_SET(EventSnippet_ClearSafeFollowerMovement, !OW_FOLLOWERS_SCRIPT_MOVEMENT)
 
     bool32 isTrainerDefeated = !battleParams->params.skipFlagCheck && GetTrainerFlag();
 

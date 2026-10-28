@@ -151,6 +151,12 @@ EventSnippet_TrainerApproach::
 EventSnippet_RevealTrainer::
 	applymovement VAR_LAST_TALKED, Movement_RevealTrainer
 	waitmovement 0
+	return
+
+@ Only pushed when OW_FOLLOWERS_SCRIPT_MOVEMENT is FALSE. When it is TRUE, every script
+@ starts with the flag set, so clearing it here would put the follower in its Poké Ball
+@ as soon as an NPC moves in a post-battle script (the Winstrates on Route 111).
+EventSnippet_ClearSafeFollowerMovement::
 	clearflag FLAG_SAFE_FOLLOWER_MOVEMENT
 	return
 
