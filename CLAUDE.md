@@ -12,6 +12,9 @@ Emerald Plus is a personal fork of [rh-hideout/pokeemerald-expansion](https://gi
 
 What the fork adds over upstream (`git diff origin/master...origin/emerald-plus --stat`):
 - Personal-playthrough config flips in `include/config/` (reusable TMs, Gen 6 Exp. Share on `FLAG_UNUSED_0x264`, followers, HGSS Pokédex, IV/EV summary, forgettable HMs).
+- Prize swaps so those config flips don't hand out useless items (#102, #103). These are fork changes, not upstream fixes:
+  - With `I_EXP_SHARE_ITEM >= GEN_6`, the Lottery Corner 3-digit prize is a Lucky Egg instead of the key-item Exp. Share (`sLotteryPrizes`, `src/lottery_corner.c`). Covered by `test/lottery_corner.c`.
+  - With reusable TMs, a TM the player already owns (bag or PC) becomes a PP Up: Trainer Hill's grand prize (`GiveChallengePrize`, `src/trainer_hill.c`, covered by `test/trainer_hill.c`) and the Game Corner TM prizes, which offer the PP Up for the same coins with a yes/no (`data/maps/MauvilleCity_GameCorner/scripts.inc`, no test).
 - Five carried upstream fixes. Upstream has none of them yet, so on every upstream sync check each one and drop it once upstream fixes the bug:
   - Exp from opponent B's Pokémon in two-trainer battles: `GetGivenExpMonsIndex` in `src/battle_util.c`. Covered by `test/battle/exp.c`.
   - Exp when the last foe faints from end-of-turn damage: the `ENDTURN_FAINTED_MON_ACTIONS` check in `DoEndTurnEffects`, `src/battle_end_turn.c`. Covered by `test/battle/exp.c`.
