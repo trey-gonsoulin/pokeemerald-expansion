@@ -5512,6 +5512,10 @@ static void Cmd_forcerandomswitch(void)
        )
     {
         party = GetBattlerParty(gBattlerTarget);
+        bool32 isLinkMultiLayout = (gBattleTypeFlags & BATTLE_TYPE_LINK)
+                                || (gBattleTypeFlags & BATTLE_TYPE_RECORDED_LINK
+                                 && gBattleTypeFlags & (BATTLE_TYPE_MULTI | BATTLE_TYPE_BATTLE_TOWER)
+                                 && !(gBattleTypeFlags & BATTLE_TYPE_INGAME_PARTNER));
 
         if (BATTLE_TWO_VS_ONE_OPPONENT && !IsOnPlayerSide(gBattlerTarget))
         {
@@ -5520,9 +5524,7 @@ static void Cmd_forcerandomswitch(void)
             battler2PartyId = gBattlerPartyIndexes[gBattlerTarget];
             battler1PartyId = gBattlerPartyIndexes[GetPartnerBattler(gBattlerTarget)];
         }
-        else if (!BattlersShareParty(gBattlerTarget, GetPartnerBattler(gBattlerTarget))
-              && !(gBattleTypeFlags & BATTLE_TYPE_LINK)
-              && !(gBattleTypeFlags & BATTLE_TYPE_RECORDED_LINK && gBattleTypeFlags & (BATTLE_TYPE_MULTI | BATTLE_TYPE_BATTLE_TOWER) && !(gBattleTypeFlags & BATTLE_TYPE_INGAME_PARTNER)))
+        else if (!BattlersShareParty(gBattlerTarget, GetPartnerBattler(gBattlerTarget)) && !isLinkMultiLayout)
         {
             // The target's trainer has a party of its own (in-game multi and two-trainer battles),
             // so the partner's party index means nothing here. Link multis and their replays keep the layout below.
