@@ -299,19 +299,22 @@ MULTI_BATTLE_TEST("Heal Bell in a multi battle cures opponent A's benched Pokemo
 MULTI_BATTLE_TEST("Heal Bell in a multi battle cures the partner's party copy of its active Pokemon")
 {
     enum Ability ability;
-    PARAMETRIZE { ability = ABILITY_SCRAPPY; }
-    PARAMETRIZE { ability = ABILITY_SOUNDPROOF; }
+    enum Move move;
+    PARAMETRIZE { move = MOVE_HEAL_BELL;    ability = ABILITY_SCRAPPY; }
+    PARAMETRIZE { move = MOVE_HEAL_BELL;    ability = ABILITY_SOUNDPROOF; }
+    PARAMETRIZE { move = MOVE_AROMATHERAPY; ability = ABILITY_SOUNDPROOF; }
     GIVEN {
         ASSUME(IsSoundMove(MOVE_HEAL_BELL));
+        ASSUME(!IsSoundMove(MOVE_AROMATHERAPY));
         WITH_CONFIG(B_HEAL_BELL_SOUNDPROOF, GEN_8);
         PLAYER(SPECIES_WOBBUFFET);
         PARTNER(SPECIES_EXPLOUD) { Ability(ability); Status1(STATUS1_POISON); }
         OPPONENT_A(SPECIES_WOBBUFFET);
         OPPONENT_B(SPECIES_WOBBUFFET);
     } WHEN {
-        TURN { MOVE(playerLeft, MOVE_HEAL_BELL); }
+        TURN { MOVE(playerLeft, move); }
     } THEN {
-        u32 status = ability == ABILITY_SOUNDPROOF ? STATUS1_POISON : STATUS1_NONE;
+        u32 status = (move == MOVE_HEAL_BELL && ability == ABILITY_SOUNDPROOF) ? STATUS1_POISON : STATUS1_NONE;
         EXPECT_EQ(gBattleMons[B_BATTLER_2].status1, status);
         EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PARTNER][0], MON_DATA_STATUS), status);
     }
