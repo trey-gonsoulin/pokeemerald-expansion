@@ -5518,75 +5518,18 @@ static void Cmd_forcerandomswitch(void)
     {
         party = GetBattlerParty(gBattlerTarget);
 
-        if (BATTLE_TWO_VS_ONE_OPPONENT && !IsOnPlayerSide(gBattlerTarget))
-        {
-            firstMonId = 0;
-            lastMonId = 6;
-            battler2PartyId = gBattlerPartyIndexes[gBattlerTarget];
-            battler1PartyId = gBattlerPartyIndexes[GetPartnerBattler(gBattlerTarget)];
-        }
-        else if ((gBattleTypeFlags & BATTLE_TYPE_BATTLE_TOWER && gBattleTypeFlags & BATTLE_TYPE_LINK)
-            || (gBattleTypeFlags & BATTLE_TYPE_BATTLE_TOWER && gBattleTypeFlags & BATTLE_TYPE_RECORDED_LINK)
-            || (gBattleTypeFlags & BATTLE_TYPE_INGAME_PARTNER))
-        {
-            if ((gBattlerTarget & BIT_FLANK) != B_FLANK_LEFT)
-            {
-                firstMonId = PARTY_SIZE / 2;
-                lastMonId = PARTY_SIZE;
-            }
-            else
-            {
-                firstMonId = 0;
-                lastMonId = PARTY_SIZE / 2;
-            }
-            battler2PartyId = gBattlerPartyIndexes[gBattlerTarget];
-            battler1PartyId = gBattlerPartyIndexes[GetPartnerBattler(gBattlerTarget)];
-        }
-        else if ((gBattleTypeFlags & BATTLE_TYPE_MULTI && gBattleTypeFlags & BATTLE_TYPE_LINK)
-                 || (gBattleTypeFlags & BATTLE_TYPE_MULTI && gBattleTypeFlags & BATTLE_TYPE_RECORDED_LINK))
-        {
-            firstMonId = 0;
-            lastMonId = PARTY_SIZE / 2;
-            battler2PartyId = gBattlerPartyIndexes[gBattlerTarget];
-            battler1PartyId = gBattlerPartyIndexes[GetPartnerBattler(gBattlerTarget)];
-        }
-        else if (gBattleTypeFlags & BATTLE_TYPE_TWO_OPPONENTS)
-        {
-            if (IsOnPlayerSide(gBattlerTarget))
-            {
-                firstMonId = 0;
-                lastMonId = PARTY_SIZE;
-            }
-            else
-            {
-                if ((gBattlerTarget & BIT_FLANK) != B_FLANK_LEFT)
-                {
-                    firstMonId = PARTY_SIZE / 2;
-                    lastMonId = PARTY_SIZE;
-                }
-                else
-                {
-                    firstMonId = 0;
-                    lastMonId = PARTY_SIZE / 2;
-                }
-            }
-            battler2PartyId = gBattlerPartyIndexes[gBattlerTarget];
-            battler1PartyId = gBattlerPartyIndexes[GetPartnerBattler(gBattlerTarget)];
-        }
-        else if (IsDoubleBattle())
-        {
-            firstMonId = 0;
-            lastMonId = PARTY_SIZE;
-            battler2PartyId = gBattlerPartyIndexes[gBattlerTarget];
-            battler1PartyId = gBattlerPartyIndexes[GetPartnerBattler(gBattlerTarget)];
-        }
+        // Each trainer's Pokémon start at index 0 of that trainer's own party (see CanBattlerSwitch),
+        // and a partner from another party doesn't rule out any index.
+        firstMonId = 0;
+        if (BattleSideHasTwoTrainers(GetBattlerSide(gBattlerTarget)) && !AreMultiPartiesFullTeams())
+            lastMonId = MULTI_PARTY_SIZE;
         else
-        {
-            firstMonId = 0;
             lastMonId = PARTY_SIZE;
-            battler2PartyId = gBattlerPartyIndexes[gBattlerTarget]; // there is only one Pokémon out in single battles
-            battler1PartyId = gBattlerPartyIndexes[gBattlerTarget];
-        }
+        battler2PartyId = gBattlerPartyIndexes[gBattlerTarget];
+        if (IsDoubleBattle() && BattlersShareParty(gBattlerTarget, GetPartnerBattler(gBattlerTarget)))
+            battler1PartyId = gBattlerPartyIndexes[GetPartnerBattler(gBattlerTarget)];
+        else
+            battler1PartyId = battler2PartyId;
 
         for (u32 i = firstMonId; i < lastMonId; i++)
         {
