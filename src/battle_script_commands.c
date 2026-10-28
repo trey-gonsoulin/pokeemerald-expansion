@@ -5465,7 +5465,6 @@ static void Cmd_forcerandomswitch(void)
     s32 battler1PartyId = 0;
     s32 battler2PartyId = 0;
 
-    s32 firstMonId;
     s32 lastMonId = 0; // + 1
     struct Pokemon *party = NULL;
     u8 validMons[PARTY_SIZE];
@@ -5520,7 +5519,6 @@ static void Cmd_forcerandomswitch(void)
 
         // Each trainer's Pokémon start at index 0 of that trainer's own party (see CanBattlerSwitch),
         // and a partner from another party doesn't rule out any index.
-        firstMonId = 0;
         if (BattleSideHasTwoTrainers(GetBattlerSide(gBattlerTarget)) && !AreMultiPartiesFullTeams())
             lastMonId = MULTI_PARTY_SIZE;
         else
@@ -5531,7 +5529,7 @@ static void Cmd_forcerandomswitch(void)
         else
             battler1PartyId = battler2PartyId;
 
-        for (u32 i = firstMonId; i < lastMonId; i++)
+        for (u32 i = 0; i < lastMonId; i++)
         {
             if (GetMonData(&party[i], MON_DATA_SPECIES) != SPECIES_NONE
              && !GetMonData(&party[i], MON_DATA_IS_EGG)
