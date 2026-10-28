@@ -522,3 +522,23 @@ AI_TWO_VS_ONE_BATTLE_TEST("Exp award: A move learned on level up is not given to
         EXPECT_EQ(partnerKnows, 0);
     }
 }
+
+// The partner's first Pokemon has party index 0 too, so the player controller used to play the
+// level-up animation on it and refresh its healthbox with the player's Pokemon.
+AI_TWO_VS_ONE_BATTLE_TEST("Exp award: The level-up animation plays on the player's Pokemon, not the partner's")
+{
+    GIVEN {
+        PLAYER(SPECIES_CATERPIE) { Level(5); Moves(MOVE_TACKLE); }
+        PARTNER(SPECIES_WOBBUFFET) { Level(50); Moves(MOVE_CELEBRATE); }
+        OPPONENT(SPECIES_TREECKO) { Level(20); HP(1); Moves(MOVE_CELEBRATE); }
+        OPPONENT(SPECIES_TREECKO) { Level(20); Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        TURN { MOVE(playerLeft, MOVE_TACKLE, target: opponentLeft); }
+    } SCENE {
+        MESSAGE("The opposing Treecko fainted!");
+        ANIMATION(ANIM_TYPE_SPECIAL, B_ANIM_LVL_UP, playerLeft);
+    } THEN {
+        EXPECT_EQ(gBattlerPartyIndexes[GetBattlerAtPosition(B_POSITION_PLAYER_RIGHT)], 0);
+        EXPECT_GT(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_LEVEL), 5);
+    }
+}
