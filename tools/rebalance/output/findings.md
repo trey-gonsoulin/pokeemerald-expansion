@@ -6,6 +6,7 @@
 - trainers.party has **1,825** Pokémon, not 1,835: 436 with set moves and **1,389** on default moves. The extra 10 were the header comment's paragraphs; the generated `trainers.h` agrees.
 - 640 trainers have exactly `Check Bad Move` and 173 exactly `Basic Trainer` (660 and 179 when counting any trainer whose AI includes the flag). 16 trainers have no AI line.
 - 25 of the 30 story bosses run plain `Basic Trainer`.
+- Since #129 all 30 story bosses, and the 92 boss teams in all (gym rematches, every rival team, Wally, Maxie, Archie, Tabitha, Matt, Shelly and the post-game Steven), run `Smart Trainer` without Omniscient and Smart Tera: `Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin`, plus any flag the team already had (Winona's `Risky`; `Force Setup First Turn` for Sidney, May's Rustboro Mudkip team and Brendan's Route 103 Treecko team). The counts above become 636 exactly `Check Bad Move` and 93 exactly `Basic Trainer` (654 and 185 counting any trainer whose AI includes the flag).
 
 ## 1. Level curve
 Full clear of every trainer on each story stage's maps (500 story trainers), all members Medium Slow from level 5.
@@ -62,13 +63,14 @@ The exp math follows `Cmd_getexp` and is checked against `test/battle/exp.c`.
   - Marcel's Shiftry 29 gets Hurricane.
 
 ## 3. Hand-written movesets
-- Of 436 Pokémon, 426 damaging set moves changed data. 156 flipped physical/special: 35 now use a weaker stat, 61 a similar one and 60 a stronger one.
-- 143 Pokémon have a flip, 31 of them onto a weaker stat. No damaging set move changed type.
-- **Boss flips onto a weaker stat:**
-  - Wallace's Gyarados: Hyper Beam, Atk 125 -> SpA 60;
-  - Phoebe's two Banette: Shadow Ball, 115 -> 83;
-  - Glacia's Sealeo: Ice Ball, 75 -> 60;
-  - Wattson's Voltorb: Spark, 55 -> 30.
+- Of 436 Pokémon, 421 damaging set moves changed data. 151 flipped physical/special: 30 now use a weaker stat, 61 a similar one and 60 a stronger one.
+- 139 Pokémon have a flip, 26 of them onto a weaker stat. No damaging set move changed type.
+- **Boss flips onto a weaker stat** (fixed by #130; before it the counts above were 426, 156, 35 / 61 / 60, 143 and 31). Each move became a same-type move on the stronger stat that the species learns in this build (level-up or the Emerald TM/tutor list; Shadow Claw and Giga Impact aren't on it):
+  - Wallace's Gyarados: Hyper Beam, Atk 125 -> SpA 60, now Double-Edge (tutor, physical 120);
+  - Phoebe's two Banette: Shadow Ball, 115 -> 83, now Phantom Force (level 53, physical 90; it spends a turn out of sight before it hits, which the player can use to switch or set up. The other physical Ghost move it learns, Shadow Sneak, is 40 power);
+  - Glacia's Sealeo: Ice Ball, 75 -> 60, now Aurora Beam (level 28, special 65);
+  - Wattson's Voltorb: Spark, 55 -> 30, now Charge Beam (level 16, special 50, raises Sp. Atk).
+  - No rematch team has the same Pokémon with the same move: Wattson's rematches carry Electrode without Spark, and the Elite Four and Wallace have no rematch teams. The model covers story fights only, so other weakened flips on rematch teams aren't listed or fixed, such as Hyper Beam on Norman 2-5's Slaking, Roxanne 5's Aerodactyl and Winona 5's Dragonite.
 - **Boss flips onto a stronger stat:**
   - Drake: Salamence's Dragon Claw and Crunch 110 -> 135, Flygon's Crunch 80 -> 100, Shelgon's Dragon Claw 60 -> 95;
   - Norman: Slaking's Feint Attack 95 -> 160;
@@ -240,8 +242,8 @@ Each rival row goes on all six teams of that fight: May or Brendan, with each st
 
 ## Proposed balance changes (owner to accept or reject; each can be its own issue)
 1. **Soft level cap at each gym ace** (config). Set `B_LEVEL_CAP_TYPE LEVEL_CAP_FLAG_LIST` and `B_EXP_CAP_TYPE EXP_CAP_SOFT`. `sLevelCapFlagMap` in `src/caps.c` already holds exactly the measured aces (15/19/24/29/31/33/42/46/58). Consider `B_RARE_CANDY_CAP` too.
-2. **Boss AI to `Smart Trainer`** (data) for the gym leaders, the Elite Four, Wallace, and optionally the rivals and team leaders.
-3. **Fix the four boss sets the split weakened** (data): Wallace's Gyarados Hyper Beam, Phoebe's Banettes' Shadow Ball (-> Shadow Claw), Glacia's Sealeo Ice Ball, Wattson's Voltorb Spark.
+2. **Boss AI to `Smart Trainer`** (data) for the gym leaders, the Elite Four, Wallace, and optionally the rivals and team leaders. Done in #129 for all of them, without Omniscient and Smart Tera (see "Corrections").
+3. **Fix the four boss sets the split weakened** (data): Wallace's Gyarados Hyper Beam, Phoebe's Banettes' Shadow Ball, Glacia's Sealeo Ice Ball, Wattson's Voltorb Spark. Done in #130 with Double-Edge, Phantom Force, Aurora Beam and Charge Beam (section 3).
 4. **Hand-write movesets for the story Pokémon that lost STAB or kept one attack** (43 and 59 slots; the list is in `output/trainer_mons.csv`). Start with the Makuhita/Hariyama line, the Museum Carvanha and Jeff's and Jace's Slugma.
 5. **Review the 157 story slots with strong new default moves** route by route (they may be welcome). A trainers-only Gen 3 learnset would need code: `P_LVL_UP_LEARNSETS` is a single include.
 6. **Optional `B_TRAINER_EXP_MULTIPLIER GEN_6`** to restore the 1.5x (GEN_7 also restores it: `Cmd_getexp` checks `<= GEN_7`), only if the Exp. Share isn't the intended way to play. Evaluated with the Exp. Share in section 7.
