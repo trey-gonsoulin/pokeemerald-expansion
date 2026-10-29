@@ -2,7 +2,6 @@
 #include "debug_menu_ui.h"
 #include "string_util.h"
 #include "test/test.h"
-#include "constants/characters.h"
 
 // In name order: "10,000 Volt" (5), "abra" (1), "Abra" (2), "Abras" (8), "Ekans" (7),
 // "Flabébé" (3), "Flabebe" (4), "Zubat" (0). Value 6 has no name.
@@ -137,7 +136,14 @@ TEST("Flag and var names: flags show the constant name without FLAG_")
     EXPECT(NameIs(Debug_GetFlagName(FLAG_SYS_POKEDEX_GET), COMPOUND_STRING("SYS_POKEDEX_GET")));
     // A range marker that is a flag of its own still shows
     EXPECT(NameIs(Debug_GetFlagName(FLAG_SYS_TV_START), COMPOUND_STRING("SYS_TV_START")));
-    EXPECT(NameIs(Debug_GetFlagName(FLAG_UNUSED_0x264), COMPOUND_STRING("UNUSED_0x264")));
+    EXPECT(NameIs(Debug_GetFlagName(FLAG_UNUSED_0x265), COMPOUND_STRING("UNUSED_0x265")));
+}
+
+TEST("Flag and var names: a config that names an unused flag shows instead of UNUSED")
+{
+    EXPECT(NameIs(Debug_GetFlagName(FLAG_UNUSED_0x264), COMPOUND_STRING("I_EXP_SHARE_FLAG")));
+    // A real name still beats a config's
+    EXPECT(NameIs(Debug_GetFlagName(B_FLAG_BADGE_BOOST_ATTACK), COMPOUND_STRING("BADGE01_GET")));
 }
 
 TEST("Flag and var names: the first defined real name shows where names share a flag")
@@ -179,8 +185,9 @@ TEST("Flag and var names: name order sorts them")
     EXPECT_GT(order.count, 1000);
     EXPECT_EQ(Debug_StepByName(&order, FLAG_BADGE01_GET, FALSE), FLAG_BADGE02_GET);
     EXPECT_EQ(Debug_StepByName(&order, FLAG_BADGE02_GET, TRUE), FLAG_BADGE01_GET);
-    EXPECT_EQ(Debug_GetFlagName(order.values[0])[0], CHAR_A);
-    EXPECT_EQ(Debug_GetFlagName(order.values[order.count - 1])[0], CHAR_W);
+    // The names all start with a capital letter, so their initials can't go down along the order
+    for (u32 i = 1; i < order.count; i++)
+        EXPECT_LE(Debug_GetFlagName(order.values[i - 1])[0], Debug_GetFlagName(order.values[i])[0]);
     Debug_FreeNameOrder(&order);
 
     Debug_BuildNameOrder(&order, VARS_START, VARS_END, Debug_GetVarName);
