@@ -3173,9 +3173,6 @@ void CB2_ReturnToPartyMenuFromSummaryScreen(void)
 
 static void CursorCb_Switch(u8 taskId)
 {
-    // Reset follower steps when the party leader is changed
-    if (gPartyMenu.slotId == 0 || gPartyMenu.slotId2 == 0)
-        gFollowerSteps = 0;
     PlaySE(SE_SELECT);
     gPartyMenu.action = PARTY_ACTION_SWITCH;
     PartyMenuRemoveWindow(&sPartyMenuInternal->windowId[1]);
@@ -3199,11 +3196,19 @@ static void CursorCb_Switch(u8 taskId)
 #define tSlot1SlideDir data[10]
 #define tSlot2SlideDir data[11]
 
+// Reset follower steps when the party leader is changed
+static void ResetFollowerStepsOnLeaderSwitch(void)
+{
+    if (gPartyMenu.slotId != gPartyMenu.slotId2 && (gPartyMenu.slotId == 0 || gPartyMenu.slotId2 == 0))
+        gFollowerSteps = 0;
+}
+
 static void SwitchSelectedMons(u8 taskId)
 {
     s16 *data = gTasks[taskId].data;
     u8 windowIds[2];
 
+    ResetFollowerStepsOnLeaderSwitch();
     if (gPartyMenu.slotId2 == gPartyMenu.slotId)
     {
         FinishTwoMonAction(taskId);
@@ -8622,5 +8627,12 @@ s8 Test_UpdatePartySelectionSingleLayout(s8 slotId, s8 movementDir, bool8 choose
 
     sPartyMenuInternal = savedInternal;
     return slotId;
+}
+
+void Test_ResetFollowerStepsOnLeaderSwitch(u8 slotId, u8 slotId2)
+{
+    gPartyMenu.slotId = slotId;
+    gPartyMenu.slotId2 = slotId2;
+    ResetFollowerStepsOnLeaderSwitch();
 }
 #endif
