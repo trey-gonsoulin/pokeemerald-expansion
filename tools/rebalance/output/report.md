@@ -20,8 +20,8 @@ AI flag sets (top 12):
 | AI | trainers |
 |---|---|
 | Check Bad Move | 636 |
-| Basic Trainer | 94 |
-| Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin | 83 |
+| Basic Trainer | 93 |
+| Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin | 84 |
 | (none) | 16 |
 | Check Bad Move / Try To Faint / Force Setup First Turn | 11 |
 | Check Bad Move / Try To Faint | 7 |
