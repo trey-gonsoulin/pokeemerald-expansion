@@ -1461,7 +1461,7 @@ static void DebugAction_Selection_PrepareStep(u8 taskId, const struct DebugSelec
     u32 min, max, input;
     u32 digits = DebugSelection_GetRange(taskId, selectionStep, &min, &max);
 
-    if (DEBUG_OVERWORLD_MENU && sDebugMenuListData != NULL)
+    if (Debug_IsNameOrder())
         sDebugMenuListData->nameOrder = FALSE;
 
     // Clamp as u32: the s16 tInput would turn stored values above 32767 negative
