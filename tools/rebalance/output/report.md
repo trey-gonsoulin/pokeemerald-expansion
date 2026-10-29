@@ -316,12 +316,14 @@ Full clear: 29 of 30 bosses have the bench (friendship) within 1 of their ace; t
 | 1.5x off | no walking | 13 | 16 | 25 | 33 | 34 | 41 | 49 | 54 | 59 | 59 | 60 | 60 | 61 |
 | 1.5x off | 8,192 steps per stage | 13 | 16 | 26 | 34 | 36 | 42 | 51 | 56 | 60 | 61 | 61 | 62 | 62 |
 | 1.5x off | every stage trainer +3 | 15 | 18 | 27 | 36 | 37 | 44 | 53 | 58 | 62 | 63 | 63 | 64 | 64 |
+| 1.5x off | whole party unevolved (1.2x) | 14 | 17 | 26 | 35 | 36 | 44 | 52 | 58 | 63 | 63 | 64 | 64 | 65 |
 | 1.5x on | as modelled | 14 | 17 | 28 | 37 | 38 | 46 | 55 | 61 | 66 | 66 | 67 | 67 | 68 |
 | 1.5x on | no catches | 14 | 17 | 28 | 37 | 38 | 46 | 55 | 61 | 66 | 66 | 67 | 67 | 68 |
 | 1.5x on | 6 catches per stage | 14 | 18 | 28 | 37 | 39 | 46 | 55 | 61 | 66 | 67 | 67 | 68 | 68 |
 | 1.5x on | no walking | 14 | 17 | 28 | 36 | 38 | 45 | 53 | 60 | 65 | 65 | 66 | 66 | 67 |
 | 1.5x on | 8,192 steps per stage | 14 | 17 | 29 | 38 | 39 | 46 | 55 | 61 | 66 | 66 | 67 | 68 | 68 |
 | 1.5x on | every stage trainer +3 | 17 | 19 | 30 | 39 | 41 | 49 | 58 | 64 | 68 | 69 | 69 | 70 | 70 |
+| 1.5x on | whole party unevolved (1.2x) | 15 | 18 | 29 | 39 | 40 | 48 | 57 | 64 | 69 | 69 | 70 | 70 | 71 |
 
 ### Default movesets of the raised boss Pokemon (1.5x off)
 

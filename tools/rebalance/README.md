@@ -69,8 +69,11 @@ in `unstaged`, and each Trick House puzzle sits after its badge gate.
   up by the same amount so its ace sits `TARGET_MARGIN` above the
   full-clear bench (modelled friendship), in story order, never lowered,
   and it reruns the curve and the default-moveset flags of the raised
-  Pokemon with them. A sensitivity table varies the catches, the walking
-  and the stage trainers' levels.
+  Pokemon with them. The model plays one rival team per fight; the
+  others (`rival_variants` in `story_stages.json`) get the raise that
+  brings their ace to the same level. A sensitivity table varies the
+  catches, the walking, the stage trainers' levels and the unevolved 1.2x
+  (the whole party, an upper bound).
 - **Default movesets**: `GiveBoxMonInitialMoveset` (the last four distinct
   level-up moves, level-0 evolution moves skipped) under both learnsets, for
   every trainer Pokemon without set moves. Fixed-damage moves (Seismic

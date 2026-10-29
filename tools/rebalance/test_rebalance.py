@@ -240,6 +240,16 @@ class Exp(unittest.TestCase):
         self.assertEqual(RB.exp_award(scaled, self.scaling, 39, 5, 5, False, 1, affection=True),
                          39 * 4915 // 4096 + 1)
 
+    def test_unevolved_boost_before_affection(self):
+        # ApplyExperienceMultipliers: the unevolved 4915/4096, then affection's, each rounded down.
+        d = fake_regime(B_SCALED_EXP='GEN_3', B_SPLIT_EXP='GEN_6', B_AFFECTION_MECHANICS='TRUE')
+        gain = 39 * 10 // 7
+        self.assertEqual(RB.exp_award(d, self.scaling, 39, 10, 20, False, 1, unevolved=True), gain * 4915 // 4096)
+        self.assertEqual(RB.exp_award(d, self.scaling, 39, 10, 20, False, 1, affection=True, unevolved=True),
+                         gain * 4915 // 4096 * 4915 // 4096)
+        off = fake_regime(B_SCALED_EXP='GEN_3', B_SPLIT_EXP='GEN_6', B_UNEVOLVED_EXP_MULTIPLIER='GEN_5')
+        self.assertEqual(RB.exp_award(off, self.scaling, 39, 10, 20, False, 1, unevolved=True), gain)
+
     def test_trainer_bonus_up_to_gen7(self):
         # Cmd_getexp checks B_TRAINER_EXP_MULTIPLIER <= GEN_7.
         calc = 98 * 20 // 7
@@ -367,6 +377,7 @@ class Analysis(unittest.TestCase):
         # The 1.5x and affection only add exp.
         on = curve(RB.with_configs(gd, B_TRAINER_EXP_MULTIPLIER='GEN_6'), affection='always')
         self.assertGreaterEqual(on[-1]['bench'], curve(affection='none')[-1]['bench'])
+        self.assertGreaterEqual(curve(unevolved=True)[-1]['bench'], curve()[-1]['bench'])
         # Only default-move Pokemon of a raised team are listed (the leader's Sableye has set moves).
         rows = RB.raised_defaults(trainers, G.load(FIXTURE), {'TRAINER_LEADER_X': 5, 'TRAINER_RIVAL_A': 0})
         self.assertEqual([(r['species'], r['levels']) for r in rows], [('SPECIES_MR_MIME', [15, 20])])

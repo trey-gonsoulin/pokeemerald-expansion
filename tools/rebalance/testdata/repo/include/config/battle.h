@@ -8,3 +8,4 @@
 #define B_WHITEOUT_MONEY            GEN_LATEST
 #define B_EXP_CATCH                 GEN_LATEST
 #define B_AFFECTION_MECHANICS       TRUE
+#define B_UNEVOLVED_EXP_MULTIPLIER  GEN_LATEST

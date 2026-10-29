@@ -105,6 +105,9 @@ SHARE_SENSITIVITY = {
     'no walking': {'walk_steps': 0},
     f'{2 * WALK_STEPS_PER_STAGE:,} steps per stage': {'walk_steps': 2 * WALK_STEPS_PER_STAGE},
     'every stage trainer +3': {'trainer_raise': 3},
+    # B_UNEVOLVED_EXP_MULTIPLIER's 1.2x on the whole party: the bound for a
+    # player who keeps every Pokemon from evolving (Everstone, cancelling).
+    'whole party unevolved (1.2x)': {'unevolved': True},
 }
 
 
@@ -470,16 +473,18 @@ def level_for_exp(growth, exp):
 
 
 def exp_award(gd, scaling, yield_, foe_level, getter_level, trainer, sent_in, sent_out=True, holders=0,
-              affection=False):
-    """Cmd_getexp + ApplyExperienceMultipliers for one getter (no Lucky Egg,
-    traded or unevolved bonuses).
+              affection=False, unevolved=False):
+    """Cmd_getexp + ApplyExperienceMultipliers for one getter (no Lucky Egg
+    or traded bonuses).
 
     ``sent_in`` is viaSentIn (party members that faced the foe), ``sent_out``
     whether the getter is one of them, and ``holders`` viaExpShare (members
     getting exp through an Exp. Share). The model only uses the Gen 6 Exp.
     Share, which makes every member a holder, so the getter holds it
     whenever ``holders`` is non-zero. ``affection``: the getter has 4+
-    hearts, worth 4915/4096 (1.2x) under B_AFFECTION_MECHANICS."""
+    hearts, worth 4915/4096 (1.2x) under B_AFFECTION_MECHANICS.
+    ``unevolved``: the getter is at or past its EVO_LEVEL level unevolved,
+    another 4915/4096 (applied first) under B_UNEVOLVED_EXP_MULTIPLIER."""
     scaled = gd.flag('B_SCALED_EXP >= GEN_5 && B_SCALED_EXP != GEN_6')
     calc = yield_ * foe_level // (5 if scaled else 7)
     if trainer and gd.flag('B_TRAINER_EXP_MULTIPLIER <= GEN_7'):
@@ -495,6 +500,8 @@ def exp_award(gd, scaling, yield_, foe_level, getter_level, trainer, sent_in, se
         reward = max(calc // 2, 1) if holders else 0
     if not reward:
         return 0  # the game skips a getter that neither faced the foe nor holds a share
+    if unevolved and gd.flag('B_UNEVOLVED_EXP_MULTIPLIER >= GEN_6'):
+        reward = reward * 4915 // 4096
     if affection and gd.flag('B_AFFECTION_MECHANICS == TRUE'):
         reward = reward * 4915 // 4096
     if scaled:
@@ -510,13 +517,15 @@ def friendship_gain(friendship, event):
 
 class Party:
     """``affection``: 'none' (no 1.2x), 'always' (4 hearts from the start) or
-    'friendship' (1.2x once a member's modelled friendship reaches 220)."""
+    'friendship' (1.2x once a member's modelled friendship reaches 220).
+    ``unevolved``: every member gets the unevolved 1.2x (kept from evolving)."""
 
     def __init__(self, size, growth='GROWTH_MEDIUM_SLOW', level=START_LEVEL, affection='none',
-                 friendship=STANDARD_FRIENDSHIP):
+                 friendship=STANDARD_FRIENDSHIP, unevolved=False):
         if affection not in AFFECTION:
             raise ValueError(affection)
         self.growth = growth
+        self.unevolved = unevolved
         self.exp = [float(exp_for_level(growth, level))] * size
         self.friendship = [float(friendship)] * size
         self.affection = affection
@@ -552,7 +561,7 @@ class Party:
                 continue
             self.exp[i] += sum(w * exp_award(gd, scaling, y, foe_level, level, trainer, 1,
                                              sent_out=i == ko, holders=len(lv) if share else 0,
-                                             affection=self.has_affection(i))
+                                             affection=self.has_affection(i), unevolved=self.unevolved)
                                for y, foe_level, w in foes)
             self.befriend('level', level_for_exp(self.growth, int(self.exp[i])) - level, members=(i,))
 
@@ -686,7 +695,7 @@ def with_configs(gd, **values):
 
 def share_curve(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friendship',
                 catches=CATCHES_PER_STAGE, walk_steps=WALK_STEPS_PER_STAGE, trainer_raise=0, raises=None,
-                margin=None):
+                margin=None, unevolved=False):
     """The share6 party (KO-taker plus five on the Gen 6 Exp. Share bench)
     just before each story boss, on ``gd``'s data and configs.
 
@@ -697,10 +706,11 @@ def share_curve(stages, trainers, gd, scaling, wilds, clear=1.0, affection='frie
     levels to every Pokemon of a boss's team, ``trainer_raise`` to every
     Pokemon of the regular trainers. With ``margin``, each boss is
     raised, when its ace is lower, to the bench level plus ``margin``, in one
-    pass, so a raise counts toward the later stages' exp."""
+    pass, so a raise counts toward the later stages' exp. ``unevolved``
+    gives the whole party the unevolved 1.2x."""
     raises = dict(raises or {})
     friendship = STANDARD_FRIENDSHIP if gd.flag('P_UPDATED_FRIENDSHIP >= GEN_8') else 70
-    party = Party(6, affection=affection, friendship=friendship)
+    party = Party(6, affection=affection, friendship=friendship, unevolved=unevolved)
     catch = catches if gd.flag('B_EXP_CATCH >= GEN_6') else 0
     rows = []
 
