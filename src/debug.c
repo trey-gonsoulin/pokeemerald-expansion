@@ -3416,10 +3416,7 @@ static void DebugSelectionStep_UpdateFlag(u8 taskId, u8 digits, u32 min, u32 max
     end = StringCopy(end, COMPOUND_STRING("  "));
     StringCopy(end, FlagGet(flag) ? sDebugText_True : sDebugText_False);
     // A trainer flag has no constant name, so it shows its trainer
-    if (Debug_CopyTrainerFlagName(trainerName, flag))
-        DebugSelectionStep_CopyFlagVarName(trainerName);
-    else
-        DebugSelectionStep_CopyFlagVarName(Debug_GetFlagName(flag));
+    DebugSelectionStep_CopyFlagVarName(Debug_CopyTrainerFlagName(trainerName, flag) ? trainerName : Debug_GetFlagName(flag));
     DebugSelectionStep_PrintFlagVarId(taskId, gText_DigitIndicator);
 }
 
