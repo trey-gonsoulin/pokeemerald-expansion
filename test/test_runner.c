@@ -192,6 +192,51 @@ void TestRunner_CheckMemory(void)
     }
 }
 
+// Test builds give these arrays one extra element (the + TESTING in their
+// declarations). Filling it before each test and checking it after catches
+// a write one element past the end. Reads and writes further out aren't caught.
+#define GUARD_ELEMENT(array, count) { &array[count], sizeof(array[0]), #array "[" #count "]" }
+
+static const struct GuardElement
+{
+    void *address;
+    u32 size;
+    const char *name;
+} sGuardElements[] =
+{
+    GUARD_ELEMENT(gBattleMons, MAX_BATTLERS_COUNT),
+    GUARD_ELEMENT(gBattlerPartyIndexes, MAX_BATTLERS_COUNT),
+    GUARD_ELEMENT(gObjectEvents, OBJECT_EVENTS_COUNT),
+};
+
+static void FillGuardElements(void)
+{
+    u32 i;
+    for (i = 0; i < ARRAY_COUNT(sGuardElements); i++)
+        memset(sGuardElements[i].address, 0xFF, sGuardElements[i].size);
+}
+
+static void CheckGuardElements(void)
+{
+    u32 i, j;
+    if (gTestRunnerState.result != TEST_RESULT_PASS)
+        return;
+
+    for (i = 0; i < ARRAY_COUNT(sGuardElements); i++)
+    {
+        const u8 *guard = sGuardElements[i].address;
+        for (j = 0; j < sGuardElements[i].size; j++)
+        {
+            if (guard[j] != 0xFF)
+            {
+                Test_MgbaPrintf("%s:%d: out-of-bounds write: %s byte %d is %d, not 255", gTestRunnerState.test->filename, SourceLine(0), sGuardElements[i].name, j, guard[j]);
+                gTestRunnerState.result = TEST_RESULT_FAIL;
+                break;
+            }
+        }
+    }
+}
+
 static void ClearSaveBlocks(void)
 {
     ClearSav1();
@@ -338,6 +383,7 @@ top:
         ResetGlobalVariables();
         SeedRng(0);
         SeedRng2(0);
+        FillGuardElements();
         if (gTestRunnerState.test->runner->setUp)
             gTestRunnerState.test->runner->setUp(gTestRunnerState.test->data);
         gTestRunnerState.tearDown = TRUE;
@@ -364,6 +410,7 @@ top:
         gTestRunnerState.tearDown = FALSE;
 
         TestRunner_CheckMemory();
+        CheckGuardElements();
 
         if (gTestRunnerState.test->runner == &gAssumptionsRunner)
         {
