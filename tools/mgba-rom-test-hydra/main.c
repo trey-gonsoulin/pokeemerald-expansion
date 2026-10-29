@@ -14,7 +14,7 @@
  *    passes/expected fails/known fails/assumption fails/fails.
  *
  * TIMEOUT
- * A runner that prints nothing for HYDRA_TIMEOUT seconds (environment,
+ * A runner that prints no command for HYDRA_TIMEOUT seconds (environment,
  * default DEFAULT_TIMEOUT_SECONDS, 0 disables) is hung where the ROM's
  * own TIMEOUT can't fire (inside an interrupt handler or with interrupts
  * off). Hydra kills it and reports its current test as a FAILED TIMEOUT.
@@ -129,7 +129,7 @@ struct Runner
     int assumption_fails;
     int fails;
     int results;
-    int64_t last_output_ms;
+    int64_t last_progress_ms;
     bool timed_out;
 };
 
@@ -269,6 +269,27 @@ static void fprint_buffer(FILE *f, const char *buffer, size_t size)
     }
 }
 
+
+static int64_t now_ms(void)
+{
+    struct timespec ts;
+    if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
+    {
+        perror("clock_gettime failed");
+        exit(2);
+    }
+    return (int64_t)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+}
+
+// Milliseconds until 'runner' times out (0 once it has), or -1 if it can't.
+static int64_t ms_until_timeout(const struct Runner *runner, long timeout, int64_t now)
+{
+    if (timeout == 0 || runner->outfd < 0 || runner->timed_out)
+        return -1;
+    int64_t left = runner->last_progress_ms + timeout * 1000 - now;
+    return left < 0 ? 0 : left;
+}
+
 static void handle_read(int i, struct Runner *runner)
 {
     char *sol = runner->input_buffer;
@@ -292,6 +313,8 @@ static void handle_read(int i, struct Runner *runner)
             soc = sol + strlen("GBA Debug: ");
             if (soc[0] == ':')
             {
+                // Only commands count as progress: a hung runner may keep logging.
+                runner->last_progress_ms = now_ms();
                 switch (soc[1])
                 {
                 case 'N':
@@ -429,19 +452,7 @@ static void exit2(int _)
     exit(2);
 }
 
-
-static int64_t now_ms(void)
-{
-    struct timespec ts;
-    if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
-    {
-        perror("clock_gettime failed");
-        exit(2);
-    }
-    return (int64_t)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
-}
-
-// Kills a runner that printed nothing for 'timeout' seconds and reports its
+// Kills a runner that made no progress for 'timeout' seconds and reports its
 // current test as a FAILED TIMEOUT. Its pipe then closes as usual.
 static void stop_hung_runner(int i, struct Runner *runner, long timeout)
 {
@@ -454,8 +465,12 @@ static void stop_hung_runner(int i, struct Runner *runner, long timeout)
     runner->fails++;
     runner->results++;
 
+    // Hung between tests: don't point at the file:line of the last one.
+    if (!strcmp(runner->test_name, "WAITING..."))
+        runner->filename_line[0] = '\0';
+
     char message[256];
-    snprintf(message, sizeof(message), "TIMEOUT: no output for %ld s, so hydra stopped this runner and its remaining tests didn't run", timeout);
+    snprintf(message, sizeof(message), "TIMEOUT: no progress for %ld s, so hydra stopped this runner and its remaining tests didn't run", timeout);
     int count = fails_summaries.count;
     push_summary_result(&fails_summaries, runner);
     if (fails_summaries.count > count)
@@ -465,10 +480,17 @@ static void stop_hung_runner(int i, struct Runner *runner, long timeout)
     fprint_buffer(stdout, runner->output_buffer, runner->output_buffer_size);
     if (runner->output_truncated)
         fprintf(stdout, "[Further test output was truncated.]\n");
+    // The last line before the hang may be unfinished.
+    if (runner->input_buffer_size > 0)
+    {
+        fwrite(runner->input_buffer, 1, runner->input_buffer_size, stdout);
+        fprintf(stdout, "\n");
+    }
 
     strcpy(runner->test_name, "WAITING...");
     runner->output_buffer_size = 0;
     runner->output_truncated = false;
+    runner->input_buffer_size = 0;
 }
 
 static int compare_addresses(const void *a, const void *b)
@@ -792,7 +814,7 @@ int main(int argc, char *argv[])
             runners[i].pid = pid;
             sprintf(runners[i].rom_path, "/tmp/mgba-rom-test-hydra-%05d", runners[i].pid);
             runners[i].outfd = pipefds[0];
-            runners[i].last_output_ms = now_ms();
+            runners[i].last_progress_ms = now_ms();
             if (close(pipefds[1]) == -1)
             {
                 perror("close pipefds[1] failed");
@@ -834,21 +856,14 @@ int main(int argc, char *argv[])
                 fprintf(stdout, "\e[%dF\e[J", scrollback);
         }
 
-        // Wake up when the next runner reaches the timeout.
+        // Wake up when the next runner times out.
         int poll_timeout = -1;
-        if (timeout > 0)
+        int64_t now = now_ms();
+        for (int i = 0; i < nrunners; i++)
         {
-            int64_t now = now_ms();
-            for (int i = 0; i < nrunners; i++)
-            {
-                if (runners[i].outfd < 0 || runners[i].timed_out)
-                    continue;
-                int64_t left = runners[i].last_output_ms + timeout * 1000 - now;
-                if (left < 0)
-                    left = 0;
-                if (poll_timeout == -1 || left < poll_timeout)
-                    poll_timeout = left;
-            }
+            int64_t left = ms_until_timeout(&runners[i], timeout, now);
+            if (left >= 0 && (poll_timeout == -1 || left < poll_timeout))
+                poll_timeout = left;
         }
 
         if (poll(pollfds, nrunners, poll_timeout) == -1)
@@ -856,7 +871,7 @@ int main(int argc, char *argv[])
             perror("poll failed");
             exit(2);
         }
-        int64_t now = now_ms();
+        now = now_ms();
         for (int i = 0; i < nrunners; i++)
         {
             if (pollfds[i].revents & POLLIN)
@@ -868,11 +883,13 @@ int main(int argc, char *argv[])
                     exit(2);
                 }
                 runners[i].input_buffer_size += n;
-                runners[i].last_output_ms = now;
-                handle_read(i, &runners[i]);
+                // Drop what a stopped runner wrote before it died: its TIMEOUT is already counted.
+                if (runners[i].timed_out)
+                    runners[i].input_buffer_size = 0;
+                else
+                    handle_read(i, &runners[i]);
             }
-            else if (pollfds[i].revents == 0 && timeout > 0 && runners[i].outfd >= 0 && !runners[i].timed_out
-                  && now - runners[i].last_output_ms >= timeout * 1000)
+            else if (pollfds[i].revents == 0 && ms_until_timeout(&runners[i], timeout, now) == 0)
             {
                 stop_hung_runner(i, &runners[i], timeout);
             }
