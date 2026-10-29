@@ -244,6 +244,7 @@ struct DebugMenuListData
     enum DebugMenuTypes menuType:3;
     u32 nameOrder:1; // Up/Down on a named selection step go A-Z instead of turning a digit
     u32 padding:28;
+    struct DebugNameOrder sortedNames; // built on the first Start of a named step, freed with this data
     s16 data[8];
     s16 savedData[8]; // data as Choose trainer from map found it, restored when B cancels the picker
 };
@@ -1259,6 +1260,8 @@ static void Debug_DestroyMenu(u8 taskId)
 static void Debug_DestroyMenu_Leave(u8 taskId)
 {
     Debug_DestroyMenu(taskId);
+    if (sDebugMenuListData != NULL)
+        Debug_FreeNameOrder(&sDebugMenuListData->sortedNames);
     TRY_FREE_AND_SET_NULL(sDebugMenuListData);
 }
 
@@ -1429,17 +1432,18 @@ static bool32 DebugSelection_StepHasNames(const struct DebugSelectionStep *selec
 // goes back). Any other key turns name order off and returns FALSE, for the numeric input to handle.
 static bool32 DebugSelection_HandleInput_NameOrder(u8 taskId, const struct DebugSelectionStep *selectionStep, u32 min, u32 max)
 {
-    DebugNameFunc getName = sDebugStepNameFuncs[selectionStep->names];
+    struct DebugNameOrder *sortedNames = &sDebugMenuListData->sortedNames;
     u32 input = DEBUG_TASK_INPUT(taskId);
 
     if (JOY_NEW(START_BUTTON))
     {
         sDebugMenuListData->nameOrder = TRUE;
-        input = Debug_NextNameInitial(input, min, max, getName);
+        Debug_BuildNameOrder(sortedNames, min, max, sDebugStepNameFuncs[selectionStep->names]);
+        input = Debug_NextNameInitial(sortedNames, input);
     }
     else if (sDebugMenuListData->nameOrder && JOY_REPEAT(DPAD_UP | DPAD_DOWN))
     {
-        input = Debug_StepByName(input, min, max, getName, JOY_REPEAT(DPAD_DOWN));
+        input = Debug_StepByName(sortedNames, input, JOY_REPEAT(DPAD_DOWN));
     }
     else
     {

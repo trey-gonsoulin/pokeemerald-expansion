@@ -50,8 +50,18 @@ void Debug_InputToHexString(u8 *dest, u8 taskId, u32 digits);
 // before or after one in A-Z order, or the first one with the next initial letter.
 // getName returns NULL for a value to leave out. min..max must fit in a u16.
 typedef const u8 *(*DebugNameFunc)(u32 value);
-u32 Debug_StepByName(u32 value, u32 min, u32 max, DebugNameFunc getName, bool32 previous);
-u32 Debug_NextNameInitial(u32 value, u32 min, u32 max, DebugNameFunc getName);
+struct DebugNameOrder
+{
+    u16 *values; // the named values in min..max, sorted by name; Alloc'd, freed by Debug_FreeNameOrder
+    u16 count;
+    u16 min;
+    u16 max;
+    DebugNameFunc getName;
+};
+void Debug_BuildNameOrder(struct DebugNameOrder *order, u32 min, u32 max, DebugNameFunc getName);
+void Debug_FreeNameOrder(struct DebugNameOrder *order);
+u32 Debug_StepByName(const struct DebugNameOrder *order, u32 value, bool32 previous);
+u32 Debug_NextNameInitial(const struct DebugNameOrder *order, u32 value);
 
 // List menus
 s32 Debug_ListMenu_ProcessInput(u8 listTaskId);
