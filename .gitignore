@@ -46,6 +46,7 @@ prefabs.json
 /pokefirered-*.png
 /pokeleafgreen-*.png
 src/data/map_group_count.h
+src/data/debug_map_names.h
 include/constants/heal_locations.h
 include/constants/script_commands.h
 tools/trainerproc/trainerproc
