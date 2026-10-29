@@ -22,9 +22,10 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # mgba-rom-test-hydra has no wall-clock timeout, and the ROM's 60 s TIMEOUT (a Timer2 interrupt)
-    # misses a test that loops inside another interrupt handler or with interrupts off, so a hung
-    # test would otherwise hold the job for GitHub's 6 hours (#73). check takes about 15 min.
+    # The ROM's 60 s TIMEOUT (a Timer2 interrupt) misses a test that loops inside another interrupt
+    # handler or with interrupts off (#73). mgba-rom-test-hydra stops a runner silent for 300 s
+    # (HYDRA_TIMEOUT, #124); this is the backstop for anything else that would hold the job for
+    # GitHub's 6 hours. check takes about 15 min.
     timeout-minutes: 60
     strategy:
       fail-fast: false
