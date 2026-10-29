@@ -3442,7 +3442,7 @@ static const struct DebugSelection sToggleFlagSelection = {
 };
 
 // Appends the var's value to the ID line and puts its name on line 2
-static void DebugSelectionStep_PrintVarValueAndName(u32 varId)
+static void DebugSelectionStep_AppendVarValueAndName(u32 varId)
 {
     u8 *end = StringAppend(gStringVar1, COMPOUND_STRING("  Val: "));
     ConvertIntToDecimalStringN(end, VarGet(varId), STR_CONV_MODE_LEADING_ZEROS, 5);
@@ -3454,7 +3454,7 @@ static void DebugSelectionStep_UpdateVarId(u8 taskId, u8 digits, u32 min, u32 ma
 {
     u32 varId = DEBUG_TASK_INPUT(taskId);
     Debug_InputToHexString(StringCopy(gStringVar1, COMPOUND_STRING("Var: 0x")), taskId, digits);
-    DebugSelectionStep_PrintVarValueAndName(varId);
+    DebugSelectionStep_AppendVarValueAndName(varId);
     DebugSelectionStep_PrintFlagVarId(taskId, gText_HexDigitIndicator);
     DebugSelection_SetData(taskId, DebugSelection_StepDataIndex(taskId, gTasks[taskId].tStep + 1), VarGet(varId));
 }
@@ -3464,7 +3464,7 @@ static void DebugSelectionStep_UpdateVarValue(u8 taskId, u8 digits, u32 min, u32
     u8 *end;
     u32 varId = DebugSelection_GetStepData(taskId, gTasks[taskId].tStep - 1);
     ConvertIntToHexStringN(StringCopy(gStringVar1, COMPOUND_STRING("Var: 0x")), varId, STR_CONV_MODE_LEFT_ALIGN, 4);
-    DebugSelectionStep_PrintVarValueAndName(varId);
+    DebugSelectionStep_AppendVarValueAndName(varId);
     end = StringCopy(gStringVar3, COMPOUND_STRING("New: "));
     Debug_InputToDecimalString(end, taskId, digits);
     DebugNativeStep_PrintWindowSelectionToFit(taskId);
