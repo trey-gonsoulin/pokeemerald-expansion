@@ -251,7 +251,7 @@ struct DebugSelectionStep
     u8 substepCount;
     bool8 useMinFunc:1;
     bool8 useMaxFunc:1;
-    bool8 hex:1; // Up/Down dial hex digits; stepUpdate prints with Debug_InputToHexString
+    bool8 hex:1; // Up/Down dial hex digits: stepUpdate prints with Debug_InputToHexString and gText_HexDigitIndicator
     bool8 padding:5;
 };
 
@@ -3087,23 +3087,19 @@ static const struct DebugSelection sToggleFlagSelection = {
     .maxSteps = 1,
 };
 
-static void DebugSelectionStep_PrepareVarDisplay(u32 varId)
+// Prints the value line and the "Var: 0x" prefix, and returns where the ID goes in gStringVar1
+static u8 *DebugSelectionStep_PrepareVarDisplay(u32 varId)
 {
-    u8 *end;
-    end = StringCopy(gStringVar1, COMPOUND_STRING("Var: 0x"));
-    ConvertIntToHexStringN(end, varId, STR_CONV_MODE_LEFT_ALIGN, 4);
-    end = StringCopy(gStringVar2, COMPOUND_STRING("Val: "));
+    u8 *end = StringCopy(gStringVar2, COMPOUND_STRING("Val: "));
     ConvertIntToDecimalStringN(end, VarGet(varId), STR_CONV_MODE_LEADING_ZEROS, 5);
+    return StringCopy(gStringVar1, COMPOUND_STRING("Var: 0x"));
 }
 
 // The ID is dialed in hex, so the highlighted digit is one of the 0x%04X digits on screen
 static void DebugSelectionStep_UpdateVarId(u8 taskId, u8 digits, u32 min, u32 max)
 {
     u32 varId = DEBUG_TASK_INPUT(taskId);
-    u8 *end;
-    DebugSelectionStep_PrepareVarDisplay(varId);
-    end = StringCopy(gStringVar1, COMPOUND_STRING("Var: 0x"));
-    Debug_InputToHexString(end, taskId, digits);
+    Debug_InputToHexString(DebugSelectionStep_PrepareVarDisplay(varId), taskId, digits);
     StringCopy(gStringVar3, COMPOUND_STRING(""));
     DebugNativeStep_PrintWindowSelectionIndicator(taskId, gText_HexDigitIndicator);
     DebugSelection_SetData(taskId, DebugSelection_StepDataIndex(taskId, gTasks[taskId].tStep + 1), VarGet(varId));
@@ -3112,7 +3108,8 @@ static void DebugSelectionStep_UpdateVarId(u8 taskId, u8 digits, u32 min, u32 ma
 static void DebugSelectionStep_UpdateVarValue(u8 taskId, u8 digits, u32 min, u32 max)
 {
     u8 *end;
-    DebugSelectionStep_PrepareVarDisplay(DebugSelection_GetStepData(taskId, gTasks[taskId].tStep - 1));
+    u32 varId = DebugSelection_GetStepData(taskId, gTasks[taskId].tStep - 1);
+    ConvertIntToHexStringN(DebugSelectionStep_PrepareVarDisplay(varId), varId, STR_CONV_MODE_LEFT_ALIGN, 4);
     end = StringCopy(gStringVar3, COMPOUND_STRING("New: "));
     Debug_InputToDecimalString(end, taskId, digits);
     DebugNativeStep_PrintWindowSelection(taskId);
