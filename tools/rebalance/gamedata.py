@@ -99,6 +99,9 @@ def c_value(expr, defines):
         return expr
     if re.fullmatch(r'-?\d+', expr):
         return int(expr)
+    # c_eval can't do ternaries: resolve the parenthesized ones inside arithmetic first.
+    while m := re.search(r'\(([^()]*\?[^()]*)\)', expr):
+        expr = f'{expr[:m.start()]}({c_value(m[1], defines)}){expr[m.end():]}'
 
     def sub(m):
         if m[0] in defines:
@@ -321,6 +324,7 @@ class GameData:
 
     def __init__(self, repo, defines):
         self.defines = defines
+        self._flags = {}
         self.species = parse_species(repo, defines)
         with open(os.path.join(repo, 'include', 'constants', 'species.h'), encoding='utf-8') as f:
             # SPECIES_CASTFORM = SPECIES_CASTFORM_NORMAL and the like
@@ -333,7 +337,10 @@ class GameData:
         self.items = parse_items(repo, defines)
 
     def flag(self, expr):
-        return R.c_eval(expr, self.defines)
+        """A config condition, cached: the exp model asks the same few for every KO."""
+        if expr not in self._flags:
+            self._flags[expr] = R.c_eval(expr, self.defines)
+        return self._flags[expr]
 
     def learnset(self, species):
         sp = self.species.get(species)
@@ -396,7 +403,7 @@ def parse_trainers(path):
     trainers = {}
     for tid, body in zip(parts[1::2], parts[2::2]):
         paras = [p for p in re.split(r'\n[ \t]*\n', body.strip('\n')) if p.strip()]
-        head = dict(re.findall(r'^([^:\n]+):\s*(.*)$', paras[0], re.M)) if paras else {}
+        head = dict(re.findall(r'^([^:\n]+):[ \t]*(.*)$', paras[0], re.M)) if paras else {}
         mons = []
         for para in paras[1:]:
             lines = [ln.strip() for ln in para.splitlines() if ln.strip()]
@@ -474,7 +481,10 @@ def map_tms(repo):
 
 
 def stage_of(folder, stages):
-    """Index of the first stage whose map globs match the folder, or None."""
+    """Index of the first stage whose map globs match the folder, or None.
+    FRLG maps (``*_Frlg``) aren't in Emerald, whatever the globs say."""
+    if folder.endswith('_Frlg'):
+        return None
     for i, st in enumerate(stages):
         if any(fnmatch.fnmatchcase(folder, g) for g in st.get('maps', ())):
             return i

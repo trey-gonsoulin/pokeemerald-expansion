@@ -45,6 +45,10 @@ class Expressions(unittest.TestCase):
         d = dict(self.d['modern'], TREASURE_FACTOR='((I_SELL_VALUE_FRACTION >= GEN_9) ? 2 : 1)')
         self.assertEqual(G.c_value('10000 * TREASURE_FACTOR', d), 20000)
 
+    def test_ternary_inside_arithmetic(self):
+        self.assertEqual(G.c_value('2 * (B_UPDATED_MOVE_DATA >= GEN_6 ? 60 : 50)', self.d['modern']), 120)
+        self.assertEqual(G.c_value('2 * (B_UPDATED_MOVE_DATA >= GEN_6 ? 60 : 50)', self.d['vanilla']), 100)
+
     def test_field_value_stops_at_the_top_level_comma(self):
         self.assertEqual(G.field_value('MON_TYPES(TYPE_A, TYPE_B), // x'), 'MON_TYPES(TYPE_A, TYPE_B)')
 
@@ -130,6 +134,19 @@ class Trainers(unittest.TestCase):
         self.assertEqual(x.ai, ['Basic Trainer'])
         self.assertTrue(tr['TRAINER_SWIMMER_B'].double)
 
+    def test_empty_header_field_keeps_the_next_one(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, 'trainers.party')
+            with open(path, 'w', encoding='utf-8') as f:
+                f.write('=== TRAINER_NONE ===\nName:\nClass: Hiker\nDouble Battle: Yes\n\nGeodude\nLevel: 5\n')
+            t = G.parse_trainers(path)['TRAINER_NONE']
+        self.assertEqual((t.name, t.trainer_class, t.double), ('', 'TRAINER_CLASS_HIKER', True))
+
+    def test_frlg_maps_are_never_in_a_stage(self):
+        stages = [{'maps': ['VictoryRoad_*']}]
+        self.assertEqual(G.stage_of('VictoryRoad_1F', stages), 0)
+        self.assertIsNone(G.stage_of('VictoryRoad_1F_Frlg', stages))
+
     def test_maps_skip_rematches(self):
         self.assertEqual(G.map_trainers(FIXTURE), {'TRAINER_HIKER_A': 'RouteA', 'TRAINER_RIVAL_A': 'RouteA',
                                                    'TRAINER_LEADER_X': 'TownA_Gym'})
@@ -175,6 +192,11 @@ class Exp(unittest.TestCase):
         self.assertEqual(RB.level_for_exp('GROWTH_MEDIUM_SLOW', 135), 5)
         self.assertEqual(RB.level_for_exp('GROWTH_MEDIUM_SLOW', 134), 4)
         self.assertEqual(RB.level_for_exp('GROWTH_MEDIUM_FAST', 10 ** 7), 100)
+
+    def test_land_foes_spread_each_slot_over_its_levels(self):
+        slots = [('land_mons', {'species': 'A', 'min_level': 2, 'max_level': 3}, 60),
+                 ('water_mons', {'species': 'B', 'min_level': 5, 'max_level': 5}, 40)]
+        self.assertEqual(RB.land_foes(slots), [('A', 2, 30.0), ('A', 3, 30.0)])
 
     def test_cleared_share(self):
         self.assertEqual(len(RB.cleared(list(range(10)), 0.5)), 5)

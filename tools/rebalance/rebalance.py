@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Measure how far Emerald's balance has drifted from vanilla (issue #113).
 
-    python3 tools/rebalance/rebalance.py [--out-dir DIR] [--wild-per-stage N]
+    python3 tools/rebalance/rebalance.py [--repo DIR] [--stages FILE] [--out-dir DIR]
 
 Reads the repo's own data twice, once as the fork builds it (``modern``) and
 once with the data and formula configs set to GEN_3 (``vanilla``, see
@@ -16,9 +16,11 @@ Nothing in src/ or data/ is written. Standard library only.
 """
 
 import argparse
+import bisect
 import collections
 import csv
 import fnmatch
+import functools
 import json
 import os
 import sys
@@ -27,7 +29,8 @@ import gamedata as G
 
 DEFAULT_OUT_DIR = os.path.join(G.HERE, 'output')
 DEFAULT_STAGES = os.path.join(G.HERE, 'story_stages.json')
-VANILLA_WILD = os.path.join('tools', 'area_archetypes', 'output', 'wild_encounters.vanilla.json')
+# area_archetypes' vanilla snapshot, relative to the repo so --repo can point elsewhere.
+VANILLA_WILD = os.path.relpath(G.R.AA.VANILLA_WILD, G.R.AA.REPO)
 
 # A default-moveset attacking move counts as "above the level band" when it
 # has at least this much power and the Gen 3 learnset teaches it at least
@@ -372,11 +375,13 @@ def exp_for_level(growth, n):
     raise ValueError(growth)
 
 
+@functools.cache
+def exp_table(growth):
+    return [exp_for_level(growth, n) for n in range(1, 101)]
+
+
 def level_for_exp(growth, exp):
-    n = 1
-    while n < 100 and exp_for_level(growth, n + 1) <= exp:
-        n += 1
-    return n
+    return bisect.bisect_right(exp_table(growth), exp)
 
 
 def exp_award(gd, scaling, yield_, foe_level, getter_level, trainer, sent_in, share_bench=False, sharers=1):
@@ -407,36 +412,52 @@ class Party:
     def levels(self):
         return [level_for_exp(self.growth, int(e)) for e in self.exp]
 
-    def defeat(self, gd, scaling, yield_, foe_level, trainer, share, weight=1.0):
-        """One foe KO'd by a single sent-in member (round-robin), the rest of
-        the party sharing through the Gen 6 Exp. Share when ``share``."""
+    def defeat(self, gd, scaling, foes, trainer, share):
+        """One KO by a single sent-in member (round-robin), the rest of the
+        party sharing through the Gen 6 Exp. Share when ``share``. ``foes``
+        is [(exp yield, level, weight)]: one foe, or a wild battle's
+        rate-weighted average over its slots."""
         lv = self.levels()
         ko = 0 if share else self.turn % len(self.exp)
         self.turn += 1
         for i, level in enumerate(lv):
-            if i == ko:
-                self.exp[i] += weight * exp_award(gd, scaling, yield_, foe_level, level, trainer, 1)
-            elif share:
-                self.exp[i] += weight * exp_award(gd, scaling, yield_, foe_level, level, trainer, 1,
-                                                  share_bench=True, sharers=len(lv) - 1)
+            if i != ko and not share:
+                continue
+            bench = i != ko
+            self.exp[i] += sum(w * exp_award(gd, scaling, y, foe_level, level, trainer, 1,
+                                             share_bench=bench, sharers=len(lv) - 1)
+                               for y, foe_level, w in foes)
 
 
-def stage_wilds(wild, stages, folders):
-    """Stage index -> [(species, level, weight)] over its maps' land tables."""
+def stage_slots(wild, stages, folders):
+    """Stage index -> [(table field, slot, encounter rate)] over every table
+    of the stage's maps (land, water, fishing, Rock Smash)."""
     by_id = {mid: f for f, mid in folders.items()}
     out = collections.defaultdict(list)
     for group in wild['wild_encounter_groups']:
-        rates = {f['type']: f.get('encounter_rates') for f in group.get('fields', ())}
+        rates = {f['type']: f.get('encounter_rates') or () for f in group.get('fields', ())}
         for enc in group['encounters']:
             folder = by_id.get(enc.get('map'))
             i = G.stage_of(folder, stages) if folder else None
-            table = enc.get('land_mons')
-            if i is None or not table:
+            if i is None:
                 continue
-            for slot, rate in zip(table['mons'], rates.get('land_mons') or ()):
-                lvl = (slot['min_level'] + slot['max_level']) / 2
-                out[i].append((slot['species'], int(lvl), rate))
+            for field, table in enc.items():
+                if isinstance(table, dict) and 'mons' in table:
+                    rate = rates.get(field, ())
+                    for k, slot in enumerate(table['mons']):
+                        out[i].append((field, slot, rate[k] if k < len(rate) else 0))
     return out
+
+
+def land_foes(slots):
+    """A stage's land slots as [(species, level, weight)], each slot's rate
+    spread evenly over its level range."""
+    foes = []
+    for field, slot, rate in slots:
+        if field == 'land_mons' and rate:
+            levels = range(slot['min_level'], slot['max_level'] + 1)
+            foes += [(slot['species'], lvl, rate / len(levels)) for lvl in levels]
+    return foes
 
 
 def cleared(regular, clear):
@@ -444,33 +465,16 @@ def cleared(regular, clear):
     return [t for k, t in enumerate(regular) if int((k + 1) * clear) > int(k * clear)]
 
 
-def stage_species(wild, stages, folders):
-    """Stage index -> {species: lowest slot level} over every table of its maps."""
-    by_id = {mid: f for f, mid in folders.items()}
-    out = collections.defaultdict(dict)
-    for group in wild['wild_encounter_groups']:
-        for enc in group['encounters']:
-            folder = by_id.get(enc.get('map'))
-            i = G.stage_of(folder, stages) if folder else None
-            if i is None:
-                continue
-            for key, table in enc.items():
-                if isinstance(table, dict) and 'mons' in table:
-                    for slot in table['mons']:
-                        sp = slot['species']
-                        out[i][sp] = min(out[i].get(sp, 100), slot['min_level'])
-    return out
-
-
-def wild_availability(repo, stages, gd):
+def wild_availability(slots, stages, gd):
     """Per stage: species the restock added over the vanilla tables, the
-    strongest of them by base stat total, and the Fairy types among them."""
-    folders = G.map_folders(repo)
+    strongest of them by base stat total, and the Fairy types first met."""
     tables = {}
-    for regime, path in (('vanilla', os.path.join(repo, VANILLA_WILD)),
-                         ('modern', os.path.join(repo, 'src', 'data', 'wild_encounters.json'))):
-        with open(path, encoding='utf-8') as f:
-            tables[regime] = stage_species(json.load(f), stages, folders)
+    for regime, by_stage in slots.items():
+        tables[regime] = {}
+        for i, stage_slots_ in by_stage.items():
+            lowest = tables[regime].setdefault(i, {})
+            for _, slot, _ in stage_slots_:
+                lowest[slot['species']] = min(lowest.get(slot['species'], 100), slot['min_level'])
     m = gd['modern']
     rows = []
     seen = {r: set() for r in G.REGIMES}
@@ -503,20 +507,18 @@ def level_curve(stages, trainers, gd, scaling, wilds, clear=1.0, wild_per_stage=
         for name, (regime, _, share) in PARTY_MODELS.items():
             d = gd[regime]
             for mon in trainers[tid].mons:
-                parties[name].defeat(d, scaling, d.species[mon.species].exp_yield, mon.level, True, share)
+                parties[name].defeat(d, scaling, [(d.species[mon.species].exp_yield, mon.level, 1.0)], True, share)
 
     def wild_battles(i):
         """``wild_per_stage`` average wild battles: every land slot of the
         stage's maps, weighted by its encounter rate, KO'd by one member."""
         for name, (regime, _, share) in PARTY_MODELS.items():
-            table = wilds.get(regime, {}).get(i, ())
-            total = sum(w for _, _, w in table)
             d = gd[regime]
-            for _ in range(wild_per_stage if total else 0):
-                for sp, lvl, w in table:
-                    parties[name].defeat(d, scaling, d.species[sp].exp_yield, lvl, False, share, weight=w / total)
-                    parties[name].turn -= 1
-                parties[name].turn += 1
+            foes = land_foes(wilds.get(regime, {}).get(i, ()))
+            total = sum(w for _, _, w in foes)
+            foes = [(d.species[sp].exp_yield, lvl, w / total) for sp, lvl, w in foes]
+            for _ in range(wild_per_stage if foes else 0):
+                parties[name].defeat(d, scaling, foes, False, share)
 
     for i, st in enumerate(stages):
         wild_battles(i)
@@ -767,14 +769,14 @@ def write_csv(path, rows):
 
 
 def load_wilds(repo, stages):
-    """Per regime, each stage's land slots. Vanilla fights the pre-restock
+    """Per regime, each stage's wild slots. Vanilla meets the pre-restock
     tables (#28), modern the committed ones."""
     folders = G.map_folders(repo)
     wilds = {}
     for regime, path in (('vanilla', os.path.join(repo, VANILLA_WILD)),
                          ('modern', os.path.join(repo, 'src', 'data', 'wild_encounters.json'))):
         with open(path, encoding='utf-8') as f:
-            wilds[regime] = stage_wilds(json.load(f), stages, folders)
+            wilds[regime] = stage_slots(json.load(f), stages, folders)
     return wilds
 
 
@@ -801,7 +803,7 @@ def analyze(repo, stages_path):
         'level_curve': {name: level_curve(stages, trainers, gd, scaling, wilds, clear, wild)
                         for name, (clear, wild) in SCENARIOS.items()},
         'tms': tm_availability(repo, stages, gd),
-        'wild': wild_availability(repo, stages, gd),
+        'wild': wild_availability(wilds, stages, gd),
         'economy': economy(stages, trainers, gd, G.parse_class_money(repo)),
     }
 
