@@ -1693,18 +1693,16 @@ static bool32 IsScriptControllingObjectEvents(void)
 static u32 TryEvictFollowerToFreeObject(void)
 {
     struct ObjectEvent *follower = GetFollowerObject();
-    u32 i;
+    u32 freeId;
 
     if (follower == NULL || IsScriptControllingObjectEvents())
         return OBJECT_EVENTS_COUNT;
 
     // The camera update spawns before it removes, so first free the slots of objects that left the view
     RemoveObjectEventsOutsideView();
-    for (i = 0; i < OBJECT_EVENTS_COUNT; i++)
-    {
-        if (!gObjectEvents[i].active)
-            return i;
-    }
+    freeId = GetFirstInactiveObjectEventId();
+    if (freeId != OBJECT_EVENTS_COUNT)
+        return freeId;
 
     RemoveObjectEvent(follower);
     sFollowerAwaitingSlot = TRUE;
