@@ -438,7 +438,7 @@ struct Camera
     s32 y;
 };
 
-extern struct ObjectEvent gObjectEvents[OBJECT_EVENTS_COUNT];
+extern struct ObjectEvent gObjectEvents[OBJECT_EVENTS_COUNT + TESTING]; // + TESTING: a guard element, see sGuardElements in test/test_runner.c
 extern u8 gSelectedObjectEvent;
 extern struct MapHeader gMapHeader;
 extern struct PlayerAvatar gPlayerAvatar;
