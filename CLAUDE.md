@@ -62,9 +62,9 @@ make -j16 build/emerald/src/debug.o TOOLCHAIN=/opt/devkitpro/devkitARM  # compil
 - `make debug` (the -Og/-g build) links once the env is clean. Its old link failure (#27: undefined `__getreent`, `_getpid_r`, `_kill_r`, `_write_r`) came from the `CPATH` leak, not gcc 16.1.
 - `make firered` / `make leafgreen` build other games through `GAME_VERSION`.
 - Warnings that are expected and not regressions (build.sh allowlists each one as a whole-line match, mostly exact text, so a new warning in the same file still shows; it matches `error:` and `warning:` in any case):
-  - `release` only, from the LTO link: pokedex.c:4507 stringop-overflow (x6), mystery_gift_client.c:102 stringop-overread, and the `-Wlto-type-mismatch` on intro_frlg.c:249 (`gMultiBootProgram_PokemonColosseum_Start`) and faraway_island.h:4 (`GetMewMoveDirection`). The LTO assembler also prints 6 `<temp>.s: Warning: section .rodata.compound_string.<hash> size (0x..) is not a multiple of its entry size 0x..` lines; the temp file names and hashes change every build, so build.sh matches those by pattern and reports the count when a log has some but not exactly 6.
+  - `release` only, from the LTO link: pokedex.c:4507 stringop-overflow (x6), mystery_gift_client.c:102 stringop-overread, and the `-Wlto-type-mismatch` on intro_frlg.c:249 (`gMultiBootProgram_PokemonColosseum_Start`) and faraway_island.h:4 (`GetMewMoveDirection`). The LTO assembler also prints 6 `<temp>.s: Warning: section .rodata.compound_string.<hash> size (0x..) is not a multiple of its entry size 0x..` lines; the temp file names and hashes change every build, so build.sh matches those by pattern and reports the count when a successful build has some but not exactly 6.
   - Every ROM build: the RWX segment linker warning. Plain `make`, `debug` and `check` emit only this one (plus the tool and asset ones below on a cold tree).
-  - Tool and asset builds: json.hpp `-Wdeprecated-literal-operator` and `libpng warning: bKGD: invalid index` (under -j two of these can share a line, which build.sh also filters).
+  - Tool and asset builds: json.hpp `-Wdeprecated-literal-operator` and `libpng warning: bKGD: invalid index` (under -j one can share a line with another or with a make recipe, which build.sh also filters).
 
 ## Tests
 
