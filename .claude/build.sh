@@ -37,11 +37,11 @@ echo "exit $status, log $log"
 LC_ALL=C
 export LC_ALL
 # Known warnings, one whole line each, so a new warning in the same file (or an error) still shows.
-# The src/ and include/ ones come from the LTO link and appear only in `release`, as do the assembler
-# compound_string ones, whose temp .s names and section hashes change on every build (so that entry is
-# a pattern); besides them, every ROM link gives the RWX one, the tool build json.hpp and the asset
-# conversion libpng. The note: lines that follow a warning are never printed (only error/warning/make
-# *** lines are).
+# The src/ and include/ ones come from the LTO link and appear only in `release`; besides them, every
+# ROM link gives the RWX one, the tool build json.hpp and the asset conversion libpng. The note:
+# lines that follow a warning are never printed (only error/warning/make *** lines are).
+# The assembler compound_string entry (also LTO, `release` only) is a pattern, because its temp .s
+# names and section hashes change on every build.
 expected="^\.\./\.\./src/pokedex\.c:4507: warning: writing 1 byte into a region of size 0 \[-Wstringop-overflow=\]\$
 ^\.\./\.\./src/mystery_gift_client\.c:102: warning: '(__builtin_)?memcpy' reading 1024 bytes from a region of size 16 \[-Wstringop-overread\]\$
 ^\.\./\.\./src/intro_frlg\.c:249: warning: type of 'gMultiBootProgram_PokemonColosseum_Start' does not match original declaration \[-Wlto-type-mismatch\]\$
