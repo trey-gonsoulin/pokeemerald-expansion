@@ -1,6 +1,6 @@
 # Rebalance findings (#113)
 
-**No game data changed.** `tools/rebalance/` is a standard-library script that reads this repo's data twice: once as built ("modern") and once with the data and formula configs at GEN_3 ("vanilla": Gen 3 learnsets, stats, types, yields, move data, the type-based physical/special rule, the Gen 3 chart, the Gen 3 exp formula, prices and healing). Vanilla wild Pokémon come from the pre-restock snapshot. Every number below comes from [`report.md`](report.md); run `python3 tools/rebalance/rebalance.py` to regenerate it, and the tests with `python3 -m unittest discover -s tools/rebalance`. CI runs them. This file is written by hand, so update it when the numbers move.
+**Levels:** sections 1-6 were measured at the story bosses' levels before #127 raised them (section 7). `report.md` now shows the raised levels, so its level-curve, default-moveset and boss tables differ from sections 1 and 2; section 7 gives the changes. `tools/rebalance/` is a standard-library script that reads this repo's data twice: once as built ("modern") and once with the data and formula configs at GEN_3 ("vanilla": Gen 3 learnsets, stats, types, yields, move data, the type-based physical/special rule, the Gen 3 chart, the Gen 3 exp formula, prices and healing). Vanilla wild Pokémon come from the pre-restock snapshot. Every number below comes from [`report.md`](report.md); run `python3 tools/rebalance/rebalance.py` to regenerate it, and the tests with `python3 -m unittest discover -s tools/rebalance`. CI runs them. This file is written by hand, so update it when the numbers move.
 
 ## Corrections to the issue's baselines
 - trainers.party has **1,825** Pokémon, not 1,835: 436 with set moves and **1,389** on default moves. The extra 10 were the header comment's paragraphs; the generated `trainers.h` agrees.
@@ -220,7 +220,11 @@ The owner's baseline (#113): the Gen 6 Exp. Share on; balance by raising opponen
 
   #131 and #132 should work from that list once the levels land. The full-game flag table in "Default movesets" updates with them too.
 
-The last commit of the #127 branch applies the 1.5x-off column to `src/data/trainers.party`: levels only, the 28 raised bosses, with `B_TRAINER_EXP_MULTIPLIER` unchanged. The coordinator can drop that commit if the owner picks another margin or 1.5x on.
+**Applied:** `src/data/trainers.party` has the 1.5x-off column: levels only, 100 Pokémon on the 28 raised bosses, with `B_TRAINER_EXP_MULTIPLIER` unchanged. The numbers above (and in the table) are from before the raises. `report.md` now measures the raised data:
+- Its "Proposed boss raises" show +0 for 1.5x off. The 1.5x-on column is now relative to the applied levels (Juan +6 -> 63, Wallace +8 -> 71), and its after-raise curve is unchanged.
+- Its "Default movesets of the raised boss Pokemon" lists none for 1.5x off.
+- Its story flags in "Default movesets" moved from 9 / 59 / 43 / 14 / 157 (no attack / one attack / lost STAB / above band / new strong) to 9 / 61 / 46 / 12 / 163.
+- The #113 level curve's boss aces are the raised ones.
 
 ## Proposed balance changes (owner to accept or reject; each can be its own issue)
 1. **Soft level cap at each gym ace** (config). Set `B_LEVEL_CAP_TYPE LEVEL_CAP_FLAG_LIST` and `B_EXP_CAP_TYPE EXP_CAP_SOFT`. `sLevelCapFlagMap` in `src/caps.c` already holds exactly the measured aces (15/19/24/29/31/33/42/46/58). Consider `B_RARE_CANDY_CAP` too.

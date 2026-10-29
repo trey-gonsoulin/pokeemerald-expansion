@@ -536,11 +536,11 @@ Double Battle: No
 AI: Basic Trainer
 
 Mightyena
-Level: 34
+Level: 51
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 
 Golbat
-Level: 34
+Level: 51
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 
 === TRAINER_ZANDER ===
@@ -566,11 +566,11 @@ Double Battle: No
 AI: Basic Trainer
 
 Carvanha
-Level: 28
+Level: 43
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 
 Mightyena
-Level: 28
+Level: 43
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 
 === TRAINER_SHELLY_SEAFLOOR_CAVERN ===
@@ -583,11 +583,11 @@ Double Battle: No
 AI: Basic Trainer
 
 Sharpedo
-Level: 37
+Level: 56
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 
 Mightyena
-Level: 37
+Level: 56
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 
 === TRAINER_ARCHIE ===
@@ -601,15 +601,15 @@ Double Battle: No
 AI: Basic Trainer
 
 Mightyena
-Level: 41
+Level: 54
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
 Crobat
-Level: 41
+Level: 54
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
 Sharpedo
-Level: 43
+Level: 56
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
 === TRAINER_LEAH ===
@@ -4598,7 +4598,7 @@ AI: Basic Trainer / Force Setup First Turn
 Mugshot: Purple
 
 Mightyena
-Level: 46
+Level: 58
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Roar
 - Double Edge
@@ -4606,7 +4606,7 @@ IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Crunch
 
 Shiftry
-Level: 48
+Level: 60
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Torment
 - Double Team
@@ -4614,7 +4614,7 @@ IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Extrasensory
 
 Cacturne
-Level: 46
+Level: 58
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Leech Seed
 - Feint Attack
@@ -4622,7 +4622,7 @@ IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Cotton Spore
 
 Crawdaunt
-Level: 48
+Level: 60
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Surf
 - Swords Dance
@@ -4630,7 +4630,7 @@ IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Facade
 
 Absol @ Sitrus Berry
-Level: 49
+Level: 61
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Aerial Ace
 - Rock Slide
@@ -4649,7 +4649,7 @@ AI: Basic Trainer
 Mugshot: Green
 
 Dusclops
-Level: 48
+Level: 59
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Shadow Punch
 - Confuse Ray
@@ -4657,7 +4657,7 @@ IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Protect
 
 Banette
-Level: 49
+Level: 60
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Shadow Ball
 - Grudge
@@ -4665,7 +4665,7 @@ IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Feint Attack
 
 Sableye
-Level: 50
+Level: 61
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Shadow Ball
 - Double Team
@@ -4673,7 +4673,7 @@ IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Feint Attack
 
 Banette
-Level: 49
+Level: 60
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Shadow Ball
 - Psychic
@@ -4681,7 +4681,7 @@ IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Facade
 
 Dusclops @ Sitrus Berry
-Level: 51
+Level: 62
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Shadow Ball
 - Ice Beam
@@ -4700,7 +4700,7 @@ AI: Basic Trainer
 Mugshot: Pink
 
 Sealeo
-Level: 50
+Level: 59
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Encore
 - Body Slam
@@ -4708,7 +4708,7 @@ IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Ice Ball
 
 Glalie
-Level: 50
+Level: 59
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Light Screen
 - Crunch
@@ -4716,7 +4716,7 @@ IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Ice Beam
 
 Sealeo
-Level: 52
+Level: 61
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Attract
 - Double Edge
@@ -4724,7 +4724,7 @@ IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Blizzard
 
 Glalie
-Level: 52
+Level: 61
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Shadow Ball
 - Explosion
@@ -4732,7 +4732,7 @@ IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Ice Beam
 
 Walrein @ Sitrus Berry
-Level: 53
+Level: 62
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Surf
 - Body Slam
@@ -4751,7 +4751,7 @@ AI: Basic Trainer
 Mugshot: Blue
 
 Shelgon
-Level: 52
+Level: 60
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Rock Tomb
 - Dragon Claw
@@ -4759,7 +4759,7 @@ IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Double Edge
 
 Altaria
-Level: 54
+Level: 62
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Double Edge
 - Dragon Breath
@@ -4767,7 +4767,7 @@ IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Aerial Ace
 
 Kingdra
-Level: 53
+Level: 61
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Smokescreen
 - Dragon Dance
@@ -4775,7 +4775,7 @@ IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Body Slam
 
 Flygon
-Level: 53
+Level: 61
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Flamethrower
 - Crunch
@@ -4783,7 +4783,7 @@ IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Earthquake
 
 Salamence @ Sitrus Berry
-Level: 55
+Level: 63
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Flamethrower
 - Dragon Claw
@@ -4869,7 +4869,7 @@ Double Battle: No
 AI: Basic Trainer
 
 Voltorb
-Level: 20
+Level: 22
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Rollout
 - Spark
@@ -4877,7 +4877,7 @@ IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Shock Wave
 
 Electrike
-Level: 20
+Level: 22
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Shock Wave
 - Leer
@@ -4885,7 +4885,7 @@ IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Howl
 
 Magneton
-Level: 22
+Level: 24
 IVs: 26 HP / 26 Atk / 26 Def / 26 SpA / 26 SpD / 26 Spe
 - Supersonic
 - Shock Wave
@@ -4893,7 +4893,7 @@ IVs: 26 HP / 26 Atk / 26 Def / 26 SpA / 26 SpD / 26 Spe
 - Sonic Boom
 
 Manectric @ Sitrus Berry
-Level: 24
+Level: 26
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Quick Attack
 - Thunder Wave
@@ -4911,7 +4911,7 @@ Double Battle: No
 AI: Basic Trainer
 
 Numel
-Level: 24
+Level: 29
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Overheat
 - Take Down
@@ -4919,7 +4919,7 @@ IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Sunny Day
 
 Slugma
-Level: 24
+Level: 29
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Overheat
 - Smog
@@ -4927,7 +4927,7 @@ IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Sunny Day
 
 Camerupt
-Level: 26
+Level: 31
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Overheat
 - Tackle
@@ -4935,7 +4935,7 @@ IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Attract
 
 Torkoal @ White Herb
-Level: 29
+Level: 34
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Overheat
 - Sunny Day
@@ -4953,7 +4953,7 @@ Double Battle: No
 AI: Basic Trainer
 
 Spinda
-Level: 27
+Level: 32
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Teeter Dance
 - Psybeam
@@ -4961,7 +4961,7 @@ IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Encore
 
 Vigoroth
-Level: 27
+Level: 32
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Slash
 - Facade
@@ -4969,7 +4969,7 @@ IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Feint Attack
 
 Linoone
-Level: 29
+Level: 34
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Slash
 - Belly Drum
@@ -4977,7 +4977,7 @@ IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Headbutt
 
 Slaking @ Sitrus Berry
-Level: 31
+Level: 36
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Counter
 - Yawn
@@ -4995,7 +4995,7 @@ Double Battle: No
 AI: Basic Trainer / Risky
 
 Swablu
-Level: 29
+Level: 39
 IVs: 25 HP / 25 Atk / 25 Def / 25 SpA / 25 SpD / 25 Spe
 - Perish Song
 - Mirror Move
@@ -5003,7 +5003,7 @@ IVs: 25 HP / 25 Atk / 25 Def / 25 SpA / 25 SpD / 25 Spe
 - Aerial Ace
 
 Tropius
-Level: 29
+Level: 39
 IVs: 25 HP / 25 Atk / 25 Def / 25 SpA / 25 SpD / 25 Spe
 - Sunny Day
 - Aerial Ace
@@ -5011,7 +5011,7 @@ IVs: 25 HP / 25 Atk / 25 Def / 25 SpA / 25 SpD / 25 Spe
 - Synthesis
 
 Pelipper
-Level: 30
+Level: 40
 IVs: 25 HP / 25 Atk / 25 Def / 25 SpA / 25 SpD / 25 Spe
 - Water Gun
 - Supersonic
@@ -5019,7 +5019,7 @@ IVs: 25 HP / 25 Atk / 25 Def / 25 SpA / 25 SpD / 25 Spe
 - Aerial Ace
 
 Skarmory
-Level: 31
+Level: 41
 IVs: 26 HP / 26 Atk / 26 Def / 26 SpA / 26 SpD / 26 Spe
 - Sand Attack
 - Fury Attack
@@ -5027,7 +5027,7 @@ IVs: 26 HP / 26 Atk / 26 Def / 26 SpA / 26 SpD / 26 Spe
 - Aerial Ace
 
 Altaria @ Oran Berry
-Level: 33
+Level: 43
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Earthquake
 - Dragon Breath
@@ -5045,7 +5045,7 @@ Double Battle: Yes
 AI: Basic Trainer
 
 Claydol
-Level: 41
+Level: 50
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Earthquake
 - Ancient Power
@@ -5053,7 +5053,7 @@ IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Light Screen
 
 Xatu
-Level: 41
+Level: 50
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Psychic
 - Sunny Day
@@ -5061,7 +5061,7 @@ IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Calm Mind
 
 Lunatone @ Sitrus Berry
-Level: 42
+Level: 51
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Light Screen
 - Psychic
@@ -5069,7 +5069,7 @@ IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Calm Mind
 
 Solrock @ Sitrus Berry
-Level: 42
+Level: 51
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Sunny Day
 - Solar Beam
@@ -5087,7 +5087,7 @@ Double Battle: No
 AI: Basic Trainer
 
 Luvdisc
-Level: 41
+Level: 52
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Water Pulse
 - Attract
@@ -5095,7 +5095,7 @@ IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Flail
 
 Whiscash
-Level: 41
+Level: 52
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Rain Dance
 - Water Pulse
@@ -5103,7 +5103,7 @@ IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Earthquake
 
 Sealeo
-Level: 43
+Level: 54
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Encore
 - Body Slam
@@ -5111,7 +5111,7 @@ IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Water Pulse
 
 Crawdaunt
-Level: 43
+Level: 54
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Water Pulse
 - Crabhammer
@@ -5119,7 +5119,7 @@ IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Leer
 
 Kingdra @ Chesto Berry
-Level: 46
+Level: 57
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Water Pulse
 - Double Team
@@ -6254,7 +6254,7 @@ AI: Basic Trainer
 Mugshot: Yellow
 
 Wailord
-Level: 57
+Level: 62
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Rain Dance
 - Water Spout
@@ -6262,7 +6262,7 @@ IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Blizzard
 
 Tentacruel
-Level: 55
+Level: 60
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Toxic
 - Hydro Pump
@@ -6270,7 +6270,7 @@ IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Ice Beam
 
 Ludicolo
-Level: 56
+Level: 61
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Giga Drain
 - Surf
@@ -6278,7 +6278,7 @@ IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Double Team
 
 Whiscash
-Level: 56
+Level: 61
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Earthquake
 - Surf
@@ -6286,7 +6286,7 @@ IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Hyper Beam
 
 Gyarados
-Level: 56
+Level: 61
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Dragon Dance
 - Earthquake
@@ -6294,7 +6294,7 @@ IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Surf
 
 Milotic @ Sitrus Berry
-Level: 58
+Level: 63
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Recover
 - Surf
@@ -9375,15 +9375,15 @@ AI: Check Bad Move
 Multi Party: Half
 
 Camerupt
-Level: 36
+Level: 52
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 
 Mightyena
-Level: 38
+Level: 54
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 
 Golbat
-Level: 40
+Level: 56
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 
 === TRAINER_EDWIN_2 ===
@@ -9465,7 +9465,7 @@ Double Battle: No
 AI: Basic Trainer
 
 Altaria
-Level: 44
+Level: 59
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 - Aerial Ace
 - Safeguard
@@ -9473,7 +9473,7 @@ IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 - Dragon Dance
 
 Delcatty
-Level: 43
+Level: 58
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 - Sing
 - Assist
@@ -9481,7 +9481,7 @@ IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 - Feint Attack
 
 Roselia
-Level: 44
+Level: 59
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 - Magical Leaf
 - Leech Seed
@@ -9489,7 +9489,7 @@ IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 - Toxic
 
 Magneton
-Level: 41
+Level: 56
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 - Supersonic
 - Thunderbolt
@@ -9497,7 +9497,7 @@ IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 - Screech
 
 Gardevoir
-Level: 45
+Level: 60
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Double Team
 - Calm Mind
@@ -9679,7 +9679,7 @@ Double Battle: No
 AI: Basic Trainer
 
 Treecko
-Level: 5
+Level: 6
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 
 === TRAINER_MAY_ROUTE_110_MUDKIP ===
@@ -9692,15 +9692,15 @@ Double Battle: No
 AI: Basic Trainer
 
 Wingull
-Level: 18
+Level: 24
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 
 Slugma
-Level: 18
+Level: 24
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 
 Grovyle
-Level: 20
+Level: 26
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 
 === TRAINER_MAY_ROUTE_119_MUDKIP ===
@@ -9713,15 +9713,15 @@ Double Battle: No
 AI: Basic Trainer
 
 Slugma
-Level: 29
+Level: 40
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 
 Lombre
-Level: 29
+Level: 40
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 
 Grovyle
-Level: 31
+Level: 42
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
 === TRAINER_MAY_ROUTE_103_TREECKO ===
@@ -10936,19 +10936,19 @@ Double Battle: No
 AI: Basic Trainer
 
 Numel
-Level: 18
+Level: 29
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 
 Poochyena
-Level: 20
+Level: 31
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 
 Numel
-Level: 22
+Level: 33
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 
 Zubat
-Level: 22
+Level: 33
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 
 === TRAINER_JONATHAN ===
@@ -10996,11 +10996,11 @@ Double Battle: No
 AI: Check Bad Move / Try To Faint / Force Setup First Turn
 
 Wingull
-Level: 13
+Level: 15
 IVs: 3 HP / 3 Atk / 3 Def / 3 SpA / 3 SpD / 3 Spe
 
 Treecko
-Level: 15
+Level: 17
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 
 === TRAINER_MAXIE_MAGMA_HIDEOUT ===
@@ -11014,15 +11014,15 @@ Double Battle: No
 AI: Basic Trainer
 
 Mightyena
-Level: 37
+Level: 49
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
 Crobat
-Level: 38
+Level: 50
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
 Camerupt
-Level: 39
+Level: 51
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
 === TRAINER_MAXIE_MT_CHIMNEY ===
@@ -11036,15 +11036,15 @@ Double Battle: No
 AI: Basic Trainer
 
 Mightyena
-Level: 24
+Level: 33
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
 Zubat
-Level: 24
+Level: 33
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
 Camerupt
-Level: 25
+Level: 34
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
 === TRAINER_TIANA ===
@@ -12045,7 +12045,7 @@ Double Battle: No
 AI: Basic Trainer
 
 Ralts
-Level: 16
+Level: 26
 IVs: 3 HP / 3 Atk / 3 Def / 3 SpA / 3 SpD / 3 Spe
 
 === TRAINER_WALLY_VR_2 ===
@@ -12333,19 +12333,19 @@ Double Battle: No
 AI: Basic Trainer
 
 Tropius
-Level: 31
+Level: 47
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
 Slugma
-Level: 32
+Level: 48
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
 Pelipper
-Level: 32
+Level: 48
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
 Grovyle
-Level: 34
+Level: 50
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 
 === TRAINER_MAY_LILYCOVE_TREECKO ===
@@ -13496,19 +13496,19 @@ Double Battle: No
 AI: Check Bad Move
 
 Numel
-Level: 26
+Level: 43
 IVs: 9 HP / 9 Atk / 9 Def / 9 SpA / 9 SpD / 9 Spe
 
 Mightyena
-Level: 28
+Level: 45
 IVs: 9 HP / 9 Atk / 9 Def / 9 SpA / 9 SpD / 9 Spe
 
 Zubat
-Level: 30
+Level: 47
 IVs: 9 HP / 9 Atk / 9 Def / 9 SpA / 9 SpD / 9 Spe
 
 Camerupt
-Level: 33
+Level: 50
 IVs: 9 HP / 9 Atk / 9 Def / 9 SpA / 9 SpD / 9 Spe
 
 === TRAINER_DARCY ===
@@ -13540,15 +13540,15 @@ AI: Basic Trainer
 Multi Party: Half
 
 Mightyena
-Level: 42
+Level: 54
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
 Crobat
-Level: 43
+Level: 55
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
 Camerupt
-Level: 44
+Level: 56
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
 === TRAINER_PETE ===
