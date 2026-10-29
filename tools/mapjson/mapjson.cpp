@@ -723,6 +723,43 @@ void clean_heal_locations(vector<string> &valid_map_ids)
     write_text_file("src/data/heal_locations.json", new_json.str());
 }
 
+// Map and group name strings for the debug menu's Warp, indexed like gMapGroups:
+// a group with no map in this version's region is NULL, and its maps are skipped as in groups.inc.
+string generate_debug_map_names_text(Json groups_data, vector<string> &invalid_maps) {
+    const string group_prefix = "gMapGroup_";
+    ostringstream text;
+    ostringstream group_names;
+    ostringstream group_maps;
+
+    text << get_generated_warning("data/maps/map_groups.json", false);
+
+    for (auto &key : groups_data["group_order"].array_items()) {
+        string group = json_to_string(key);
+        string short_name = group.compare(0, group_prefix.length(), group_prefix) == 0 ? group.substr(group_prefix.length()) : group;
+        vector<string> valid_maps;
+        for (auto &map_name : groups_data[group].array_items()) {
+            string map_name_str = json_to_string(map_name);
+            if (find(invalid_maps.begin(), invalid_maps.end(), map_name_str) == invalid_maps.end())
+                valid_maps.push_back(map_name_str);
+        }
+
+        group_names << "    COMPOUND_STRING(\"" << short_name << "\"),\n";
+        if (valid_maps.size() > 0) {
+            text << "static const u8 *const sDebugMapNames_" << short_name << "[] = {\n";
+            for (string map : valid_maps)
+                text << "    COMPOUND_STRING(\"" << map << "\"),\n";
+            text << "};\n\n";
+            group_maps << "    sDebugMapNames_" << short_name << ",\n";
+        } else {
+            group_maps << "    NULL,\n";
+        }
+    }
+
+    text << "static const u8 *const sDebugMapGroupNames[] = {\n" << group_names.str() << "};\n\n";
+    text << "static const u8 *const *const sDebugMapNames[] = {\n" << group_maps.str() << "};\n";
+    return text.str();
+}
+
 // Output paths are directories with trailing path separators
 void process_groups(string groups_filepath, vector<string> &map_filepaths, string output_asm, string output_c) {
     output_asm = strip_trailing_separator(output_asm); // Remove separator if existing.
@@ -764,6 +801,7 @@ void process_groups(string groups_filepath, vector<string> &map_filepaths, strin
     string headers_text = generate_headers_text(groups_data, invalid_maps, output_asm);
     string events_text = generate_events_text(groups_data, invalid_maps, output_asm);
     string map_header_text = generate_map_constants_text(groups_filepath, groups_data, valid_map_ids);
+    string debug_map_names_text = generate_debug_map_names_text(groups_data, invalid_maps);
 
     clean_heal_locations(valid_map_ids);
     write_text_file(output_asm + sep + "groups.inc", groups_text);
@@ -771,6 +809,8 @@ void process_groups(string groups_filepath, vector<string> &map_filepaths, strin
     write_text_file(output_asm + sep + "headers.inc", headers_text);
     write_text_file(output_asm + sep + "events.inc", events_text);
     write_text_file(output_c + sep + "map_groups.h", map_header_text);
+    // Next to map_group_count.h, which the debug menu reads too
+    write_text_file(file_parent(groups_filepath) + sep + ".." + sep + ".." + sep + "src" + sep + "data" + sep + "debug_map_names.h", debug_map_names_text);
 }
 
 string generate_layout_headers_text(Json layouts_data) {

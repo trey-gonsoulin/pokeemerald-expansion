@@ -54,4 +54,7 @@ void Debug_RemoveListScrollArrows(u8 *arrowsTaskId);
 u8 Debug_ShowPathWindow(const struct WindowTemplate *pathWindow, u32 levels, void (*getLevelName)(u8 *dest, u32 level));
 void Debug_RestoreMenuPosition(struct DebugMenuPosition *position, const struct DebugMenuOption *items, u32 totalItems, u32 maxShowed, u16 *scrollOffset, u16 *selectedRow);
 
+// Text
+void Debug_PrintLinesToFit(u32 windowId, u32 fontId, u32 lineHeight, const u8 *const *lines, u32 count);
+
 #endif // GUARD_DEBUG_MENU_UI_H
