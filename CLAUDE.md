@@ -47,6 +47,10 @@ What the fork adds over upstream (`git diff origin/master...origin/emerald-plus 
     - The compiler computes the values (many need enums), so every entry is `#if defined(...)`-guarded and indexed through a macro that sends values outside the table to an unread last slot. Where names share a value, the last initializer wins (`-Woverride-init` is off in that header), and the generator orders the entries so that the first defined real name beats a config alias, which beats `UNUSED` placeholders and `_START`/`_END`/`_COUNT` markers.
     - Behind `DEBUG_FLAG_VAR_NAMES` (`include/config/debug.h`, TRUE): about 50 KB of the debug-menu ROM, none of the release ROM. Covered by `test/debug_menu_ui.c` and `python3 -m unittest discover -s tools/misc` (in CI); the picker display isn't.
 - `tools/area_archetypes/`, a standalone Python tool (see below).
+- Story boss levels raised for the Gen 6 Exp. Share (#127), levels only, in `src/data/trainers.party` and Steven's in `src/data/battle_partners.party`. These are fork data changes:
+  - The owner's rule: balance with the Exp. Share on and the 1.5x trainer exp off, mainly by raising opponent levels, never with a level cap.
+  - Each boss's ace sits 1 above the modelled Exp. Share bench on a full clear. The Elite Four step one level per fight, and Wallace sits 3 above Drake.
+  - `tools/rebalance/` (standard library, imports the area_archetypes parsers) models the curve. `python3 tools/rebalance/rebalance.py` regenerates `output/report.md`, which CI checks for drift, so rerun it after any `trainers.party` change. `output/findings.md` is hand-written: the analysis, the targets and the owner's decisions. A rival level change has to go on all six teams of that fight (May or Brendan with each starter), and boss raises also move the Mossdeep partner battle and the post-game rematches.
 
 ## Build
 
