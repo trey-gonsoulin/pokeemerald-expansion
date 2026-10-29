@@ -92,3 +92,7 @@ jobs:
         run: |
           python3 tools/rebalance/rebalance.py
           git diff --exit-code tools/rebalance/output/report.md
+
+      # The generator of the debug menu's flag and var names (src/data/debug_flag_var_names.h)
+      - name: Debug name generator unit tests
+        run: python3 -m unittest discover -s tools/misc

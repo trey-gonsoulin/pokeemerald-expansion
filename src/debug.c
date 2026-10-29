@@ -181,6 +181,8 @@ enum DebugStepNames
     DEBUG_STEP_NAMES_SPECIES,
     DEBUG_STEP_NAMES_ITEMS,
     DEBUG_STEP_NAMES_MOVES,
+    DEBUG_STEP_NAMES_FLAGS,
+    DEBUG_STEP_NAMES_VARS,
     DEBUG_STEP_NAMES_COUNT,
 };
 
@@ -267,8 +269,8 @@ struct DebugSelectionStep
     bool8 useMinFunc:1;
     bool8 useMaxFunc:1;
     bool8 hex:1; // Up/Down dial hex digits: stepUpdate prints with Debug_InputToHexString and gText_HexDigitIndicator
-    u8 names:2; // enum DebugStepNames: Start turns on name order, and stepUpdate prints with DebugNativeStep_PrintNamedSelection
-    bool8 padding:3;
+    u8 names:3; // enum DebugStepNames: Start turns on name order, and stepUpdate prints with DebugNativeStep_PrintNamedSelection
+    bool8 padding:2;
 };
 
 typedef const struct DebugSelectionStep *SelectionStep;
@@ -1226,8 +1228,8 @@ static bool32 Debug_IsNameOrder(void)
 }
 
 // For steps with names: prints gStringVar1-2, then the Start hint on the third line and the digit
-// indicator, or in name order what Start and Up/Down do now
-static void DebugNativeStep_PrintNamedSelection(u8 taskId)
+// indicator from the given table (decimal or hex), or in name order what Start and Up/Down do now
+static void DebugNativeStep_PrintNamedSelectionIndicator(u8 taskId, const u8 *const *digitIndicator)
 {
     if (Debug_IsNameOrder())
     {
@@ -1237,11 +1239,16 @@ static void DebugNativeStep_PrintNamedSelection(u8 taskId)
     else
     {
         StringCopy(gStringVar3, COMPOUND_STRING("{START_BUTTON} A-Z order"));
-        StringCopy(gStringVar4, gText_DigitIndicator[gTasks[taskId].tDigit]);
+        StringCopy(gStringVar4, digitIndicator[gTasks[taskId].tDigit]);
     }
     const u8 *const lines[] = {gStringVar1, gStringVar2, gStringVar3, gStringVar4};
     FillWindowPixelBuffer(gTasks[taskId].tSubWindowId, PIXEL_FILL(1));
     Debug_PrintLinesToFit(gTasks[taskId].tSubWindowId, DEBUG_MENU_FONT, DEBUG_LINE_HEIGHT, lines, ARRAY_COUNT(lines));
+}
+
+static void DebugNativeStep_PrintNamedSelection(u8 taskId)
+{
+    DebugNativeStep_PrintNamedSelectionIndicator(taskId, gText_DigitIndicator);
 }
 
 // Removes the menu's windows, list and input task but keeps the menu data,
@@ -1421,6 +1428,8 @@ static const DebugNameFunc sDebugStepNameFuncs[] =
     [DEBUG_STEP_NAMES_SPECIES] = Debug_GetEnabledSpeciesName,
     [DEBUG_STEP_NAMES_ITEMS] = Debug_GetNamedItemName,
     [DEBUG_STEP_NAMES_MOVES] = Debug_GetMoveStepName,
+    [DEBUG_STEP_NAMES_FLAGS] = Debug_GetFlagName,
+    [DEBUG_STEP_NAMES_VARS] = Debug_GetVarName,
 };
 
 // Name order is only for the overworld menu, which holds its state; the release ROM's native steps have no names
@@ -3362,17 +3371,51 @@ static const struct DebugSelection sStaticMassOutbreakSelection = {
 // *******************************
 // Actions Flags and Vars
 
+// Set Flag and Set Var use the warp window, wide enough for nearly every constant name
+static void DebugSelection_FlagVar_Init(u8 taskId)
+{
+    Debug_CreateInputDisplayWindowFromTemplate(taskId, &sDebugMenuWindowTemplateWarp);
+}
+
+// Line 2 of Set Flag and Set Var: the constant name, or "-" for a value without one. The few names
+// too wide for the window even in the narrowest font lose their start to a leading ellipsis.
+// With DEBUG_FLAG_VAR_NAMES off the line stays empty.
+static void DebugSelectionStep_CopyFlagVarName(const u8 *name)
+{
+    if (!DEBUG_FLAG_VAR_NAMES)
+        gStringVar2[0] = EOS;
+    else if (name == NULL)
+        StringCopy(gStringVar2, COMPOUND_STRING("-"));
+    else
+        Debug_CopyStringEndToFit(gStringVar2, sizeof(gStringVar2), name, FONT_NARROWER, DEBUG_MENU_WIDTH_WARP * TILE_WIDTH);
+}
+
+// Prints the flag and var ID steps with the name-order hints, or with DEBUG_FLAG_VAR_NAMES off just the digit indicator
+static void DebugSelectionStep_PrintFlagVarId(u8 taskId, const u8 *const *digitIndicator)
+{
+    if (DEBUG_FLAG_VAR_NAMES)
+    {
+        DebugNativeStep_PrintNamedSelectionIndicator(taskId, digitIndicator);
+    }
+    else
+    {
+        gStringVar3[0] = EOS;
+        DebugNativeStep_PrintWindowSelectionIndicator(taskId, digitIndicator);
+    }
+}
+
 static void DebugSelectionStep_UpdateFlag(u8 taskId, u8 digits, u32 min, u32 max)
 {
-    u32 flag = gTasks[taskId].tInput;
+    u32 flag = DEBUG_TASK_INPUT(taskId);
+    u8 *end;
+
     Debug_InputToDecimalString(gStringVar1, taskId, digits);
-    ConvertIntToHexStringN(gStringVar3, flag, STR_CONV_MODE_LEFT_ALIGN, 3);
-    StringExpandPlaceholders(gStringVar2, COMPOUND_STRING("0x{STR_VAR_3}"));
-    if (FlagGet(flag))
-        StringCopy(gStringVar3, sDebugText_True);
-    else
-        StringCopy(gStringVar3, sDebugText_False);
-    DebugNativeStep_PrintWindowSelection(taskId);
+    end = StringAppend(gStringVar1, COMPOUND_STRING("  0x"));
+    end = ConvertIntToHexStringN(end, flag, STR_CONV_MODE_LEFT_ALIGN, 3);
+    end = StringCopy(end, COMPOUND_STRING("  "));
+    StringCopy(end, FlagGet(flag) ? sDebugText_True : sDebugText_False);
+    DebugSelectionStep_CopyFlagVarName(Debug_GetFlagName(flag));
+    DebugSelectionStep_PrintFlagVarId(taskId, gText_DigitIndicator);
 }
 
 static bool32 DebugSelection_ToggleFlag_Complete(u8 taskId)
@@ -3387,31 +3430,32 @@ static const struct DebugSelectionStep sFlagSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = FLAG_TEMP_1,
     .maxValue = FLAGS_COUNT - 1,
+    .names = DEBUG_FLAG_VAR_NAMES ? DEBUG_STEP_NAMES_FLAGS : DEBUG_STEP_NAMES_NONE,
 };
 
 static const struct DebugSelection sToggleFlagSelection = {
-    .onInit = Debug_CreateInputDisplayWindow,
+    .onInit = DebugSelection_FlagVar_Init,
     .onCancel = DebugSelectionStep_ReturnToFlagsVarsMenu,
     .onComplete = DebugSelection_ToggleFlag_Complete,
     .steps = {&sFlagSelectionStep},
     .maxSteps = 1,
 };
 
-// Prints the value line and the "Var: 0x" prefix, and returns where the ID goes in gStringVar1
-static u8 *DebugSelectionStep_PrepareVarDisplay(u32 varId)
+// Appends the var's value to the ID line and puts its name on line 2
+static void DebugSelectionStep_AppendVarValueAndName(u32 varId)
 {
-    u8 *end = StringCopy(gStringVar2, COMPOUND_STRING("Val: "));
+    u8 *end = StringAppend(gStringVar1, COMPOUND_STRING("  Val: "));
     ConvertIntToDecimalStringN(end, VarGet(varId), STR_CONV_MODE_LEADING_ZEROS, 5);
-    return StringCopy(gStringVar1, COMPOUND_STRING("Var: 0x"));
+    DebugSelectionStep_CopyFlagVarName(Debug_GetVarName(varId));
 }
 
 // The ID is dialed in hex, so the highlighted digit is one of the 0x%04X digits on screen
 static void DebugSelectionStep_UpdateVarId(u8 taskId, u8 digits, u32 min, u32 max)
 {
     u32 varId = DEBUG_TASK_INPUT(taskId);
-    Debug_InputToHexString(DebugSelectionStep_PrepareVarDisplay(varId), taskId, digits);
-    StringCopy(gStringVar3, COMPOUND_STRING(""));
-    DebugNativeStep_PrintWindowSelectionIndicator(taskId, gText_HexDigitIndicator);
+    Debug_InputToHexString(StringCopy(gStringVar1, COMPOUND_STRING("Var: 0x")), taskId, digits);
+    DebugSelectionStep_AppendVarValueAndName(varId);
+    DebugSelectionStep_PrintFlagVarId(taskId, gText_HexDigitIndicator);
     DebugSelection_SetData(taskId, DebugSelection_StepDataIndex(taskId, gTasks[taskId].tStep + 1), VarGet(varId));
 }
 
@@ -3419,10 +3463,11 @@ static void DebugSelectionStep_UpdateVarValue(u8 taskId, u8 digits, u32 min, u32
 {
     u8 *end;
     u32 varId = DebugSelection_GetStepData(taskId, gTasks[taskId].tStep - 1);
-    ConvertIntToHexStringN(DebugSelectionStep_PrepareVarDisplay(varId), varId, STR_CONV_MODE_LEFT_ALIGN, 4);
+    ConvertIntToHexStringN(StringCopy(gStringVar1, COMPOUND_STRING("Var: 0x")), varId, STR_CONV_MODE_LEFT_ALIGN, 4);
+    DebugSelectionStep_AppendVarValueAndName(varId);
     end = StringCopy(gStringVar3, COMPOUND_STRING("New: "));
     Debug_InputToDecimalString(end, taskId, digits);
-    DebugNativeStep_PrintWindowSelection(taskId);
+    DebugNativeStep_PrintWindowSelectionToFit(taskId);
 }
 
 static bool32 DebugSelection_SetVar_Complete(u8 taskId)
@@ -3440,6 +3485,7 @@ static const struct DebugSelectionStep sVarIdSelectionStep = {
     .minValue = VARS_START,
     .maxValue = VARS_END,
     .hex = TRUE,
+    .names = DEBUG_FLAG_VAR_NAMES ? DEBUG_STEP_NAMES_VARS : DEBUG_STEP_NAMES_NONE,
 };
 
 static const struct DebugSelectionStep sVarValueSelectionStep = {
@@ -3450,7 +3496,7 @@ static const struct DebugSelectionStep sVarValueSelectionStep = {
 };
 
 static const struct DebugSelection sSetVarSelection = {
-    .onInit = Debug_CreateInputDisplayWindow,
+    .onInit = DebugSelection_FlagVar_Init,
     .onCancel = DebugSelectionStep_ReturnToFlagsVarsMenu,
     .onComplete = DebugSelection_SetVar_Complete,
     .steps = {&sVarIdSelectionStep, &sVarValueSelectionStep},
