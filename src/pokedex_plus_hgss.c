@@ -3153,12 +3153,10 @@ static void Task_LoadEvolutionScreen(u8 taskId)
         if (gTasks[taskId].data[1] == 0)
         {
             enum Species species = NationalPokedexNumToSpeciesForm(sPokedexListItem->dexNum);
-            u32 personality = GetPokedexMonPersonality(species);
             sPokedexView->selectedScreen = EVO_SCREEN;
             ResetEvoScreenDataStruct();
             //Icon
             FreeMonIconPalettes(); //Free space for new pallete
-            LoadMonIconPalettePersonality(species, personality); //Loads pallete for current mon
             PrintPreEvolutions(taskId, species);
             gTasks[taskId].data[4] = CreateEvoScreenIcon(species, 18 + 32*sPokedexView->numPreEvolutions); //Create Pokémon sprite
             EvoFormsPage_PrintNavigationButtons(); // Navigation buttons
