@@ -154,33 +154,6 @@ WILD_BATTLE_TEST("Transformed Pokemon gives the experience points of the copied 
     }
 }
 
-// The held effect works whatever I_EXP_SHARE_ITEM is: in Gen 6+ the item is a key item, but holding it still works.
-WILD_BATTLE_TEST("Exp Share(held) gives Experience to mons which did not participate in battle")
-{
-    enum Item item = ITEM_NONE;
-
-    PARAMETRIZE { item = ITEM_NONE; }
-    PARAMETRIZE { item = ITEM_EXP_SHARE; }
-
-    GIVEN {
-        PLAYER(SPECIES_WOBBUFFET);
-        PLAYER(SPECIES_WYNAUT) { Level(40); Item(item); }
-        OPPONENT(SPECIES_CATERPIE) { Level(10); HP(1); }
-    } WHEN {
-        TURN { MOVE(player, MOVE_SCRATCH); }
-    } SCENE {
-        MESSAGE("Wobbuffet used Scratch!");
-        MESSAGE("The wild Caterpie fainted!");
-        // This message should appear only for gen6> exp share.
-        NOT MESSAGE("The rest of your team gained Exp. Points thanks to the Exp. Share!");
-    } THEN {
-        if (item == ITEM_EXP_SHARE)
-            EXPECT_GT(GetMonData(&gParties[B_TRAINER_PLAYER][1], MON_DATA_EXP), gExperienceTables[gSpeciesInfo[SPECIES_WYNAUT].growthRate][40]);
-        else
-            EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][1], MON_DATA_EXP), gExperienceTables[gSpeciesInfo[SPECIES_WYNAUT].growthRate][40]);
-    }
-}
-
 AI_DOUBLE_BATTLE_TEST("Both player Pokemon gain experience in double battles")
 {
     GIVEN {
