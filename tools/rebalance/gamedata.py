@@ -127,6 +127,19 @@ def field_value(text):
     return text.strip()
 
 
+def _int(v):
+    """A parsed numeric field, 0 when it resolved to a constant name."""
+    return v if isinstance(v, int) else 0
+
+
+def _local_define(line, local):
+    """Record a file's own object-like ``#define`` in ``local``; True if it was one."""
+    m = re.match(r'\s*#\s*define\s+(\w+)(?![\w(])\s*(.*)', line)
+    if m:
+        local[m[1]] = re.sub(r'//.*', '', m[2]).strip()
+    return bool(m)
+
+
 def parse_table(path, defines, prefix, fields, indent=8):
     """``[PREFIX_X] = { .field = value, ... }`` -> {PREFIX_X: {field: value}}.
 
@@ -138,9 +151,7 @@ def parse_table(path, defines, prefix, fields, indent=8):
     current = None
     field_re = re.compile(r' {%d}\.(\w+)\s*=\s*(.*)' % indent)
     for line in R.active_lines(path, local):
-        m = re.match(r'\s*#\s*define\s+(\w+)(?![\w(])\s*(.*)', line)
-        if m:
-            local[m[1]] = re.sub(r'//.*', '', m[2]).strip()
+        if _local_define(line, local):
             continue
         m = re.match(r'\s*\[(%s_\w+)\]\s*=' % prefix, line)
         if m:
@@ -242,9 +253,7 @@ def parse_moves(repo, defines, type_categories):
         typ = f.get('type', 'TYPE_NORMAL')
         if not split and cat != 'DAMAGE_CATEGORY_STATUS':
             cat = type_categories.get(typ, cat)  # GetBattleMoveCategory before Gen 4
-        power = f.get('power', 0)
-        out[move] = Move(typ, power if isinstance(power, int) else 0,
-                         f.get('accuracy', 0) if isinstance(f.get('accuracy', 0), int) else 0, cat)
+        out[move] = Move(typ, _int(f.get('power', 0)), _int(f.get('accuracy', 0)), cat)
     return out
 
 
@@ -256,9 +265,7 @@ def parse_type_chart(repo, defines):
     rows = {}
     in_table = False
     for line in R.active_lines(path, local):
-        m = re.match(r'\s*#\s*define\s+(\w+)(?![\w(])\s*(.*)', line)
-        if m:
-            local[m[1]] = re.sub(r'//.*', '', m[2]).strip()
+        if _local_define(line, local):
             continue
         if 'gTypeEffectivenessTable' in line:
             in_table = True
@@ -269,7 +276,7 @@ def parse_type_chart(repo, defines):
             vals = []
             for tok in R.split_args(m[2]):
                 tok = c_select(tok, local)
-                x = re.fullmatch(r'X\(\s*([\d.]+)\s*\)', tok) or re.fullmatch(r'UQ_4_12\(\s*([\d.]+)\s*\)', tok)
+                x = re.fullmatch(r'(?:X|UQ_4_12)\(\s*([\d.]+)\s*\)', tok)
                 vals.append(float(x[1]) if x else 1.0)
             rows[m[1]] = vals
     order = list(rows)
@@ -295,10 +302,8 @@ def parse_items(repo, defines):
         for name, body in re.findall(r'const u8 (gItemEffect_\w+)\[\w*\]\s*=\s*\{(.*?)\};', f.read(), re.S):
             m = re.search(r'\[6\]\s*=\s*([^,\n]+)', body)
             if m and 'ITEM4_HEAL_HP' in body:
-                v = c_value(m[1], defines)
-                heals[name] = v if isinstance(v, int) else None
-    return {k: {'price': f.get('price', 0) if isinstance(f.get('price', 0), int) else 0,
-                'heal': heals.get(f.get('effect'))} for k, f in items.items()}
+                heals[name] = _int(c_value(m[1], defines)) or None
+    return {k: {'price': _int(f.get('price', 0)), 'heal': heals.get(f.get('effect'))} for k, f in items.items()}
 
 
 def parse_scaling_factors(repo):
