@@ -6,6 +6,7 @@
 - trainers.party has **1,825** Pokémon, not 1,835: 436 with set moves and **1,389** on default moves. The extra 10 were the header comment's paragraphs; the generated `trainers.h` agrees.
 - 640 trainers have exactly `Check Bad Move` and 173 exactly `Basic Trainer` (660 and 179 when counting any trainer whose AI includes the flag). 16 trainers have no AI line.
 - 25 of the 30 story bosses run plain `Basic Trainer`.
+- Since #129 all 30 story bosses, and the 91 boss teams in all (gym rematches, every rival team, Wally, Maxie, Archie, Tabitha, Matt and Shelly), run `Smart Trainer` without Omniscient and Smart Tera: `Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin`, plus any flag the team already had (Winona's `Risky`; `Force Setup First Turn` for Sidney, May's Rustboro Mudkip team and Brendan's Route 103 Treecko team). The counts above become 636 exactly `Check Bad Move` and 94 exactly `Basic Trainer` (654 and 185 counting any trainer whose AI includes the flag).
 
 ## 1. Level curve
 Full clear of every trainer on each story stage's maps (500 story trainers), all members Medium Slow from level 5.
@@ -241,7 +242,7 @@ Each rival row goes on all six teams of that fight: May or Brendan, with each st
 
 ## Proposed balance changes (owner to accept or reject; each can be its own issue)
 1. **Soft level cap at each gym ace** (config). Set `B_LEVEL_CAP_TYPE LEVEL_CAP_FLAG_LIST` and `B_EXP_CAP_TYPE EXP_CAP_SOFT`. `sLevelCapFlagMap` in `src/caps.c` already holds exactly the measured aces (15/19/24/29/31/33/42/46/58). Consider `B_RARE_CANDY_CAP` too.
-2. **Boss AI to `Smart Trainer`** (data) for the gym leaders, the Elite Four, Wallace, and optionally the rivals and team leaders.
+2. **Boss AI to `Smart Trainer`** (data) for the gym leaders, the Elite Four, Wallace, and optionally the rivals and team leaders. Done in #129 for all of them, without Omniscient and Smart Tera (see "Corrections").
 3. **Fix the four boss sets the split weakened** (data): Wallace's Gyarados Hyper Beam, Phoebe's Banettes' Shadow Ball (-> Shadow Claw), Glacia's Sealeo Ice Ball, Wattson's Voltorb Spark. Done in #130 with Double-Edge, Phantom Force, Aurora Beam and Charge Beam (section 3).
 4. **Hand-write movesets for the story Pokémon that lost STAB or kept one attack** (43 and 59 slots; the list is in `output/trainer_mons.csv`). Start with the Makuhita/Hariyama line, the Museum Carvanha and Jeff's and Jace's Slugma.
 5. **Review the 157 story slots with strong new default moves** route by route (they may be welcome). A trainers-only Gen 3 learnset would need code: `P_LVL_UP_LEARNSETS` is a single include.
