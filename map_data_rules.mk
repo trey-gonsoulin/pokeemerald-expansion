@@ -33,25 +33,27 @@ $(MAPS_OUTDIR)/%/header.inc $(MAPS_OUTDIR)/%/events.inc $(MAPS_OUTDIR)/%/connect
 # mapjson groups and mapjson layouts each write several files. Listing them all as targets of one
 # rule makes -j run the recipe once per target, concurrently (make 3.81 has no grouped targets), so
 # the outputs depend on a stamp with an empty recipe instead. The stamp is touched before mapjson
-# runs and moved into place after, so the outputs are never older than it and a failed run leaves
-# it out of date. A missing output forces the stamp to rebuild.
+# runs and moved into place after, so a failed run leaves it out of date. mapjson rewrites every
+# output, so none is older than the stamp. A missing output (checked when make starts) forces the
+# stamp to rebuild; clean-generated removes the stamps with the other AUTO_GEN_TARGETS.
 MAPJSON_GROUPS_STAMP := .mapjson_groups.stamp
 MAPJSON_GROUPS_OUTPUTS := $(MAPS_OUTDIR)/connections.inc $(MAPS_OUTDIR)/groups.inc $(MAPS_OUTDIR)/events.inc $(MAPS_OUTDIR)/headers.inc $(INCLUDECONSTS_OUTDIR)/map_groups.h $(DATA_SRC_SUBDIR)/map_group_count.h $(DATA_SRC_SUBDIR)/debug_map_names.h
 MAPJSON_LAYOUTS_STAMP := .mapjson_layouts.stamp
 MAPJSON_LAYOUTS_OUTPUTS := $(LAYOUTS_OUTDIR)/layouts.inc $(LAYOUTS_OUTDIR)/layouts_table.inc $(INCLUDECONSTS_OUTDIR)/layouts.h
+AUTO_GEN_TARGETS += $(MAPJSON_GROUPS_STAMP) $(MAPJSON_LAYOUTS_STAMP)
+force_if_missing = $(if $(filter-out $(wildcard $1),$1),FORCE)
 
-$(MAPJSON_GROUPS_OUTPUTS): $(MAPJSON_GROUPS_STAMP) ;
-$(MAPJSON_GROUPS_STAMP): $(MAPS_DIR)/map_groups.json $(MAP_JSONS) .map_version $(MAPJSON) $(if $(filter-out $(wildcard $(MAPJSON_GROUPS_OUTPUTS)),$(MAPJSON_GROUPS_OUTPUTS)),FORCE)
+# mapjson groups also rewrites the tracked heal_locations.json, which jsonproc reads: as a stamp
+# output, jsonproc runs after it and sees its new contents.
+$(MAPJSON_GROUPS_OUTPUTS) $(DATA_SRC_SUBDIR)/heal_locations.json: $(MAPJSON_GROUPS_STAMP) ;
+$(MAPJSON_GROUPS_STAMP): $(MAPS_DIR)/map_groups.json $(MAP_JSONS) .map_version $(MAPJSON) $(call force_if_missing,$(MAPJSON_GROUPS_OUTPUTS))
 	@touch $@.tmp
 	@$(MAPJSON) groups $(MAP_VERSION) $(filter %.json,$^) $(MAPS_OUTDIR) $(INCLUDECONSTS_OUTDIR)
 	@echo "$(MAPJSON) groups $(MAP_VERSION) $(MAPS_DIR)/map_groups.json <MAP_JSONS> $(MAPS_OUTDIR) $(INCLUDECONSTS_OUTDIR)"
 	@mv $@.tmp $@
 
-# mapjson groups also rewrites heal_locations.json, which jsonproc reads.
-$(DATA_SRC_SUBDIR)/heal_locations.h $(INCLUDECONSTS_OUTDIR)/heal_locations.h: | $(MAPJSON_GROUPS_STAMP)
-
 $(MAPJSON_LAYOUTS_OUTPUTS): $(MAPJSON_LAYOUTS_STAMP) ;
-$(MAPJSON_LAYOUTS_STAMP): $(LAYOUTS_DIR)/layouts.json .map_version $(MAPJSON) $(if $(filter-out $(wildcard $(MAPJSON_LAYOUTS_OUTPUTS)),$(MAPJSON_LAYOUTS_OUTPUTS)),FORCE)
+$(MAPJSON_LAYOUTS_STAMP): $(LAYOUTS_DIR)/layouts.json .map_version $(MAPJSON) $(call force_if_missing,$(MAPJSON_LAYOUTS_OUTPUTS))
 	@touch $@.tmp
 	$(MAPJSON) layouts $(MAP_VERSION) $< $(LAYOUTS_OUTDIR) $(INCLUDECONSTS_OUTDIR)
 	@mv $@.tmp $@
