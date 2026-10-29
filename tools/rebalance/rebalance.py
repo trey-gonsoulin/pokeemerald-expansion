@@ -519,10 +519,11 @@ class Party:
         return self.affection == 'always' or (self.affection == 'friendship'
                                               and self.friendship[i] >= AFFECTION_FOUR_HEARTS)
 
-    def befriend(self, event, times=1, chance=1.0):
-        """AdjustFriendship for every member, ``times`` over; ``chance`` is
-        the expected share of them that apply (walking: 50%)."""
-        for i, f in enumerate(self.friendship):
+    def befriend(self, event, times=1, chance=1.0, members=None):
+        """AdjustFriendship for every member (or ``members``), ``times`` over;
+        ``chance`` is the expected share of them that apply (walking: 50%)."""
+        for i in range(len(self.friendship)) if members is None else members:
+            f = self.friendship[i]
             for _ in range(times):
                 f = min(f + chance * friendship_gain(f, event), MAX_FRIENDSHIP)
             self.friendship[i] = f
@@ -543,9 +544,7 @@ class Party:
                                              sent_out=i == ko, holders=len(lv) if share else 0,
                                              affection=self.has_affection(i))
                                for y, foe_level, w in foes)
-            for _ in range(level_for_exp(self.growth, int(self.exp[i])) - level):
-                self.friendship[i] = min(self.friendship[i] + friendship_gain(self.friendship[i], 'level'),
-                                         MAX_FRIENDSHIP)
+            self.befriend('level', level_for_exp(self.growth, int(self.exp[i])) - level, members=(i,))
 
 
 def stage_slots(wild, stages, folders):
@@ -579,6 +578,14 @@ def land_foes(slots):
             levels = range(slot['min_level'], slot['max_level'] + 1)
             foes += [(slot['species'], lvl, rate / len(levels)) for lvl in levels]
     return foes
+
+
+def wild_battle_foes(gd, slots):
+    """A stage's average wild battle as Party.defeat foes: [(exp yield,
+    level, share of the encounter rate)] over its land slots."""
+    foes = land_foes(slots)
+    total = sum(w for _, _, w in foes)
+    return [(gd.species[sp].exp_yield, lvl, w / total) for sp, lvl, w in foes]
 
 
 def cleared(regular, clear):
@@ -635,9 +642,7 @@ def level_curve(stages, trainers, gd, scaling, wilds, clear=1.0, wild_per_stage=
         stage's maps, weighted by its encounter rate, KO'd by one member."""
         for name, (regime, _, share) in PARTY_MODELS.items():
             d = gd[regime]
-            foes = land_foes(wilds.get(regime, {}).get(i, ()))
-            total = sum(w for _, _, w in foes)
-            foes = [(d.species[sp].exp_yield, lvl, w / total) for sp, lvl, w in foes]
+            foes = wild_battle_foes(d, wilds.get(regime, {}).get(i, ()))
             for _ in range(wild_per_stage if foes else 0):
                 parties[name].defeat(d, scaling, foes, False, share)
 
@@ -696,9 +701,7 @@ def share_curve(stages, trainers, gd, scaling, wilds, clear=1.0, affection='frie
 
     for i, st in enumerate(stages):
         party.befriend('walk', walk_steps // 128, chance=0.5)
-        foes = land_foes(wilds.get(i, ()))
-        total = sum(w for _, _, w in foes)
-        foes = [(gd.species[sp].exp_yield, lvl, w / total) for sp, lvl, w in foes]
+        foes = wild_battle_foes(gd, wilds.get(i, ()))
         for _ in range(catch if foes else 0):
             party.defeat(gd, scaling, foes, False, True)
         for tid in cleared(st['regular'], clear):
