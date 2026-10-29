@@ -1,0 +1,24 @@
+{
+  "wild_encounter_groups": [
+    {
+      "label": "gWildMonHeaders",
+      "for_maps": true,
+      "fields": [
+        {"type": "land_mons", "encounter_rates": [60, 40]}
+      ],
+      "encounters": [
+        {
+          "map": "MAP_ROUTE_A",
+          "base_label": "gRouteA",
+          "land_mons": {
+            "encounter_rate": 20,
+            "mons": [
+              {"min_level": 3, "max_level": 5, "species": "SPECIES_MAGIKARP"},
+              {"min_level": 4, "max_level": 4, "species": "SPECIES_MAGIKARP"}
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

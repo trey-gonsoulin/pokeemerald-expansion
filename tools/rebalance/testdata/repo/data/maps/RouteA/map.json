@@ -1,0 +1,20 @@
+{
+  "id": "MAP_ROUTE_A",
+  "name": "RouteA",
+  "object_events": [
+    {
+      "graphics_id": "OBJ_EVENT_GFX_ITEM_BALL",
+      "trainer_type": "TRAINER_TYPE_NONE",
+      "trainer_sight_or_berry_tree_id": "ITEM_TM_SHADOW_BALL",
+      "script": "Common_EventScript_FindItem",
+      "flag": "FLAG_ITEM_ROUTE_A_TM_SHADOW_BALL"
+    }
+  ],
+  "bg_events": [
+    {
+      "type": "hidden_item",
+      "item": "ITEM_TM_SHADOW_CLAW",
+      "flag": "FLAG_HIDDEN_ITEM_ROUTE_A_TM_SHADOW_CLAW"
+    }
+  ]
+}
