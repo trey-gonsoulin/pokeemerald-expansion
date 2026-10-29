@@ -61,10 +61,10 @@ make -j16 build/emerald/src/debug.o TOOLCHAIN=/opt/devkitpro/devkitARM  # compil
 - The debug menus are `DISABLED_ON_RELEASE` (`include/config/debug.h`), so plain `make` gives the ROM with the debug menus. In the overworld, open the menu by holding R and pressing Start.
 - `make debug` (the -Og/-g build) links once the env is clean. Its old link failure (#27: undefined `__getreent`, `_getpid_r`, `_kill_r`, `_write_r`) came from the `CPATH` leak, not gcc 16.1.
 - `make firered` / `make leafgreen` build other games through `GAME_VERSION`.
-- Warnings that are expected and not regressions (build.sh allowlists each exact line, so a new warning in the same file still shows):
-  - `release` only, from the LTO link: pokedex.c:4507 stringop-overflow (x6), mystery_gift_client.c:102 stringop-overread, and the `-Wlto-type-mismatch` on intro_frlg.c:249 (`gMultiBootProgram_PokemonColosseum_Start`) and faraway_island.h:4 (`GetMewMoveDirection`). The LTO assembler also prints 6 `<temp>.s: Warning: section .rodata.compound_string.<hash> size (0x..) is not a multiple of its entry size 0x..` lines; the temp file names and hashes change every build, so build.sh matches those by pattern.
+- Warnings that are expected and not regressions (build.sh allowlists each one as a whole-line match, mostly exact text, so a new warning in the same file still shows; it matches `error:` and `warning:` in any case):
+  - `release` only, from the LTO link: pokedex.c:4507 stringop-overflow (x6), mystery_gift_client.c:102 stringop-overread, and the `-Wlto-type-mismatch` on intro_frlg.c:249 (`gMultiBootProgram_PokemonColosseum_Start`) and faraway_island.h:4 (`GetMewMoveDirection`). The LTO assembler also prints 6 `<temp>.s: Warning: section .rodata.compound_string.<hash> size (0x..) is not a multiple of its entry size 0x..` lines; the temp file names and hashes change every build, so build.sh matches those by pattern and reports the count when a log has some but not exactly 6.
   - Every ROM build: the RWX segment linker warning. Plain `make`, `debug` and `check` emit only this one (plus the tool and asset ones below on a cold tree).
-  - Tool and asset builds: json.hpp `-Wdeprecated-literal-operator` and `libpng warning: bKGD: invalid index`.
+  - Tool and asset builds: json.hpp `-Wdeprecated-literal-operator` and `libpng warning: bKGD: invalid index` (under -j two of these can share a line, which build.sh also filters).
 
 ## Tests
 
