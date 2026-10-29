@@ -22,10 +22,15 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # mgba-rom-test-hydra has no wall-clock timeout, and the ROM's 60 s TIMEOUT (a Timer2 interrupt)
+    # misses a test that loops inside another interrupt handler or with interrupts off, so a hung
+    # test would otherwise hold the job for GitHub's 6 hours (#73). check takes about 15 min.
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        # check: the full test suite. KNOWN_FAILING and TO_DO results don't fail it; FAILED ones do.
+        # check: the full test suite. KNOWN_FAILING, TO_DO and (outside rh-hideout) ASSUMPTIONS_FAILED
+        # results don't fail it. FAILED ones do, and so does a KNOWN_FAILING test that passes.
         # all: the ROM with the debug menus. release: the ROM without them.
         target: [check, all, release]
     env:
