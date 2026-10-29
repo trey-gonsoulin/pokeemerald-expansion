@@ -1,4 +1,5 @@
 #include "global.h"
+#include "constants/characters.h"
 #include "debug_menu_ui.h"
 #include "string_util.h"
 #include "test/test.h"
@@ -161,6 +162,37 @@ TEST("Flag and var names: NULL outside the flags and for trainer flags")
     EXPECT(Debug_GetFlagName(SPECIAL_FLAGS_START) == NULL);
     EXPECT(Debug_GetFlagName(TRAINER_FLAGS_START + 1) == NULL);
     EXPECT(Debug_GetFlagName(FLAGS_COUNT - 1) != NULL);
+}
+
+// The test ROM links test/battle/trainer_control.party as gTrainers, not the game's trainers:
+// trainer 1 is RED and 2 is LEAF (both Rival, "{PKMN} TRAINER"), and the IDs after its 17 trainers
+// are zero-filled: no party, and no EOS in the name
+TEST("Flag and var names: trainer flags show the trainer's class and name")
+{
+    u8 name[DEBUG_TRAINER_FLAG_NAME_SIZE];
+
+    EXPECT(Debug_CopyTrainerFlagName(name, TRAINER_FLAGS_START + 1));
+    EXPECT(NameIs(name, COMPOUND_STRING("{PKMN} TRAINER RED")));
+    EXPECT(Debug_CopyTrainerFlagName(name, TRAINER_FLAGS_START + 2));
+    EXPECT(NameIs(name, COMPOUND_STRING("{PKMN} TRAINER LEAF")));
+}
+
+TEST("Flag and var names: no trainer for TRAINER_NONE, trainers without a party, unused trainer IDs and other flags")
+{
+    u8 name[DEBUG_TRAINER_FLAG_NAME_SIZE];
+
+    name[0] = EOS;
+    EXPECT(!Debug_CopyTrainerFlagName(name, TRAINER_FLAGS_START + TRAINER_NONE));
+    EXPECT(!Debug_CopyTrainerFlagName(name, TRAINER_FLAGS_START + TRAINERS_COUNT - 1));
+    EXPECT(!Debug_CopyTrainerFlagName(name, TRAINER_FLAGS_START + TRAINERS_COUNT));
+    EXPECT(!Debug_CopyTrainerFlagName(name, TRAINER_FLAGS_END));
+    EXPECT(!Debug_CopyTrainerFlagName(name, TRAINER_FLAGS_END + 1));
+    EXPECT(!Debug_CopyTrainerFlagName(name, TRAINER_FLAGS_START - 1));
+    EXPECT(!Debug_CopyTrainerFlagName(name, FLAG_BADGE05_GET));
+    EXPECT_EQ(name[0], EOS);
+    // Constant names are unchanged around the trainer flags
+    EXPECT(NameIs(Debug_GetFlagName(FLAG_BADGE05_GET), COMPOUND_STRING("BADGE05_GET")));
+    EXPECT(Debug_GetFlagName(TRAINER_FLAGS_START + TRAINER_ROXANNE_1) == NULL);
 }
 
 TEST("Flag and var names: vars show the constant name without VAR_, NULL outside VARS_START..VARS_END")
