@@ -107,19 +107,19 @@ TEST("HGSS evolution page frees every icon it draws")
 {
     enum Species species = SPECIES_NONE;
     enum Species targetSpecies[1];
+    u32 expectedIcons = 0;
     u64 spritesInUse;
     u8 taskId;
 
-    PARAMETRIZE { species = SPECIES_RAICHU; }
-    PARAMETRIZE { species = SPECIES_COMBUSKEN; }
-    PARAMETRIZE { species = SPECIES_TORCHIC; }
-    PARAMETRIZE { species = SPECIES_EEVEE; }
+    PARAMETRIZE { species = SPECIES_RAICHU; expectedIcons = 3; }
+    PARAMETRIZE { species = SPECIES_COMBUSKEN; expectedIcons = 3; }
+    PARAMETRIZE { species = SPECIES_TORCHIC; expectedIcons = 3; }
+    PARAMETRIZE { species = SPECIES_EEVEE; expectedIcons = 9; }
 
     taskId = CreateTask(TaskDummy, 0);
     spritesInUse = GetSpritesInUse();
 
-    Test_PrintAndDestroyEvolutionPage(taskId, species, targetSpecies, ARRAY_COUNT(targetSpecies));
-
+    EXPECT_EQ(Test_PrintAndDestroyEvolutionPage(taskId, species, targetSpecies, ARRAY_COUNT(targetSpecies)), expectedIcons);
     EXPECT(GetSpritesInUse() == spritesInUse);
     DestroyTask(taskId);
 }
