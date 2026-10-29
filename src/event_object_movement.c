@@ -180,6 +180,7 @@ static u8 GetObjectEventIdByLocalIdAndMapInternal(u8, u8, u8);
 static u32 GetAvailableObjectEventId(u16, u8, u8);
 static u32 TryEvictFollowerToFreeObject(void);
 static void TryRespawnEvictedFollower(s16, s16);
+void RemoveObjectEventsOutsideView(void);
 static void SetObjectEventDynamicGraphicsId(struct ObjectEvent *);
 static void RemoveObjectEventInternal(struct ObjectEvent *);
 static u16 GetObjectEventFlagIdByObjectEventId(u8);
@@ -1692,9 +1693,18 @@ static bool32 IsScriptControllingObjectEvents(void)
 static u32 TryEvictFollowerToFreeObject(void)
 {
     struct ObjectEvent *follower = GetFollowerObject();
+    u32 i;
 
     if (follower == NULL || IsScriptControllingObjectEvents())
         return OBJECT_EVENTS_COUNT;
+
+    // The camera update spawns before it removes, so first free the slots of objects that left the view
+    RemoveObjectEventsOutsideView();
+    for (i = 0; i < OBJECT_EVENTS_COUNT; i++)
+    {
+        if (!gObjectEvents[i].active)
+            return i;
+    }
 
     RemoveObjectEvent(follower);
     sFollowerAwaitingSlot = TRUE;
@@ -1703,27 +1713,17 @@ static u32 TryEvictFollowerToFreeObject(void)
 
 static void TryRespawnEvictedFollower(s16 cameraX, s16 cameraY)
 {
-    u32 i;
-
     if (!sFollowerAwaitingSlot || IsScriptControllingObjectEvents())
         return;
-    if (GetFollowerObject() != NULL)
-    {
-        sFollowerAwaitingSlot = FALSE;
-        return;
-    }
 
-    // Objects that scrolled into view before the ones leaving it freed their slots go first
+    sFollowerAwaitingSlot = FALSE;
+    if (GetFollowerObject() != NULL)
+        return;
+
+    // Map objects in view that found no slot go first.
+    // UpdateFollowingPokemon sets sFollowerAwaitingSlot again if none is left.
     TrySpawnObjectEvents(cameraX, cameraY);
-    for (i = 0; i < OBJECT_EVENTS_COUNT; i++)
-    {
-        if (!gObjectEvents[i].active)
-        {
-            sFollowerAwaitingSlot = FALSE;
-            UpdateFollowingPokemon();
-            return;
-        }
-    }
+    UpdateFollowingPokemon();
 }
 
 void RemoveObjectEvent(struct ObjectEvent *objectEvent)
