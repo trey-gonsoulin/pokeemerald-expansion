@@ -69,17 +69,19 @@ TEST("Follower object slots: the follower keeps its slot while a script runs")
 TEST("Follower object slots: an evicted follower comes back once a slot frees")
 {
     u32 i;
+    u8 firstNpc;
 
     SetUpFollowerSlotsTest();
     UpdateFollowingPokemon();
-    for (i = 1; i <= OBJECT_EVENTS_COUNT; i++)
+    firstNpc = SpawnTestNpc(1);
+    for (i = 2; i <= OBJECT_EVENTS_COUNT; i++)
         SpawnTestNpc(i);
     EXPECT(GetFollowerObject() == NULL);
 
     UpdateObjectEventsForCameraUpdate(0, 0);
     EXPECT(GetFollowerObject() == NULL);
 
-    RemoveObjectEventByLocalIdAndMap(1, gSaveBlock1Ptr->location.mapNum, gSaveBlock1Ptr->location.mapGroup);
+    RemoveObjectEvent(&gObjectEvents[firstNpc]);
     UpdateObjectEventsForCameraUpdate(0, 0);
     EXPECT(GetFollowerObject() != NULL);
     CleanUpFollowerSlotsTest();
@@ -88,15 +90,57 @@ TEST("Follower object slots: an evicted follower comes back once a slot frees")
 TEST("Follower object slots: a follower that found no slot on map load spawns once one frees")
 {
     u32 i;
+    u8 firstNpc;
 
     SetUpFollowerSlotsTest();
-    for (i = 1; i <= OBJECT_EVENTS_COUNT; i++)
+    firstNpc = SpawnTestNpc(1);
+    for (i = 2; i <= OBJECT_EVENTS_COUNT; i++)
         SpawnTestNpc(i);
     UpdateFollowingPokemon();
     EXPECT(GetFollowerObject() == NULL);
 
-    RemoveObjectEventByLocalIdAndMap(1, gSaveBlock1Ptr->location.mapNum, gSaveBlock1Ptr->location.mapGroup);
+    RemoveObjectEvent(&gObjectEvents[firstNpc]);
     UpdateObjectEventsForCameraUpdate(0, 0);
+    EXPECT(GetFollowerObject() != NULL);
+    CleanUpFollowerSlotsTest();
+}
+
+TEST("Follower object slots: an evicted follower stays away while the field controls are locked")
+{
+    u32 i;
+    u8 firstNpc;
+
+    SetUpFollowerSlotsTest();
+    UpdateFollowingPokemon();
+    firstNpc = SpawnTestNpc(1);
+    for (i = 2; i <= OBJECT_EVENTS_COUNT; i++)
+        SpawnTestNpc(i);
+    RemoveObjectEvent(&gObjectEvents[firstNpc]);
+
+    LockPlayerFieldControls();
+    UpdateObjectEventsForCameraUpdate(0, 0);
+    EXPECT(GetFollowerObject() == NULL);
+    UnlockPlayerFieldControls();
+
+    UpdateObjectEventsForCameraUpdate(0, 0);
+    EXPECT(GetFollowerObject() != NULL);
+    CleanUpFollowerSlotsTest();
+}
+
+TEST("Follower object slots: an object that left the view frees its slot before the follower is evicted")
+{
+    u32 i;
+
+    SetUpFollowerSlotsTest();
+    UpdateFollowingPokemon();
+    // Out of view, as when the camera update spawns before it removes the objects that left
+    SpawnSpecialObjectEventParameterized(OBJ_EVENT_GFX_BOY_1, MOVEMENT_TYPE_FACE_DOWN, 1,
+                                         gSaveBlock1Ptr->pos.x + MAP_OFFSET + 30,
+                                         gSaveBlock1Ptr->pos.y + MAP_OFFSET, 3);
+    for (i = 2; i < OBJECT_EVENTS_COUNT; i++)
+        SpawnTestNpc(i);
+
+    EXPECT_NE(SpawnTestNpc(OBJECT_EVENTS_COUNT), OBJECT_EVENTS_COUNT);
     EXPECT(GetFollowerObject() != NULL);
     CleanUpFollowerSlotsTest();
 }
