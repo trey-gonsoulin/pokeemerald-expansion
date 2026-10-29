@@ -114,7 +114,7 @@ python3 -m unittest discover -s tools/area_archetypes      # tests
 
 ### `src/debug.c` and `src/debug_menu_ui.c` gotchas
 - Put new generic menu UX in `src/debug_menu_ui.c`, not inline in `src/debug.c`. Its helpers take the window template, counts and state pointers as arguments. The numeric input is the exception: it works on the task data slots `DEBUG_DATA_INPUT`/`DIGIT`/`INPUT_START` from `include/debug_menu_ui.h`, which `src/debug.c` names `tInput`/`tDigit`/`tInputStart`.
-- Numeric inputs store the value in s16 task data (`tInput`), but a max can be 0xFFFF. Every read, compare and clamp has to go through u16/u32: read it with `DEBUG_TASK_INPUT`, print it with `Debug_InputToDecimalString` (not `ConvertIntToDecimalStringN` on `tInput`, which loses the digit highlight and the u16 read), and size it with the bounded `Debug_CountDigits`.
+- Numeric inputs store the value in s16 task data (`tInput`), but a max can be 0xFFFF. Every read, compare and clamp has to go through u16/u32: read it with `DEBUG_TASK_INPUT`, print it with `Debug_InputToDecimalString` (not `ConvertIntToDecimalStringN` on `tInput`, which loses the digit highlight and the u16 read), and size it with the bounded `Debug_CountDigits`. A selection step with `.hex = TRUE` (the Var ID, #36) is dialed in hex instead: print it with `Debug_InputToHexString` and `gText_HexDigitIndicator`.
 - Steps that skip invalid values (species) are bounded with a `maxFunc`, such as the last enabled species.
   - `IsSpeciesEnabled(SPECIES_EGG)` is TRUE, and `SPECIES_EGG == NUM_SPECIES`, so an upward search can land one past the max.
 - Almost all of the task data slots are in use. Extra menu state goes in the heap-allocated `sDebugMenuListData`, which is freed on every exit path.
