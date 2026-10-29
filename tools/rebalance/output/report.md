@@ -107,10 +107,10 @@ Party level just before each boss. Every party member is Medium Slow (the starte
 | Tate and Liza | Tate And Liza 1 | 42 | 41.5 | 74 | 48.0 | 58 | 43.0 | 58 | 50.0 |
 | Juan | Juan 1 | 46 | 42.8 | 81 | 52.0 | 63 | 46.2 | 63 | 54.0 |
 | Elite Four | Sidney | 49 | 47.4 | 85 | 54.8 | 67 | 49.0 | 67 | 58.0 |
-| Elite Four | Phoebe | 51 | 49.4 | 85 | 55.0 | 68 | 49.5 | 68 | 58.0 |
+| Elite Four | Phoebe | 51 | 49.4 | 85 | 55.0 | 68 | 49.2 | 68 | 58.0 |
 | Elite Four | Glacia | 53 | 51.4 | 85 | 55.0 | 68 | 50.0 | 68 | 58.0 |
 | Elite Four | Drake | 55 | 53.4 | 86 | 55.0 | 68 | 50.0 | 68 | 59.0 |
-| Elite Four | Wallace | 58 | 56.3 | 86 | 55.5 | 69 | 50.8 | 69 | 59.0 |
+| Elite Four | Wallace | 58 | 56.3 | 86 | 56.0 | 69 | 50.8 | 69 | 59.0 |
 
 ## Default movesets (Gen 3 vs Gen 9 learnsets)
 
@@ -239,7 +239,7 @@ Flags (all default Pokemon / story trainers only):
 |   Pokemon with a flip onto a weaker stat | 31 |
 |   type changes | 0 |
 |   power changes | 267 |
-|   accuracy changes | 68 |
+|   accuracy changes | 71 |
 
 Changed attacking moves (set-move slots; weaker/similar/stronger: the category flipped onto that stat; data: only power, accuracy or type changed):
 
@@ -577,6 +577,7 @@ First stage where each TM is on a stage map (ball, hidden item, mart list or scr
 | Norman | Taunt | Dark | - | Status | Route110_TrickHouseEnd | script |
 | Winona | Aerial Ace | Flying | 60 | Physical | FortreeCity_Gym | script |
 | Winona | Rain Dance | Water | - | Status | AbandonedShip_HiddenFloorRooms | ball |
+| Winona | Sunny Day | Fire | - | Status | ScorchedSlab | ball |
 | Tate and Liza | Hyper Beam | Normal | 150 | Special | LilycoveCity_DepartmentStore_4F | mart |
 | Tate and Liza | Solar Beam | Grass | 120 | Special | SafariZone_Northwest | ball |
 | Tate and Liza | Blizzard | Ice | 110 | Special | LilycoveCity_DepartmentStore_4F | mart |
@@ -596,6 +597,7 @@ First stage where each TM is on a stage map (ball, hidden item, mart list or scr
 | Juan | Brick Break | Fighting | 75 | Physical | SootopolisCity_House1 | script |
 | Juan | Water Pulse | Water | 60 | Special | SootopolisCity_Gym_1F | script |
 | Juan | Frustration | Normal | varies | Physical | PacifidlogTown_House2 | script |
+| Elite Four | Dragon Claw | Dragon | 80 | Physical | MeteorFalls_B1F_2R | ball |
 
 ## Wild Pokemon by story stage
 
@@ -609,10 +611,10 @@ Species on the stage maps so far (every table), vanilla tables vs the restocked 
 | Wattson | 35 / 73 | 13 | Clawitzer (500, 40), Lanturn (460, 30), Quagsire (430, 25), Frillish (335, 5), Chinchou (330, 20), Clauncher (330, 35) | - |
 | Flannery | 60 / 114 | 30 | Shuckle (505, 5), Floatzel (495, 30), Slowbro (490, 40), Maractus (461, 19), Basculin Blue Striped (460, 15), Masquerain (454, 30) | Jigglypuff |
 | Norman | 60 / 120 | 6 | Sigilyph (490, 20), Onix (385, 22), Scraggy (348, 20), Darumaka (315, 21), Gible (300, 20), Sandile (292, 20) | - |
-| Winona | 68 / 146 | 26 | Gyarados (540, 30), Lumineon (460, 35), Noctowl (452, 25), Dunsparce (415, 27), Pyukumuku (410, 5), Kadabra (400, 27) | - |
-| Tate and Liza | 109 / 207 | 49 | Gyarados (540, 30), Kangaskhan (490, 27), Kingler (475, 32), Stunfisk (471, 20), Alomomola (470, 25), Basculin Blue Striped (460, 30) | Snubbull |
-| Juan | 115 / 215 | 19 | Relicanth (485, 35), Alomomola (470, 25), Raticate (413, 31), Pyukumuku (410, 15), Machoke (405, 29), Onix (385, 31) | - |
-| Elite Four | 119 / 224 | 10 | Bronzong (500, 36), Drednaw (485, 35), Durant (484, 38), Alomomola (470, 25), Boldore (390, 30), Onix (385, 38) | Mawile |
+| Winona | 72 / 153 | 30 | Gyarados (540, 30), Lumineon (460, 35), Noctowl (452, 25), Audino (445, 23), Dunsparce (415, 27), Raticate Alola (413, 22) | - |
+| Tate and Liza | 113 / 213 | 49 | Gyarados (540, 30), Kangaskhan (490, 27), Kingler (475, 32), Stunfisk (471, 20), Alomomola (470, 25), Basculin Blue Striped (460, 30) | Snubbull |
+| Juan | 125 / 231 | 24 | Druddigon (485, 38), Alomomola (470, 25), Raticate (413, 31), Pyukumuku (410, 15), Machoke (405, 29), Onix (385, 31) | Mawile |
+| Elite Four | 130 / 242 | 14 | Cloyster (525, 35), Bronzong (500, 36), Floatzel (495, 30), Drednaw (485, 35), Durant (484, 38), Alomomola (470, 25) | - |
 
 ## Economy
 

@@ -140,27 +140,38 @@ def _local_define(line, local):
     return bool(m)
 
 
-def parse_table(path, defines, prefix, fields, indent=8):
+def _brace_delta(line):
+    """Net ``{`` minus ``}`` on a line, ignoring string literals and // comments."""
+    code = re.sub(r'//.*', '', re.sub(r'"(?:[^"\\]|\\.)*"', '""', line))
+    return code.count('{') - code.count('}')
+
+
+def parse_table(path, defines, prefix, fields):
     """``[PREFIX_X] = { .field = value, ... }`` -> {PREFIX_X: {field: value}}.
 
-    Only fields at ``indent`` spaces are read, so nested structs are skipped.
-    The file's own object-like #defines are visible to later values.
+    Only the entry's own fields (one brace level inside it) are read, so
+    nested structs are skipped, whatever the indent of a field inside an
+    #if branch. The file's own object-like #defines are visible to later values.
     """
     local = dict(defines)
     out = {}
     current = None
-    field_re = re.compile(r' {%d}\.(\w+)\s*=\s*(.*)' % indent)
+    depth = base = 0
     for line in R.active_lines(path, local):
         if _local_define(line, local):
             continue
         m = re.match(r'\s*\[(%s_\w+)\]\s*=' % prefix, line)
         if m:
-            current = m[1]
+            current, base = m[1], depth
             out[current] = {}
-            continue
-        m = field_re.match(line)
-        if m and current and m[1] in fields and m[1] not in out[current]:
-            out[current][m[1]] = c_value(field_value(m[2]), local)
+        elif current and depth == base + 1:
+            m = re.match(r'\s*\.(\w+)\s*=\s*(.*)', line)
+            if m and m[1] in fields and m[1] not in out[current]:
+                out[current][m[1]] = c_value(field_value(m[2]), local)
+        delta = _brace_delta(line)
+        depth += delta
+        if current and delta < 0 and depth <= base:  # the entry's closing brace
+            current = None
     return out
 
 

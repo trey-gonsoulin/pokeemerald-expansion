@@ -4,7 +4,9 @@
 """
 
 import contextlib
+import fnmatch
 import io
+import json
 import os
 import sys
 import tempfile
@@ -48,6 +50,32 @@ class Expressions(unittest.TestCase):
     def test_ternary_inside_arithmetic(self):
         self.assertEqual(G.c_value('2 * (B_UPDATED_MOVE_DATA >= GEN_6 ? 60 : 50)', self.d['modern']), 120)
         self.assertEqual(G.c_value('2 * (B_UPDATED_MOVE_DATA >= GEN_6 ? 60 : 50)', self.d['vanilla']), 100)
+
+    def test_table_fields_inside_if_branches_and_nested_structs(self):
+        text = ('const struct MoveInfo gMovesInfo[] =\n{\n'
+                '    [MOVE_CRABHAMMER] =\n    {\n'
+                '        .description = COMPOUND_STRING("{BRACE} text"),\n'
+                '    #if B_UPDATED_MOVE_DATA >= GEN_5\n'
+                '            .accuracy = 90,\n'
+                '    #else\n'
+                '            .accuracy = 85,\n'
+                '    #endif\n'
+                '        .additionalEffects = ADDITIONAL_EFFECTS({\n'
+                '            .power = 1,\n'
+                '        }),\n'
+                '        .power = 100,\n'
+                '    },\n'
+                '    [MOVE_POUND] = { },\n'
+                '        .power = 7,\n'
+                '};\n')
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, 'moves_info.h')
+            with open(path, 'w', encoding='utf-8') as f:
+                f.write(text)
+            for regime, accuracy in (('modern', 90), ('vanilla', 85)):
+                table = G.parse_table(path, self.d[regime], 'MOVE', ('accuracy', 'power'))
+                self.assertEqual(table['MOVE_CRABHAMMER'], {'accuracy': accuracy, 'power': 100})
+                self.assertEqual(table['MOVE_POUND'], {})
 
     def test_field_value_stops_at_the_top_level_comma(self):
         self.assertEqual(G.field_value('MON_TYPES(TYPE_A, TYPE_B), // x'), 'MON_TYPES(TYPE_A, TYPE_B)')
@@ -296,6 +324,18 @@ class RealRepo(unittest.TestCase):
         trainers = G.parse_trainers(os.path.join(G.REPO, 'src', 'data', 'trainers.party'))
         stages = RB.load_stages(RB.DEFAULT_STAGES, trainers, G.REPO)
         self.assertTrue(all(st['bosses'] for st in stages))
+
+    def test_every_map_with_trainers_tms_or_wild_has_a_stage(self):
+        with open(RB.DEFAULT_STAGES, encoding='utf-8') as f:
+            cfg = json.load(f)
+        with open(os.path.join(G.REPO, 'src', 'data', 'wild_encounters.json'), encoding='utf-8') as f:
+            wild_ids = {e.get('map') for g in json.load(f)['wild_encounter_groups'] for e in g['encounters']}
+        folders = set(G.map_trainers(G.REPO).values()) | set(G.map_tms(G.REPO))
+        folders |= {f for f, mid in G.map_folders(G.REPO).items() if mid in wild_ids}
+        missing = sorted(f for f in folders
+                         if not f.endswith('_Frlg') and G.stage_of(f, cfg['stages']) is None
+                         and not any(fnmatch.fnmatchcase(f, g) for g in cfg['unstaged']))
+        self.assertEqual(missing, [])
 
 
 if __name__ == '__main__':

@@ -22,19 +22,21 @@ Standard library only; nothing in `src/` or `data/` is written. The
 preprocessor helpers and the species_info macro expansion are imported from
 `tools/area_archetypes/restock.py` (`parse_defines`, `active_lines`,
 `species_entries`). The tests run on the small fake repo in `testdata/repo/`,
-plus two checks that every trainer species and move in the real
-`src/data/trainers.party` resolves under both regimes.
+plus checks on the real repo: every trainer species and move in
+`src/data/trainers.party` resolves under both regimes, every stage boss
+exists, and every map with trainers, TMs or wild Pokemon is in a stage or
+in `unstaged`.
 
 ## Outputs
 
+- [`output/findings.md`](output/findings.md): the written-up findings and
+  the proposed balance changes (#113). Hand-written from `report.md`; update
+  it by hand when the numbers move.
 - `output/report.md`: every table the findings use. Committed as a
   snapshot; rerun after upstream syncs or balance edits.
 - `output/trainer_mons.csv`: every trainer Pokemon with its vanilla and
   modern default moveset and its flags (gitignored).
 - `output/summary.json`: the report's numbers, for scripts (gitignored).
-
-The written-up findings and the proposed balance changes are in the
-closing comment of issue #113.
 
 ## What it measures
 
@@ -91,5 +93,10 @@ belongs to the stage of the first map whose script battles it
 battles (`TRAINER_{RIVAL}_ROUTE_103_{STARTER}`, default May with the player
 on Mudkip), and `exclude` drops the other rival variants. The stage split
 is approximate: water routes sit after Norman (Surf), Route 103 east with
-Wattson, and optional areas (Trick House, Safari Zone, routes 129-134) in
-the stage where they open.
+Wattson, Dive and Sky Pillar with Juan, Meteor Falls B1F (Waterfall) with
+the Elite Four, and optional areas (Trick House, Safari Zone, New Mauville,
+Scorched Slab, routes 129-134) in the stage where they open. `unstaged`
+lists the maps that deliberately belong to no stage: post-game areas
+(S.S. Tidal, Steven's cave, Altering and Artisan Caves, the Desert
+Underpass, Marine Cave, Sealed Chamber), the Elite Four rooms, whose
+trainers are bosses, and unused maps.
