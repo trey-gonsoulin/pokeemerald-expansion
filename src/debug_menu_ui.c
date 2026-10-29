@@ -2,6 +2,7 @@
 // A release build (DEBUG_OVERWORLD_MENU off) keeps only the numeric input and its digit rendering,
 // because the native party-menu debug entries (Set Friendship, Set Pokerus) run the selection engine.
 #include "global.h"
+#include "data.h"
 #include "debug_menu_ui.h"
 #include "list_menu.h"
 #include "main.h"
@@ -358,6 +359,25 @@ const u8 *Debug_GetVarName(u32 varId)
     if (!DEBUG_FLAG_VAR_NAMES || varId < VARS_START || varId > VARS_END)
         return NULL;
     return sDebugVarNames[varId - VARS_START];
+}
+
+// For a trainer flag, copies the trainer's class and name ("LEADER ROXANNE") into dest and returns TRUE.
+// Returns FALSE and leaves dest alone for any other flag, TRAINER_NONE, the unused IDs from
+// TRAINERS_COUNT up to TRAINER_FLAGS_END, and a trainer without a name.
+bool32 Debug_CopyTrainerFlagName(u8 *dest, u32 flag)
+{
+    u32 trainerId = flag - TRAINER_FLAGS_START;
+    const u8 *name;
+
+    if (flag < TRAINER_FLAGS_START || trainerId == TRAINER_NONE || trainerId >= TRAINERS_COUNT)
+        return FALSE;
+    name = GetTrainerNameFromId(trainerId);
+    if (name[0] == EOS)
+        return FALSE;
+    dest = StringCopy(dest, GetTrainerClassNameFromId(trainerId));
+    *dest++ = CHAR_SPACE;
+    StringCopy(dest, name);
+    return TRUE;
 }
 
 // *******************************
