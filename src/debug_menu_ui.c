@@ -279,3 +279,16 @@ void Debug_RestoreMenuPosition(struct DebugMenuPosition *position, const struct 
     *scrollOffset = min(position->scrollOffset, maxScroll);
     *selectedRow = index - *scrollOffset;
 }
+
+// *******************************
+// Text
+
+// Prints the lines lineHeight apart. A line too long for the window drops to a narrower font instead of clipping.
+void Debug_PrintLinesToFit(u32 windowId, u32 fontId, u32 lineHeight, const u8 *const *lines, u32 count)
+{
+    for (u32 i = 0; i < count; i++)
+    {
+        u32 fitFontId = GetFontIdToFit(lines[i], fontId, 0, WindowWidthPx(windowId));
+        AddTextPrinterParameterized(windowId, fitFontId, lines[i], 0, i * lineHeight, 0, NULL);
+    }
+}
