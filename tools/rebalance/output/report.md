@@ -59,21 +59,21 @@ Party level just before each boss. Every party member is Medium Slow (the starte
 | Winona | Shelly Weather Institute | 43 | 43.0 | 60 | 38.8 | 47 | 34.5 | 47 | 41.0 |
 | Winona | Winona 1 | 43 | 40.4 | 60 | 38.8 | 48 | 34.8 | 48 | 41.0 |
 | Tate and Liza | May Lilycove Mudkip | 50 | 48.2 | 70 | 45.2 | 55 | 40.5 | 55 | 47.0 |
-| Tate and Liza | Tabitha Magma Hideout | 50 | 46.2 | 70 | 45.8 | 56 | 40.8 | 56 | 48.0 |
+| Tate and Liza | Tabitha Magma Hideout | 51 | 47.2 | 70 | 45.8 | 56 | 40.8 | 56 | 48.0 |
 | Tate and Liza | Maxie Magma Hideout | 51 | 50.0 | 71 | 45.8 | 56 | 41.0 | 56 | 48.0 |
 | Tate and Liza | Matt | 51 | 51.0 | 71 | 45.8 | 57 | 41.5 | 57 | 49.0 |
-| Tate and Liza | Tate And Liza 1 | 51 | 50.5 | 71 | 46.0 | 57 | 41.8 | 57 | 49.0 |
+| Tate and Liza | Tate And Liza 1 | 52 | 51.5 | 71 | 46.0 | 57 | 41.8 | 57 | 49.0 |
 | Juan | Tabitha Mossdeep | 56 | 54.0 | 78 | 49.8 | 62 | 45.0 | 62 | 53.0 |
 | Juan | Maxie Mossdeep | 56 | 55.0 | 78 | 50.2 | 62 | 45.2 | 62 | 53.0 |
-| Juan | Shelly Seafloor Cavern | 56 | 56.0 | 78 | 50.5 | 62 | 45.8 | 62 | 53.0 |
-| Juan | Archie | 56 | 54.7 | 78 | 50.8 | 63 | 45.8 | 63 | 54.0 |
+| Juan | Shelly Seafloor Cavern | 57 | 57.0 | 78 | 50.5 | 62 | 45.8 | 62 | 53.0 |
+| Juan | Archie | 57 | 55.7 | 78 | 50.8 | 63 | 45.8 | 63 | 54.0 |
 | Juan | Juan 1 | 57 | 53.8 | 79 | 50.8 | 63 | 46.2 | 63 | 54.0 |
-| Elite Four | Wally Vr 1 | 60 | 58.4 | 83 | 53.2 | 67 | 49.0 | 67 | 57.0 |
+| Elite Four | Wally Vr 1 | 61 | 59.4 | 83 | 53.2 | 67 | 49.0 | 67 | 57.0 |
 | Elite Four | Sidney | 61 | 59.4 | 83 | 53.8 | 68 | 49.5 | 68 | 58.0 |
-| Elite Four | Phoebe | 62 | 60.4 | 84 | 54.0 | 68 | 49.8 | 68 | 58.0 |
+| Elite Four | Phoebe | 62 | 60.4 | 84 | 54.0 | 68 | 50.0 | 68 | 58.0 |
 | Elite Four | Glacia | 63 | 61.4 | 84 | 54.2 | 69 | 50.2 | 69 | 59.0 |
-| Elite Four | Drake | 64 | 62.4 | 85 | 54.5 | 69 | 50.8 | 69 | 59.0 |
-| Elite Four | Wallace | 66 | 64.3 | 85 | 55.0 | 70 | 51.2 | 70 | 60.0 |
+| Elite Four | Drake | 64 | 62.4 | 85 | 54.8 | 69 | 50.8 | 69 | 59.0 |
+| Elite Four | Wallace | 66 | 64.3 | 85 | 55.0 | 70 | 51.5 | 70 | 60.0 |
 
 ### half clear (gym leaders, Elite Four, Champion)
 
@@ -85,12 +85,12 @@ Party level just before each boss. Every party member is Medium Slow (the starte
 | Flannery | Flannery 1 | 34 | 30.8 | 40 | 26.2 | 34 | 24.8 | 34 | 29.0 |
 | Norman | Norman 1 | 36 | 33.5 | 41 | 27.2 | 35 | 26.0 | 35 | 30.0 |
 | Winona | Winona 1 | 43 | 40.4 | 50 | 32.5 | 42 | 31.0 | 42 | 36.0 |
-| Tate and Liza | Tate And Liza 1 | 51 | 50.5 | 59 | 38.5 | 51 | 37.2 | 51 | 44.0 |
+| Tate and Liza | Tate And Liza 1 | 52 | 51.5 | 59 | 38.5 | 51 | 37.2 | 51 | 44.0 |
 | Juan | Juan 1 | 57 | 53.8 | 66 | 42.5 | 57 | 41.5 | 57 | 49.0 |
 | Elite Four | Sidney | 61 | 59.4 | 69 | 44.8 | 61 | 44.2 | 61 | 52.0 |
-| Elite Four | Phoebe | 62 | 60.4 | 70 | 45.2 | 62 | 44.8 | 62 | 52.0 |
-| Elite Four | Glacia | 63 | 61.4 | 70 | 45.5 | 62 | 45.0 | 62 | 53.0 |
-| Elite Four | Drake | 64 | 62.4 | 71 | 45.8 | 63 | 45.8 | 63 | 54.0 |
+| Elite Four | Phoebe | 62 | 60.4 | 70 | 45.2 | 62 | 44.8 | 62 | 53.0 |
+| Elite Four | Glacia | 63 | 61.4 | 71 | 45.5 | 62 | 45.2 | 62 | 53.0 |
+| Elite Four | Drake | 64 | 62.4 | 71 | 45.8 | 63 | 46.0 | 63 | 54.0 |
 | Elite Four | Wallace | 66 | 64.3 | 72 | 46.5 | 64 | 46.5 | 64 | 55.0 |
 
 ### full clear + 20 wild battles per stage (gym leaders, Elite Four, Champion)
@@ -103,12 +103,12 @@ Party level just before each boss. Every party member is Medium Slow (the starte
 | Flannery | Flannery 1 | 34 | 30.8 | 50 | 32.2 | 39 | 29.0 | 39 | 34.0 |
 | Norman | Norman 1 | 36 | 33.5 | 52 | 33.8 | 41 | 30.0 | 41 | 35.0 |
 | Winona | Winona 1 | 43 | 40.4 | 62 | 39.8 | 49 | 35.8 | 49 | 42.0 |
-| Tate and Liza | Tate And Liza 1 | 51 | 50.5 | 73 | 47.0 | 58 | 42.5 | 58 | 50.0 |
+| Tate and Liza | Tate And Liza 1 | 52 | 51.5 | 73 | 47.0 | 58 | 42.8 | 58 | 50.0 |
 | Juan | Juan 1 | 57 | 53.8 | 80 | 51.8 | 64 | 47.0 | 64 | 55.0 |
 | Elite Four | Sidney | 61 | 59.4 | 86 | 55.0 | 69 | 50.5 | 69 | 59.0 |
 | Elite Four | Phoebe | 62 | 60.4 | 86 | 55.8 | 70 | 51.0 | 70 | 60.0 |
 | Elite Four | Glacia | 63 | 61.4 | 86 | 55.8 | 70 | 51.2 | 70 | 60.0 |
-| Elite Four | Drake | 64 | 62.4 | 87 | 56.0 | 71 | 51.8 | 71 | 60.0 |
+| Elite Four | Drake | 64 | 62.4 | 87 | 56.0 | 71 | 51.8 | 71 | 61.0 |
 | Elite Four | Wallace | 66 | 64.3 | 87 | 56.2 | 71 | 52.2 | 71 | 61.0 |
 
 ## Exp. Share curve (#127)
@@ -134,19 +134,19 @@ The share6 party on modern data: one Pokemon takes every KO (KO-taker) and five 
 | Winona | Shelly Weather Institute | 43 | 49 | 41 / 42 / 42 | 255 | 54 | 45 / 46 / 46 | 255 |
 | Winona | Winona 1 | 43 | 50 | 41 / 42 / 43 | 255 | 54 | 45 / 46 / 47 | 255 |
 | Tate and Liza | May Lilycove Mudkip | 50 | 58 | 48 / 49 / 49 | 255 | 63 | 52 / 54 / 54 | 255 |
-| Tate and Liza | Tabitha Magma Hideout | 50 | 58 | 48 / 50 / 50 | 255 | 64 | 53 / 55 / 55 | 255 |
+| Tate and Liza | Tabitha Magma Hideout | 51 | 58 | 48 / 50 / 50 | 255 | 64 | 53 / 55 / 55 | 255 |
 | Tate and Liza | Maxie Magma Hideout | 51 | 59 | 48 / 50 / 50 | 255 | 64 | 53 / 55 / 55 | 255 |
 | Tate and Liza | Matt | 51 | 59 | 49 / 50 / 51 | 255 | 65 | 53 / 55 / 56 | 255 |
-| Tate and Liza | Tate And Liza 1 | 51 | 59 | 49 / 51 / 51 | 255 | 65 | 54 / 56 / 56 | 255 |
+| Tate and Liza | Tate And Liza 1 | 52 | 59 | 49 / 51 / 51 | 255 | 65 | 54 / 56 / 56 | 255 |
 | Juan | Tabitha Mossdeep | 56 | 64 | 53 / 55 / 55 | 255 | 70 | 58 / 60 / 60 | 255 |
-| Juan | Maxie Mossdeep | 56 | 65 | 53 / 55 / 55 | 255 | 71 | 58 / 60 / 61 | 255 |
-| Juan | Shelly Seafloor Cavern | 56 | 65 | 54 / 56 / 56 | 255 | 71 | 59 / 61 / 61 | 255 |
-| Juan | Archie | 56 | 65 | 54 / 56 / 56 | 255 | 71 | 59 / 61 / 61 | 255 |
+| Juan | Maxie Mossdeep | 56 | 65 | 53 / 55 / 55 | 255 | 71 | 58 / 61 / 61 | 255 |
+| Juan | Shelly Seafloor Cavern | 57 | 65 | 54 / 56 / 56 | 255 | 71 | 59 / 61 / 61 | 255 |
+| Juan | Archie | 57 | 65 | 54 / 56 / 56 | 255 | 71 | 59 / 61 / 61 | 255 |
 | Juan | Juan 1 | 57 | 66 | 54 / 56 / 56 | 255 | 72 | 59 / 62 / 62 | 255 |
-| Elite Four | Wally Vr 1 | 60 | 70 | 58 / 60 / 60 | 255 | 76 | 63 / 66 / 66 | 255 |
+| Elite Four | Wally Vr 1 | 61 | 70 | 58 / 60 / 60 | 255 | 77 | 63 / 66 / 66 | 255 |
 | Elite Four | Sidney | 61 | 71 | 58 / 60 / 61 | 255 | 77 | 64 / 66 / 66 | 255 |
 | Elite Four | Phoebe | 62 | 71 | 59 / 61 / 61 | 255 | 78 | 64 / 67 / 67 | 255 |
-| Elite Four | Glacia | 63 | 72 | 59 / 61 / 61 | 255 | 78 | 65 / 67 / 67 | 255 |
+| Elite Four | Glacia | 63 | 72 | 59 / 61 / 62 | 255 | 79 | 65 / 67 / 67 | 255 |
 | Elite Four | Drake | 64 | 72 | 60 / 62 / 62 | 255 | 79 | 65 / 68 / 68 | 255 |
 | Elite Four | Wallace | 66 | 73 | 60 / 63 / 63 | 255 | 80 | 66 / 69 / 69 | 255 |
 
@@ -160,11 +160,11 @@ The share6 party on modern data: one Pokemon takes every KO (KO-taker) and five 
 | Flannery | Flannery 1 | 34 | 35 | 29 / 29 / 30 | 211 | 38 | 32 / 32 / 33 | 218 |
 | Norman | Norman 1 | 36 | 36 | 31 / 31 / 32 | 232 | 40 | 33 / 34 / 35 | 239 |
 | Winona | Winona 1 | 43 | 44 | 37 / 37 / 38 | 255 | 48 | 40 / 41 / 42 | 255 |
-| Tate and Liza | Tate And Liza 1 | 51 | 53 | 44 / 45 / 46 | 255 | 58 | 48 / 50 / 50 | 255 |
-| Juan | Juan 1 | 57 | 59 | 49 / 51 / 51 | 255 | 65 | 53 / 55 / 56 | 255 |
-| Elite Four | Sidney | 61 | 63 | 52 / 54 / 54 | 255 | 69 | 57 / 59 / 59 | 255 |
-| Elite Four | Phoebe | 62 | 64 | 53 / 55 / 55 | 255 | 70 | 58 / 60 / 60 | 255 |
-| Elite Four | Glacia | 63 | 65 | 53 / 55 / 56 | 255 | 71 | 58 / 61 / 61 | 255 |
+| Tate and Liza | Tate And Liza 1 | 52 | 53 | 44 / 45 / 46 | 255 | 58 | 48 / 50 / 50 | 255 |
+| Juan | Juan 1 | 57 | 59 | 49 / 51 / 51 | 255 | 65 | 54 / 56 / 56 | 255 |
+| Elite Four | Sidney | 61 | 64 | 52 / 54 / 54 | 255 | 70 | 57 / 59 / 60 | 255 |
+| Elite Four | Phoebe | 62 | 64 | 53 / 55 / 55 | 255 | 71 | 58 / 60 / 60 | 255 |
+| Elite Four | Glacia | 63 | 65 | 53 / 56 / 56 | 255 | 71 | 59 / 61 / 61 | 255 |
 | Elite Four | Drake | 64 | 66 | 54 / 56 / 56 | 255 | 72 | 59 / 62 / 62 | 255 |
 | Elite Four | Wallace | 66 | 67 | 55 / 57 / 57 | 255 | 74 | 60 / 63 / 63 | 255 |
 
@@ -205,16 +205,16 @@ Target: on a full clear with modelled friendship, each story boss's ace is 1 lev
 | Winona | Shelly Weather Institute | 43 | +0 -> 43 | +5 -> 48 |
 | Winona | Winona 1 | 43 | +0 -> 43 | +5 -> 48 |
 | Tate and Liza | May Lilycove Mudkip | 50 | +0 -> 50 | +5 -> 55 |
-| Tate and Liza | Tabitha Magma Hideout | 50 | +1 -> 51 | +6 -> 56 |
+| Tate and Liza | Tabitha Magma Hideout | 51 | +0 -> 51 | +5 -> 56 |
 | Tate and Liza | Maxie Magma Hideout | 51 | +0 -> 51 | +6 -> 57 |
 | Tate and Liza | Matt | 51 | +0 -> 51 | +6 -> 57 |
-| Tate and Liza | Tate And Liza 1 | 51 | +1 -> 52 | +7 -> 58 |
+| Tate and Liza | Tate And Liza 1 | 52 | +0 -> 52 | +6 -> 58 |
 | Juan | Tabitha Mossdeep | 56 | +0 -> 56 | +6 -> 62 |
 | Juan | Maxie Mossdeep | 56 | +0 -> 56 | +6 -> 62 |
-| Juan | Shelly Seafloor Cavern | 56 | +1 -> 57 | +7 -> 63 |
-| Juan | Archie | 56 | +1 -> 57 | +7 -> 63 |
+| Juan | Shelly Seafloor Cavern | 57 | +0 -> 57 | +6 -> 63 |
+| Juan | Archie | 57 | +0 -> 57 | +6 -> 63 |
 | Juan | Juan 1 | 57 | +0 -> 57 | +7 -> 64 |
-| Elite Four | Wally Vr 1 | 60 | +1 -> 61 | +8 -> 68 |
+| Elite Four | Wally Vr 1 | 61 | +0 -> 61 | +7 -> 68 |
 | Elite Four | Sidney | 61 | +0 -> 61 | +7 -> 68 |
 | Elite Four | Phoebe | 62 | +0 -> 62 | +7 -> 69 |
 | Elite Four | Glacia | 63 | +0 -> 63 | +7 -> 70 |
@@ -313,28 +313,24 @@ Full clear: 30 of 30 bosses have the bench (friendship) within 1 of their ace; t
 | 1.5x off | no catches | 13 | 16 | 25 | 33 | 35 | 42 | 51 | 56 | 60 | 61 | 61 | 62 | 62 |
 | 1.5x off | 6 catches per stage | 13 | 16 | 26 | 33 | 35 | 42 | 51 | 56 | 61 | 61 | 62 | 62 | 63 |
 | 1.5x off | no walking | 13 | 16 | 25 | 33 | 34 | 41 | 49 | 54 | 59 | 59 | 60 | 61 | 61 |
-| 1.5x off | 8,192 steps per stage | 13 | 16 | 26 | 34 | 36 | 43 | 51 | 56 | 61 | 61 | 61 | 62 | 63 |
-| 1.5x off | every stage trainer +3 | 15 | 18 | 27 | 36 | 37 | 45 | 53 | 58 | 62 | 63 | 63 | 64 | 64 |
-| 1.5x off | whole party unevolved (1.2x) | 14 | 17 | 26 | 35 | 37 | 44 | 53 | 59 | 63 | 63 | 64 | 64 | 65 |
+| 1.5x off | 8,192 steps per stage | 13 | 16 | 26 | 34 | 36 | 43 | 51 | 56 | 61 | 61 | 62 | 62 | 63 |
+| 1.5x off | every stage trainer +3 | 15 | 18 | 27 | 36 | 37 | 45 | 53 | 58 | 63 | 63 | 63 | 64 | 65 |
+| 1.5x off | whole party unevolved (1.2x) | 14 | 17 | 26 | 35 | 37 | 44 | 53 | 59 | 63 | 64 | 64 | 65 | 65 |
 | 1.5x on | as modelled | 14 | 18 | 28 | 37 | 39 | 46 | 56 | 62 | 66 | 67 | 67 | 68 | 69 |
-| 1.5x on | no catches | 14 | 17 | 28 | 37 | 38 | 46 | 56 | 61 | 66 | 67 | 67 | 68 | 68 |
+| 1.5x on | no catches | 14 | 17 | 28 | 37 | 38 | 46 | 56 | 62 | 66 | 67 | 67 | 68 | 69 |
 | 1.5x on | 6 catches per stage | 14 | 18 | 28 | 37 | 39 | 47 | 56 | 62 | 66 | 67 | 67 | 68 | 69 |
 | 1.5x on | no walking | 14 | 18 | 28 | 36 | 38 | 45 | 54 | 60 | 65 | 66 | 66 | 67 | 68 |
 | 1.5x on | 8,192 steps per stage | 14 | 18 | 29 | 38 | 39 | 47 | 56 | 62 | 66 | 67 | 67 | 68 | 69 |
 | 1.5x on | every stage trainer +3 | 17 | 19 | 30 | 40 | 41 | 49 | 58 | 64 | 68 | 69 | 69 | 70 | 71 |
-| 1.5x on | whole party unevolved (1.2x) | 15 | 18 | 29 | 39 | 40 | 48 | 58 | 64 | 69 | 69 | 70 | 71 | 71 |
+| 1.5x on | whole party unevolved (1.2x) | 15 | 18 | 29 | 39 | 40 | 48 | 58 | 64 | 69 | 70 | 70 | 71 | 72 |
 
 ### Default movesets of the raised boss Pokemon (1.5x off)
 
-9 raised boss Pokemon are on default moves; 1 get a different moveset or flags at the raised level (the flags as in "Default movesets" below).
-
-| boss | species | lv | modern default now | raised | flags now -> raised |
-|---|---|---|---|---|---|
-| Archie | Crobat | 54 -> 55 | Air Cutter, Bite, Haze, Venoshock | Bite, Haze, Venoshock, Confuse Ray | - -> - |
+0 raised boss Pokemon are on default moves; 0 get a different moveset or flags at the raised level (the flags as in "Default movesets" below).
 
 ### Default movesets of the raised boss Pokemon (1.5x on)
 
-87 raised boss Pokemon are on default moves; 39 get a different moveset or flags at the raised level (the flags as in "Default movesets" below).
+87 raised boss Pokemon are on default moves; 38 get a different moveset or flags at the raised level (the flags as in "Default movesets" below).
 
 | boss | species | lv | modern default now | raised | flags now -> raised |
 |---|---|---|---|---|---|
@@ -350,16 +346,15 @@ Full clear: 30 of 30 bosses have the bench (friendship) within 1 of their ace; t
 | Shelly Weather Institute | Mightyena | 43 -> 48 | Swagger, Assurance, Scary Face, Taunt | Scary Face, Taunt, Yawn, Take Down | - -> one_attack lost_stab |
 | May Lilycove Mudkip | Tropius | 47 -> 52 | Wide Guard, Air Slash, Body Slam, Outrage | Air Slash, Body Slam, Outrage, Synthesis | new_strong -> new_strong |
 | May Lilycove Mudkip | Magcargo | 48 -> 53 | Lava Plume, Amnesia, Body Slam, Recover | Lava Plume, Amnesia, Body Slam, Recover | above_band new_strong -> new_strong |
-| Tabitha Magma Hideout | Camerupt | 43 -> 49 | Earth Power, Curse, Take Down, Yawn | Curse, Take Down, Yawn, Earthquake | new_strong -> - |
-| Tabitha Magma Hideout | Mightyena | 45 -> 51 | Assurance, Scary Face, Taunt, Yawn | Scary Face, Taunt, Yawn, Take Down | - -> one_attack lost_stab |
-| Tabitha Magma Hideout | Zubat | 47 -> 53 | Bite, Haze, Venoshock, Confuse Ray | Haze, Venoshock, Confuse Ray, Air Slash | - -> new_strong |
+| Tabitha Magma Hideout | Camerupt | 44 -> 49 | Earth Power, Curse, Take Down, Yawn | Curse, Take Down, Yawn, Earthquake | new_strong -> - |
+| Tabitha Magma Hideout | Mightyena | 46 -> 51 | Assurance, Scary Face, Taunt, Yawn | Scary Face, Taunt, Yawn, Take Down | - -> one_attack lost_stab |
+| Tabitha Magma Hideout | Zubat | 48 -> 53 | Bite, Haze, Venoshock, Confuse Ray | Haze, Venoshock, Confuse Ray, Air Slash | - -> new_strong |
 | Maxie Magma Hideout | Crobat | 50 -> 56 | Air Cutter, Bite, Haze, Venoshock | Bite, Haze, Venoshock, Confuse Ray | - -> - |
 | Matt | Golbat | 51 -> 57 | Air Cutter, Bite, Haze, Venoshock | Bite, Haze, Venoshock, Confuse Ray | - -> - |
 | Tabitha Mossdeep | Mightyena | 54 -> 60 | Taunt, Yawn, Take Down, Sucker Punch | Yawn, Take Down, Sucker Punch, Play Rough | new_strong -> new_strong |
 | Tabitha Mossdeep | Golbat | 56 -> 62 | Bite, Haze, Venoshock, Confuse Ray | Haze, Venoshock, Confuse Ray, Air Slash | - -> new_strong |
 | Maxie Mossdeep | Mightyena | 54 -> 60 | Taunt, Yawn, Take Down, Sucker Punch | Yawn, Take Down, Sucker Punch, Play Rough | new_strong -> new_strong |
-| Archie | Mightyena | 54 -> 61 | Taunt, Yawn, Take Down, Sucker Punch | Yawn, Take Down, Sucker Punch, Play Rough | new_strong -> new_strong |
-| Archie | Crobat | 54 -> 61 | Air Cutter, Bite, Haze, Venoshock | Bite, Haze, Venoshock, Confuse Ray | - -> - |
+| Archie | Mightyena | 55 -> 61 | Taunt, Yawn, Take Down, Sucker Punch | Yawn, Take Down, Sucker Punch, Play Rough | new_strong -> new_strong |
 | Brendan Route 110 Mudkip | Wingull | 24 -> 26 | Quick Attack, Supersonic, Wing Attack, Water Pulse | Supersonic, Wing Attack, Water Pulse, Agility | - -> - |
 | Brendan Route 110 Treecko | Wingull | 24 -> 26 | Quick Attack, Supersonic, Wing Attack, Water Pulse | Supersonic, Wing Attack, Water Pulse, Agility | - -> - |
 | May Route 110 Treecko | Wingull | 24 -> 26 | Quick Attack, Supersonic, Wing Attack, Water Pulse | Supersonic, Wing Attack, Water Pulse, Agility | - -> - |
@@ -437,9 +432,9 @@ Flags (all default Pokemon / story trainers only):
 | Shiftry | 29 | Marcel | Tate and Liza | Pound, Harden, Growth, Nature Power | Sunny Day, Air Cutter, Payback, Hurricane | Hurricane |
 | Gyarados | 34 | Declan | Tate and Liza | Thrash, Bite, Dragon Rage, Leer | Waterfall, Crunch, Rain Dance, Aqua Tail | Waterfall, Crunch, Aqua Tail |
 | Numel | 32 | Grunt Space Center 1 | Juan | Magnitude, Focus Energy, Take Down, Amnesia | Lava Plume, Earth Power, Curse, Take Down | Lava Plume, Earth Power |
-| Sharpedo | 56 | Shelly Seafloor Cavern | Juan | Taunt, Swagger, Skull Bash, Agility | Crunch, Agility, Liquidation, Take Down | Liquidation, Take Down |
-| Mightyena | 56 | Shelly Seafloor Cavern | Juan | Take Down, Taunt, Crunch, Thief | Yawn, Take Down, Sucker Punch, Play Rough | Sucker Punch, Play Rough |
-| Mightyena | 54 | Archie | Juan | Take Down, Taunt, Crunch, Thief | Taunt, Yawn, Take Down, Sucker Punch | Sucker Punch |
+| Sharpedo | 57 | Shelly Seafloor Cavern | Juan | Taunt, Swagger, Skull Bash, Agility | Crunch, Agility, Liquidation, Take Down | Liquidation, Take Down |
+| Mightyena | 57 | Shelly Seafloor Cavern | Juan | Take Down, Taunt, Crunch, Thief | Yawn, Take Down, Sucker Punch, Play Rough | Sucker Punch, Play Rough |
+| Mightyena | 55 | Archie | Juan | Take Down, Taunt, Crunch, Thief | Taunt, Yawn, Take Down, Sucker Punch | Sucker Punch |
 | Gloom | 26 | Violet | Tate and Liza | Poison Powder, Stun Spore, Sleep Powder, Acid | Stun Spore, Sleep Powder, Giga Drain, Toxic | Giga Drain |
 | Marill | 26 | Austina | Wattson | Tail Whip, Water Gun, Rollout, Bubble Beam | Bounce, Aqua Tail, Play Rough, Aqua Ring | Bounce, Aqua Tail, Play Rough |
 | Marill | 12 | Simon | Wattson | Tackle, Defense Curl, Tail Whip, Water Gun | Defense Curl, Bubble Beam, Charm, Slam | Slam |
@@ -565,12 +560,12 @@ Changed attacking moves (set-move slots; weaker/similar/stronger: the category f
 | Flannery 1 | Slugma | 29 | Smog | Physical -> Special | 40 -> 70 | stronger |
 | Norman 1 | Vigoroth | 32 | Feint Attack | Special -> Physical | 55 -> 80 | stronger |
 | Norman 1 | Slaking | 36 | Feint Attack | Special -> Physical | 95 -> 160 | stronger |
-| Tate And Liza 1 | Claydol | 50 | Ancient Power | Physical -> Special | 70 -> 70 | similar |
+| Tate And Liza 1 | Claydol | 51 | Ancient Power | Physical -> Special | 70 -> 70 | similar |
 | Juan 1 | Crawdaunt | 54 | Crabhammer | Special -> Physical | 90 -> 120 | stronger |
 | Wallace | Tentacruel | 63 | Sludge Bomb | Physical -> Special | 70 -> 80 | similar |
 | Wallace | Whiscash | 64 | Hyper Beam | Physical -> Special | 78 -> 76 | similar |
-| Wally Vr 1 | Delcatty | 58 | Feint Attack | Special -> Physical | 55 -> 65 | stronger |
-| Wally Vr 1 | Magneton | 56 | Tri Attack | Physical -> Special | 60 -> 120 | stronger |
+| Wally Vr 1 | Delcatty | 59 | Feint Attack | Special -> Physical | 55 -> 65 | stronger |
+| Wally Vr 1 | Magneton | 57 | Tri Attack | Physical -> Special | 60 -> 120 | stronger |
 | May Route 110 Mudkip | Slugma | 24 | Clear Smog | Physical -> Special | 40 -> 70 | stronger |
 | May Route 110 Mudkip | Slugma | 24 | Ancient Power | Physical -> Special | 40 -> 70 | stronger |
 | Maxie Magma Hideout | Mightyena | 49 | Crunch | Special -> Physical | 60 -> 90 | stronger |
@@ -699,10 +694,10 @@ Per boss Pokemon: retyping, defensive multipliers that changed (attacking type: 
 
 ### Tabitha Magma Hideout
 
-- Camerupt 43 (default moves): takes Fairy new->0.5x; hits Bug 2x->1x, Flying 2x->1x, Ice 2x->1x
-- Mightyena 45 (default moves): takes Fairy new->2x; hits Dark 1x->0.5x, Fighting 1x->0.5x, Ghost 0x->2x, Psychic 1x->2x, Rock 0.5x->1x, Steel 0.5x->1x, Fairy new->0.5x
-- Zubat 47 (default moves): takes Fairy new->0.5x; hits Bug 2x->1x, Fighting 2x->1x, Ghost 1x->2x, Psychic 1x->2x, Rock 0.5x->1x, Steel 0.5x->1x, Fairy new->2x
-- Camerupt 50 (default moves): takes Fairy new->0.5x; hits Bug 2x->1x, Flying 2x->1x, Grass 2x->1x, Ice 2x->1x
+- Camerupt 44 (default moves): takes Fairy new->0.5x; hits Bug 2x->1x, Flying 2x->1x, Ice 2x->1x
+- Mightyena 46 (default moves): takes Fairy new->2x; hits Dark 1x->0.5x, Fighting 1x->0.5x, Ghost 0x->2x, Psychic 1x->2x, Rock 0.5x->1x, Steel 0.5x->1x, Fairy new->0.5x
+- Zubat 48 (default moves): takes Fairy new->0.5x; hits Bug 2x->1x, Fighting 2x->1x, Ghost 1x->2x, Psychic 1x->2x, Rock 0.5x->1x, Steel 0.5x->1x, Fairy new->2x
+- Camerupt 51 (default moves): takes Fairy new->0.5x; hits Bug 2x->1x, Flying 2x->1x, Grass 2x->1x, Ice 2x->1x
 
 ### Maxie Magma Hideout
 
@@ -733,14 +728,14 @@ Per boss Pokemon: retyping, defensive multipliers that changed (attacking type: 
 
 ### Shelly Seafloor Cavern
 
-- Sharpedo 56 (default moves): takes Fairy new->2x; hits Fire 1x->2x, Ghost 0x->2x, Ground 1x->2x, Psychic 1x->2x, Rock 0.5x->2x, Steel 0.5x->1x
-- Mightyena 56 (default moves): takes Fairy new->2x; hits Dark 1x->2x, Dragon 1x->2x, Fighting 1x->2x, Steel 0.5x->1x
+- Sharpedo 57 (default moves): takes Fairy new->2x; hits Fire 1x->2x, Ghost 0x->2x, Ground 1x->2x, Psychic 1x->2x, Rock 0.5x->2x, Steel 0.5x->1x
+- Mightyena 57 (default moves): takes Fairy new->2x; hits Dark 1x->2x, Dragon 1x->2x, Fighting 1x->2x, Steel 0.5x->1x
 
 ### Archie
 
-- Mightyena 54 (default moves): takes Fairy new->2x; hits Steel 0.5x->1x
-- Crobat 54 (default moves): takes Fairy new->0.5x; hits Ghost 1x->2x, Psychic 1x->2x, Rock 0.5x->1x, Steel 0.5x->1x, Fairy new->2x
-- Sharpedo 56 (default moves): takes Fairy new->2x; hits Fire 1x->2x, Ghost 0x->2x, Ground 1x->2x, Psychic 1x->2x, Rock 0.5x->2x, Steel 0.5x->1x
+- Mightyena 55 (default moves): takes Fairy new->2x; hits Steel 0.5x->1x
+- Crobat 55 (default moves): takes Fairy new->0.5x; hits Bug 2x->1x, Fighting 2x->1x, Ghost 1x->2x, Psychic 1x->2x, Rock 0.5x->1x, Steel 0.5x->1x, Fairy new->2x
+- Sharpedo 57 (default moves): takes Fairy new->2x; hits Fire 1x->2x, Ghost 0x->2x, Ground 1x->2x, Psychic 1x->2x, Rock 0.5x->2x, Steel 0.5x->1x
 
 ### Juan 1
 
@@ -749,11 +744,11 @@ Per boss Pokemon: retyping, defensive multipliers that changed (attacking type: 
 
 ### Wally Vr 1
 
-- Altaria 59: takes Fairy new->2x
-- Delcatty 58: hits Steel 0.5x->1x, Fairy new->0.5x
-- Roselia 59: takes Fairy new->0.5x
-- Magneton 56: takes Dark 0.5x->1x, Ghost 0.5x->1x, Fairy new->0.5x
-- Gardevoir 60: retyped Psychic -> Psychic/Fairy; takes Bug 2x->1x, Dark 2x->1x, Dragon 1x->0x, Fighting 0.5x->0.25x, Poison 1x->2x, Steel 1x->2x
+- Altaria 60: takes Fairy new->2x
+- Delcatty 59: hits Steel 0.5x->1x, Fairy new->0.5x
+- Roselia 60: takes Fairy new->0.5x
+- Magneton 57: takes Dark 0.5x->1x, Ghost 0.5x->1x, Fairy new->0.5x
+- Gardevoir 61: retyped Psychic -> Psychic/Fairy; takes Bug 2x->1x, Dark 2x->1x, Dragon 1x->0x, Fighting 0.5x->0.25x, Poison 1x->2x, Steel 1x->2x
 
 ### Sidney
 
@@ -900,6 +895,6 @@ Prize money from a full clear of each stage (same in both: 4 x last Pokemon's le
 | Flannery | 95 | 64596 | 110496 |
 | Norman | 11 | 13968 | 124464 |
 | Winona | 86 | 69220 | 193684 |
-| Tate and Liza | 113 | 117136 | 310820 |
-| Juan | 76 | 107564 | 418384 |
-| Elite Four | 31 | 90752 | 509136 |
+| Tate and Liza | 113 | 117376 | 311060 |
+| Juan | 76 | 107684 | 418744 |
+| Elite Four | 31 | 90812 | 509556 |
