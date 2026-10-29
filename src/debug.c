@@ -174,6 +174,15 @@ enum DebugMenuTypes
     DEBUG_RECENT_WARPS_MENU,
 };
 
+// Names a selection step's values have, for Start's name order (Debug_StepByName)
+enum DebugStepNames
+{
+    DEBUG_STEP_NAMES_NONE,
+    DEBUG_STEP_NAMES_SPECIES,
+    DEBUG_STEP_NAMES_ITEMS,
+    DEBUG_STEP_NAMES_MOVES,
+};
+
 // *******************************
 // Constants
 #define DEBUG_MENU_FONT FONT_NORMAL
@@ -233,7 +242,8 @@ struct DebugMenuListData
     struct ListMenuItem listItems[DEBUG_MAX_MENU_ITEMS + 1];
     u8 itemNames[DEBUG_MAX_MENU_ITEMS + 1][26];
     enum DebugMenuTypes menuType:3;
-    u32 padding:29;
+    u32 nameOrder:1; // Up/Down on a named selection step go A-Z instead of turning a digit
+    u32 padding:28;
     s16 data[8];
     s16 savedData[8]; // data as Choose trainer from map found it, restored when B cancels the picker
 };
@@ -255,7 +265,8 @@ struct DebugSelectionStep
     bool8 useMinFunc:1;
     bool8 useMaxFunc:1;
     bool8 hex:1; // Up/Down dial hex digits: stepUpdate prints with Debug_InputToHexString and gText_HexDigitIndicator
-    bool8 padding:5;
+    u8 names:2; // enum DebugStepNames: Start turns on name order, and stepUpdate prints with DebugNativeStep_PrintNamedSelection
+    bool8 padding:3;
 };
 
 typedef const struct DebugSelectionStep *SelectionStep;
@@ -1207,6 +1218,30 @@ static void DebugNativeStep_PrintWindowSelectionToFit(u8 taskId)
     Debug_PrintLinesToFit(windowId, DEBUG_MENU_FONT, DEBUG_LINE_HEIGHT, lines, ARRAY_COUNT(lines));
 }
 
+static bool32 Debug_IsNameOrder(void)
+{
+    return DEBUG_OVERWORLD_MENU && sDebugMenuListData != NULL && sDebugMenuListData->nameOrder;
+}
+
+// For steps with names: prints gStringVar1-2, then the Start hint on the third line and the digit
+// indicator, or in name order what Start and Up/Down do now
+static void DebugNativeStep_PrintNamedSelection(u8 taskId)
+{
+    if (Debug_IsNameOrder())
+    {
+        StringCopy(gStringVar3, COMPOUND_STRING("{START_BUTTON} Next letter"));
+        StringCopy(gStringVar4, COMPOUND_STRING("{UP_ARROW}{DOWN_ARROW} A-Z order"));
+    }
+    else
+    {
+        StringCopy(gStringVar3, COMPOUND_STRING("{START_BUTTON} A-Z order"));
+        StringCopy(gStringVar4, gText_DigitIndicator[gTasks[taskId].tDigit]);
+    }
+    const u8 *const lines[] = {gStringVar1, gStringVar2, gStringVar3, gStringVar4};
+    FillWindowPixelBuffer(gTasks[taskId].tSubWindowId, PIXEL_FILL(1));
+    Debug_PrintLinesToFit(gTasks[taskId].tSubWindowId, DEBUG_MENU_FONT, DEBUG_LINE_HEIGHT, lines, ARRAY_COUNT(lines));
+}
+
 // Removes the menu's windows, list and input task but keeps the menu data,
 // for switching between submenus.
 static void Debug_DestroyMenu(u8 taskId)
@@ -1359,10 +1394,69 @@ static u32 DebugSelection_GetRange(u8 taskId, const struct DebugSelectionStep *s
     return selectionStep->hex ? Debug_CountHexDigits(*max) : Debug_CountDigits(*max);
 }
 
+// Name order leaves out disabled species: A can't give them, and they have no name to show
+static const u8 *Debug_GetEnabledSpeciesName(u32 species)
+{
+    return IsSpeciesEnabled(species) ? GetSpeciesName(species) : NULL;
+}
+
+static const u8 *Debug_GetNamedItemName(u32 itemId)
+{
+    const u8 *name = GetItemName(itemId);
+    return name == gQuestionMarksItemName ? NULL : name;
+}
+
+// The Moves step's MOVES_COUNT is its "Default" choice
+static const u8 *Debug_GetMoveStepName(u32 moveId)
+{
+    return moveId == MOVES_COUNT ? COMPOUND_STRING("Default") : GetMoveName(moveId);
+}
+
+static const DebugNameFunc sDebugStepNameFuncs[] =
+{
+    [DEBUG_STEP_NAMES_SPECIES] = Debug_GetEnabledSpeciesName,
+    [DEBUG_STEP_NAMES_ITEMS] = Debug_GetNamedItemName,
+    [DEBUG_STEP_NAMES_MOVES] = Debug_GetMoveStepName,
+};
+
+// Name order is only for the overworld menu, which holds its state; the release ROM's native steps have no names
+static bool32 DebugSelection_StepHasNames(const struct DebugSelectionStep *selectionStep)
+{
+    return DEBUG_OVERWORLD_MENU && selectionStep->names != DEBUG_STEP_NAMES_NONE && sDebugMenuListData != NULL;
+}
+
+// Start turns on name order and jumps to the next initial letter, and Up/Down then go A-Z (Down
+// goes back). Any other key turns name order off and returns FALSE, for the numeric input to handle.
+static bool32 DebugSelection_HandleInput_NameOrder(u8 taskId, const struct DebugSelectionStep *selectionStep, u32 min, u32 max)
+{
+    DebugNameFunc getName = sDebugStepNameFuncs[selectionStep->names];
+    u32 input = DEBUG_TASK_INPUT(taskId);
+
+    if (JOY_NEW(START_BUTTON))
+    {
+        sDebugMenuListData->nameOrder = TRUE;
+        input = Debug_NextNameInitial(input, min, max, getName);
+    }
+    else if (sDebugMenuListData->nameOrder && JOY_REPEAT(DPAD_UP | DPAD_DOWN))
+    {
+        input = Debug_StepByName(input, min, max, getName, JOY_REPEAT(DPAD_DOWN));
+    }
+    else
+    {
+        sDebugMenuListData->nameOrder = FALSE;
+        return FALSE;
+    }
+    gTasks[taskId].tInput = input;
+    return TRUE;
+}
+
 static void DebugAction_Selection_PrepareStep(u8 taskId, const struct DebugSelectionStep *selectionStep)
 {
     u32 min, max, input;
     u32 digits = DebugSelection_GetRange(taskId, selectionStep, &min, &max);
+
+    if (DEBUG_OVERWORLD_MENU && sDebugMenuListData != NULL)
+        sDebugMenuListData->nameOrder = FALSE;
 
     // Clamp as u32: the s16 tInput would turn stored values above 32767 negative
     input = DebugSelection_GetData(taskId, DebugSelection_DataIndex(taskId));
@@ -1422,15 +1516,17 @@ static void DebugAction_Selection_StepUpdate(u8 taskId)
         }
         gTasks[taskId].func = DebugAction_Selection_Cancel;
     }
-    else if (DEBUG_NUMERIC_INPUT_PRESSED())
+    else if (DEBUG_NUMERIC_INPUT_PRESSED() || (DebugSelection_StepHasNames(selectionStep) && JOY_NEW(START_BUTTON)))
     {
         u32 min, max;
         s16 oldInput = gTasks[taskId].tInput;
         s16 oldDigit = gTasks[taskId].tDigit;
+        bool32 oldNameOrder = Debug_IsNameOrder();
         u32 digits = DebugSelection_GetRange(taskId, selectionStep, &min, &max);
-        Debug_HandleInput_Numeric(taskId, min, max, digits, selectionStep->hex);
+        if (!DebugSelection_StepHasNames(selectionStep) || !DebugSelection_HandleInput_NameOrder(taskId, selectionStep, min, max))
+            Debug_HandleInput_Numeric(taskId, min, max, digits, selectionStep->hex);
         // Holding Up/Down at min/max changes nothing, so don't beep or redraw every repeat
-        if (gTasks[taskId].tInput == oldInput && gTasks[taskId].tDigit == oldDigit)
+        if (gTasks[taskId].tInput == oldInput && gTasks[taskId].tDigit == oldDigit && Debug_IsNameOrder() == oldNameOrder)
             return;
         PlaySE(SE_SELECT);
         selectionStep->stepUpdate(taskId, digits, min, max);
@@ -2990,9 +3086,8 @@ static void DebugSelectionStep_UpdateSpecies(u8 taskId, u8 digits, u32 min, u32 
         StringCopy(gStringVar2, COMPOUND_STRING("{COLOR RED}{SHADOW LIGHT_RED}Not enabled"));
         species = SPECIES_NONE;
     }
-    StringCopy(gStringVar3, COMPOUND_STRING(""));
     Debug_ResetInputDisplayMonIcon(taskId, species);
-    DebugNativeStep_PrintWindowSelection(taskId);
+    DebugNativeStep_PrintNamedSelection(taskId);
 }
 
 static void DebugSelectionStep_UpdateMoves(u8 taskId, u8 digits, u32 min, u32 max)
@@ -3001,14 +3096,9 @@ static void DebugSelectionStep_UpdateMoves(u8 taskId, u8 digits, u32 min, u32 ma
     ConvertIntToDecimalStringN(gStringVar2, gTasks[taskId].tSubstep + 1, STR_CONV_MODE_LEADING_ZEROS, 1);
     Debug_InputToDecimalString(gStringVar3, taskId, digits);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Move {STR_VAR_2}: {STR_VAR_3}"));
-    u8 *end;
-    if (moveId == MOVES_COUNT)
-        end = StringCopy(gStringVar2, COMPOUND_STRING("Default"));
-    else
-        end = StringCopy(gStringVar2, GetMoveName(moveId));
+    u8 *end = StringCopy(gStringVar2, Debug_GetMoveStepName(moveId));
     WrapFontIdToFit(gStringVar2, end, DEBUG_MENU_FONT, WindowWidthPx(gTasks[taskId].tSubWindowId));
-    StringCopy(gStringVar3, COMPOUND_STRING(""));
-    DebugNativeStep_PrintWindowSelection(taskId);
+    DebugNativeStep_PrintNamedSelection(taskId);
 }
 
 // None or Default ends the moveset: it goes in this slot and the ones after it, which are skipped
@@ -3088,6 +3178,7 @@ static const struct DebugSelectionStep sSpeciesSelectionStep = {
     .minValue = 1,
     .maxFunc = DebugSelectionStep_GetLastEnabledSpecies,
     .useMaxFunc = TRUE,
+    .names = DEBUG_STEP_NAMES_SPECIES,
 };
 
 static const struct DebugSelectionStep sLevelSelectionStep = {
@@ -3103,6 +3194,7 @@ static const struct DebugSelectionStep sMovesSelectionStep = {
     .minValue = MOVE_NONE,
     .maxValue = MOVES_COUNT,
     .substepCount = 4,
+    .names = DEBUG_STEP_NAMES_MOVES,
 };
 
 static const struct DebugSelectionStep sOutbreakProbabilitySelectionStep = {
@@ -3613,8 +3705,7 @@ static void DebugSelectionStep_UpdateItem(u8 taskId, u8 digits, u32 min, u32 max
         end = StringCopy(end, COMPOUND_STRING(" None"));
     }
     WrapFontIdToFit(gStringVar2, end, DEBUG_MENU_FONT, WindowWidthPx(gTasks[taskId].tSubWindowId));
-    StringCopy(gStringVar3, COMPOUND_STRING(""));
-    DebugNativeStep_PrintWindowSelection(taskId);
+    DebugNativeStep_PrintNamedSelection(taskId);
 }
 
 UPDATE_GENERIC_INPUT(Quantity, Quantity)
@@ -3632,6 +3723,7 @@ static const struct DebugSelectionStep sItemSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = 1,
     .maxValue = ITEMS_COUNT - 1,
+    .names = DEBUG_STEP_NAMES_ITEMS,
 };
 
 static const struct DebugSelectionStep sQuantitySelectionStep = {

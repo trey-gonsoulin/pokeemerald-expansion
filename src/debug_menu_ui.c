@@ -183,6 +183,104 @@ void Debug_InputToHexString(u8 *dest, u8 taskId, u32 digits)
 }
 
 // *******************************
+// Name order
+// Each call scans min..max once instead of keeping a sorted index: about 1,500 names at most,
+// well under a frame, and nothing to allocate or free.
+
+// Name order ignores case and the acute accent, so "Flabébé" sorts with the other Fs
+static u32 Debug_FoldNameChar(u32 c)
+{
+    if (c >= CHAR_a && c <= CHAR_z)
+        return c - CHAR_a + CHAR_A;
+    if (c == CHAR_e_ACUTE || c == CHAR_E_ACUTE)
+        return CHAR_E;
+    return c;
+}
+
+// Below, equal to or above 0 as a (named nameA) sorts before, with or after b. A name sorts before
+// the longer names it starts, and values with the same name sort by value.
+static s32 Debug_CompareNames(const u8 *nameA, u32 a, const u8 *nameB, u32 b)
+{
+    for (; *nameA != EOS && *nameB != EOS; nameA++, nameB++)
+    {
+        s32 diff = (s32)Debug_FoldNameChar(*nameA) - (s32)Debug_FoldNameChar(*nameB);
+        if (diff != 0)
+            return diff;
+    }
+    if (*nameA != *nameB)
+        return *nameA == EOS ? -1 : 1;
+    return (s32)a - (s32)b;
+}
+
+// The letter a name starts with, 0 for A to 25 for Z, or -1 when it doesn't start with a letter
+static s32 Debug_NameInitial(const u8 *name)
+{
+    u32 c = Debug_FoldNameChar(name[0]);
+    return (c >= CHAR_A && c <= CHAR_Z) ? (s32)(c - CHAR_A) : -1;
+}
+
+// The value after value in name order among min..max (with previous, the one before it). Past the
+// last name it wraps to the first. getName returns NULL for values that name order leaves out,
+// such as disabled species; from one of those it goes to the first (or last) name.
+// Returns value when no other value in the range has a name.
+u32 Debug_StepByName(u32 value, u32 min, u32 max, DebugNameFunc getName, bool32 previous)
+{
+    const u8 *name = getName(value);
+    const u8 *nextName = NULL, *firstName = NULL;
+    u32 next = value, first = value;
+    s32 sign = previous ? -1 : 1;
+
+    for (u32 i = min; i <= max; i++)
+    {
+        const u8 *iName = getName(i);
+        if (iName == NULL || i == value)
+            continue;
+        if (name != NULL && sign * Debug_CompareNames(iName, i, name, value) > 0
+         && (nextName == NULL || sign * Debug_CompareNames(iName, i, nextName, next) < 0))
+        {
+            next = i;
+            nextName = iName;
+        }
+        if (firstName == NULL || sign * Debug_CompareNames(iName, i, firstName, first) < 0)
+        {
+            first = i;
+            firstName = iName;
+        }
+    }
+    return nextName != NULL ? next : first;
+}
+
+// The first value in name order whose name starts with a later letter than value's name, so
+// repeated calls cycle A to Z, skipping letters no name starts with, and wrap from Z back to A.
+// Names that don't start with a letter are skipped. Returns value when no name starts with a letter.
+u32 Debug_NextNameInitial(u32 value, u32 min, u32 max, DebugNameFunc getName)
+{
+    const u8 *name = getName(value);
+    s32 initial = name != NULL ? Debug_NameInitial(name) : -1;
+    const u8 *nextName = NULL, *firstName = NULL;
+    u32 next = value, first = value;
+
+    for (u32 i = min; i <= max; i++)
+    {
+        const u8 *iName = getName(i);
+        if (iName == NULL || Debug_NameInitial(iName) < 0)
+            continue;
+        if (Debug_NameInitial(iName) > initial
+         && (nextName == NULL || Debug_CompareNames(iName, i, nextName, next) < 0))
+        {
+            next = i;
+            nextName = iName;
+        }
+        if (firstName == NULL || Debug_CompareNames(iName, i, firstName, first) < 0)
+        {
+            first = i;
+            firstName = iName;
+        }
+    }
+    return nextName != NULL ? next : first;
+}
+
+// *******************************
 // List menus
 
 // ListMenu_ProcessInput plus L/R paging and wrapping between the first and last entries.
