@@ -154,6 +154,10 @@ and then nothing can tell it from vanilla: once a restock is committed,
 refresh the baseline from upstream's copy (below). `restock --write` also refuses, unless `--force`, when the file it would
 overwrite differs from the base in anything but species (an upstream merge
 since the last `baseline`, or a hand edit), since the write would lose it.
+A run with a ratio above 0 that changes no table (the allow/deny lists, gens or
+the other filters leave nothing to draw) warns, and with `--write` it refuses
+unless `--force`, since the write would put the vanilla tables back. A ratio of
+0 changes nothing on purpose and writes without a warning.
 
 Refresh the snapshot when upstream changes `src/data/wild_encounters.json`,
 then rerun `build` and `restock --write`:
@@ -181,7 +185,7 @@ python3 tools/area_archetypes/area_archetypes.py baseline --wild /tmp/wild_encou
 | `--base FILE` | `output/wild_encounters.vanilla.json` | vanilla file the natives come from |
 | `--wild FILE` | `src/data/wild_encounters.json` | file `--write` overwrites; not a source of natives |
 | `--write` | off | also overwrite `--wild` |
-| `--force` | off | accept a `--base` that `restock` wrote, and `--write` over a `--wild` that differs from it in more than species |
+| `--force` | off | accept a `--base` that `restock` wrote, `--write` over a `--wild` that differs from it in more than species, and `--write` a run that changed nothing |
 
 Per-map overrides go under `maps`, keyed by base label:
 

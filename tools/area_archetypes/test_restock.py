@@ -508,6 +508,41 @@ class CliTests(unittest.TestCase):
         self.assertIn('gens: 10,11,12 matches no pool species', self.restock_error(['--gens', '10-12']))
         self.assertIn('gens: 0 matches no pool species', self.restock_error(config={'gens': [0]}))
 
+    def test_write_refuses_a_run_that_draws_nothing(self):
+        # Filters that overlap the pools can still leave nothing to draw (#99).
+        with tempfile.TemporaryDirectory() as tmp:
+            wild = os.path.join(tmp, 'wild_encounters.json')
+            out = os.path.join(tmp, 'out')
+            R.dump_wild(R.load_json(AA.SRC_WILD), wild)
+            written = read(wild)
+            argv = ['--wild', wild, '--out-dir', out, '--allow', 'MEWTWO']
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err):
+                _, changes = run_quietly(argv)
+            self.assertEqual(changes, [])
+            self.assertIn('warning: no table changed although the ratio is above 0', err.getvalue())
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as cm:
+                run_quietly(argv + ['--write'])
+            self.assertEqual(cm.exception.code, 2)
+            self.assertIn('--write would put', err.getvalue())
+            self.assertEqual(read(wild), written)
+            with contextlib.redirect_stderr(io.StringIO()):
+                run_quietly(argv + ['--write', '--force'])
+            self.assertEqual(R.skeleton(R.load_json(wild)), R.skeleton(R.load_json(WILD)))
+            self.assertNotEqual(read(wild), written)
+
+    def test_ratio_zero_writes_without_a_warning(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            wild = os.path.join(tmp, 'wild_encounters.json')
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err):
+                _, changes = run_quietly(['--wild', wild, '--out-dir', os.path.join(tmp, 'out'),
+                                          '--ratio', '0', '--write'])
+            self.assertEqual(changes, [])
+            self.assertNotIn('no table changed', err.getvalue())
+            self.assertTrue(os.path.exists(wild))
+
     def test_bad_option_values_are_rejected(self):
         for config, message in (({'gens': 4}, 'gens:'), ({'gens': '4-x'}, 'gens:'),
                                 ({'ratio': 1.5}, 'ratio:'), ({'ratio': '0.5'}, 'ratio:'),

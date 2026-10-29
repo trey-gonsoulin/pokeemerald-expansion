@@ -594,8 +594,8 @@ OPTIONS = (
     Option('out_dir', dict(default=DEFAULT_OUT_DIR, help='where the preview JSON and report go')),
     Option('write', dict(action='store_true', help='also overwrite --wild with the result')),
     Option('force', dict(action='store_true',
-                         help='accept a --base that restock wrote, and --write over a --wild that differs '
-                              'from --base in more than species')),
+                         help='accept a --base that restock wrote, --write over a --wild that differs '
+                              'from --base in more than species, and --write a run that changed nothing')),
     Option('repo', dict(default=AA.REPO, help=argparse.SUPPRESS)),
 )
 CONFIG_OPTIONS = {o.name: o for o in OPTIONS if o.parse and o.top}
@@ -950,6 +950,17 @@ def main(argv=None):
     print(f'{s["maps_changed"]} maps / {s["tables_changed"]} tables / {s["slots_changed"]} slots changed; '
           f'{s["distinct_species_added"]} species added, {s["distinct_species_removed"]} removed')
     print(f'  report: {report}\n  preview: {preview}')
+    # A ratio of 0 legitimately changes nothing; above 0, the filters left nothing to draw.
+    drawing = any(not ms.skip and ms.ratio > 0
+                  for ms in map(settings.for_map, (label for label, em in emerald_maps.items()
+                                                   if em.get('region') in settings.regions)))
+    if drawing and not changes:
+        nothing = ('no table changed although the ratio is above 0: the allow/deny lists, gens, the '
+                   'legendary or regional-form flags or devolving leave nothing to draw')
+        if args.write and not args.force:
+            p.error(f'{nothing}, and --write would put {args.base} back over {args.wild}; '
+                    f'--force to write anyway')
+        print(f'warning: {nothing}', file=sys.stderr)
     if args.write:
         dump_wild(new, args.wild)
         print(f'  wrote {args.wild}')
