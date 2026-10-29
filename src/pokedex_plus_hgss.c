@@ -4060,7 +4060,6 @@ static void Task_LoadFormsScreen(u8 taskId)
         break;
     case 4:
         //Print form icons
-        gTasks[taskId].data[3] = 0;
         PrintForms(taskId, NationalPokedexNumToSpeciesForm(sPokedexListItem->dexNum));
         LoadSpritePalette(&gSpritePalette_Arrow);
         TryLoadDarkModeArrowPalette();
@@ -4188,10 +4187,12 @@ static void Task_HandleFormsScreenInput(u8 taskId)
                 sPokedexView->formSpecies = formSpecies;
 
             sPokedexView->sEvoScreenData.fromEvoPage = TRUE;
+            DestroySprite(&gSprites[sPokedexView->sFormScreenData.arrowSpriteId]);
             sPokedexView->sFormScreenData.inSubmenu = FALSE;
             PlaySE(SE_PIN);
             BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
-            gTasks[taskId].func = Task_LoadInfoScreenWaitForFade;
+            // Frees the icons, then loads the info screen (screenSwitchState is 0 here).
+            gTasks[taskId].func = Task_SwitchScreensFromFormsScreen;
         }
 
         if (JOY_NEW(B_BUTTON))
@@ -4251,7 +4252,6 @@ static void PrintForms(u8 taskId, enum Species species)
             }
         }
     }
-    gTasks[taskId].data[3] = times;
     sPokedexView->sFormScreenData.numForms = times;
 
     //If there are no forms print text
