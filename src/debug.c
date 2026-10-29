@@ -251,7 +251,8 @@ struct DebugSelectionStep
     u8 substepCount;
     bool8 useMinFunc:1;
     bool8 useMaxFunc:1;
-    bool8 padding:6;
+    bool8 hex:1; // Up/Down dial hex digits; stepUpdate prints with Debug_InputToHexString
+    bool8 padding:5;
 };
 
 typedef const struct DebugSelectionStep *SelectionStep;
@@ -1124,15 +1125,21 @@ static void Debug_ResetInputDisplayMonIcon(u8 taskId, enum Species species)
     gSprites[gTasks[taskId].tSpriteId].oam.priority = 0;
 }
 
-static void DebugNativeStep_PrintWindowSelection(u8 taskId)
+// Prints gStringVar1-3 and the digit indicator from the given table (decimal or hex)
+static void DebugNativeStep_PrintWindowSelectionIndicator(u8 taskId, const u8 *const *digitIndicator)
 {
     u32 windowId = gTasks[taskId].tSubWindowId;
-    StringCopy(gStringVar4, gText_DigitIndicator[gTasks[taskId].tDigit]);
+    StringCopy(gStringVar4, digitIndicator[gTasks[taskId].tDigit]);
     FillWindowPixelBuffer(windowId, PIXEL_FILL(1));
     AddTextPrinterParameterized(windowId, DEBUG_MENU_FONT, gStringVar1, 0, 0                    , 0, NULL);
     AddTextPrinterParameterized(windowId, DEBUG_MENU_FONT, gStringVar2, 0, 1 * DEBUG_LINE_HEIGHT, 0, NULL);
     AddTextPrinterParameterized(windowId, DEBUG_MENU_FONT, gStringVar3, 0, 2 * DEBUG_LINE_HEIGHT, 0, NULL);
     AddTextPrinterParameterized(windowId, DEBUG_MENU_FONT, gStringVar4, 0, 3 * DEBUG_LINE_HEIGHT, 0, NULL);
+}
+
+static void DebugNativeStep_PrintWindowSelection(u8 taskId)
+{
+    DebugNativeStep_PrintWindowSelectionIndicator(taskId, gText_DigitIndicator);
 }
 
 // Removes the menu's windows, list and input task but keeps the menu data,
@@ -1195,7 +1202,7 @@ static bool32 Debug_HandleInput_SongId(u8 taskId, enum SongType type)
     s16 oldDigit = gTasks[taskId].tDigit;
     u32 max = Debug_GetLastSong(type);
 
-    Debug_HandleInput_Numeric(taskId, Debug_GetFirstSong(type), max, Debug_CountDigits(max));
+    Debug_HandleInput_Numeric(taskId, Debug_GetFirstSong(type), max, Debug_CountDigits(max), FALSE);
     return gTasks[taskId].tInput != oldInput || gTasks[taskId].tDigit != oldDigit;
 }
 
@@ -1284,7 +1291,7 @@ static u32 DebugSelection_GetRange(u8 taskId, const struct DebugSelectionStep *s
 {
     *min = selectionStep->useMinFunc ? selectionStep->minFunc(taskId) : selectionStep->minValue;
     *max = selectionStep->useMaxFunc ? selectionStep->maxFunc(taskId) : selectionStep->maxValue;
-    return Debug_CountDigits(*max);
+    return selectionStep->hex ? Debug_CountHexDigits(*max) : Debug_CountDigits(*max);
 }
 
 static void DebugAction_Selection_PrepareStep(u8 taskId, const struct DebugSelectionStep *selectionStep)
@@ -1356,7 +1363,7 @@ static void DebugAction_Selection_StepUpdate(u8 taskId)
         s16 oldInput = gTasks[taskId].tInput;
         s16 oldDigit = gTasks[taskId].tDigit;
         u32 digits = DebugSelection_GetRange(taskId, selectionStep, &min, &max);
-        Debug_HandleInput_Numeric(taskId, min, max, digits);
+        Debug_HandleInput_Numeric(taskId, min, max, digits, selectionStep->hex);
         // Holding Up/Down at min/max changes nothing, so don't beep or redraw every repeat
         if (gTasks[taskId].tInput == oldInput && gTasks[taskId].tDigit == oldDigit)
             return;
@@ -3089,12 +3096,17 @@ static void DebugSelectionStep_PrepareVarDisplay(u32 varId)
     ConvertIntToDecimalStringN(end, VarGet(varId), STR_CONV_MODE_LEADING_ZEROS, 5);
 }
 
+// The ID is dialed in hex, so the highlighted digit is one of the 0x%04X digits on screen
 static void DebugSelectionStep_UpdateVarId(u8 taskId, u8 digits, u32 min, u32 max)
 {
-    DebugSelectionStep_PrepareVarDisplay(gTasks[taskId].tInput);
+    u32 varId = DEBUG_TASK_INPUT(taskId);
+    u8 *end;
+    DebugSelectionStep_PrepareVarDisplay(varId);
+    end = StringCopy(gStringVar1, COMPOUND_STRING("Var: 0x"));
+    Debug_InputToHexString(end, taskId, digits);
     StringCopy(gStringVar3, COMPOUND_STRING(""));
-    DebugNativeStep_PrintWindowSelection(taskId);
-    DebugSelection_SetData(taskId, DebugSelection_StepDataIndex(taskId, gTasks[taskId].tStep + 1), VarGet(gTasks[taskId].tInput));
+    DebugNativeStep_PrintWindowSelectionIndicator(taskId, gText_HexDigitIndicator);
+    DebugSelection_SetData(taskId, DebugSelection_StepDataIndex(taskId, gTasks[taskId].tStep + 1), VarGet(varId));
 }
 
 static void DebugSelectionStep_UpdateVarValue(u8 taskId, u8 digits, u32 min, u32 max)
@@ -3120,6 +3132,7 @@ static const struct DebugSelectionStep sVarIdSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = VARS_START,
     .maxValue = VARS_END,
+    .hex = TRUE,
 };
 
 static const struct DebugSelectionStep sVarValueSelectionStep = {

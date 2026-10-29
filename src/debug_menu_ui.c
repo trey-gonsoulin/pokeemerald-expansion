@@ -28,6 +28,15 @@ const u8 *const gText_DigitIndicator[] =
     COMPOUND_STRING("{LEFT_ARROW}+10000000{RIGHT_ARROW} "),
 };
 
+// Hex inputs fit in a u16, so they have at most four digits
+const u8 *const gText_HexDigitIndicator[] =
+{
+    COMPOUND_STRING("{LEFT_ARROW}+0x1{RIGHT_ARROW}      "),
+    COMPOUND_STRING("{LEFT_ARROW}+0x10{RIGHT_ARROW}     "),
+    COMPOUND_STRING("{LEFT_ARROW}+0x100{RIGHT_ARROW}    "),
+    COMPOUND_STRING("{LEFT_ARROW}+0x1000{RIGHT_ARROW}   "),
+};
+
 static const s32 sPowersOfTen[] =
 {
              1,
@@ -58,6 +67,15 @@ u32 Debug_CountDigits(u32 max)
     return digits;
 }
 
+// Hex digits shown for a numeric input up to max, clamped to 1..ARRAY_COUNT(gText_HexDigitIndicator)
+u32 Debug_CountHexDigits(u32 max)
+{
+    u32 digits = 1;
+    while (digits < ARRAY_COUNT(gText_HexDigitIndicator) && (max >> (4 * digits)) != 0)
+        digits++;
+    return digits;
+}
+
 // Starts a numeric input at input, with the ones digit highlighted
 void Debug_StartNumericInput(u8 taskId, u32 input)
 {
@@ -71,7 +89,8 @@ void Debug_StartNumericInput(u8 taskId, u32 input)
 // no carry into the other digits, and they repeat while held. A result past either end stops
 // on min/max. L/R jump to min/max and Select goes back to the value the step started from.
 // Left/Right move the highlight the way they point (tDigit counts from the ones place).
-void Debug_HandleInput_Numeric(u8 taskId, u32 min, u32 max, u32 digits)
+// With hex, the digits are base 16 (F wraps to 0), for inputs shown with Debug_InputToHexString.
+void Debug_HandleInput_Numeric(u8 taskId, u32 min, u32 max, u32 digits, bool32 hex)
 {
     u32 input = DEBUG_TASK_INPUT(taskId);
 
@@ -79,10 +98,11 @@ void Debug_HandleInput_Numeric(u8 taskId, u32 min, u32 max, u32 digits)
     if (JOY_REPEAT(DPAD_UP | DPAD_DOWN))
     {
         u32 oldInput = input;
-        u32 place = sPowersOfTen[gTasks[taskId].tDigit];
-        u32 digit = (input / place) % 10;
+        u32 base = hex ? 16 : 10;
+        u32 place = hex ? 1u << (4 * gTasks[taskId].tDigit) : (u32)sPowersOfTen[gTasks[taskId].tDigit];
+        u32 digit = (input / place) % base;
         input -= digit * place;
-        digit = (digit + (JOY_REPEAT(DPAD_UP) ? 1 : 9)) % 10;
+        digit = (digit + (JOY_REPEAT(DPAD_UP) ? 1 : base - 1)) % base;
         input += digit * place;
         if (input > max)
             input = max;
@@ -125,15 +145,13 @@ bool32 Debug_NumericInputMovedDown(void)
     return sNumericInputMovedDown;
 }
 
-// Prints the numeric input with the digit that Up/Down changes highlighted
-void Debug_InputToDecimalString(u8 *dest, u8 taskId, u32 digits)
+// Copies number to dest with the digit that Up/Down changes highlighted
+static void Debug_HighlightInputDigit(u8 *dest, u8 taskId, const u8 *number)
 {
     static const u8 sColor_Digit[] = _("{COLOR BLUE}{SHADOW LIGHT_BLUE}");
     static const u8 sColor_Default[] = _("{COLOR DARK_GRAY}{SHADOW LIGHT_GRAY}");
-    u8 number[12];
     u32 length, position;
 
-    ConvertIntToDecimalStringN(number, DEBUG_TASK_INPUT(taskId), STR_CONV_MODE_LEADING_ZEROS, digits);
     length = StringLength(number);
     if (gTasks[taskId].tDigit >= length)
     {
@@ -146,6 +164,22 @@ void Debug_InputToDecimalString(u8 *dest, u8 taskId, u32 digits)
     *dest++ = number[position];
     dest = StringCopy(dest, sColor_Default);
     StringCopy(dest, &number[position + 1]);
+}
+
+// Prints the numeric input with the digit that Up/Down changes highlighted
+void Debug_InputToDecimalString(u8 *dest, u8 taskId, u32 digits)
+{
+    u8 number[12];
+    ConvertIntToDecimalStringN(number, DEBUG_TASK_INPUT(taskId), STR_CONV_MODE_LEADING_ZEROS, digits);
+    Debug_HighlightInputDigit(dest, taskId, number);
+}
+
+// Same in hex, without the 0x prefix, for inputs that Debug_HandleInput_Numeric dials in hex
+void Debug_InputToHexString(u8 *dest, u8 taskId, u32 digits)
+{
+    u8 number[12];
+    ConvertIntToHexStringN(number, DEBUG_TASK_INPUT(taskId), STR_CONV_MODE_LEADING_ZEROS, digits);
+    Debug_HighlightInputDigit(dest, taskId, number);
 }
 
 // *******************************
