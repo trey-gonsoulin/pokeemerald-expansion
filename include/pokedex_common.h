@@ -152,6 +152,9 @@ struct EvoScreenData
     u8 arrowSpriteId;
 };
 
+// The forms page draws two rows of 7 icons, the first starting with the current form's.
+#define FORMS_SCREEN_ICON_COUNT 13
+
 struct FromScreenData
 {
     u16 formIds[30];
@@ -159,6 +162,7 @@ struct FromScreenData
     u8 numForms;
     u8 menuPos;
     u8 arrowSpriteId;
+    u8 iconSpriteIds[FORMS_SCREEN_ICON_COUNT];
 };
 
 struct PokedexView

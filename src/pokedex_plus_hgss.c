@@ -4234,15 +4234,21 @@ static void PrintForms(u8 taskId, enum Species species)
             continue;
         else
         {
-            u32 personality = GetPokedexMonPersonality(speciesForm);
             sPokedexView->sFormScreenData.formIds[j++] = i;
             times += 1;
-            LoadMonIconPalettePersonality(speciesForm, personality); //Loads pallete for current mon
-            if (times < 7)
-                gTasks[taskId].data[4+times] = CreateMonIcon(speciesForm, SpriteCB_MonIcon, 52 + 34*(times-1), 31, 4, personality); //Create Pokémon sprite
-            else if (times < 14)
-                gTasks[taskId].data[4+times] = CreateMonIcon(speciesForm, SpriteCB_MonIcon, 18 + 34*(times-7), 70 - y_offset_icons, 4, personality); //Create Pokémon sprite
-            gSprites[gTasks[taskId].data[4+times]].oam.priority = 0;
+            if (times <= FORMS_SCREEN_ICON_COUNT)
+            {
+                u32 personality = GetPokedexMonPersonality(speciesForm);
+                u8 spriteId;
+
+                LoadMonIconPalettePersonality(speciesForm, personality); //Loads pallete for current mon
+                if (times < 7)
+                    spriteId = CreateMonIcon(speciesForm, SpriteCB_MonIcon, 52 + 34*(times-1), 31, 4, personality); //Create Pokémon sprite
+                else
+                    spriteId = CreateMonIcon(speciesForm, SpriteCB_MonIcon, 18 + 34*(times-7), 70 - y_offset_icons, 4, personality); //Create Pokémon sprite
+                gSprites[spriteId].oam.priority = 0;
+                sPokedexView->sFormScreenData.iconSpriteIds[times - 1] = spriteId;
+            }
         }
     }
     gTasks[taskId].data[3] = times;
@@ -4256,17 +4262,21 @@ static void PrintForms(u8 taskId, enum Species species)
     }
 }
 
+static void DestroyFormIcons(void)
+{
+    u32 i;
+
+    for (i = 0; i < min(sPokedexView->sFormScreenData.numForms, FORMS_SCREEN_ICON_COUNT); i++)
+        FreeAndDestroyMonIconSprite(&gSprites[sPokedexView->sFormScreenData.iconSpriteIds[i]]); //Destroy Pokémon icon sprite
+}
+
 static void Task_SwitchScreensFromFormsScreen(u8 taskId)
 {
-    u8 i;
     if (!gPaletteFade.active)
     {
         FreeMonIconPalettes();                                          //Destroy Pokémon icon sprite
         FreeAndDestroyMonIconSprite(&gSprites[gTasks[taskId].data[4]]); //Destroy Pokémon icon sprite
-        for (i = 1; i <= gTasks[taskId].data[3]; i++)
-        {
-            FreeAndDestroyMonIconSprite(&gSprites[gTasks[taskId].data[4+i]]); //Destroy Pokémon icon sprite
-        }
+        DestroyFormIcons();
         FreeAndDestroyMonPicSprite(gTasks[taskId].tMonSpriteId);
 
         switch (sPokedexView->screenSwitchState)
@@ -4283,21 +4293,31 @@ static void Task_SwitchScreensFromFormsScreen(u8 taskId)
 
 static void Task_ExitFormsScreen(u8 taskId)
 {
-    u8 i;
     if (!gPaletteFade.active)
     {
         FreeMonIconPalettes();                                          //Destroy Pokémon icon sprite
         FreeAndDestroyMonIconSprite(&gSprites[gTasks[taskId].data[4]]); //Destroy Pokémon icon sprite
-        for (i = 1; i <= gTasks[taskId].data[3]; i++)
-        {
-            FreeAndDestroyMonIconSprite(&gSprites[gTasks[taskId].data[4+i]]); //Destroy Pokémon icon sprite
-        }
+        DestroyFormIcons();
         FreeAndDestroyMonPicSprite(gTasks[taskId].tMonSpriteId);
 
         FreeInfoScreenWindowAndBgBuffers();
         DestroyTask(taskId);
     }
 }
+
+#if TESTING
+void Test_PrintAndDestroyFormIcons(u8 taskId, enum Species species)
+{
+    struct PokedexView *savedView = sPokedexView;
+
+    sPokedexView = AllocZeroed(sizeof(struct PokedexView));
+    PrintForms(taskId, species);
+    DestroyFormIcons();
+    FreeMonIconPalettes();
+    Free(sPokedexView);
+    sPokedexView = savedView;
+}
+#endif
 
 #undef tMonSpriteId
 

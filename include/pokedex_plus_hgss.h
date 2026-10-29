@@ -23,4 +23,8 @@ void HandleCreateStatBarsDPAD_HGSS(void);
 void HandleCaughtMonPageTypeIcons_HGSS(void);
 bool32 TryHandleCaughtMonPageFlicker_HGSS(u8 taskId);
 
+#if TESTING
+void Test_PrintAndDestroyFormIcons(u8 taskId, enum Species species);
+#endif
+
 #endif // GUARD_POKEDEX_PLUS_HGSS_H
