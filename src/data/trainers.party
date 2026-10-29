@@ -177,6 +177,10 @@ AI: Check Bad Move
 Carvanha
 Level: 36
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Ice Fang
+- Swagger
+- Crunch
+- Agility
 
 === TRAINER_GRUNT_SEAFLOOR_CAVERN_3 ===
 Name: GRUNT
@@ -271,6 +275,10 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 Xatu
 Level: 30
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Air Slash
+- Confuse Ray
+- Night Shade
+- Psycho Shift
 
 === TRAINER_ED ===
 Name: ED
@@ -301,6 +309,10 @@ AI: Check Bad Move
 Carvanha
 Level: 36
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Ice Fang
+- Swagger
+- Crunch
+- Agility
 
 === TRAINER_DECLAN ===
 Name: DECLAN
@@ -395,6 +407,10 @@ AI: Check Bad Move
 Carvanha
 Level: 15
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Aqua Jet
+- Poison Fang
+- Focus Energy
+- Scary Face
 
 === TRAINER_GRUNT_MUSEUM_2 ===
 Name: GRUNT
@@ -412,6 +428,10 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 Carvanha
 Level: 14
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Aqua Jet
+- Poison Fang
+- Focus Energy
+- Scary Face
 
 === TRAINER_GRUNT_SPACE_CENTER_1 ===
 Name: GRUNT
@@ -520,6 +540,10 @@ AI: Basic Trainer
 Makuhita
 Level: 30
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Knock Off
+- Bulk Up
+- Belly Drum
+- Force Palm
 
 Machoke
 Level: 30
@@ -538,6 +562,10 @@ AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / 
 Mightyena
 Level: 51
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
+- Crunch
+- Taunt
+- Yawn
+- Take Down
 
 Golbat
 Level: 51
@@ -555,6 +583,10 @@ AI: Check Bad Move
 Hariyama
 Level: 31
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Knock Off
+- Bulk Up
+- Belly Drum
+- Force Palm
 
 === TRAINER_SHELLY_WEATHER_INSTITUTE ===
 Name: SHELLY
@@ -565,7 +597,7 @@ Music: Aqua
 Double Battle: No
 AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
-Carvanha
+Sharpedo
 Level: 43
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 
@@ -624,6 +656,10 @@ AI: Check Bad Move
 Spoink
 Level: 31
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Psybeam
+- Confuse Ray
+- Rest
+- Power Gem
 
 === TRAINER_DAISY ===
 Name: DAISY
@@ -641,6 +677,10 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 Roselia
 Level: 14
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Stun Spore
+- Poison Sting
+- Mega Drain
+- Leech Seed
 
 === TRAINER_ROSE_1 ===
 Name: ROSE
@@ -654,6 +694,10 @@ AI: Check Bad Move
 Roselia
 Level: 14
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Stun Spore
+- Poison Sting
+- Mega Drain
+- Leech Seed
 
 Shroomish
 Level: 14
@@ -662,6 +706,10 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 Roselia
 Level: 14
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Stun Spore
+- Poison Sting
+- Mega Drain
+- Leech Seed
 
 === TRAINER_FELIX ===
 Name: FELIX
@@ -696,6 +744,10 @@ AI: Check Bad Move
 Roselia
 Level: 26
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Leech Seed
+- Magical Leaf
+- Toxic Spikes
+- Mega Drain
 
 Gloom
 Level: 26
@@ -1536,6 +1588,10 @@ AI: Basic Trainer
 Kecleon
 Level: 42
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Slash
+- Shadow Claw
+- Screech
+- Substitute
 
 Graveler
 Level: 42
@@ -1815,6 +1871,10 @@ AI: Basic Trainer
 Claydol
 Level: 45
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Self Destruct
+- Earth Power
+- Extrasensory
+- Sandstorm
 
 === TRAINER_MICHELLE ===
 Name: MICHELLE
@@ -1995,6 +2055,10 @@ AI: Check Bad Move
 Duskull
 Level: 30
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Night Shade
+- Payback
+- Will O Wisp
+- Shadow Sneak
 
 Shuppet
 Level: 30
@@ -2012,6 +2076,10 @@ AI: Check Bad Move
 Duskull
 Level: 29
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Night Shade
+- Payback
+- Will O Wisp
+- Shadow Sneak
 
 Shuppet
 Level: 29
@@ -2414,6 +2482,10 @@ AI: Check Bad Move
 Carvanha
 Level: 39
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Ice Fang
+- Swagger
+- Crunch
+- Agility
 
 Sharpedo
 Level: 39
@@ -3206,6 +3278,10 @@ AI: Check Bad Move
 Hariyama
 Level: 34
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Bulk Up
+- Belly Drum
+- Force Palm
+- Seismic Toss
 
 === TRAINER_KOICHI ===
 Name: KOICHI
@@ -3325,6 +3401,10 @@ AI: Check Bad Move
 Makuhita
 Level: 26
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Force Palm
+- Knock Off
+- Bulk Up
+- Belly Drum
 
 Machoke
 Level: 26
@@ -3355,6 +3435,10 @@ AI: Check Bad Move
 Hariyama
 Level: 32
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Knock Off
+- Bulk Up
+- Belly Drum
+- Force Palm
 
 === TRAINER_KIRK ===
 Name: KIRK
@@ -3443,6 +3527,10 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 Loudred
 Level: 30
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Rest
+- Sleep Talk
+- Stomp
+- Bite
 
 === TRAINER_DALTON_1 ===
 Name: DALTON
@@ -3460,6 +3548,10 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 Whismur
 Level: 15
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Echoed Voice
+- Astonish
+- Rest
+- Sleep Talk
 
 === TRAINER_DALTON_2 ===
 Name: DALTON
@@ -3570,10 +3662,18 @@ AI: Check Bad Move
 Slugma
 Level: 22
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Ember
+- Harden
+- Clear Smog
+- Ancient Power
 
 Slugma
 Level: 22
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Ember
+- Harden
+- Clear Smog
+- Ancient Power
 
 === TRAINER_AXLE ===
 Name: AXLE
@@ -3600,6 +3700,10 @@ AI: Check Bad Move
 Slugma
 Level: 23
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Ember
+- Harden
+- Clear Smog
+- Ancient Power
 
 === TRAINER_KEEGAN ===
 Name: KEEGAN
@@ -3613,6 +3717,10 @@ AI: Check Bad Move
 Slugma
 Level: 23
 IVs: 14 HP / 14 Atk / 14 Def / 14 SpA / 14 SpD / 14 Spe
+- Ember
+- Harden
+- Clear Smog
+- Ancient Power
 
 === TRAINER_BERNIE_1 ===
 Name: BERNIE
@@ -3923,6 +4031,10 @@ AI: Check Bad Move
 Surskit
 Level: 26
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Bubble Beam
+- Agility
+- Quick Attack
+- Haze
 
 === TRAINER_DONALD ===
 Name: DONALD
@@ -3978,14 +4090,26 @@ AI: Check Bad Move
 Surskit
 Level: 27
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Bubble Beam
+- Agility
+- Quick Attack
+- Haze
 
 Surskit
 Level: 27
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Bubble Beam
+- Agility
+- Quick Attack
+- Haze
 
 Surskit
 Level: 27
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Bubble Beam
+- Agility
+- Quick Attack
+- Haze
 
 === TRAINER_DEREK ===
 Name: DEREK
@@ -4058,6 +4182,10 @@ AI: Check Bad Move
 Surskit
 Level: 36
 IVs: 3 HP / 3 Atk / 3 Def / 3 SpA / 3 SpD / 3 Spe
+- Agility
+- Bubble Beam
+- Haze
+- Baton Pass
 
 Wurmple
 Level: 36
@@ -4066,6 +4194,10 @@ IVs: 3 HP / 3 Atk / 3 Def / 3 SpA / 3 SpD / 3 Spe
 Surskit
 Level: 36
 IVs: 3 HP / 3 Atk / 3 Def / 3 SpA / 3 SpD / 3 Spe
+- Agility
+- Bubble Beam
+- Haze
+- Baton Pass
 
 Masquerain
 Level: 36
@@ -4083,6 +4215,10 @@ AI: Check Bad Move
 Surskit
 Level: 38
 IVs: 4 HP / 4 Atk / 4 Def / 4 SpA / 4 SpD / 4 Spe
+- Bubble Beam
+- Haze
+- Baton Pass
+- Sticky Web
 
 Dustox
 Level: 38
@@ -4091,6 +4227,10 @@ IVs: 4 HP / 4 Atk / 4 Def / 4 SpA / 4 SpD / 4 Spe
 Surskit
 Level: 38
 IVs: 4 HP / 4 Atk / 4 Def / 4 SpA / 4 SpD / 4 Spe
+- Bubble Beam
+- Haze
+- Baton Pass
+- Sticky Web
 
 Masquerain @ Silver Powder
 Level: 38
@@ -4311,6 +4451,10 @@ AI: Check Bad Move
 Xatu
 Level: 36
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Night Shade
+- Air Slash
+- Power Swap
+- Guard Swap
 
 === TRAINER_MAURA ===
 Name: MAURA
@@ -4341,6 +4485,10 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 Natu
 Level: 26
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Peck
+- Confuse Ray
+- Night Shade
+- Psycho Shift
 
 Kadabra
 Level: 26
@@ -4358,10 +4506,18 @@ AI: Check Bad Move
 Kirlia
 Level: 41
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Draining Kiss
+- Charm
+- Calm Mind
+- Psychic
 
 Xatu
 Level: 41
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Air Slash
+- Power Swap
+- Guard Swap
+- Psychic
 
 === TRAINER_JACKI_1 ===
 Name: JACKI
@@ -4994,11 +5150,11 @@ Items: Hyper Potion / Hyper Potion
 Double Battle: No
 AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin / Risky
 
-Swablu
+Altaria
 Level: 39
 IVs: 25 HP / 25 Atk / 25 Def / 25 SpA / 25 SpD / 25 Spe
-- Perish Song
-- Mirror Move
+- Sing
+- Dragon Breath
 - Safeguard
 - Aerial Ace
 
@@ -5102,7 +5258,7 @@ IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Amnesia
 - Earthquake
 
-Sealeo
+Walrein
 Level: 54
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Encore
@@ -5771,6 +5927,10 @@ AI: Basic Trainer
 Hariyama
 Level: 27
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
+- Force Palm
+- Knock Off
+- Bulk Up
+- Belly Drum
 
 === TRAINER_TIMOTHY_2 ===
 Name: TIMOTHY
@@ -7201,10 +7361,18 @@ AI: Check Bad Move
 Altaria
 Level: 37
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Dragon Breath
+- Pluck
+- Sing
+- Cotton Guard
 
 Altaria
 Level: 37
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Dragon Breath
+- Pluck
+- Sing
+- Cotton Guard
 
 === TRAINER_NICOLAS_2 ===
 Name: NICOLAS
@@ -7392,6 +7560,10 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 Xatu
 Level: 33
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Air Slash
+- Confuse Ray
+- Night Shade
+- Psycho Shift
 
 === TRAINER_EDWARDO ===
 Name: EDWARDO
@@ -7426,6 +7598,10 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 Natu
 Level: 28
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Peck
+- Confuse Ray
+- Night Shade
+- Psycho Shift
 
 === TRAINER_ROBERT_1 ===
 Name: ROBERT
@@ -7452,6 +7628,10 @@ AI: Check Bad Move
 Swellow
 Level: 36
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Double Team
+- Aerial Ace
+- Quick Attack
+- Agility
 
 Pelipper
 Level: 36
@@ -7460,6 +7640,10 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 Xatu
 Level: 36
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Night Shade
+- Air Slash
+- Power Swap
+- Guard Swap
 
 === TRAINER_CHESTER ===
 Name: CHESTER
@@ -7558,10 +7742,18 @@ AI: Check Bad Move
 Natu
 Level: 33
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
+- Confuse Ray
+- Night Shade
+- Peck
+- Power Swap
 
 Swellow
 Level: 33
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
+- Double Team
+- Aerial Ace
+- Quick Attack
+- Agility
 
 === TRAINER_BECK ===
 Name: BECK
@@ -7588,6 +7780,10 @@ AI: Check Bad Move / Try To Faint
 Ninjask
 Level: 26
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Fury Cutter
+- False Swipe
+- Agility
+- Absorb
 
 === TRAINER_TAKASHI ===
 Name: TAKASHI
@@ -7601,6 +7797,10 @@ AI: Check Bad Move / Try To Faint
 Ninjask
 Level: 25
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Fury Cutter
+- False Swipe
+- Agility
+- Absorb
 
 Koffing
 Level: 25
@@ -7686,6 +7886,10 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 Ninjask
 Level: 18
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Scratch
+- Fury Cutter
+- False Swipe
+- Agility
 
 === TRAINER_LAO_2 ===
 Name: LAO
@@ -7845,6 +8049,10 @@ AI: Check Bad Move
 Meditite
 Level: 13
 IVs: 15 HP / 15 Atk / 15 Def / 15 SpA / 15 SpD / 15 Spe
+- Confusion
+- Rock Smash
+- Detect
+- Endure
 
 === TRAINER_LAURA ===
 Name: LAURA
@@ -7858,6 +8066,10 @@ AI: Check Bad Move
 Meditite
 Level: 13
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
+- Confusion
+- Rock Smash
+- Detect
+- Endure
 
 === TRAINER_CYNDY_1 ===
 Name: CYNDY
@@ -7999,6 +8211,10 @@ AI: Check Bad Move
 Roselia
 Level: 28
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Leech Seed
+- Magical Leaf
+- Toxic Spikes
+- Mega Drain
 
 Wailmer
 Level: 28
@@ -8267,6 +8483,10 @@ AI: Check Bad Move
 Luvdisc
 Level: 34
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Draining Kiss
+- Flail
+- Water Pulse
+- Take Down
 
 === TRAINER_SHARON ===
 Name: SHARON
@@ -8340,6 +8560,10 @@ AI: Check Bad Move
 Luvdisc
 Level: 34
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Draining Kiss
+- Flail
+- Water Pulse
+- Take Down
 
 === TRAINER_KARA ===
 Name: KARA
@@ -8379,10 +8603,18 @@ AI: Check Bad Move
 Luvdisc
 Level: 33
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Water Pulse
+- Draining Kiss
+- Flail
+- Sweet Kiss
 
 Luvdisc
 Level: 33
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Water Pulse
+- Draining Kiss
+- Flail
+- Sweet Kiss
 
 === TRAINER_DEBRA ===
 Name: DEBRA
@@ -8443,10 +8675,18 @@ AI: Check Bad Move
 Luvdisc
 Level: 33
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Water Pulse
+- Draining Kiss
+- Flail
+- Sweet Kiss
 
 Luvdisc
 Level: 33
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Water Pulse
+- Draining Kiss
+- Flail
+- Sweet Kiss
 
 === TRAINER_CARLEE ===
 Name: CARLEE
@@ -9299,6 +9539,10 @@ IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 Hariyama
 Level: 33
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
+- Knock Off
+- Bulk Up
+- Belly Drum
+- Force Palm
 
 === TRAINER_HUDSON ===
 Name: HUDSON
@@ -9329,6 +9573,10 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 Hariyama
 Level: 33
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
+- Knock Off
+- Bulk Up
+- Belly Drum
+- Force Palm
 
 === TRAINER_EDWIN_1 ===
 Name: EDWIN
@@ -9529,6 +9777,10 @@ AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / 
 Slugma
 Level: 24
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
+- Ember
+- Harden
+- Clear Smog
+- Ancient Power
 
 Wingull
 Level: 24
@@ -9547,7 +9799,7 @@ Music: Male
 Double Battle: No
 AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
-Slugma
+Magcargo
 Level: 40
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 
@@ -9555,7 +9807,7 @@ Pelipper
 Level: 40
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 
-Grovyle
+Sceptile
 Level: 42
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
@@ -9592,6 +9844,10 @@ IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 Combusken
 Level: 26
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Detect
+- Flame Charge
+- Aerial Ace
+- Slash
 
 === TRAINER_BRENDAN_ROUTE_119_TREECKO ===
 Name: BRENDAN
@@ -9610,9 +9866,13 @@ Lombre
 Level: 40
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 
-Combusken
+Blaziken
 Level: 42
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
+- Slash
+- Bounce
+- Blaze Kick
+- Bulk Up
 
 === TRAINER_BRENDAN_ROUTE_103_TORCHIC ===
 Name: BRENDAN
@@ -9643,6 +9903,10 @@ IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 Slugma
 Level: 24
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
+- Ember
+- Harden
+- Clear Smog
+- Ancient Power
 
 Marshtomp
 Level: 26
@@ -9661,11 +9925,11 @@ Lombre
 Level: 40
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 
-Slugma
+Magcargo
 Level: 40
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 
-Marshtomp
+Swampert
 Level: 42
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
@@ -9698,6 +9962,10 @@ IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 Slugma
 Level: 24
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
+- Ember
+- Harden
+- Clear Smog
+- Ancient Power
 
 Grovyle
 Level: 26
@@ -9712,7 +9980,7 @@ Music: Female
 Double Battle: No
 AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
-Slugma
+Magcargo
 Level: 40
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 
@@ -9720,7 +9988,7 @@ Lombre
 Level: 40
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 
-Grovyle
+Sceptile
 Level: 42
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
@@ -9757,6 +10025,10 @@ IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 Combusken
 Level: 26
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Detect
+- Flame Charge
+- Aerial Ace
+- Slash
 
 === TRAINER_MAY_ROUTE_119_TREECKO ===
 Name: MAY
@@ -9775,9 +10047,13 @@ Lombre
 Level: 40
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 
-Combusken
+Blaziken
 Level: 42
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
+- Slash
+- Bounce
+- Blaze Kick
+- Bulk Up
 
 === TRAINER_MAY_ROUTE_103_TORCHIC ===
 Name: MAY
@@ -9808,6 +10084,10 @@ IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 Slugma
 Level: 24
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
+- Ember
+- Harden
+- Clear Smog
+- Ancient Power
 
 Marshtomp
 Level: 26
@@ -9826,11 +10106,11 @@ Lombre
 Level: 40
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 
-Slugma
+Magcargo
 Level: 40
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 
-Marshtomp
+Swampert
 Level: 42
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
@@ -9850,6 +10130,10 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 Zigzagoon
 Level: 11
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Tackle
+- Sand Attack
+- Tail Whip
+- Covet
 
 Aron
 Level: 11
@@ -9929,6 +10213,10 @@ IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
 Mightyena
 Level: 22
 IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
+- Howl
+- Bite
+- Roar
+- Swagger
 
 Swellow
 Level: 22
@@ -10061,6 +10349,10 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 Roselia
 Level: 11
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Stun Spore
+- Poison Sting
+- Mega Drain
+- Leech Seed
 
 Skitty
 Level: 11
@@ -10360,6 +10652,10 @@ IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 Roselia
 Level: 26
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
+- Leech Seed
+- Magical Leaf
+- Toxic Spikes
+- Mega Drain
 
 === TRAINER_JENNA ===
 Name: JENNA
@@ -10400,6 +10696,10 @@ IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 Roselia
 Level: 38
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
+- Toxic Spikes
+- Magical Leaf
+- Giga Drain
+- Synthesis
 
 === TRAINER_CATHERINE_2 ===
 Name: CATHERINE
@@ -10596,6 +10896,10 @@ AI: Check Bad Move
 Meditite
 Level: 13
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
+- Confusion
+- Rock Smash
+- Detect
+- Endure
 
 === TRAINER_CRISTIAN ===
 Name: CRISTIAN
@@ -10622,6 +10926,10 @@ AI: Check Bad Move
 Meditite
 Level: 36
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- High Jump Kick
+- Zen Headbutt
+- Acupressure
+- Power Trick
 
 === TRAINER_LEONARDO ===
 Name: LEONARDO
@@ -10723,6 +11031,10 @@ AI: Check Bad Move
 Spoink
 Level: 36
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Confuse Ray
+- Rest
+- Power Gem
+- Psybeam
 
 === TRAINER_KATHLEEN ===
 Name: KATHLEEN
@@ -10844,6 +11156,10 @@ AI: Check Bad Move
 Natu
 Level: 36
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Night Shade
+- Power Swap
+- Guard Swap
+- Psychic
 
 === TRAINER_BRENDAN_RUSTBORO_TREECKO ===
 Name: BRENDAN
@@ -10854,11 +11170,11 @@ Music: Male
 Double Battle: No
 AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
-Lotad
+Lombre
 Level: 15
 IVs: 3 HP / 3 Atk / 3 Def / 3 SpA / 3 SpD / 3 Spe
 
-Torchic
+Combusken
 Level: 17
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 
@@ -10875,7 +11191,7 @@ Wingull
 Level: 15
 IVs: 3 HP / 3 Atk / 3 Def / 3 SpA / 3 SpD / 3 Spe
 
-Treecko
+Grovyle
 Level: 17
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 
@@ -10891,6 +11207,10 @@ AI: Basic Trainer
 Swellow
 Level: 33
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Double Team
+- Aerial Ace
+- Quick Attack
+- Agility
 
 Breloom
 Level: 33
@@ -10943,7 +11263,7 @@ Poochyena
 Level: 31
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 
-Numel
+Camerupt
 Level: 33
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 
@@ -10968,6 +11288,10 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 Loudred
 Level: 33
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Rest
+- Sleep Talk
+- Stomp
+- Bite
 
 === TRAINER_BRENDAN_RUSTBORO_TORCHIC ===
 Name: BRENDAN
@@ -10982,7 +11306,7 @@ Slugma
 Level: 15
 IVs: 3 HP / 3 Atk / 3 Def / 3 SpA / 3 SpD / 3 Spe
 
-Mudkip
+Marshtomp
 Level: 17
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 
@@ -10999,7 +11323,7 @@ Wingull
 Level: 15
 IVs: 3 HP / 3 Atk / 3 Def / 3 SpA / 3 SpD / 3 Spe
 
-Treecko
+Grovyle
 Level: 17
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 
@@ -11016,6 +11340,10 @@ AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / 
 Mightyena
 Level: 49
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
+- Crunch
+- Taunt
+- Yawn
+- Take Down
 
 Crobat
 Level: 50
@@ -11233,6 +11561,10 @@ AI: Check Bad Move
 Luvdisc
 Level: 40
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Sweet Kiss
+- Take Down
+- Water Pulse
+- Aqua Ring
 
 === TRAINER_CRISSY ===
 Name: CRISSY
@@ -11309,6 +11641,9 @@ IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 Nincada
 Level: 8
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
+- Sand Attack
+- Scratch
+- Fury Cutter
 
 === TRAINER_DOUG ===
 Name: DOUG
@@ -11326,6 +11661,10 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 Ninjask
 Level: 28
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Fury Cutter
+- False Swipe
+- Agility
+- Absorb
 
 === TRAINER_GREG ===
 Name: GREG
@@ -11356,6 +11695,10 @@ AI: Check Bad Move
 Ninjask
 Level: 25
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Fury Cutter
+- False Swipe
+- Agility
+- Absorb
 
 === TRAINER_JAMES_1 ===
 Name: JAMES
@@ -11369,10 +11712,16 @@ AI: Check Bad Move
 Nincada
 Level: 6
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Sand Attack
+- Scratch
+- Fury Cutter
 
 Nincada
 Level: 6
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Sand Attack
+- Scratch
+- Fury Cutter
 
 === TRAINER_JAMES_2 ===
 Name: JAMES
@@ -11797,6 +12146,10 @@ IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
 Illumise
 Level: 30
 IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
+- Moonlight
+- Wish
+- Encore
+- Struggle Bug
 
 === TRAINER_KIRA_AND_DAN_3 ===
 Name: KIRA & DAN
@@ -12013,6 +12366,10 @@ IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 Xatu
 Level: 29
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
+- Air Slash
+- Confuse Ray
+- Night Shade
+- Psycho Shift
 
 === TRAINER_ASHLEY ===
 Name: ASHLEY
@@ -12261,7 +12618,7 @@ Tropius
 Level: 47
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
-Slugma
+Magcargo
 Level: 48
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
@@ -12269,9 +12626,13 @@ Pelipper
 Level: 48
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
-Grovyle
+Sceptile
 Level: 50
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
+- Slam
+- Energy Ball
+- Screech
+- Endeavor
 
 === TRAINER_BRENDAN_LILYCOVE_TREECKO ===
 Name: BRENDAN
@@ -12294,9 +12655,13 @@ Ludicolo
 Level: 48
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
-Combusken
+Blaziken
 Level: 50
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
+- Bounce
+- Blaze Kick
+- Bulk Up
+- Reversal
 
 === TRAINER_BRENDAN_LILYCOVE_TORCHIC ===
 Name: BRENDAN
@@ -12315,11 +12680,11 @@ Ludicolo
 Level: 48
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
-Slugma
+Magcargo
 Level: 48
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
-Marshtomp
+Swampert
 Level: 50
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 
@@ -12336,7 +12701,7 @@ Tropius
 Level: 47
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
-Slugma
+Magcargo
 Level: 48
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
@@ -12344,9 +12709,13 @@ Pelipper
 Level: 48
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
-Grovyle
+Sceptile
 Level: 50
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
+- Slam
+- Energy Ball
+- Screech
+- Endeavor
 
 === TRAINER_MAY_LILYCOVE_TREECKO ===
 Name: MAY
@@ -12369,9 +12738,13 @@ Ludicolo
 Level: 48
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
-Combusken
+Blaziken
 Level: 50
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
+- Bounce
+- Blaze Kick
+- Bulk Up
+- Reversal
 
 === TRAINER_MAY_LILYCOVE_TORCHIC ===
 Name: MAY
@@ -12390,11 +12763,11 @@ Ludicolo
 Level: 48
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
-Slugma
+Magcargo
 Level: 48
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 
-Marshtomp
+Swampert
 Level: 50
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 
@@ -13495,7 +13868,7 @@ Music: Magma
 Double Battle: No
 AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
-Numel
+Camerupt
 Level: 43
 IVs: 9 HP / 9 Atk / 9 Def / 9 SpA / 9 SpD / 9 Spe
 
@@ -13798,6 +14171,10 @@ AI: Check Bad Move
 Ninjask
 Level: 26
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Fury Cutter
+- False Swipe
+- Agility
+- Absorb
 
 Gulpin
 Level: 26
@@ -13836,6 +14213,10 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 Makuhita
 Level: 26
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Force Palm
+- Knock Off
+- Bulk Up
+- Belly Drum
 
 === TRAINER_MARLENE ===
 Name: MARLENE
@@ -13970,6 +14351,10 @@ AI: Check Bad Move
 Slugma
 Level: 25
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Ember
+- Harden
+- Clear Smog
+- Ancient Power
 
 Numel
 Level: 25
@@ -14021,6 +14406,10 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 Makuhita
 Level: 28
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Knock Off
+- Bulk Up
+- Belly Drum
+- Force Palm
 
 === TRAINER_CALE ===
 Name: CALE
@@ -14051,6 +14440,10 @@ AI: Check Bad Move
 Makuhita
 Level: 25
 IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
+- Force Palm
+- Knock Off
+- Bulk Up
+- Belly Drum
 
 Wingull
 Level: 25
@@ -14118,6 +14511,10 @@ AI: Basic Trainer
 Loudred
 Level: 29
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Rest
+- Sleep Talk
+- Stomp
+- Bite
 
 Vigoroth
 Level: 29
@@ -14132,11 +14529,11 @@ Music: Female
 Double Battle: No
 AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
-Lotad
+Lombre
 Level: 15
 IVs: 3 HP / 3 Atk / 3 Def / 3 SpA / 3 SpD / 3 Spe
 
-Torchic
+Combusken
 Level: 17
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 
@@ -14152,8 +14549,12 @@ AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / 
 Torkoal
 Level: 15
 IVs: 3 HP / 3 Atk / 3 Def / 3 SpA / 3 SpD / 3 Spe
+- Smog
+- Ember
+- Rapid Spin
+- Smokescreen
 
-Mudkip
+Marshtomp
 Level: 17
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 
