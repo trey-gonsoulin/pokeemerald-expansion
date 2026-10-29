@@ -195,7 +195,7 @@ void TestRunner_CheckMemory(void)
 // Test builds give these arrays one extra element (the + TESTING in their
 // declarations). Filling it before each test and checking it after catches
 // a write one element past the end. Reads and writes further out aren't caught.
-#define GUARD_ELEMENT(array, count) { &array[count], sizeof(array[0]), #array "[" #count "]" }
+#define GUARD_ELEMENT(array) { &array[ARRAY_COUNT(array) - 1], sizeof(array[0]), #array }
 
 static const struct GuardElement
 {
@@ -204,9 +204,9 @@ static const struct GuardElement
     const char *name;
 } sGuardElements[] =
 {
-    GUARD_ELEMENT(gBattleMons, MAX_BATTLERS_COUNT),
-    GUARD_ELEMENT(gBattlerPartyIndexes, MAX_BATTLERS_COUNT),
-    GUARD_ELEMENT(gObjectEvents, OBJECT_EVENTS_COUNT),
+    GUARD_ELEMENT(gBattleMons),
+    GUARD_ELEMENT(gBattlerPartyIndexes),
+    GUARD_ELEMENT(gObjectEvents),
 };
 
 static void FillGuardElements(void)
@@ -219,7 +219,10 @@ static void FillGuardElements(void)
 static void CheckGuardElements(void)
 {
     u32 i, j;
-    if (gTestRunnerState.result != TEST_RESULT_PASS)
+    // Only a test expected to pass: failing a KNOWN_FAILING or EXPECT_FAIL
+    // test that passed would report it as the failure it expects.
+    if (gTestRunnerState.result != TEST_RESULT_PASS
+     || gTestRunnerState.expectedResult != TEST_RESULT_PASS)
         return;
 
     for (i = 0; i < ARRAY_COUNT(sGuardElements); i++)
@@ -229,7 +232,7 @@ static void CheckGuardElements(void)
         {
             if (guard[j] != 0xFF)
             {
-                Test_MgbaPrintf("%s:%d: out-of-bounds write: %s byte %d is %d, not 255", gTestRunnerState.test->filename, SourceLine(0), sGuardElements[i].name, j, guard[j]);
+                Test_MgbaPrintf("%s:%d: out-of-bounds write: %s guard element byte %d is %d, not 255", gTestRunnerState.test->filename, SourceLine(0), sGuardElements[i].name, j, guard[j]);
                 gTestRunnerState.result = TEST_RESULT_FAIL;
                 break;
             }
