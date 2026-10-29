@@ -22,6 +22,7 @@ import copy
 import csv
 import fnmatch
 import functools
+import itertools
 import json
 import os
 import sys
@@ -130,12 +131,21 @@ def load_stages(path, trainers, repo):
     with open(path, encoding='utf-8') as f:
         cfg = json.load(f)
     fill = {'RIVAL': cfg.get('rival', 'MAY'), 'STARTER': cfg.get('starter', 'MUDKIP')}
+    choices = {k: cfg.get('rival_variants', {}).get(k, [v]) for k, v in fill.items()}
     stages = cfg['stages']
     for st in stages:
-        st['bosses'] = [b.format(**fill) for b in st.get('bosses', ())]
+        templates = st.get('bosses', ())
+        st['bosses'] = [b.format(**fill) for b in templates]
+        # The same fight's other rival and starter teams, which the model leaves out.
+        st['variants'] = {}
+        for b, bid in zip(templates, st['bosses']):
+            ids = {b.format(**dict(zip(choices, c))) for c in itertools.product(*choices.values())} - {bid}
+            if ids:
+                st['variants'][bid] = sorted(ids)
         st['regular'] = []
     bosses = {b for st in stages for b in st['bosses']}
-    missing = sorted(b for b in bosses if b not in trainers)
+    missing = sorted(b for st in stages for b in itertools.chain(st['bosses'], *st['variants'].values())
+                     if b not in trainers)
     if missing:
         raise SystemExit(f'{path}: unknown boss trainers {missing}')
     excluded = cfg.get('exclude', ())
@@ -733,11 +743,24 @@ def stage_trainer_levels(stages, trainers):
     return rows
 
 
+def variant_raises(stages, trainers, raises):
+    """The raise for each rival variant of a staged boss (the same fight's
+    other rival and starter teams) that lifts its ace to the boss's raised ace."""
+    out = {}
+    for st in stages:
+        for bid, ids in st['variants'].items():
+            target = max(mon.level for mon in trainers[bid].mons) + raises.get(bid, 0)
+            for v in ids:
+                out[v] = max(0, target - max(mon.level for mon in trainers[v].mons))
+    return out
+
+
 def share_curves(stages, trainers, gd, scaling, wilds):
     """Per TRAINER_EXP setting: the share6 curve now (full and half clear,
     every AFFECTION bracket), the boss raises that meet TARGET_MARGIN on a
-    full clear with modelled friendship, the curve after them, and how the
-    full-clear bench (now) moves with SHARE_SENSITIVITY's assumptions."""
+    full clear with modelled friendship (the rival variants' included), the
+    curve after them, and how the full-clear bench (now) moves with
+    SHARE_SENSITIVITY's assumptions."""
     out = {}
     for name, value in TRAINER_EXP.items():
         d = with_configs(gd, B_TRAINER_EXP_MULTIPLIER=value)
@@ -747,7 +770,10 @@ def share_curves(stages, trainers, gd, scaling, wilds):
                     for clear_name, clear in (('full', 1.0), ('half', 0.5)) for aff in AFFECTION}
         raises = {r['boss']: r['raise']
                   for r in share_curve(stages, trainers, d, scaling, wilds, margin=TARGET_MARGIN)}
+        raises.update(variant_raises(stages, trainers, raises))
         out[name] = {'now': curves(None), 'raises': raises, 'after': curves(raises),
+                     'variants': {bid: {v: max(mon.level for mon in trainers[v].mons) for v in ids}
+                                  for st in stages for bid, ids in st['variants'].items()},
                      'sensitivity': {label: share_curve(stages, trainers, d, scaling, wilds, **kw)
                                      for label, kw in SHARE_SENSITIVITY.items()}}
     return out
@@ -885,6 +911,18 @@ def share_report(share, raised_defaults, stage_trainers):
             'above the bench. Bosses are only raised, every Pokemon of the team by the same amount, in story order '
             'so each raise counts toward the later stages\' exp. Raises are against the current trainers.party.', '',
             table(['stage', 'boss', 'ace now'] + [f'{n}: raise -> ace' for n in names], rows), '']
+
+    variants = share[names[0]]['variants']
+    if variants:
+        def spread(values):
+            return ' / '.join(str(v) for v in sorted(set(values)))
+        rows = [[short(bid), len(aces), spread(aces.values())]
+                + [spread(f"+{share[n]['raises'][v]} -> {ace + share[n]['raises'][v]}" for v, ace in aces.items())
+                   for n in names]
+                for bid, aces in variants.items()]
+        out += ['The model plays one rival team per fight. The same fight\'s other rival and starter teams get '
+                'the raise that lifts their ace to the staged team\'s raised ace:', '',
+                table(['staged boss', 'other teams', 'ace now'] + [f'{n}: raise -> ace' for n in names], rows), '']
 
     for n in names:
         after = share[n]['after']
