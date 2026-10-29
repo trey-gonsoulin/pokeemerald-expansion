@@ -24,45 +24,91 @@ static const u8 *GetTestName(u32 value)
 
 #define TEST_NAMES_MAX (ARRAY_COUNT(sTestNames) - 1)
 
-TEST("Name order steps A-Z ignoring case and accents, and wraps at the end")
+static struct DebugNameOrder sTestOrder;
+
+static const struct DebugNameOrder *BuildTestOrder(u32 min, u32 max)
 {
-    static const u8 order[] = {5, 1, 2, 8, 7, 3, 4, 0, 5};
-    for (u32 i = 0; i < ARRAY_COUNT(order) - 1; i++)
-        EXPECT_EQ(Debug_StepByName(order[i], 0, TEST_NAMES_MAX, GetTestName, FALSE), order[i + 1]);
+    Debug_FreeNameOrder(&sTestOrder);
+    Debug_BuildNameOrder(&sTestOrder, min, max, GetTestName);
+    return &sTestOrder;
+}
+
+TEST("Name order sorts the named values A-Z ignoring case and accents")
+{
+    static const u16 sorted[] = {5, 1, 2, 8, 7, 3, 4, 0};
+    const struct DebugNameOrder *order = BuildTestOrder(0, TEST_NAMES_MAX);
+    EXPECT_EQ(order->count, ARRAY_COUNT(sorted));
+    for (u32 i = 0; i < ARRAY_COUNT(sorted); i++)
+        EXPECT_EQ(order->values[i], sorted[i]);
+    Debug_FreeNameOrder(&sTestOrder);
+}
+
+TEST("Name order steps A-Z, and wraps at the end")
+{
+    static const u8 steps[] = {5, 1, 2, 8, 7, 3, 4, 0, 5};
+    const struct DebugNameOrder *order = BuildTestOrder(0, TEST_NAMES_MAX);
+    for (u32 i = 0; i < ARRAY_COUNT(steps) - 1; i++)
+        EXPECT_EQ(Debug_StepByName(order, steps[i], FALSE), steps[i + 1]);
+    Debug_FreeNameOrder(&sTestOrder);
 }
 
 TEST("Name order steps back Z-A, and wraps at the start")
 {
-    static const u8 order[] = {0, 4, 3, 7, 8, 2, 1, 5, 0};
-    for (u32 i = 0; i < ARRAY_COUNT(order) - 1; i++)
-        EXPECT_EQ(Debug_StepByName(order[i], 0, TEST_NAMES_MAX, GetTestName, TRUE), order[i + 1]);
+    static const u8 steps[] = {0, 4, 3, 7, 8, 2, 1, 5, 0};
+    const struct DebugNameOrder *order = BuildTestOrder(0, TEST_NAMES_MAX);
+    for (u32 i = 0; i < ARRAY_COUNT(steps) - 1; i++)
+        EXPECT_EQ(Debug_StepByName(order, steps[i], TRUE), steps[i + 1]);
+    Debug_FreeNameOrder(&sTestOrder);
 }
 
 TEST("Name order from a value without a name goes to the first or last name")
 {
-    EXPECT_EQ(Debug_StepByName(6, 0, TEST_NAMES_MAX, GetTestName, FALSE), 5);
-    EXPECT_EQ(Debug_StepByName(6, 0, TEST_NAMES_MAX, GetTestName, TRUE), 0);
+    const struct DebugNameOrder *order = BuildTestOrder(0, TEST_NAMES_MAX);
+    EXPECT_EQ(Debug_StepByName(order, 6, FALSE), 5);
+    EXPECT_EQ(Debug_StepByName(order, 6, TRUE), 0);
+    Debug_FreeNameOrder(&sTestOrder);
 }
 
 TEST("Name order stays within min and max")
 {
-    EXPECT_EQ(Debug_StepByName(4, 1, 4, GetTestName, FALSE), 1);
-    EXPECT_EQ(Debug_StepByName(1, 1, 4, GetTestName, TRUE), 4);
-    EXPECT_EQ(Debug_NextNameInitial(3, 1, 4, GetTestName), 1);
+    const struct DebugNameOrder *order = BuildTestOrder(1, 4);
+    EXPECT_EQ(Debug_StepByName(order, 4, FALSE), 1);
+    EXPECT_EQ(Debug_StepByName(order, 1, TRUE), 4);
+    EXPECT_EQ(Debug_NextNameInitial(order, 3), 1);
+    Debug_FreeNameOrder(&sTestOrder);
+}
+
+TEST("Name order rebuilds only for another range")
+{
+    Debug_FreeNameOrder(&sTestOrder);
+    Debug_BuildNameOrder(&sTestOrder, 1, 4, GetTestName);
+    const u16 *values = sTestOrder.values;
+    Debug_BuildNameOrder(&sTestOrder, 1, 4, GetTestName);
+    EXPECT(sTestOrder.values == values);
+    Debug_BuildNameOrder(&sTestOrder, 0, TEST_NAMES_MAX, GetTestName);
+    EXPECT_EQ(sTestOrder.count, 8);
+    Debug_FreeNameOrder(&sTestOrder);
+    EXPECT(sTestOrder.values == NULL);
 }
 
 TEST("Name order letter jump cycles the initials that names start with")
 {
     // From the name without a letter, A, E, F, Z and back to A
-    static const u8 order[] = {5, 1, 7, 3, 0, 1};
-    for (u32 i = 0; i < ARRAY_COUNT(order) - 1; i++)
-        EXPECT_EQ(Debug_NextNameInitial(order[i], 0, TEST_NAMES_MAX, GetTestName), order[i + 1]);
-    EXPECT_EQ(Debug_NextNameInitial(2, 0, TEST_NAMES_MAX, GetTestName), 7);
-    EXPECT_EQ(Debug_NextNameInitial(6, 0, TEST_NAMES_MAX, GetTestName), 1);
+    static const u8 steps[] = {5, 1, 7, 3, 0, 1};
+    const struct DebugNameOrder *order = BuildTestOrder(0, TEST_NAMES_MAX);
+    for (u32 i = 0; i < ARRAY_COUNT(steps) - 1; i++)
+        EXPECT_EQ(Debug_NextNameInitial(order, steps[i]), steps[i + 1]);
+    EXPECT_EQ(Debug_NextNameInitial(order, 2), 7);
+    EXPECT_EQ(Debug_NextNameInitial(order, 6), 1);
+    Debug_FreeNameOrder(&sTestOrder);
 }
 
 TEST("Name order returns the value when nothing else has a name")
 {
-    EXPECT_EQ(Debug_StepByName(6, 6, 6, GetTestName, FALSE), 6);
-    EXPECT_EQ(Debug_NextNameInitial(5, 5, 6, GetTestName), 5);
+    const struct DebugNameOrder *order = BuildTestOrder(6, 6);
+    EXPECT_EQ(order->count, 0);
+    EXPECT_EQ(Debug_StepByName(order, 6, FALSE), 6);
+    order = BuildTestOrder(5, 6);
+    EXPECT_EQ(Debug_NextNameInitial(order, 5), 5);
+    Debug_FreeNameOrder(&sTestOrder);
 }

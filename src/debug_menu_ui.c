@@ -5,6 +5,7 @@
 #include "debug_menu_ui.h"
 #include "list_menu.h"
 #include "main.h"
+#include "malloc.h"
 #include "menu.h"
 #include "string_util.h"
 #include "task.h"
@@ -184,8 +185,8 @@ void Debug_InputToHexString(u8 *dest, u8 taskId, u32 digits)
 
 // *******************************
 // Name order
-// Each call scans min..max once instead of keeping a sorted index: about 1,500 names at most,
-// well under a frame, and nothing to allocate or free.
+// A sorted index, built once per range: scanning min..max on every press took about 4 frames
+// for the ~1,570 species, so holding Up/Down lagged. Sorting them takes a few frames once.
 
 // Name order ignores case and the acute accent, so "Flabébé" sorts with the other Fs
 static u32 Debug_FoldNameChar(u32 c)
@@ -219,65 +220,118 @@ static s32 Debug_NameInitial(const u8 *name)
     return (c >= CHAR_A && c <= CHAR_Z) ? (s32)(c - CHAR_A) : -1;
 }
 
-// The value after value in name order among min..max (with previous, the one before it). Past the
-// last name it wraps to the first. getName returns NULL for values that name order leaves out,
-// such as disabled species; from one of those it goes to the first (or last) name.
-// Returns value when no other value in the range has a name.
-u32 Debug_StepByName(u32 value, u32 min, u32 max, DebugNameFunc getName, bool32 previous)
+// Merges the sorted runs src[start..mid) and src[mid..end) into dest. names[v - min] is v's name.
+static void Debug_MergeByName(const u16 *src, u16 *dest, u32 start, u32 mid, u32 end, const u8 *const *names, u32 min)
 {
-    const u8 *name = getName(value);
-    const u8 *nextName = NULL, *firstName = NULL;
-    u32 next = value, first = value;
-    s32 sign = previous ? -1 : 1;
+    u32 i = start, j = mid;
 
-    for (u32 i = min; i <= max; i++)
+    for (u32 k = start; k < end; k++)
     {
-        const u8 *iName = getName(i);
-        if (iName == NULL || i == value)
-            continue;
-        if (name != NULL && sign * Debug_CompareNames(iName, i, name, value) > 0
-         && (nextName == NULL || sign * Debug_CompareNames(iName, i, nextName, next) < 0))
-        {
-            next = i;
-            nextName = iName;
-        }
-        if (firstName == NULL || sign * Debug_CompareNames(iName, i, firstName, first) < 0)
-        {
-            first = i;
-            firstName = iName;
-        }
+        if (i < mid && (j == end || Debug_CompareNames(names[src[i] - min], src[i], names[src[j] - min], src[j]) <= 0))
+            dest[k] = src[i++];
+        else
+            dest[k] = src[j++];
     }
-    return nextName != NULL ? next : first;
+}
+
+// Sorts the values in min..max that have a name (getName returns NULL for the ones name order
+// leaves out, such as disabled species) into order->values. Does nothing when order already
+// holds that range; Debug_FreeNameOrder frees it. On a failed Alloc the order stays empty.
+void Debug_BuildNameOrder(struct DebugNameOrder *order, u32 min, u32 max, DebugNameFunc getName)
+{
+    u32 size = max - min + 1, count = 0;
+    const u8 **names;
+    u16 *buffer;
+
+    if (order->values != NULL && order->getName == getName && order->min == min && order->max == max)
+        return;
+    Debug_FreeNameOrder(order);
+    order->getName = getName;
+    order->min = min;
+    order->max = max;
+    order->values = Alloc(size * sizeof(u16));
+    // The names, looked up once, and a merge buffer: only while sorting
+    names = Alloc(size * sizeof(*names));
+    buffer = Alloc(size * sizeof(u16));
+    if (order->values != NULL && names != NULL && buffer != NULL)
+    {
+        for (u32 i = min; i <= max; i++)
+        {
+            names[i - min] = getName(i);
+            if (names[i - min] != NULL)
+                order->values[count++] = i;
+        }
+        // Bottom-up merge sort, swapping the source and destination after each pass
+        u16 *src = order->values, *dest = buffer;
+        for (u32 width = 1; width < count; width *= 2)
+        {
+            for (u32 start = 0; start < count; start += 2 * width)
+                Debug_MergeByName(src, dest, start, min(start + width, count), min(start + 2 * width, count), names, min);
+            u16 *sorted = dest;
+            dest = src;
+            src = sorted;
+        }
+        if (src != order->values)
+            memcpy(order->values, src, count * sizeof(u16));
+    }
+    order->count = count;
+    TRY_FREE_AND_SET_NULL(names);
+    TRY_FREE_AND_SET_NULL(buffer);
+}
+
+void Debug_FreeNameOrder(struct DebugNameOrder *order)
+{
+    TRY_FREE_AND_SET_NULL(order->values);
+    order->count = 0;
+}
+
+// value's position in order, or -1 when value has no name
+static s32 Debug_FindInNameOrder(const struct DebugNameOrder *order, u32 value)
+{
+    for (u32 i = 0; i < order->count; i++)
+    {
+        if (order->values[i] == value)
+            return i;
+    }
+    return -1;
+}
+
+// The value after value in name order (with previous, the one before it). Past the last name it
+// wraps to the first. From a value without a name it goes to the first (or last) name.
+// Returns value when the order is empty.
+u32 Debug_StepByName(const struct DebugNameOrder *order, u32 value, bool32 previous)
+{
+    s32 pos = Debug_FindInNameOrder(order, value);
+
+    if (order->count == 0)
+        return value;
+    if (previous)
+        pos = (pos <= 0 ? order->count : pos) - 1;
+    else
+        pos = (pos < 0 || pos == order->count - 1) ? 0 : pos + 1;
+    return order->values[pos];
 }
 
 // The first value in name order whose name starts with a later letter than value's name, so
 // repeated calls cycle A to Z, skipping letters no name starts with, and wrap from Z back to A.
 // Names that don't start with a letter are skipped. Returns value when no name starts with a letter.
-u32 Debug_NextNameInitial(u32 value, u32 min, u32 max, DebugNameFunc getName)
+u32 Debug_NextNameInitial(const struct DebugNameOrder *order, u32 value)
 {
-    const u8 *name = getName(value);
-    s32 initial = name != NULL ? Debug_NameInitial(name) : -1;
-    const u8 *nextName = NULL, *firstName = NULL;
-    u32 next = value, first = value;
+    s32 pos = Debug_FindInNameOrder(order, value);
+    s32 initial = pos >= 0 ? Debug_NameInitial(order->getName(value)) : -1;
 
-    for (u32 i = min; i <= max; i++)
+    // Folded initials only grow along the order, so the next letter is after pos
+    for (u32 i = pos + 1; i < order->count; i++)
     {
-        const u8 *iName = getName(i);
-        if (iName == NULL || Debug_NameInitial(iName) < 0)
-            continue;
-        if (Debug_NameInitial(iName) > initial
-         && (nextName == NULL || Debug_CompareNames(iName, i, nextName, next) < 0))
-        {
-            next = i;
-            nextName = iName;
-        }
-        if (firstName == NULL || Debug_CompareNames(iName, i, firstName, first) < 0)
-        {
-            first = i;
-            firstName = iName;
-        }
+        if (Debug_NameInitial(order->getName(order->values[i])) > initial)
+            return order->values[i];
     }
-    return nextName != NULL ? next : first;
+    for (u32 i = 0; i < order->count; i++)
+    {
+        if (Debug_NameInitial(order->getName(order->values[i])) >= 0)
+            return order->values[i];
+    }
+    return value;
 }
 
 // *******************************
