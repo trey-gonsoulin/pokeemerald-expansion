@@ -30,12 +30,31 @@ $(MAPS_OUTDIR)/%/header.inc $(MAPS_OUTDIR)/%/events.inc $(MAPS_OUTDIR)/%/connect
 	$(MAPJSON) map emerald $< $(LAYOUTS_DIR)/layouts.json $(@D)
 
 
-$(MAPS_OUTDIR)/connections.inc $(MAPS_OUTDIR)/groups.inc $(MAPS_OUTDIR)/events.inc $(MAPS_OUTDIR)/headers.inc $(INCLUDECONSTS_OUTDIR)/map_groups.h $(DATA_SRC_SUBDIR)/map_group_count.h $(DATA_SRC_SUBDIR)/debug_map_names.h: $(MAPS_DIR)/map_groups.json $(MAP_JSONS) .map_version $(MAPJSON)
+# mapjson groups and mapjson layouts each write several files. Listing them all as targets of one
+# rule makes -j run the recipe once per target, concurrently (make 3.81 has no grouped targets), so
+# the outputs depend on a stamp with an empty recipe instead. The stamp is touched before mapjson
+# runs and moved into place after, so the outputs are never older than it and a failed run leaves
+# it out of date. A missing output forces the stamp to rebuild.
+MAPJSON_GROUPS_STAMP := .mapjson_groups.stamp
+MAPJSON_GROUPS_OUTPUTS := $(MAPS_OUTDIR)/connections.inc $(MAPS_OUTDIR)/groups.inc $(MAPS_OUTDIR)/events.inc $(MAPS_OUTDIR)/headers.inc $(INCLUDECONSTS_OUTDIR)/map_groups.h $(DATA_SRC_SUBDIR)/map_group_count.h $(DATA_SRC_SUBDIR)/debug_map_names.h
+MAPJSON_LAYOUTS_STAMP := .mapjson_layouts.stamp
+MAPJSON_LAYOUTS_OUTPUTS := $(LAYOUTS_OUTDIR)/layouts.inc $(LAYOUTS_OUTDIR)/layouts_table.inc $(INCLUDECONSTS_OUTDIR)/layouts.h
+
+$(MAPJSON_GROUPS_OUTPUTS): $(MAPJSON_GROUPS_STAMP) ;
+$(MAPJSON_GROUPS_STAMP): $(MAPS_DIR)/map_groups.json $(MAP_JSONS) .map_version $(MAPJSON) $(if $(filter-out $(wildcard $(MAPJSON_GROUPS_OUTPUTS)),$(MAPJSON_GROUPS_OUTPUTS)),FORCE)
+	@touch $@.tmp
 	@$(MAPJSON) groups $(MAP_VERSION) $(filter %.json,$^) $(MAPS_OUTDIR) $(INCLUDECONSTS_OUTDIR)
 	@echo "$(MAPJSON) groups $(MAP_VERSION) $(MAPS_DIR)/map_groups.json <MAP_JSONS> $(MAPS_OUTDIR) $(INCLUDECONSTS_OUTDIR)"
+	@mv $@.tmp $@
 
-$(LAYOUTS_OUTDIR)/layouts.inc $(LAYOUTS_OUTDIR)/layouts_table.inc $(INCLUDECONSTS_OUTDIR)/layouts.h: $(LAYOUTS_DIR)/layouts.json .map_version $(MAPJSON)
+# mapjson groups also rewrites heal_locations.json, which jsonproc reads.
+$(DATA_SRC_SUBDIR)/heal_locations.h $(INCLUDECONSTS_OUTDIR)/heal_locations.h: | $(MAPJSON_GROUPS_STAMP)
+
+$(MAPJSON_LAYOUTS_OUTPUTS): $(MAPJSON_LAYOUTS_STAMP) ;
+$(MAPJSON_LAYOUTS_STAMP): $(LAYOUTS_DIR)/layouts.json .map_version $(MAPJSON) $(if $(filter-out $(wildcard $(MAPJSON_LAYOUTS_OUTPUTS)),$(MAPJSON_LAYOUTS_OUTPUTS)),FORCE)
+	@touch $@.tmp
 	$(MAPJSON) layouts $(MAP_VERSION) $< $(LAYOUTS_OUTDIR) $(INCLUDECONSTS_OUTDIR)
+	@mv $@.tmp $@
 
 # Generate constants for map events, which depend on data that's distributed across the map.json files.
 # There's a lot of map.json files, so we print an abbreviated output with echo.
