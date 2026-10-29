@@ -1,5 +1,5 @@
 {
-  "comment": "Emerald's story in order, for the level-curve and TM models. Each stage's map globs (data/maps folder names) hold the trainers, TMs and wild Pokemon reachable in it; a map belongs to the first stage that matches it. The bosses are fought last, in order. {RIVAL} and {STARTER} are filled in from rival and starter.",
+  "comment": "Emerald's story in order, for the level-curve and TM models. Each stage's map globs (data/maps folder names) hold the trainers, TMs and wild Pokemon reachable in it; a map belongs to the first stage that matches it. The bosses are fought last, in order. A stage's optional land_maps globs place a map's land (grass) table there ahead of its maps globs (Route 103's grass is at its west end, by the first rival fight), and its optional trainers ids override their map's stage (Route 103's two swimmers need Surf). {RIVAL} and {STARTER} are filled in from rival and starter.",
   "rival": "MAY",
   "starter": "MUDKIP",
   "exclude": ["TRAINER_MAY_*", "TRAINER_BRENDAN_*"],
@@ -8,7 +8,7 @@
                "Underwater_MarineCave", "Underwater_SealedChamber", "CaveOfOrigin_UnusedRubySapphireMap*",
                "EverGrandeCity_*Room", "Route110_TrickHousePuzzle8"],
   "stages": [
-    {"name": "Rival (Route 103)", "maps": ["Route101", "LittlerootTown*", "OldaleTown*"],
+    {"name": "Rival (Route 103)", "maps": ["Route101", "LittlerootTown*", "OldaleTown*"], "land_maps": ["Route103"],
      "bosses": ["TRAINER_{RIVAL}_ROUTE_103_{STARTER}"]},
     {"name": "Roxanne", "maps": ["Route102", "PetalburgCity", "PetalburgCity_[!G]*", "Route104*", "PetalburgWoods", "RustboroCity_Gym", "Route116"],
      "bosses": ["TRAINER_ROXANNE_1"]},
@@ -20,7 +20,7 @@
      "bosses": ["TRAINER_TABITHA_MT_CHIMNEY", "TRAINER_MAXIE_MT_CHIMNEY", "TRAINER_FLANNERY_1"]},
     {"name": "Norman", "maps": ["PetalburgCity_Gym", "Route110_TrickHousePuzzle3", "MirageTower*", "DesertRuins"],
      "bosses": ["TRAINER_NORMAN_1"]},
-    {"name": "Winona", "maps": ["Route110_TrickHousePuzzle4", "Route105", "Route106", "Route107", "Route108", "AbandonedShip_*", "Route118*", "Route119*", "Route120*", "FortreeCity*", "ScorchedSlab", "NewMauville_*"],
+    {"name": "Winona", "trainers": ["TRAINER_ISABELLE", "TRAINER_PETE"], "maps":["Route110_TrickHousePuzzle4", "Route105", "Route106", "Route107", "Route108", "AbandonedShip_*", "Route118*", "Route119*", "Route120*", "FortreeCity*", "ScorchedSlab", "NewMauville_*"],
      "bosses": ["TRAINER_{RIVAL}_ROUTE_119_{STARTER}", "TRAINER_SHELLY_WEATHER_INSTITUTE", "TRAINER_WINONA_1"]},
     {"name": "Tate and Liza", "maps": ["Route110_TrickHousePuzzle5", "Route121*", "Route122", "MtPyre_*", "SafariZone_*", "LilycoveCity*", "Route123*", "MagmaHideout_*", "AquaHideout_*", "Route124*", "Route125", "Route126", "Route127", "ShoalCave_*", "MossdeepCity", "MossdeepCity_[!S]*"],
      "bosses": ["TRAINER_{RIVAL}_LILYCOVE_{STARTER}", "TRAINER_TABITHA_MAGMA_HIDEOUT", "TRAINER_MAXIE_MAGMA_HIDEOUT", "TRAINER_MATT", "TRAINER_TATE_AND_LIZA_1"]},
