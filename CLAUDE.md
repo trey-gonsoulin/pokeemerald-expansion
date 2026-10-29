@@ -51,6 +51,9 @@ What the fork adds over upstream (`git diff origin/master...origin/emerald-plus 
   - The owner's rule: balance with the Exp. Share on and the 1.5x trainer exp off, mainly by raising opponent levels, never with a level cap.
   - Each boss's ace sits 1 above the modelled Exp. Share bench on a full clear. The Elite Four step one level per fight, and Wallace sits 3 above Drake.
   - `tools/rebalance/` (standard library, imports the area_archetypes parsers) models the curve. `python3 tools/rebalance/rebalance.py` regenerates `output/report.md`, which CI checks for drift, so rerun it after any `trainers.party` change. `output/findings.md` is hand-written: the analysis, the targets and the owner's decisions. A rival level change has to go on all six teams of that fight (May or Brendan with each starter), and boss raises also move the Mossdeep partner battle and the post-game rematches.
+- Story boss AI and moves, also fork data changes in `src/data/trainers.party`:
+  - Smart AI (#129) on 91 teams: the gym leaders and their rematches, the Elite Four, Wallace, every May and Brendan team, Wally, Maxie, Archie, Tabitha, Matt and Shelly. Their `AI:` line is `AI_FLAG_SMART_TRAINER` (`include/constants/battle_ai.h`) spelled out without `Omniscient` and `Smart Tera`, then any flag the team already had (Winona's `Risky`, three `Force Setup First Turn`). Smart Tera keeps each mon's Tera Type, which lets the AI Terastallize while the player has no Tera Orb.
+  - Four moves the physical/special split weakened, each now a same-type move on the stronger stat that the species learns here (#130): Wallace's Gyarados Hyper Beam -> Double-Edge, Phoebe's two Banette Shadow Ball -> Phantom Force, Glacia's first Sealeo Ice Ball -> Aurora Beam, Wattson's Voltorb Spark -> Charge Beam.
 
 ## Build
 

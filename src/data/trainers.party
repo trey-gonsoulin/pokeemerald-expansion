@@ -533,7 +533,7 @@ Gender: Male
 Music: Aqua
 Items: Super Potion
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Mightyena
 Level: 51
@@ -563,7 +563,7 @@ Pic: Aqua Admin F
 Gender: Female
 Music: Aqua
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Carvanha
 Level: 43
@@ -580,7 +580,7 @@ Pic: Aqua Admin F
 Gender: Female
 Music: Aqua
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Sharpedo
 Level: 56
@@ -598,7 +598,7 @@ Gender: Male
 Music: Aqua
 Items: Super Potion / Super Potion
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Mightyena
 Level: 54
@@ -4594,7 +4594,7 @@ Gender: Male
 Music: Elite Four
 Items: Full Restore / Full Restore
 Double Battle: No
-AI: Basic Trainer / Force Setup First Turn
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin / Force Setup First Turn
 Mugshot: Purple
 
 Mightyena
@@ -4645,7 +4645,7 @@ Gender: Female
 Music: Elite Four
 Items: Full Restore / Full Restore
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 Mugshot: Green
 
 Dusclops
@@ -4696,7 +4696,7 @@ Gender: Female
 Music: Elite Four
 Items: Full Restore / Full Restore
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 Mugshot: Pink
 
 Sealeo
@@ -4747,7 +4747,7 @@ Gender: Male
 Music: Elite Four
 Items: Full Restore / Full Restore
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 Mugshot: Blue
 
 Shelgon
@@ -4798,7 +4798,7 @@ Gender: Female
 Music: Female
 Items: Potion / Potion
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Geodude
 Level: 12
@@ -4832,7 +4832,7 @@ Gender: Male
 Music: Male
 Items: Super Potion / Super Potion
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Machop
 Level: 16
@@ -4866,7 +4866,7 @@ Gender: Male
 Music: Male
 Items: Super Potion / Super Potion
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Voltorb
 Level: 22
@@ -4908,7 +4908,7 @@ Gender: Female
 Music: Female
 Items: Hyper Potion / Hyper Potion
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Numel
 Level: 29
@@ -4950,7 +4950,7 @@ Gender: Male
 Music: Male
 Items: Hyper Potion / Hyper Potion
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Spinda
 Level: 32
@@ -4992,7 +4992,7 @@ Gender: Female
 Music: Female
 Items: Hyper Potion / Hyper Potion
 Double Battle: No
-AI: Basic Trainer / Risky
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin / Risky
 
 Swablu
 Level: 39
@@ -5042,7 +5042,7 @@ Gender: Male
 Music: Female
 Items: Hyper Potion / Hyper Potion / Hyper Potion / Hyper Potion
 Double Battle: Yes
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Claydol
 Level: 50
@@ -5084,7 +5084,7 @@ Gender: Male
 Music: Male
 Items: Hyper Potion / Hyper Potion
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Luvdisc
 Level: 52
@@ -6250,7 +6250,7 @@ Gender: Male
 Music: Male
 Items: Full Restore / Full Restore / Full Restore / Full Restore
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 Mugshot: Yellow
 
 Wailord
@@ -9371,7 +9371,7 @@ Pic: Magma Admin
 Gender: Male
 Music: Magma
 Double Battle: No
-AI: Check Bad Move
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 Multi Party: Half
 
 Camerupt
@@ -9462,7 +9462,7 @@ Gender: Male
 Music: Male
 Items: Full Restore / Full Restore
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Altaria
 Level: 59
@@ -9511,7 +9511,7 @@ Pic: Brendan
 Gender: Male
 Music: Male
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Treecko
 Level: 6
@@ -9524,7 +9524,7 @@ Pic: Brendan
 Gender: Male
 Music: Male
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Slugma
 Level: 24
@@ -9545,7 +9545,7 @@ Pic: Brendan
 Gender: Male
 Music: Male
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Slugma
 Level: 40
@@ -9566,7 +9566,7 @@ Pic: Brendan
 Gender: Male
 Music: Male
 Double Battle: No
-AI: Check Bad Move / Try To Faint / Force Setup First Turn
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin / Force Setup First Turn
 
 Torchic
 Level: 6
@@ -9579,7 +9579,7 @@ Pic: Brendan
 Gender: Male
 Music: Male
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Wingull
 Level: 24
@@ -9600,7 +9600,7 @@ Pic: Brendan
 Gender: Male
 Music: Male
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Pelipper
 Level: 40
@@ -9621,7 +9621,7 @@ Pic: Brendan
 Gender: Male
 Music: Male
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Mudkip
 Level: 6
@@ -9634,7 +9634,7 @@ Pic: Brendan
 Gender: Male
 Music: Male
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Lombre
 Level: 24
@@ -9655,7 +9655,7 @@ Pic: Brendan
 Gender: Male
 Music: Male
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Lombre
 Level: 40
@@ -9676,7 +9676,7 @@ Pic: May
 Gender: Female
 Music: Female
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Treecko
 Level: 6
@@ -9689,7 +9689,7 @@ Pic: May
 Gender: Female
 Music: Female
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Wingull
 Level: 24
@@ -9710,7 +9710,7 @@ Pic: May
 Gender: Female
 Music: Female
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Slugma
 Level: 40
@@ -9731,7 +9731,7 @@ Pic: May
 Gender: Female
 Music: Female
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Torchic
 Level: 6
@@ -9744,7 +9744,7 @@ Pic: May
 Gender: Female
 Music: Female
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Wingull
 Level: 24
@@ -9765,7 +9765,7 @@ Pic: May
 Gender: Female
 Music: Female
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Pelipper
 Level: 40
@@ -9786,7 +9786,7 @@ Pic: May
 Gender: Female
 Music: Female
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Mudkip
 Level: 6
@@ -9799,7 +9799,7 @@ Pic: May
 Gender: Female
 Music: Female
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Lombre
 Level: 24
@@ -9820,7 +9820,7 @@ Pic: May
 Gender: Female
 Music: Female
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Lombre
 Level: 40
@@ -10852,7 +10852,7 @@ Pic: Brendan
 Gender: Male
 Music: Male
 Double Battle: No
-AI: Check Bad Move
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Lotad
 Level: 15
@@ -10869,7 +10869,7 @@ Pic: Brendan
 Gender: Male
 Music: Male
 Double Battle: No
-AI: Check Bad Move
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Wingull
 Level: 15
@@ -10933,7 +10933,7 @@ Pic: Magma Admin
 Gender: Male
 Music: Magma
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Numel
 Level: 29
@@ -10976,7 +10976,7 @@ Pic: Brendan
 Gender: Male
 Music: Male
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Slugma
 Level: 15
@@ -10993,7 +10993,7 @@ Pic: May
 Gender: Female
 Music: Female
 Double Battle: No
-AI: Check Bad Move / Try To Faint / Force Setup First Turn
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin / Force Setup First Turn
 
 Wingull
 Level: 15
@@ -11011,7 +11011,7 @@ Gender: Male
 Music: Magma
 Items: Super Potion / Super Potion
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Mightyena
 Level: 49
@@ -11033,7 +11033,7 @@ Gender: Male
 Music: Magma
 Items: Super Potion / Super Potion
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Mightyena
 Level: 33
@@ -12042,7 +12042,7 @@ Pic: Wally
 Gender: Male
 Music: Male
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Ralts
 Level: 26
@@ -12056,7 +12056,7 @@ Gender: Male
 Music: Male
 Items: Full Restore / Full Restore
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Altaria
 Level: 47
@@ -12106,7 +12106,7 @@ Gender: Male
 Music: Male
 Items: Full Restore / Full Restore
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Altaria
 Level: 50
@@ -12156,7 +12156,7 @@ Gender: Male
 Music: Male
 Items: Full Restore / Full Restore
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Altaria
 Level: 53
@@ -12206,7 +12206,7 @@ Gender: Male
 Music: Male
 Items: Full Restore / Full Restore
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Altaria
 Level: 56
@@ -12255,7 +12255,7 @@ Pic: Brendan
 Gender: Male
 Music: Male
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Tropius
 Level: 47
@@ -12280,7 +12280,7 @@ Pic: Brendan
 Gender: Male
 Music: Male
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Tropius
 Level: 47
@@ -12305,7 +12305,7 @@ Pic: Brendan
 Gender: Male
 Music: Male
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Tropius
 Level: 47
@@ -12330,7 +12330,7 @@ Pic: May
 Gender: Female
 Music: Female
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Tropius
 Level: 47
@@ -12355,7 +12355,7 @@ Pic: May
 Gender: Female
 Music: Female
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Tropius
 Level: 47
@@ -12380,7 +12380,7 @@ Pic: May
 Gender: Female
 Music: Female
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Tropius
 Level: 47
@@ -13493,7 +13493,7 @@ Pic: Magma Admin
 Gender: Male
 Music: Magma
 Double Battle: No
-AI: Check Bad Move
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Numel
 Level: 43
@@ -13536,7 +13536,7 @@ Pic: Magma Leader Maxie
 Gender: Male
 Music: Magma
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 Multi Party: Half
 
 Mightyena
@@ -14130,7 +14130,7 @@ Pic: May
 Gender: Female
 Music: Female
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Lotad
 Level: 15
@@ -14147,7 +14147,7 @@ Pic: May
 Gender: Female
 Music: Female
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Torkoal
 Level: 15
@@ -14165,7 +14165,7 @@ Gender: Female
 Music: Female
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Golem
 Level: 32
@@ -14207,7 +14207,7 @@ Gender: Female
 Music: Female
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Omanyte
 Level: 37
@@ -14257,7 +14257,7 @@ Gender: Female
 Music: Female
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Omastar
 Level: 42
@@ -14307,7 +14307,7 @@ Gender: Female
 Music: Female
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Aerodactyl
 Level: 47
@@ -14365,7 +14365,7 @@ Gender: Male
 Music: Male
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Machamp @ Sitrus Berry
 Level: 33
@@ -14407,7 +14407,7 @@ Gender: Male
 Music: Male
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Machamp @ Sitrus Berry
 Level: 38
@@ -14449,7 +14449,7 @@ Gender: Male
 Music: Male
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Hitmonchan
 Level: 40
@@ -14499,7 +14499,7 @@ Gender: Male
 Music: Male
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Hitmonlee
 Level: 46
@@ -14557,7 +14557,7 @@ Gender: Male
 Music: Male
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Mareep
 Level: 36
@@ -14599,7 +14599,7 @@ Gender: Male
 Music: Male
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Pikachu
 Level: 39
@@ -14649,7 +14649,7 @@ Gender: Male
 Music: Male
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Raichu
 Level: 44
@@ -14699,7 +14699,7 @@ Gender: Male
 Music: Male
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Electabuzz
 Level: 50
@@ -14757,7 +14757,7 @@ Gender: Female
 Music: Female
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Magcargo @ White Herb
 Level: 38
@@ -14799,7 +14799,7 @@ Gender: Female
 Music: Female
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Growlithe
 Level: 41
@@ -14849,7 +14849,7 @@ Gender: Female
 Music: Female
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Houndour
 Level: 46
@@ -14907,7 +14907,7 @@ Gender: Female
 Music: Female
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Arcanine
 Level: 51
@@ -14965,7 +14965,7 @@ Gender: Male
 Music: Male
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Chansey
 Level: 42
@@ -15007,7 +15007,7 @@ Gender: Male
 Music: Male
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Slaking @ Sitrus Berry
 Level: 47
@@ -15057,7 +15057,7 @@ Gender: Male
 Music: Male
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Slaking @ Sitrus Berry
 Level: 52
@@ -15107,7 +15107,7 @@ Gender: Male
 Music: Male
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Slaking @ Sitrus Berry
 Level: 57
@@ -15165,7 +15165,7 @@ Gender: Female
 Music: Female
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer / Risky
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin / Risky
 
 Dratini @ Sitrus Berry
 Level: 40
@@ -15215,7 +15215,7 @@ Gender: Female
 Music: Female
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer / Risky
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin / Risky
 
 Hoothoot
 Level: 43
@@ -15273,7 +15273,7 @@ Gender: Female
 Music: Female
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer / Risky
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin / Risky
 
 Noctowl
 Level: 48
@@ -15331,7 +15331,7 @@ Gender: Female
 Music: Female
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer / Risky
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin / Risky
 
 Noctowl
 Level: 53
@@ -15389,7 +15389,7 @@ Gender: Male
 Music: Female
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Slowpoke
 Level: 48
@@ -15439,7 +15439,7 @@ Gender: Male
 Music: Female
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Drowzee
 Level: 53
@@ -15497,7 +15497,7 @@ Gender: Male
 Music: Female
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Hypno
 Level: 58
@@ -15555,7 +15555,7 @@ Gender: Male
 Music: Female
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Hypno
 Level: 63
@@ -15613,7 +15613,7 @@ Gender: Male
 Music: Male
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Poliwag
 Level: 46
@@ -15663,7 +15663,7 @@ Gender: Male
 Music: Male
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Poliwhirl
 Level: 50
@@ -15713,7 +15713,7 @@ Gender: Male
 Music: Male
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Lapras
 Level: 56
@@ -15771,7 +15771,7 @@ Gender: Male
 Music: Male
 Items: Full Restore / Full Restore / Full Restore
 Double Battle: Yes
-AI: Basic Trainer
+AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin
 
 Lapras
 Level: 61
