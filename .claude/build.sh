@@ -39,12 +39,14 @@ export LC_ALL
 # Known warnings. Each entry matches one whole line, so a new warning in the same file (or an error)
 # still shows. The src/ and include/ ones come from the LTO link and appear only in `release`; besides
 # them, every ROM link gives the RWX one, the tool build json.hpp and the asset conversion libpng
-# (under -j two libpng warnings can land on one line). The note: lines that follow a warning are never
-# printed (only error/warning/make *** lines, in any case, are).
+# (under -j a libpng warning can lose its newline and share a line with another one or with a make
+# recipe; [^:]* lets that through but not a glued warning, which has a colon). The note: lines that
+# follow a warning are never printed (only error/warning/make *** lines, in any case, are).
 # The LTO assembler's compound_string warnings (`release` only) need a pattern, because their temp .s
-# names and section hashes change on every build. So that the pattern can't hide a new one, a log
-# with any of them must have exactly compound_count (each LTO link prints all 6).
-compound="^.*\.s: Warning: section .\.rodata\.compound_string\.[0-9a-f]+' size \(0x[0-9a-f]+\) is not a multiple of its entry size 0x[0-9a-f]+\$"
+# names (which may hold spaces, never a colon) and section hashes change on every build. So that a
+# new one shows, a successful build with any of them must have exactly compound_count (each LTO link
+# prints all 6).
+compound="^[^:]*\.s: Warning: section .\.rodata\.compound_string\.[0-9a-f]+' size \(0x[0-9a-f]+\) is not a multiple of its entry size 0x[0-9a-f]+\$"
 compound_count=6
 expected="^\.\./\.\./src/pokedex\.c:4507: warning: writing 1 byte into a region of size 0 \[-Wstringop-overflow=\]\$
 ^\.\./\.\./src/mystery_gift_client\.c:102: warning: '(__builtin_)?memcpy' reading 1024 bytes from a region of size 16 \[-Wstringop-overread\]\$
@@ -53,12 +55,12 @@ expected="^\.\./\.\./src/pokedex\.c:4507: warning: writing 1 byte into a region 
 $compound
 ^[^ ]*ld: warning: [^ ]*\.elf has a LOAD segment with RWX permissions\$
 ^\./nlohmann/json\.hpp:[0-9:]* warning: identifier '_json(_pointer)?' preceded by whitespace in a literal operator declaration is deprecated \[-Wdeprecated-literal-operator\]\$
-^(libpng warning: bKGD: invalid index)+\$"
+^(libpng warning: bKGD: invalid index)+[^:]*\$"
 problems='error:|warning:|\*\*\*'
 grep -aiE "$problems" "$log" | grep -vE "$expected" |
     awk 'NR <= 40; END { if (NR > 40) printf "... %d more (%d in total), see the log\n", NR - 40, NR }'
 found=$(grep -acE "$compound" "$log")
-[ "$found" -gt 0 ] && [ "$found" -ne "$compound_count" ] &&
+[ "$status" -eq 0 ] && [ "$found" -gt 0 ] && [ "$found" -ne "$compound_count" ] &&
     echo "$found .rodata.compound_string assembler warnings, expected $compound_count: see the log"
 filtered=$(grep -aiE "$problems" "$log" | grep -cE "$expected")
 [ "$filtered" -gt 0 ] && echo "($filtered expected warning lines filtered)"
