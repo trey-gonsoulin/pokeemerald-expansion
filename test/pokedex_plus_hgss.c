@@ -5,16 +5,17 @@
 #include "task.h"
 #include "test/test.h"
 
-static u32 CountSpritesInUse(void)
+static u64 GetSpritesInUse(void)
 {
-    u32 i, count = 0;
+    u32 i;
+    u64 inUse = 0;
 
     for (i = 0; i < MAX_SPRITES; i++)
     {
         if (gSprites[i].inUse)
-            count++;
+            inUse |= 1ull << i;
     }
-    return count;
+    return inUse;
 }
 
 // Pikachu has 16 forms besides its own and Unown 27: more than the 13 icons
@@ -22,7 +23,7 @@ static u32 CountSpritesInUse(void)
 TEST("HGSS forms page keeps its form icons inside its own task")
 {
     enum Species species = SPECIES_NONE;
-    u32 spritesInUse;
+    u64 spritesInUse;
     u8 taskId, nextTaskId;
     struct Task nextTask;
 
@@ -33,12 +34,12 @@ TEST("HGSS forms page keeps its form icons inside its own task")
     nextTaskId = CreateTask(TaskDummy, 0);
     ASSUME(nextTaskId == taskId + 1);
     nextTask = gTasks[nextTaskId];
-    spritesInUse = CountSpritesInUse();
+    spritesInUse = GetSpritesInUse();
 
     Test_PrintAndDestroyFormIcons(taskId, species);
 
     EXPECT(memcmp(&nextTask, &gTasks[nextTaskId], sizeof(nextTask)) == 0);
-    EXPECT_EQ(CountSpritesInUse(), spritesInUse);
+    EXPECT(GetSpritesInUse() == spritesInUse);
     DestroyTask(nextTaskId);
     DestroyTask(taskId);
 }
