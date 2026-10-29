@@ -725,11 +725,13 @@ void clean_heal_locations(vector<string> &valid_map_ids)
 
 // Map and group name strings for the debug menu's Warp, indexed like gMapGroups:
 // a group with no map in this version's region is NULL, and its maps are skipped as in groups.inc.
+// sDebugMapNameCounts has each group's name count, so a lookup is bounded by the names listed here.
 string generate_debug_map_names_text(Json groups_data, vector<string> &invalid_maps) {
     const string group_prefix = "gMapGroup_";
     ostringstream text;
     ostringstream group_names;
     ostringstream group_maps;
+    ostringstream group_counts;
 
     text << get_generated_warning("data/maps/map_groups.json", false);
 
@@ -744,6 +746,7 @@ string generate_debug_map_names_text(Json groups_data, vector<string> &invalid_m
         }
 
         group_names << "    COMPOUND_STRING(\"" << short_name << "\"),\n";
+        group_counts << "    " << valid_maps.size() << ",\n";
         if (valid_maps.size() > 0) {
             text << "static const u8 *const sDebugMapNames_" << short_name << "[] = {\n";
             for (string map : valid_maps)
@@ -756,7 +759,8 @@ string generate_debug_map_names_text(Json groups_data, vector<string> &invalid_m
     }
 
     text << "static const u8 *const sDebugMapGroupNames[] = {\n" << group_names.str() << "};\n\n";
-    text << "static const u8 *const *const sDebugMapNames[] = {\n" << group_maps.str() << "};\n";
+    text << "static const u8 *const *const sDebugMapNames[] = {\n" << group_maps.str() << "};\n\n";
+    text << "static const u8 sDebugMapNameCounts[] = {\n" << group_counts.str() << "};\n";
     return text.str();
 }
 

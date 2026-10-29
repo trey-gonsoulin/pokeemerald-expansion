@@ -1938,13 +1938,22 @@ static void DebugAction_Util_Fly(u8 taskId)
 // Copies the map's name from its map.json, or "?" for a map this game doesn't have
 static u8 *Debug_CopyMapName(u8 *dest, u32 mapGroup, u32 mapNum)
 {
-    if (mapGroup >= MAP_GROUPS_COUNT || sDebugMapNames[mapGroup] == NULL || mapNum >= MAP_GROUP_COUNT[mapGroup])
+    // sDebugMapNames lists only this game's maps, which a group's MAP_GROUP_COUNT can exceed
+    if (mapGroup >= MAP_GROUPS_COUNT || mapNum >= sDebugMapNameCounts[mapGroup])
         return StringCopy(dest, COMPOUND_STRING("?"));
     return StringCopy(dest, sDebugMapNames[mapGroup][mapNum]);
 }
 
 STATIC_ASSERT(ARRAY_COUNT(sDebugMapNames) == MAP_GROUPS_COUNT, DebugMapNamesCount);
 STATIC_ASSERT(ARRAY_COUNT(sDebugMapGroupNames) == MAP_GROUPS_COUNT, DebugMapGroupNamesCount);
+STATIC_ASSERT(ARRAY_COUNT(sDebugMapNameCounts) == MAP_GROUPS_COUNT, DebugMapNameCountsCount);
+
+// Only Warp to map warp… has room for the map.json names. The outbreak location pickers share
+// the map group and map steps but keep the narrow window, so they show the region map section.
+static bool32 Debug_HasRoomForMapNames(u8 taskId)
+{
+    return GetWindowAttribute(gTasks[taskId].tSubWindowId, WINDOW_WIDTH) == DEBUG_MENU_WIDTH_WARP;
+}
 
 static void DebugSelectionStep_UpdateMapGroup(u8 taskId, u8 digits, u32 min, u32 max)
 {
@@ -1952,7 +1961,7 @@ static void DebugSelectionStep_UpdateMapGroup(u8 taskId, u8 digits, u32 min, u32
     Debug_InputToDecimalString(gStringVar2, taskId, digits);
     ConvertIntToDecimalStringN(gStringVar3, max, STR_CONV_MODE_LEADING_ZEROS, digits);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Group: {STR_VAR_2} / {STR_VAR_3}"));
-    StringCopy(gStringVar2, sDebugMapGroupNames[mapGroup]);
+    StringCopy(gStringVar2, Debug_HasRoomForMapNames(taskId) ? sDebugMapGroupNames[mapGroup] : COMPOUND_STRING(""));
     StringCopy(gStringVar3, sDebugMapNames[mapGroup] == NULL ? COMPOUND_STRING("Not in this game") : COMPOUND_STRING(""));
     DebugNativeStep_PrintWindowSelectionToFit(taskId);
 }
@@ -1970,7 +1979,10 @@ static void DebugSelectionStep_UpdateMapNum(u8 taskId, u8 digits, u32 min, u32 m
     Debug_InputToDecimalString(gStringVar2, taskId, digits);
     ConvertIntToDecimalStringN(gStringVar3, max, STR_CONV_MODE_LEADING_ZEROS, digits);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Map: {STR_VAR_2} / {STR_VAR_3}"));
-    Debug_CopyMapName(gStringVar2, mapGroup, mapNum);
+    if (Debug_HasRoomForMapNames(taskId))
+        Debug_CopyMapName(gStringVar2, mapGroup, mapNum);
+    else
+        StringCopy(gStringVar2, COMPOUND_STRING("MapSec:"));
     GetMapName(gStringVar3, Overworld_GetMapHeaderByGroupAndId(mapGroup, mapNum)->regionMapSectionId, 0);
     DebugNativeStep_PrintWindowSelectionToFit(taskId);
 }
@@ -2092,7 +2104,10 @@ static void DebugAction_Util_RecentWarp(u8 taskId, const void *params)
     const struct DebugWarp *warp = params;
     // The empty list's one entry
     if (warp - sDebugRecentWarps >= sDebugRecentWarpsCount)
+    {
+        PlaySE(SE_FAILURE);
         return;
+    }
     Debug_WarpTo(taskId, *warp);
 }
 
@@ -2113,11 +2128,19 @@ static u32 Debug_GenerateListRecentWarpsMenu(const struct DebugMenuOption *items
     for (i = 0; i < sDebugRecentWarpsCount; i++)
     {
         const struct DebugWarp *warp = &sDebugRecentWarps[i];
-        u8 *end;
+        u32 length = Debug_CopyMapName(gStringVar4, warp->mapGroup, warp->mapNum) - gStringVar4;
+        u8 *end = sDebugMenuListData->itemNames[i];
 
-        Debug_CopyMapName(gStringVar4, warp->mapGroup, warp->mapNum);
-        end = StringCopyN(sDebugMenuListData->itemNames[i], gStringVar4, min(StringLength(gStringVar4), maxNameLength));
-        *end = EOS;
+        // An over-long name keeps its end, which tells apart maps such as a house's 1F and 2F
+        if (length > maxNameLength)
+        {
+            *end++ = CHAR_ELLIPSIS;
+            end = StringCopy(end, &gStringVar4[length - (maxNameLength - 1)]);
+        }
+        else
+        {
+            end = StringCopy(end, gStringVar4);
+        }
         if (Overworld_GetMapHeaderByGroupAndId(warp->mapGroup, warp->mapNum)->events->warpCount > 0)
         {
             end = StringCopy(end, COMPOUND_STRING(" ("));
