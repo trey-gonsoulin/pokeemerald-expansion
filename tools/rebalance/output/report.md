@@ -515,11 +515,11 @@ Flags (all default Pokemon / story trainers only):
 | measure | value |
 |---|---|
 | trainer Pokemon with set moves | 436 |
-| attacking set moves whose data changed | 426 |
-|   category flips (physical <-> special) | 156 |
-|   of them now on a weaker / similar / stronger stat | 35 / 61 / 60 |
-|   Pokemon with at least one flip | 143 |
-|   Pokemon with a flip onto a weaker stat | 31 |
+| attacking set moves whose data changed | 421 |
+|   category flips (physical <-> special) | 151 |
+|   of them now on a weaker / similar / stronger stat | 30 / 61 / 60 |
+|   Pokemon with at least one flip | 139 |
+|   Pokemon with a flip onto a weaker stat | 26 |
 |   type changes | 0 |
 |   power changes | 269 |
 |   accuracy changes | 71 |
@@ -537,18 +537,18 @@ Changed attacking moves (set-move slots; weaker/similar/stronger: the category f
 | Sludge | similar 22 |
 | Thunderbolt | data 21 |
 | Dig | data 19 |
-| Shadow Ball | weaker 14, stronger 1, similar 3 |
+| Shadow Ball | weaker 12, stronger 1, similar 3 |
 | Overheat | data 16 |
 | Rock Tomb | data 12 |
 | Giga Drain | data 9 |
 | Crunch | similar 6, stronger 3 |
 | Bite | stronger 3, weaker 5 |
-| Hyper Beam | similar 1, weaker 7 |
 | Fire Punch | similar 6, stronger 2 |
-| Spark | weaker 7 |
 | Hydro Pump | data 7 |
+| Hyper Beam | similar 1, weaker 6 |
 | Ancient Power | similar 5, weaker 1 |
 | Bind | data 6 |
+| Spark | weaker 6 |
 | Blizzard | data 6 |
 | Lick | data 5 |
 | Tri Attack | stronger 5 |
@@ -577,7 +577,6 @@ Changed attacking moves (set-move slots; weaker/similar/stronger: the category f
 | Fly | data 1 |
 | Uproar | stronger 1 |
 | Needle Arm | similar 1 |
-| Ice Ball | weaker 1 |
 | High Jump Kick | data 1 |
 | Thief | stronger 1 |
 | Fury Cutter | data 1 |
@@ -592,20 +591,16 @@ Changed attacking moves (set-move slots; weaker/similar/stronger: the category f
 | Sidney | Mightyena | 58 | Crunch | Special -> Physical | 60 -> 90 | stronger |
 | Sidney | Cacturne | 58 | Feint Attack | Special -> Physical | 115 -> 115 | similar |
 | Sidney | Cacturne | 58 | Needle Arm | Special -> Physical | 115 -> 115 | similar |
-| Phoebe | Banette | 60 | Shadow Ball | Physical -> Special | 115 -> 83 | weaker |
 | Phoebe | Banette | 60 | Feint Attack | Special -> Physical | 83 -> 115 | stronger |
 | Phoebe | Sableye | 61 | Shadow Ball | Physical -> Special | 75 -> 65 | similar |
 | Phoebe | Sableye | 61 | Feint Attack | Special -> Physical | 65 -> 75 | stronger |
-| Phoebe | Banette | 60 | Shadow Ball | Physical -> Special | 115 -> 83 | weaker |
 | Phoebe | Dusclops | 62 | Shadow Ball | Physical -> Special | 70 -> 60 | similar |
-| Glacia | Sealeo | 60 | Ice Ball | Special -> Physical | 75 -> 60 | weaker |
 | Glacia | Glalie | 60 | Crunch | Special -> Physical | 80 -> 80 | similar |
 | Glacia | Glalie | 62 | Shadow Ball | Physical -> Special | 80 -> 80 | similar |
 | Drake | Shelgon | 61 | Dragon Claw | Special -> Physical | 60 -> 95 | stronger |
 | Drake | Flygon | 62 | Crunch | Special -> Physical | 80 -> 100 | stronger |
 | Drake | Salamence | 64 | Dragon Claw | Special -> Physical | 110 -> 135 | stronger |
 | Drake | Salamence | 64 | Crunch | Special -> Physical | 110 -> 135 | stronger |
-| Wattson 1 | Voltorb | 22 | Spark | Special -> Physical | 55 -> 30 | weaker |
 | Flannery 1 | Slugma | 29 | Smog | Physical -> Special | 40 -> 70 | stronger |
 | Norman 1 | Vigoroth | 32 | Feint Attack | Special -> Physical | 55 -> 80 | stronger |
 | Norman 1 | Slaking | 36 | Feint Attack | Special -> Physical | 95 -> 160 | stronger |
@@ -613,7 +608,6 @@ Changed attacking moves (set-move slots; weaker/similar/stronger: the category f
 | Juan 1 | Crawdaunt | 54 | Crabhammer | Special -> Physical | 90 -> 120 | stronger |
 | Wallace | Tentacruel | 63 | Sludge Bomb | Physical -> Special | 70 -> 80 | similar |
 | Wallace | Whiscash | 64 | Hyper Beam | Physical -> Special | 78 -> 76 | similar |
-| Wallace | Gyarados | 64 | Hyper Beam | Physical -> Special | 125 -> 60 | weaker |
 | Wally Vr 1 | Delcatty | 58 | Feint Attack | Special -> Physical | 55 -> 65 | stronger |
 | Wally Vr 1 | Magneton | 56 | Tri Attack | Physical -> Special | 60 -> 120 | stronger |
 

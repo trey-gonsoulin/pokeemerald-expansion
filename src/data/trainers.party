@@ -4659,7 +4659,7 @@ IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 Banette
 Level: 60
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
-- Shadow Ball
+- Phantom Force
 - Grudge
 - Will O Wisp
 - Feint Attack
@@ -4675,7 +4675,7 @@ IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 Banette
 Level: 60
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
-- Shadow Ball
+- Phantom Force
 - Psychic
 - Thunderbolt
 - Facade
@@ -4705,7 +4705,7 @@ IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Encore
 - Body Slam
 - Hail
-- Ice Ball
+- Aurora Beam
 
 Glalie
 Level: 60
@@ -4872,7 +4872,7 @@ Voltorb
 Level: 22
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Rollout
-- Spark
+- Charge Beam
 - Self Destruct
 - Shock Wave
 
@@ -6290,7 +6290,7 @@ Level: 64
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Dragon Dance
 - Earthquake
-- Hyper Beam
+- Double Edge
 - Surf
 
 Milotic @ Sitrus Berry
