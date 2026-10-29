@@ -3061,25 +3061,36 @@ static void ResetEvoScreenDataStruct(void)
     sPokedexView->sEvoScreenData.numIcons = 0;
     for (i = 0; i < ARRAY_COUNT(sPokedexView->sEvoScreenData.targetSpecies); i++)
     {
+        sPokedexView->sEvoScreenData.arrowSpriteDist[i] = 0;
         sPokedexView->sEvoScreenData.targetSpecies[i] = 0;
         sPokedexView->sEvoScreenData.seen[i] = 0;
     }
 
 }
 
-STATIC_ASSERT(EVO_SCREEN_ICON_COUNT >= 2 + 1 + MAX_EVOLUTION_ICONS, EvoScreenIconCount);
-
-// Every icon on the evolution page goes through here, so that its exits can free them all.
-static u8 CreateEvoScreenIcon(enum Species species, s16 x, u32 personality)
+// Loads species's icon palette, creates its icon at (x, y) and records the sprite
+// ID in spriteIds, so that the page's exits can free it. Past maxIcons, draws nothing.
+static u8 CreatePageMonIcon(enum Species species, s16 x, s16 y, u8 *spriteIds, u8 *numIcons, u32 maxIcons)
 {
+    u32 personality = GetPokedexMonPersonality(species);
     u8 spriteId;
 
-    if (sPokedexView->sEvoScreenData.numIcons >= EVO_SCREEN_ICON_COUNT)
+    if (*numIcons >= maxIcons)
         return MAX_SPRITES;
-    spriteId = CreateMonIcon(species, SpriteCB_MonIcon, x, 31, 4, personality);
+    LoadMonIconPalettePersonality(species, personality); //Loads pallete for current mon
+    spriteId = CreateMonIcon(species, SpriteCB_MonIcon, x, y, 4, personality); //Create Pokémon sprite
     gSprites[spriteId].oam.priority = 0;
-    sPokedexView->sEvoScreenData.iconSpriteIds[sPokedexView->sEvoScreenData.numIcons++] = spriteId;
+    spriteIds[(*numIcons)++] = spriteId;
     return spriteId;
+}
+
+// Two pre-evolutions, the mon's own and MAX_EVOLUTION_ICONS evolutions. PrintPreEvolutions
+// doesn't enforce the 2, but no enabled species draws more than 9 icons (Eevee, Milcery).
+STATIC_ASSERT(EVO_SCREEN_ICON_COUNT >= 2 + 1 + MAX_EVOLUTION_ICONS, EvoScreenIconCount);
+
+static u8 CreateEvoScreenIcon(enum Species species, s16 x)
+{
+    return CreatePageMonIcon(species, x, 31, sPokedexView->sEvoScreenData.iconSpriteIds, &sPokedexView->sEvoScreenData.numIcons, EVO_SCREEN_ICON_COUNT);
 }
 
 static void GetSeenFlagTargetSpecies(void)
@@ -3149,7 +3160,7 @@ static void Task_LoadEvolutionScreen(u8 taskId)
             FreeMonIconPalettes(); //Free space for new pallete
             LoadMonIconPalettePersonality(species, personality); //Loads pallete for current mon
             PrintPreEvolutions(taskId, species);
-            gTasks[taskId].data[4] = CreateEvoScreenIcon(species, 18 + 32*sPokedexView->numPreEvolutions, personality); //Create Pokémon sprite
+            gTasks[taskId].data[4] = CreateEvoScreenIcon(species, 18 + 32*sPokedexView->numPreEvolutions); //Create Pokémon sprite
             EvoFormsPage_PrintNavigationButtons(); // Navigation buttons
         }
         gMain.state++;
@@ -3160,6 +3171,7 @@ static void Task_LoadEvolutionScreen(u8 taskId)
         u32 depth = sPokedexView->numPreEvolutions;
         u32 iconDepth = depth;
         //Print evo info and icons
+        gTasks[taskId].data[3] = 0; // The info screen's tSkipCry after A, see PrintEvolutionTargetSpeciesAndMethod
         PrintEvolutionTargetSpeciesAndMethod(taskId, NationalPokedexNumToSpeciesForm(sPokedexListItem->dexNum), 0, &depth, alreadyPrintedIcons, &iconDepth, 0);
         LoadSpritePalette(&gSpritePalette_Arrow);
         TryLoadDarkModeArrowPalette();
@@ -3335,12 +3347,10 @@ static void HandleTargetSpeciesPrintText(enum Species targetSpecies, u32 base_x,
 
 static void HandleTargetSpeciesPrintIcon(u8 taskId, enum Species targetSpecies, u8 base_i, u8 iterations)
 {
-    u32 personality = GetPokedexMonPersonality(targetSpecies);
-    LoadMonIconPalettePersonality(targetSpecies, personality); //Loads pallete for current mon
     if (iterations > 6) // Print icons closer to each other if there are many evolutions
-        CreateEvoScreenIcon(targetSpecies, 45 + 26*base_i, personality);
+        CreateEvoScreenIcon(targetSpecies, 45 + 26*base_i);
     else
-        CreateEvoScreenIcon(targetSpecies, 50 + 32*base_i, personality);
+        CreateEvoScreenIcon(targetSpecies, 50 + 32*base_i);
 }
 
 static void CreateCaughtBallEvolutionScreen(enum Species targetSpecies, u8 x, u8 y, u16 unused)
@@ -3378,11 +3388,7 @@ static void HandlePreEvolutionSpeciesPrint(u8 taskId, enum Species preSpecies, e
     PrintInfoScreenTextSmall(gStringVar3, FONT_SMALL, base_x, base_y + base_y_offset*base_i); //evolution mon name
 
     if (base_i < 3)
-    {
-        u32 personality = GetPokedexMonPersonality(preSpecies);
-        LoadMonIconPalettePersonality(preSpecies, personality); //Loads pallete for current mon
-        CreateEvoScreenIcon(preSpecies, 18 + 32*base_i, personality); //Create Pokémon sprite
-    }
+        CreateEvoScreenIcon(preSpecies, 18 + 32*base_i);
 }
 
 static bool32 HasTwoPreEvolutions(enum Species species)
@@ -3611,6 +3617,9 @@ static void PrintEvolutionTargetSpeciesAndMethod(u8 taskId, enum Species species
         times = 9;
     else if (times > 10)
         times = 10;
+
+    // No longer read by the exits, but A leaves it to the info screen as tSkipCry
+    gTasks[taskId].data[3] = times;
 
     //If there are evolutions find out which and print them 1 by 1
     for (i = 0; i < times; i++)
@@ -4019,27 +4028,27 @@ static void Task_ExitEvolutionScreen(u8 taskId)
 #if TESTING
 // Draws species's evolution page as Task_LoadEvolutionScreen's cases 3 and 4 do,
 // copies out the rows' species, then frees the sprites as the page's exits do.
-void Test_PrintAndDestroyEvolutionPage(u8 taskId, enum Species species, enum Species *targetSpecies, u32 count)
+u32 Test_PrintAndDestroyEvolutionPage(u8 taskId, enum Species species, enum Species *targetSpecies, u32 count)
 {
     struct PokedexView *savedView = sPokedexView;
     u32 alreadyPrintedIcons[MAX_EVOLUTION_ICONS] = {0};
-    u32 depth, iconDepth;
-    u32 personality = GetPokedexMonPersonality(species);
+    u32 depth, iconDepth, numIcons;
 
     sPokedexView = AllocZeroed(sizeof(struct PokedexView));
     InitWindows(sInfoScreen_WindowTemplates);
     ResetEvoScreenDataStruct();
-    LoadMonIconPalettePersonality(species, personality);
     PrintPreEvolutions(taskId, species);
-    CreateEvoScreenIcon(species, 18 + 32*sPokedexView->numPreEvolutions, personality);
+    CreateEvoScreenIcon(species, 18 + 32*sPokedexView->numPreEvolutions);
     depth = iconDepth = sPokedexView->numPreEvolutions;
     PrintEvolutionTargetSpeciesAndMethod(taskId, species, 0, &depth, alreadyPrintedIcons, &iconDepth, 0);
     memcpy(targetSpecies, sPokedexView->sEvoScreenData.targetSpecies, min(count, ARRAY_COUNT(sPokedexView->sEvoScreenData.targetSpecies)) * sizeof(*targetSpecies));
+    numIcons = sPokedexView->sEvoScreenData.numIcons;
     DestroyEvoScreenSprites();
     FreeMonIconPalettes();
     FreeAllWindowBuffers();
     Free(sPokedexView);
     sPokedexView = savedView;
+    return numIcons;
 }
 #endif
 
@@ -4234,6 +4243,8 @@ static void Task_HandleFormsScreenInput(u8 taskId)
 
         if (JOY_NEW(B_BUTTON))
         {
+            // Scrolls back to the current form, where A starts the cursor again
+            UpdateFormsCursor(taskId, 1);
             DestroySprite(&gSprites[sPokedexView->sFormScreenData.arrowSpriteId]);
             sPokedexView->sFormScreenData.inSubmenu = FALSE;
             EvoFormsPage_PrintNavigationButtons();
@@ -4258,16 +4269,11 @@ static void CreateFormIcons(void)
     sPokedexView->sFormScreenData.numIcons = 0;
     for (cell = max(firstCell, 1); cell <= lastCell; cell++)
     {
-        enum Species speciesForm = GetFormSpeciesId(sPokedexView->sFormScreenData.species, sPokedexView->sFormScreenData.formIds[cell]);
-        u32 personality = GetPokedexMonPersonality(speciesForm);
         u32 shownCell = cell - firstCell;
-        u8 spriteId;
 
-        LoadMonIconPalettePersonality(speciesForm, personality); //Loads pallete for current mon
-        spriteId = CreateMonIcon(speciesForm, SpriteCB_MonIcon, 18 + 34 * (shownCell % FORMS_SCREEN_COLUMNS),
-                                 shownCell < FORMS_SCREEN_COLUMNS ? 31 : secondRowY, 4, personality); //Create Pokémon sprite
-        gSprites[spriteId].oam.priority = 0;
-        sPokedexView->sFormScreenData.iconSpriteIds[sPokedexView->sFormScreenData.numIcons++] = spriteId;
+        CreatePageMonIcon(GetFormSpeciesId(sPokedexView->sFormScreenData.species, sPokedexView->sFormScreenData.formIds[cell]),
+                          18 + 34 * (shownCell % FORMS_SCREEN_COLUMNS), shownCell < FORMS_SCREEN_COLUMNS ? 31 : secondRowY,
+                          sPokedexView->sFormScreenData.iconSpriteIds, &sPokedexView->sFormScreenData.numIcons, FORMS_SCREEN_ICON_COUNT);
     }
 }
 
