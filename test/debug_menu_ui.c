@@ -1,6 +1,8 @@
 #include "global.h"
 #include "debug_menu_ui.h"
+#include "string_util.h"
 #include "test/test.h"
+#include "constants/characters.h"
 
 // In name order: "10,000 Volt" (5), "abra" (1), "Abra" (2), "Abras" (8), "Ekans" (7),
 // "Flabébé" (3), "Flabebe" (4), "Zubat" (0). Value 6 has no name.
@@ -122,4 +124,66 @@ TEST("Name order returns the value when nothing else has a name")
     order = BuildTestOrder(5, 6);
     EXPECT_EQ(Debug_NextNameInitial(order, 5), 5);
     Debug_FreeNameOrder(&sTestOrder);
+}
+
+static bool32 NameIs(const u8 *name, const u8 *expected)
+{
+    return name != NULL && StringCompare(name, expected) == 0;
+}
+
+TEST("Flag and var names: flags show the constant name without FLAG_")
+{
+    EXPECT(NameIs(Debug_GetFlagName(FLAG_BADGE05_GET), COMPOUND_STRING("BADGE05_GET")));
+    EXPECT(NameIs(Debug_GetFlagName(FLAG_SYS_POKEDEX_GET), COMPOUND_STRING("SYS_POKEDEX_GET")));
+    // A range marker that is a flag of its own still shows
+    EXPECT(NameIs(Debug_GetFlagName(FLAG_SYS_TV_START), COMPOUND_STRING("SYS_TV_START")));
+    EXPECT(NameIs(Debug_GetFlagName(FLAG_UNUSED_0x264), COMPOUND_STRING("UNUSED_0x264")));
+}
+
+TEST("Flag and var names: the first defined real name shows where names share a flag")
+{
+    // FLAG_TEMP_SKIP_GABBY_INTERVIEW and others alias the temp flags after them
+    EXPECT(NameIs(Debug_GetFlagName(FLAG_TEMP_1), COMPOUND_STRING("TEMP_1")));
+    // The range marker FLAG_HIDDEN_ITEMS_START is defined first, but the hidden item is a real name
+    EXPECT(NameIs(Debug_GetFlagName(FLAG_HIDDEN_ITEMS_START), COMPOUND_STRING("HIDDEN_ITEM_LAVARIDGE_TOWN_ICE_HEAL")));
+}
+
+TEST("Flag and var names: NULL outside the flags and for trainer flags")
+{
+    EXPECT(Debug_GetFlagName(0) == NULL);
+    EXPECT(Debug_GetFlagName(FLAGS_COUNT) == NULL);
+    EXPECT(Debug_GetFlagName(SPECIAL_FLAGS_START) == NULL);
+    EXPECT(Debug_GetFlagName(TRAINER_FLAGS_START + 1) == NULL);
+    EXPECT(Debug_GetFlagName(FLAGS_COUNT - 1) != NULL);
+}
+
+TEST("Flag and var names: vars show the constant name without VAR_, NULL outside VARS_START..VARS_END")
+{
+    EXPECT(NameIs(Debug_GetVarName(VARS_START), COMPOUND_STRING("TEMP_0")));
+    EXPECT(NameIs(Debug_GetVarName(VAR_TEMP_1), COMPOUND_STRING("TEMP_1")));
+    EXPECT(NameIs(Debug_GetVarName(VAR_ICE_STEP_COUNT), COMPOUND_STRING("ICE_STEP_COUNT")));
+    EXPECT(Debug_GetVarName(VARS_START - 1) == NULL);
+    EXPECT(Debug_GetVarName(VARS_END + 1) == NULL);
+    EXPECT(Debug_GetVarName(VAR_RESULT) == NULL);
+}
+
+TEST("Flag and var names: name order sorts them")
+{
+    struct DebugNameOrder order = {0};
+    u32 named = 0;
+
+    for (u32 i = FLAG_TEMP_1; i < FLAGS_COUNT; i++)
+        named += Debug_GetFlagName(i) != NULL;
+    Debug_BuildNameOrder(&order, FLAG_TEMP_1, FLAGS_COUNT - 1, Debug_GetFlagName);
+    EXPECT_EQ(order.count, named);
+    EXPECT_GT(order.count, 1000);
+    EXPECT_EQ(Debug_StepByName(&order, FLAG_BADGE01_GET, FALSE), FLAG_BADGE02_GET);
+    EXPECT_EQ(Debug_StepByName(&order, FLAG_BADGE02_GET, TRUE), FLAG_BADGE01_GET);
+    EXPECT_EQ(Debug_GetFlagName(order.values[0])[0], CHAR_A);
+    EXPECT_EQ(Debug_GetFlagName(order.values[order.count - 1])[0], CHAR_W);
+    Debug_FreeNameOrder(&order);
+
+    Debug_BuildNameOrder(&order, VARS_START, VARS_END, Debug_GetVarName);
+    EXPECT_GT(order.count, 200);
+    Debug_FreeNameOrder(&order);
 }

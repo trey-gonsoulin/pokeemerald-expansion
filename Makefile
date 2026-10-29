@@ -256,6 +256,15 @@ $(DATA_SRC_SUBDIR)/wild_encounters.h: $(DATA_SRC_SUBDIR)/wild_encounters.json $(
 $(INCLUDE_DIRS)/constants/script_commands.h: $(MISC_TOOL_DIR)/make_scr_cmd_constants.py $(DATA_ASM_SUBDIR)/script_cmd_table.inc
 	python3  $(MISC_TOOL_DIR)/make_scr_cmd_constants.py
 
+# The overworld debug menu's flag and var names (DEBUG_FLAG_VAR_NAMES). vars_frlg.h is left out:
+# vars.h includes it in every game, and its _FRLG names would label Emerald's vars.
+DEBUG_FLAG_NAME_HEADERS := $(INCLUDE_DIRS)/constants/flags.h $(INCLUDE_DIRS)/constants/flags_frlg.h
+DEBUG_VAR_NAME_HEADERS := $(INCLUDE_DIRS)/constants/vars.h
+AUTO_GEN_TARGETS += $(DATA_SRC_SUBDIR)/debug_flag_var_names.h
+
+$(DATA_SRC_SUBDIR)/debug_flag_var_names.h: $(MISC_TOOL_DIR)/make_debug_flag_var_names.py $(DEBUG_FLAG_NAME_HEADERS) $(DEBUG_VAR_NAME_HEADERS)
+	python3 $(MISC_TOOL_DIR)/make_debug_flag_var_names.py $@ --flags $(DEBUG_FLAG_NAME_HEADERS) --vars $(DEBUG_VAR_NAME_HEADERS)
+
 PERL := perl
 SHA1 := $(shell { command -v sha1sum || command -v shasum; } 2>/dev/null) -c
 
