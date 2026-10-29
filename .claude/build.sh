@@ -37,17 +37,20 @@ echo "exit $status, log $log"
 LC_ALL=C
 export LC_ALL
 # Known warnings, one whole line each, so a new warning in the same file (or an error) still shows.
-# The src/ and include/ ones come from the LTO link and appear only in `release`; besides them, every
-# ROM link gives the RWX one, the tool build json.hpp and the asset conversion libpng. The note:
-# lines that follow a warning are never printed (only error/warning/make *** lines are).
+# The src/ and include/ ones come from the LTO link and appear only in `release`, as do the assembler
+# compound_string ones, whose temp .s names and section hashes change on every build (so that entry is
+# a pattern); besides them, every ROM link gives the RWX one, the tool build json.hpp and the asset
+# conversion libpng. The note: lines that follow a warning are never printed (only error/warning/make
+# *** lines are).
 expected="^\.\./\.\./src/pokedex\.c:4507: warning: writing 1 byte into a region of size 0 \[-Wstringop-overflow=\]\$
 ^\.\./\.\./src/mystery_gift_client\.c:102: warning: '(__builtin_)?memcpy' reading 1024 bytes from a region of size 16 \[-Wstringop-overread\]\$
 ^\.\./\.\./src/intro_frlg\.c:249: warning: type of 'gMultiBootProgram_PokemonColosseum_Start' does not match original declaration \[-Wlto-type-mismatch\]\$
 ^\.\./\.\./include/faraway_island\.h:4: warning: type of 'GetMewMoveDirection' does not match original declaration \[-Wlto-type-mismatch\]\$
+^[^ ]*\.s: Warning: section .\.rodata\.compound_string\.[0-9a-f]+' size \(0x[0-9a-f]+\) is not a multiple of its entry size 0x[0-9a-f]+\$
 ^[^ ]*ld: warning: [^ ]*\.elf has a LOAD segment with RWX permissions\$
 ^\./nlohmann/json\.hpp:[0-9:]* warning: identifier '_json(_pointer)?' preceded by whitespace in a literal operator declaration is deprecated \[-Wdeprecated-literal-operator\]\$
 ^libpng warning: bKGD: invalid index\$"
-problems='error:|Error:|warning:|\*\*\*'
+problems='[Ee]rror:|[Ww]arning:|\*\*\*'
 grep -aE "$problems" "$log" | grep -vE "$expected" |
     awk 'NR <= 40; END { if (NR > 40) printf "... %d more (%d in total), see the log\n", NR - 40, NR }'
 filtered=$(grep -aE "$problems" "$log" | grep -cE "$expected")
