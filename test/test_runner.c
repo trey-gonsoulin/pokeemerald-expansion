@@ -195,6 +195,7 @@ void TestRunner_CheckMemory(void)
 // Test builds give these arrays one extra element (the + TESTING in their
 // declarations). Filling it before each test and checking it after catches
 // a write one element past the end. Reads and writes further out aren't caught.
+#define GUARD_FILL 0xFF
 #define GUARD_ELEMENT(array) { &array[ARRAY_COUNT(array) - 1], sizeof(array[0]), #array }
 
 static const struct GuardElement
@@ -213,7 +214,7 @@ static void FillGuardElements(void)
 {
     u32 i;
     for (i = 0; i < ARRAY_COUNT(sGuardElements); i++)
-        memset(sGuardElements[i].address, 0xFF, sGuardElements[i].size);
+        memset(sGuardElements[i].address, GUARD_FILL, sGuardElements[i].size);
 }
 
 static void CheckGuardElements(void)
@@ -230,9 +231,9 @@ static void CheckGuardElements(void)
         const u8 *guard = sGuardElements[i].address;
         for (j = 0; j < sGuardElements[i].size; j++)
         {
-            if (guard[j] != 0xFF)
+            if (guard[j] != GUARD_FILL)
             {
-                Test_MgbaPrintf("%s:%d: out-of-bounds write: %s guard element byte %d is %d, not 255", gTestRunnerState.test->filename, SourceLine(0), sGuardElements[i].name, j, guard[j]);
+                Test_MgbaPrintf("%s:%d: out-of-bounds write: %s guard element byte %d is %d, not %d", gTestRunnerState.test->filename, SourceLine(0), sGuardElements[i].name, j, guard[j], GUARD_FILL);
                 gTestRunnerState.result = TEST_RESULT_FAIL;
                 break;
             }
