@@ -85,7 +85,7 @@ The exp math follows `Cmd_getexp` and is checked against `test/battle/exp.c`.
     - Phoebe's Dusclops 48, Banette 49 and Sableye;
     - both of Glacia's Glalie;
     - Sidney's Mightyena and Cacturne;
-    - Norman's Vigoroth;
+    - Norman's Vigoroth and Slaking;
     - the Magma and Aqua Mightyena and Golbat lines.
   - Player Steel types lose their safe switch against Phoebe and Sidney.
   - Wattson's and Wally's Magneton and Winona's Skarmory now take neutral damage from Ghost and Dark.

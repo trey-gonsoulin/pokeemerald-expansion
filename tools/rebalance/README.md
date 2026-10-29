@@ -81,8 +81,11 @@ in `unstaged`, and each Trick House puzzle sits after its badge gate.
 - **TMs by stage**: the first story stage where each TM sits on a map
   (item ball, hidden item, mart list, script, or reward: a Trick House
   puzzle's prize, which the entrance and end rooms hand out, filed under
-  that puzzle's map). A script source can be gated later than its map's
-  stage (Wattson's Thunderbolt needs New Mauville).
+  that puzzle's map). Other script gates aren't modelled, so a script
+  source can open later than its map's stage: Wattson's Thunderbolt gift
+  needs New Mauville (the Game Corner sells it by Wattson anyway). Hidden
+  Power's type is shown as "varies". Fixed-damage moves don't count toward
+  the boss matchups' best multipliers or the split fit's STAB moves.
 - **Wild Pokemon by stage**: species added by the restock, the strongest by
   base stat total, and the first Fairy types, over every table of the stage's
   maps (land, water, fishing, Rock Smash). When Surf and each rod become

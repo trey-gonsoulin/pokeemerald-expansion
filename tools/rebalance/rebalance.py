@@ -103,6 +103,11 @@ def load_stages(path, trainers, repo):
     if missing:
         raise SystemExit(f'{path}: unknown boss trainers {missing}')
     excluded = cfg.get('exclude', ())
+    overrides = [t for st in stages for t in st.get('trainers', ())]
+    bad = sorted(t for t in overrides if t not in trainers or t in bosses
+                 or any(fnmatch.fnmatchcase(t, g) for g in excluded))
+    if bad or len(overrides) != len(set(overrides)):
+        raise SystemExit(f'{path}: bad stage trainer overrides {bad or overrides}')
     for tid, folder in G.map_trainers(repo).items():
         if tid in bosses or tid not in trainers or any(fnmatch.fnmatchcase(tid, g) for g in excluded):
             continue
@@ -142,11 +147,13 @@ def census(trainers):
 
 def attacks(gd, moves, ivs=None):
     """The damaging moves, as Move data resolved for these IVs (Hidden Power)."""
-    return [gd.move(m, ivs) for m in attack_ids(gd, moves, ivs)]
+    return [mv for _, mv in attack_pairs(gd, moves, ivs)]
 
 
-def attack_ids(gd, moves, ivs=None):
-    return [m for m in moves if m in gd.moves and gd.move(m, ivs).attacking]
+def attack_pairs(gd, moves, ivs=None):
+    """[(move id, resolved Move)] of the damaging moves."""
+    resolved = ((m, gd.move(m, ivs)) for m in moves if m in gd.moves)
+    return [(m, mv) for m, mv in resolved if mv.attacking]
 
 
 def has_stab(gd, species, moves, ivs=None):
@@ -164,15 +171,16 @@ def default_flags(gd, species, level, van_moves, mod_moves, ivs=None):
     """Flags for one trainer Pokemon on default moves (see the README)."""
     v, m = gd['vanilla'], gd['modern']
     flags = []
-    if not attacks(m, mod_moves, ivs):
+    mod_attacks, van_attacks = attack_pairs(m, mod_moves, ivs), attacks(v, van_moves, ivs)
+    if not mod_attacks:
         flags.append('no_attack')
-        if attacks(v, van_moves, ivs):
+        if van_attacks:
             flags.append('lost_all_attacks')
-    elif len(attacks(m, mod_moves, ivs)) == 1 and len(attacks(v, van_moves, ivs)) >= 2:
+    elif len(mod_attacks) == 1 and len(van_attacks) >= 2:
         flags.append('one_attack')
     if has_stab(v, species, van_moves, ivs) and not has_stab(m, species, mod_moves, ivs):
         flags.append('lost_stab')
-    strong = [mv for mv in attack_ids(m, mod_moves, ivs) if m.move(mv, ivs).power >= ABOVE_BAND_POWER]
+    strong = [mid for mid, mv in mod_attacks if mv.power >= ABOVE_BAND_POWER]
     above = [mv for mv in strong if (v.learn_level(species, mv) or 0) >= level + ABOVE_BAND_LEVELS]
     new = [mv for mv in strong if v.learn_level(species, mv) is None]
     if above:
@@ -265,7 +273,7 @@ def handwritten_changes(trainers, gd, boss_ids):
                        'power': [a.power, b.power], 'accuracy': [a.accuracy, b.accuracy]}
                 # Fixed-damage moves (Night Shade, Sonic Boom) use no attacking stat.
                 if (a.category != b.category and 'DAMAGE_CATEGORY_STATUS' not in (a.category, b.category)
-                        and not b.fixed_damage):
+                        and not (a.fixed_damage or b.fixed_damage)):
                     sa, sb = attack_stat(v, mon.species, a.category), attack_stat(m, mon.species, b.category)
                     row['stat'] = [sa, sb]
                     row['stat_shift'] = ('weaker' if sb < sa * (1 - STAT_SHIFT)
@@ -313,7 +321,9 @@ def split_fit(gd, species_list):
         if sp not in m.species:
             continue
         cats = {t: short(v.type_categories.get(t, '')).replace('Category ', '').lower() for t in v.species[sp].types}
+        # As in has_stab: no fixed-damage moves; Hidden Power's type depends on the IVs.
         stab = [mv for _, mv in m.learnset(sp) if mv in m.moves and m.moves[mv].attacking
+                and not m.moves[mv].fixed_damage and m.moves[mv].effect != 'EFFECT_HIDDEN_POWER'
                 and m.moves[mv].type in m.species[sp].types]
         stab = list(dict.fromkeys(stab))
         phys = sum(1 for mv in stab if m.moves[mv].category == 'DAMAGE_CATEGORY_PHYSICAL')
@@ -333,8 +343,10 @@ def mon_moves(gd, mon):
 
 
 def best_vs(gd, moves, def_type, ivs=None):
-    return max((G.effectiveness(gd.chart, mv.type, (def_type,)) for mv in attacks(gd, moves, ivs)),
-               default=None)
+    """The best type multiplier of the moves against one type; fixed-damage
+    moves ignore the multiplier, so they don't count."""
+    return max((G.effectiveness(gd.chart, mv.type, (def_type,)) for mv in attacks(gd, moves, ivs)
+                if not mv.fixed_damage), default=None)
 
 
 def boss_matchups(trainers, gd, boss_ids):
@@ -461,8 +473,10 @@ def stage_slots(wild, stages, folders):
             if not folder:
                 continue
             for field, table in enc.items():
+                if not (isinstance(table, dict) and 'mons' in table):
+                    continue
                 i = G.stage_of(folder, stages, land=field == 'land_mons')
-                if i is not None and isinstance(table, dict) and 'mons' in table:
+                if i is not None:
                     rate = rates.get(field, ())
                     for k, slot in enumerate(table['mons']):
                         out[i].append((field, slot, rate[k] if k < len(rate) else 0))
@@ -579,7 +593,8 @@ def tm_availability(repo, stages, gd):
             if key not in seen or seen[key]['stage_index'] > i:
                 mv = m.moves[move]
                 seen[key] = {'tm': item, 'move': move, 'stage_index': i, 'stage': stages[i]['name'],
-                             'map': folder, 'source': source, 'type': mv.type, 'power': mv.power,
+                             'map': folder, 'source': source, 'power': mv.power,
+                             'type': '' if mv.effect == 'EFFECT_HIDDEN_POWER' else mv.type,
                              'category': mv.category}
     return sorted(seen.values(), key=lambda r: (r['stage_index'], -r['power'], r['tm']))
 
@@ -746,10 +761,11 @@ def write_report(path, res):
         out += [f'### {short(bid)}', ''] + (lines or ['- no change']) + ['']
 
     out += ['## TMs by story stage', '',
-            'First stage where each TM is on a stage map (ball, hidden item, mart list or script). '
+            'First stage where each TM is on a stage map (ball, hidden item, mart list, script, or reward: a Trick House '
+            'puzzle prize, filed under that puzzle). Hidden Power\'s type comes from the IVs. '
             'Reusable TMs mean one copy covers the whole party.', '',
             table(['stage', 'TM', 'type', 'power', 'category', 'map', 'source'],
-                  [[r['stage'], short(r['move']), short(r['type']), {0: '-', 1: 'varies'}.get(r['power'], r['power']),
+                  [[r['stage'], short(r['move']), short(r['type']) or 'varies', {0: '-', 1: 'varies'}.get(r['power'], r['power']),
                     short(r['category']).replace('Category ', ''), r['map'], r['source']] for r in res['tms']]), '']
 
     out += ['## Wild Pokemon by story stage', '',

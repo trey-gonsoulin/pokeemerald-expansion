@@ -343,9 +343,9 @@ Better stat: Attack or Sp. Atk when one beats the other by 15%. Gen 3 STAB: the 
 | Sceptile | 85 / 105 | special | Grass special | Grass | 2 / 4 |
 | Blaziken | 120 / 110 | mixed | Fire special, Fighting physical | Fire/Fighting | 6 / 2 |
 | Swampert | 110 / 85 | physical | Water special, Ground physical | Water/Ground | 1 / 6 |
-| Sableye | 75 / 65 | physical | Dark special, Ghost physical | Dark/Ghost | 5 / 2 |
-| Dusclops | 70 / 60 | physical | Ghost physical | Ghost | 3 / 3 |
-| Banette | 115 / 83 | physical | Ghost physical | Ghost | 2 / 3 |
+| Sableye | 75 / 65 | physical | Dark special, Ghost physical | Dark/Ghost | 5 / 1 |
+| Dusclops | 70 / 60 | physical | Ghost physical | Ghost | 3 / 2 |
+| Banette | 115 / 83 | physical | Ghost physical | Ghost | 2 / 2 |
 | Sharpedo | 120 / 95 | physical | Water special, Dark special | Water/Dark | 5 / 0 |
 | Gyarados | 125 / 60 | physical | Water special, Flying physical | Water/Flying | 2 / 4 |
 | Mightyena | 90 / 60 | physical | Dark special | Dark | 5 / 1 |
@@ -353,24 +353,24 @@ Better stat: Attack or Sp. Atk when one beats the other by 15%. Gen 3 STAB: the 
 | Absol | 130 / 75 | physical | Dark special | Dark | 3 / 0 |
 | Cacturne | 115 / 115 | mixed | Grass special, Dark special | Grass/Dark | 4 / 2 |
 | Shiftry | 100 / 90 | mixed | Grass special, Dark special | Grass/Dark | 5 / 2 |
-| Glalie | 80 / 80 | mixed | Ice special | Ice | 2 / 6 |
-| Walrein | 80 / 95 | special | Ice special, Water special | Ice/Water | 1 / 7 |
+| Glalie | 80 / 80 | mixed | Ice special | Ice | 2 / 5 |
+| Walrein | 80 / 95 | special | Ice special, Water special | Ice/Water | 1 / 6 |
 | Manectric | 75 / 105 | special | Electric special | Electric | 2 / 3 |
-| Camerupt | 100 / 105 | mixed | Fire special, Ground physical | Fire/Ground | 3 / 5 |
+| Camerupt | 100 / 105 | mixed | Fire special, Ground physical | Fire/Ground | 2 / 5 |
 | Torkoal | 85 / 85 | mixed | Fire special | Fire | 1 / 6 |
 | Kingdra | 95 / 95 | mixed | Water special, Dragon special | Water/Dragon | 1 / 8 |
 | Salamence | 135 / 110 | physical | Dragon special, Flying physical | Dragon/Flying | 4 / 1 |
-| Flygon | 100 / 80 | physical | Ground physical, Dragon special | Ground/Dragon | 8 / 3 |
+| Flygon | 100 / 80 | physical | Ground physical, Dragon special | Ground/Dragon | 7 / 3 |
 | Altaria | 70 / 70 | mixed | Dragon special, Flying physical | Dragon/Flying | 3 / 2 |
 | Gardevoir | 65 / 125 | special | Psychic special | Psychic/Fairy | 0 / 9 |
 | Azumarill | 50 / 60 | special | Water special | Water/Fairy | 2 / 3 |
 | Mawile | 85 / 55 | physical | Steel physical | Steel/Fairy | 2 / 1 |
-| Aggron | 110 / 60 | physical | Steel physical, Rock physical | Steel/Rock | 7 / 0 |
+| Aggron | 110 / 60 | physical | Steel physical, Rock physical | Steel/Rock | 6 / 0 |
 | Metagross | 135 / 95 | physical | Steel physical, Psychic special | Steel/Psychic | 4 / 3 |
 | Skarmory | 80 / 40 | physical | Steel physical, Flying physical | Steel/Flying | 6 / 0 |
-| Breloom | 130 / 60 | physical | Grass special, Fighting physical | Grass/Fighting | 7 / 2 |
-| Hariyama | 120 / 40 | physical | Fighting physical | Fighting | 6 / 0 |
-| Medicham | 60 / 60 | mixed | Fighting physical, Psychic special | Fighting/Psychic | 5 / 2 |
+| Breloom | 130 / 60 | physical | Grass special, Fighting physical | Grass/Fighting | 6 / 2 |
+| Hariyama | 120 / 40 | physical | Fighting physical | Fighting | 5 / 0 |
+| Medicham | 60 / 60 | mixed | Fighting physical, Psychic special | Fighting/Psychic | 4 / 2 |
 | Claydol | 70 / 70 | mixed | Ground physical, Psychic special | Ground/Psychic | 0 / 5 |
 
 ## Boss type matchups
@@ -431,6 +431,7 @@ Per boss Pokemon: retyping, defensive multipliers that changed (attacking type: 
 ### Norman 1
 
 - Vigoroth 27: hits Steel 0.5x->1x
+- Slaking 31: hits Steel 0.5x->1x
 
 ### May Route 119 Mudkip
 
@@ -545,7 +546,7 @@ Per boss Pokemon: retyping, defensive multipliers that changed (attacking type: 
 
 ## TMs by story stage
 
-First stage where each TM is on a stage map (ball, hidden item, mart list or script). Reusable TMs mean one copy covers the whole party.
+First stage where each TM is on a stage map (ball, hidden item, mart list, script, or reward: a Trick House puzzle prize, filed under that puzzle). Hidden Power's type comes from the IVs. Reusable TMs mean one copy covers the whole party.
 
 | stage | TM | type | power | category | map | source |
 |---|---|---|---|---|---|---|
@@ -559,7 +560,7 @@ First stage where each TM is on a stage map (ball, hidden item, mart list or scr
 | Wattson | Psychic | Psychic | 90 | Special | MauvilleCity_GameCorner | script |
 | Wattson | Thunderbolt | Electric | 90 | Special | MauvilleCity | script |
 | Wattson | Secret Power | Normal | 70 | Physical | SlateportCity | mart |
-| Wattson | Hidden Power | Normal | 60 | Special | SlateportCity | mart |
+| Wattson | Hidden Power | varies | 60 | Special | SlateportCity | mart |
 | Wattson | Shock Wave | Electric | 60 | Special | MauvilleCity_Gym | script |
 | Wattson | Thief | Dark | 60 | Physical | SlateportCity_OceanicMuseum_1F | script |
 | Wattson | Double Team | Normal | - | Status | MauvilleCity_GameCorner | script |

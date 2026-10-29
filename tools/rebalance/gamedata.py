@@ -546,7 +546,7 @@ def map_tms(repo):
             with open(si, encoding='utf-8') as f:
                 where = folder
                 for line in f:
-                    label = re.match(r'(\w+)::', line)
+                    label = re.match(r'(\w+)::?', line)
                     if label:
                         # The Trick House end room and entrance hand out each puzzle's prize:
                         # file it under the puzzle, which is staged by the badge it needs.
