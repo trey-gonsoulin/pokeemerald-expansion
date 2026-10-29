@@ -87,4 +87,13 @@ filtered=$(grep -aiE "$problems" "$log" | grep -cE "$expected")
         if (counts != "" && !failed) print "- Tests FAILED:          0"
         printf "%s", counts
     }' "$log"
+# The ROM resets a runner's exit code when it restarts after "Tests resume after CRASH"
+# (test/test_test_runner.c), so a failure that ran earlier on the same runner is counted but
+# make check still exits 0 (#73). Fail on hydra's count lines for the results that should fail:
+# FAILED (the only one with "Add TESTS="), KNOWN_FAILING_PASSING and EXPECTED_FAIL_PASSING.
+if [ "$target" = check ] && [ "$status" -eq 0 ] &&
+    grep -aqE '^- .*(Add TESTS=|KNOWN_FAILING_PASSING|EXPECTED_FAIL_PASSING)' "$log"; then
+    echo "make check exited 0 with failing results, so exiting 1"
+    status=1
+fi
 exit $status

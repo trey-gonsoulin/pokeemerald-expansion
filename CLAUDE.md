@@ -79,7 +79,11 @@ make pokeemerald-test.elf TESTS="Lucky Egg" TOOLCHAIN=/opt/devkitpro/devkitARM  
 
 - Tests live in `test/` (mostly battle mechanics). They use `ASSUMPTIONS` / `GIVEN` / `WHEN` / `SCENE` blocks; see `docs/tutorials/how_to_testing_system.md`.
 - Name related tests with a shared prefix so `TESTS=` can select them.
-- CI: `.github/workflows/emerald-plus.yml` runs the full `make check`, both ROMs and the area_archetypes unittests on pushes to `emerald-plus` and `issue-*` and on PRs into `emerald-plus`. KNOWN_FAILING tests don't fail it. Upstream's `build.yml` doesn't run on fork pushes, but it does run on every PR.
+- CI: `.github/workflows/emerald-plus.yml` runs the full `make check`, both ROMs and the area_archetypes unittests on pushes to `emerald-plus` and `issue-*` and on PRs into `emerald-plus`. KNOWN_FAILING, TO_DO and ASSUMPTIONS_FAILED results don't fail it (upstream fails on skipped assumptions only in rh-hideout's own CI), but a KNOWN_FAILING test that passes does. The job times out after 60 min: the ROM's 60 s TIMEOUT (a Timer2 interrupt) can't catch every hang, and hydra itself has no timeout (#73). Upstream's `build.yml` doesn't run on fork pushes, but it does run on every PR.
+- What a green `make check` doesn't prove (#73):
+  - Headless tests skip every battle animation except Transform and Ally Switch, and record battle messages without drawing them.
+  - The only memory checks are heap corruption, leaked heap blocks and leaked tasks, so a stray write to a static array such as `gBattleMons` passes (#57's write did).
+  - A failing test that runs on the same hydra runner before "Tests resume after CRASH" is counted, but `make check` still exits 0, because the ROM restart resets the runner's exit code. Only tests defined below it in `test/test_test_runner.c` can hit this: that file runs first, and a file's tests run bottom up. build.sh and CI fail on hydra's FAILED, KNOWN_FAILING_PASSING and EXPECTED_FAIL_PASSING count lines instead.
 - **Nothing covers `src/debug.c` or other overworld UI.** Verify those changes by building both ROMs (no new warnings in the changed file) and with a written in-game test plan.
 
 Area archetypes tool (standard library only, run from the repo root):
