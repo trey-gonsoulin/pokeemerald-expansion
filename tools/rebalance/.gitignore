@@ -1,0 +1,3 @@
+# Bulky machine-readable outputs; report.md is the committed snapshot.
+output/summary.json
+output/trainer_mons.csv

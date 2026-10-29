@@ -1,0 +1,60 @@
+/*
+Fixture for tools/rebalance. The real file's header comment has blank lines,
+
+and its paragraphs must not count as Pokemon.
+*/
+
+=== TRAINER_HIKER_A ===
+Name: A
+Class: Hiker
+Pic: Hiker
+Gender: Male
+Music: Hiker
+Double Battle: No
+AI: Check Bad Move
+
+Ralts
+Level: 7
+IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+
+Sableye
+Level: 20
+
+=== TRAINER_RIVAL_A ===
+Name: RIVAL
+Class: Pkmn Trainer 1
+Pic: Hiker
+Gender: Male
+Music: Hiker
+Double Battle: No
+
+Magikarp
+Level: 5
+
+=== TRAINER_SWIMMER_B ===
+Name: B
+Class: Swimmer M
+Pic: Hiker
+Gender: Male
+Music: Hiker
+Double Battle: Yes
+
+Magikarp
+Level: 10
+
+=== TRAINER_LEADER_X ===
+Name: X
+Class: Leader
+Pic: Hiker
+Gender: Female
+Music: Female
+Double Battle: No
+AI: Basic Trainer
+
+Sableye @ Oran Berry
+Level: 20
+- Shadow Ball
+- Feint Attack
+
+Mimi (Mr. Mime) (M)
+Level: 15

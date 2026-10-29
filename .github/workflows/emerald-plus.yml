@@ -76,3 +76,7 @@ jobs:
       # The EndToEnd tests skip without a PokeAPI cache; the rest run offline.
       - name: Unit tests
         run: python3 -m unittest discover -s tools/area_archetypes
+
+      # tools/rebalance imports the area_archetypes parsers, so it runs here too.
+      - name: Rebalance unit tests
+        run: python3 -m unittest discover -s tools/rebalance

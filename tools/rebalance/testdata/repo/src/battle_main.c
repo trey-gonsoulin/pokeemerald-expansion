@@ -1,0 +1,7 @@
+const struct TrainerClass gTrainerClasses[TRAINER_CLASS_COUNT] =
+{
+    [TRAINER_CLASS_PKMN_TRAINER_1] = { _("{PKMN} TRAINER"), 5 },
+    [TRAINER_CLASS_HIKER] = { _("HIKER"), 10 },
+    [TRAINER_CLASS_LEADER] = { _("LEADER"), 25, B_TRAINER_CLASS_POKE_BALLS >= GEN_8 ? BALL_ULTRA : BALL_POKE },
+    [TRAINER_CLASS_SWIMMER_M] = { _("SWIMMER♂") },
+};
