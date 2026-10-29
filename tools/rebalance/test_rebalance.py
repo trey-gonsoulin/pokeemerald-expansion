@@ -8,6 +8,7 @@ import fnmatch
 import io
 import json
 import os
+import re
 import sys
 import tempfile
 import types
@@ -336,6 +337,29 @@ class RealRepo(unittest.TestCase):
                          if not f.endswith('_Frlg') and G.stage_of(f, cfg['stages']) is None
                          and not any(fnmatch.fnmatchcase(f, g) for g in cfg['unstaged']))
         self.assertEqual(missing, [])
+
+    def test_trick_house_puzzles_follow_their_badge_gates(self):
+        """A puzzle that needs badge N sits in the stage after gym leader N's; the game-clear one in none."""
+        with open(RB.DEFAULT_STAGES, encoding='utf-8') as f:
+            cfg = json.load(f)
+        leaders = ['ROXANNE', 'BRAWLY', 'WATTSON', 'FLANNERY', 'NORMAN', 'WINONA', 'TATE_AND_LIZA', 'JUAN']
+        badge_stage = {n: next(i for i, st in enumerate(cfg['stages']) if f'TRAINER_{name}_1' in st['bosses'])
+                       for n, name in enumerate(leaders, 1)}
+        path = os.path.join(G.REPO, 'data', 'maps', 'Route110_TrickHouseEntrance', 'scripts.inc')
+        with open(path, encoding='utf-8') as f:
+            gates = dict(re.findall(r'CheckReadyForPuzzle(\d)::\s*call_if_unset (\w+)', f.read()))
+        self.assertEqual(sorted(gates), [str(n) for n in range(2, 9)])
+        self.assertEqual(G.stage_of('Route110_TrickHousePuzzle1', cfg['stages']),
+                         G.stage_of('Route110', cfg['stages']))
+        for puzzle, flag in gates.items():
+            folder = f'Route110_TrickHousePuzzle{puzzle}'
+            badge = re.fullmatch(r'FLAG_BADGE0(\d)_GET', flag)
+            if badge:
+                self.assertEqual(G.stage_of(folder, cfg['stages']), badge_stage[int(badge.group(1))] + 1, folder)
+            else:
+                self.assertEqual(flag, 'FLAG_SYS_GAME_CLEAR')
+                self.assertIsNone(G.stage_of(folder, cfg['stages']), folder)
+                self.assertTrue(any(fnmatch.fnmatchcase(folder, g) for g in cfg['unstaged']), folder)
 
 
 if __name__ == '__main__':

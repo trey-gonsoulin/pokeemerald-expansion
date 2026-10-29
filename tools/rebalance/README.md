@@ -93,10 +93,15 @@ belongs to the stage of the first map whose script battles it
 battles (`TRAINER_{RIVAL}_ROUTE_103_{STARTER}`, default May with the player
 on Mudkip), and `exclude` drops the other rival variants. The stage split
 is approximate: water routes sit after Norman (Surf), Route 103 east with
-Wattson, Dive and Sky Pillar with Juan, Meteor Falls B1F (Waterfall) with
-the Elite Four, and optional areas (Trick House, Safari Zone, New Mauville,
-Scorched Slab, routes 129-134) in the stage where they open. `unstaged`
-lists the maps that deliberately belong to no stage: post-game areas
-(S.S. Tidal, Steven's cave, Altering and Artisan Caves, the Desert
-Underpass, Marine Cave, Sealed Chamber), the Elite Four rooms, whose
-trainers are bosses, and unused maps.
+Wattson, Dive and Sky Pillar with Juan, Meteor Falls 1F_2R and B1F
+(Waterfall) with the Elite Four, and optional areas (Safari Zone, New
+Mauville, Scorched Slab, routes 129-134) in the stage where they open. A
+stage holds what the player can reach before its bosses, so each Trick
+House puzzle sits in the stage after the badge it needs
+(`Route110_TrickHouseEntrance/scripts.inc`): Puzzle 1 and the
+entrance, corridor and end rooms with Wattson, Puzzle 2 (badge 3) with
+Flannery, and so on up to Puzzle 7 (badge 8) with the Elite Four.
+`unstaged` lists the maps that deliberately belong to no stage: post-game
+areas (S.S. Tidal, Steven's cave, Altering and Artisan Caves, the Desert
+Underpass, Marine Cave, Sealed Chamber, Trick House Puzzle 8), the Elite
+Four rooms, whose trainers are bosses, and unused maps.
