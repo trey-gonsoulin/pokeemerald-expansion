@@ -292,3 +292,23 @@ void Debug_PrintLinesToFit(u32 windowId, u32 fontId, u32 lineHeight, const u8 *c
         AddTextPrinterParameterized(windowId, fitFontId, lines[i], 0, i * lineHeight, 0, NULL);
     }
 }
+
+// Copies src, or for a src too long for dest or too wide for widthPx in fontId,
+// a leading ellipsis and as much of the end of src as fits.
+void Debug_CopyStringEndToFit(u8 *dest, u32 destSize, const u8 *src, u32 fontId, u32 widthPx)
+{
+    u32 length = StringLength(src);
+    u32 skip;
+
+    if (length < destSize && GetStringWidth(fontId, src, 0) <= widthPx)
+    {
+        StringCopy(dest, src);
+        return;
+    }
+    // The ellipsis, src from skip on and the EOS fill at most destSize
+    skip = length + 2 > destSize ? length + 2 - destSize : 1;
+    dest[0] = CHAR_ELLIPSIS;
+    StringCopy(&dest[1], &src[skip]);
+    while (skip < length && GetStringWidth(fontId, dest, 0) > widthPx)
+        StringCopy(&dest[1], &src[++skip]);
+}

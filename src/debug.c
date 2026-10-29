@@ -275,6 +275,7 @@ struct DebugSelection
     DebugFunc onCancel;
     bool32 (*onComplete)(u8 taskId);
     u8 maxSteps;
+    bool8 showMapNames; // the map group and map steps show map.json names, which need the Warp window's width
     const SelectionStep steps[];
 };
 
@@ -466,7 +467,6 @@ static const struct DebugSelection sTrainer1Selection;
 static const struct DebugSelection sTrainer2Selection;
 static const struct DebugSelection sPartnerSelection;
 
-#include "data/map_group_count.h"
 #include "data/debug_map_names.h"
 
 // Text
@@ -1938,8 +1938,8 @@ static void DebugAction_Util_Fly(u8 taskId)
 // Copies the map's name from its map.json, or "?" for a map this game doesn't have
 static u8 *Debug_CopyMapName(u8 *dest, u32 mapGroup, u32 mapNum)
 {
-    // sDebugMapNames lists only this game's maps, which a group's MAP_GROUP_COUNT can exceed
-    if (mapGroup >= MAP_GROUPS_COUNT || mapNum >= sDebugMapNameCounts[mapGroup])
+    // sDebugMapNames lists only this game's maps, which a group in map_groups.json can outnumber
+    if (mapGroup >= MAP_GROUPS_COUNT || sDebugMapNames[mapGroup] == NULL || mapNum >= sDebugMapNameCounts[mapGroup])
         return StringCopy(dest, COMPOUND_STRING("?"));
     return StringCopy(dest, sDebugMapNames[mapGroup][mapNum]);
 }
@@ -1950,9 +1950,10 @@ STATIC_ASSERT(ARRAY_COUNT(sDebugMapNameCounts) == MAP_GROUPS_COUNT, DebugMapName
 
 // Only Warp to map warp… has room for the map.json names. The outbreak location pickers share
 // the map group and map steps but keep the narrow window, so they show the region map section.
-static bool32 Debug_HasRoomForMapNames(u8 taskId)
+static bool32 DebugSelection_ShowsMapNames(u8 taskId)
 {
-    return GetWindowAttribute(gTasks[taskId].tSubWindowId, WINDOW_WIDTH) == DEBUG_MENU_WIDTH_WARP;
+    const struct DebugSelection *selection = (const struct DebugSelection *)GetWordTaskArg(taskId, DEBUG_SELECTION_PTR_ARG);
+    return selection->showMapNames;
 }
 
 static void DebugSelectionStep_UpdateMapGroup(u8 taskId, u8 digits, u32 min, u32 max)
@@ -1961,7 +1962,7 @@ static void DebugSelectionStep_UpdateMapGroup(u8 taskId, u8 digits, u32 min, u32
     Debug_InputToDecimalString(gStringVar2, taskId, digits);
     ConvertIntToDecimalStringN(gStringVar3, max, STR_CONV_MODE_LEADING_ZEROS, digits);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Group: {STR_VAR_2} / {STR_VAR_3}"));
-    StringCopy(gStringVar2, Debug_HasRoomForMapNames(taskId) ? sDebugMapGroupNames[mapGroup] : COMPOUND_STRING(""));
+    StringCopy(gStringVar2, DebugSelection_ShowsMapNames(taskId) ? sDebugMapGroupNames[mapGroup] : COMPOUND_STRING(""));
     StringCopy(gStringVar3, sDebugMapNames[mapGroup] == NULL ? COMPOUND_STRING("Not in this game") : COMPOUND_STRING(""));
     DebugNativeStep_PrintWindowSelectionToFit(taskId);
 }
@@ -1979,7 +1980,7 @@ static void DebugSelectionStep_UpdateMapNum(u8 taskId, u8 digits, u32 min, u32 m
     Debug_InputToDecimalString(gStringVar2, taskId, digits);
     ConvertIntToDecimalStringN(gStringVar3, max, STR_CONV_MODE_LEADING_ZEROS, digits);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Map: {STR_VAR_2} / {STR_VAR_3}"));
-    if (Debug_HasRoomForMapNames(taskId))
+    if (DebugSelection_ShowsMapNames(taskId))
         Debug_CopyMapName(gStringVar2, mapGroup, mapNum);
     else
         StringCopy(gStringVar2, COMPOUND_STRING("MapSec:"));
@@ -1990,7 +1991,8 @@ static void DebugSelectionStep_UpdateMapNum(u8 taskId, u8 digits, u32 min, u32 m
 static u32 DebugSelectionStep_GetLastMapNum(u8 taskId)
 {
     u16 mapGroup = DebugSelection_GetStepData(taskId, gTasks[taskId].tStep - 1);
-    return (MAP_GROUP_COUNT[mapGroup] - 1);
+    // The map group step refuses a group with no maps in this game
+    return sDebugMapNameCounts[mapGroup] - 1;
 }
 
 // The map dialed in the two steps before the Warp step
@@ -2114,8 +2116,9 @@ static void DebugAction_Util_RecentWarp(u8 taskId, const void *params)
 // The recent warps, most recent first: the map name, then the warp unless the map has none
 static u32 Debug_GenerateListRecentWarpsMenu(const struct DebugMenuOption *items)
 {
-    // Room for the longest " (warp)" suffix and the EOS
-    const u32 maxNameLength = ARRAY_COUNT(sDebugMenuListData->itemNames[0]) - 6;
+    // The list's textNarrowWidth (window minus item_X). A label that fits it in FONT_NARROWER,
+    // the narrowest font the list drops to, isn't clipped.
+    const u32 labelWidth = sDebugMenuWindowTemplateMain.width * 8 - 8;
     u32 i;
 
     if (sDebugRecentWarpsCount == 0)
@@ -2128,25 +2131,17 @@ static u32 Debug_GenerateListRecentWarpsMenu(const struct DebugMenuOption *items
     for (i = 0; i < sDebugRecentWarpsCount; i++)
     {
         const struct DebugWarp *warp = &sDebugRecentWarps[i];
-        u32 length = Debug_CopyMapName(gStringVar4, warp->mapGroup, warp->mapNum) - gStringVar4;
-        u8 *end = sDebugMenuListData->itemNames[i];
+        u8 *end = Debug_CopyMapName(gStringVar4, warp->mapGroup, warp->mapNum);
 
-        // An over-long name keeps its end, which tells apart maps such as a house's 1F and 2F
-        if (length > maxNameLength)
-        {
-            *end++ = CHAR_ELLIPSIS;
-            end = StringCopy(end, &gStringVar4[length - (maxNameLength - 1)]);
-        }
-        else
-        {
-            end = StringCopy(end, gStringVar4);
-        }
         if (Overworld_GetMapHeaderByGroupAndId(warp->mapGroup, warp->mapNum)->events->warpCount > 0)
         {
             end = StringCopy(end, COMPOUND_STRING(" ("));
             end = ConvertIntToDecimalStringN(end, warp->warpId, STR_CONV_MODE_LEFT_ALIGN, 2);
             StringCopy(end, COMPOUND_STRING(")"));
         }
+        // An over-long label keeps its end, which tells apart maps such as a house's 1F and 2F
+        Debug_CopyStringEndToFit(sDebugMenuListData->itemNames[i], ARRAY_COUNT(sDebugMenuListData->itemNames[i]),
+            gStringVar4, FONT_NARROWER, labelWidth);
         sDebugMenuListData->listItems[i].id = i;
         sDebugMenuListData->listItems[i].name = sDebugMenuListData->itemNames[i];
     }
@@ -2183,6 +2178,7 @@ static const struct DebugSelection sWarpSelection = {
     .onComplete = DebugSelection_SetWarp_OnComplete,
     .steps = {&sMapGroupSelectionStep, &sMapNumSelectionStep, &sWarpSelectionStep},
     .maxSteps = 3,
+    .showMapNames = TRUE,
 };
 
 void CheckSaveBlock1Size(struct ScriptContext *ctx)
