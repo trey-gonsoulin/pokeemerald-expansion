@@ -43,6 +43,17 @@ TEST("Name order sorts the named values A-Z ignoring case and accents")
     Debug_FreeNameOrder(&sTestOrder);
 }
 
+TEST("Name order sorts an odd number of named values")
+{
+    // 7 names leave a short last run in every merge pass
+    static const u16 sorted[] = {5, 1, 2, 7, 3, 4, 0};
+    const struct DebugNameOrder *order = BuildTestOrder(0, 7);
+    EXPECT_EQ(order->count, ARRAY_COUNT(sorted));
+    for (u32 i = 0; i < ARRAY_COUNT(sorted); i++)
+        EXPECT_EQ(order->values[i], sorted[i]);
+    Debug_FreeNameOrder(&sTestOrder);
+}
+
 TEST("Name order steps A-Z, and wraps at the end")
 {
     static const u8 steps[] = {5, 1, 2, 8, 7, 3, 4, 0, 5};

@@ -220,45 +220,48 @@ static s32 Debug_NameInitial(const u8 *name)
     return (c >= CHAR_A && c <= CHAR_Z) ? (s32)(c - CHAR_A) : -1;
 }
 
-// Merges the sorted runs src[start..mid) and src[mid..end) into dest. names[v - min] is v's name.
-static void Debug_MergeByName(const u16 *src, u16 *dest, u32 start, u32 mid, u32 end, const u8 *const *names, u32 min)
+// Merges the sorted runs src[start..mid) and src[mid..end) into dest. names[v - first] is v's name.
+static void Debug_MergeByName(const u16 *src, u16 *dest, u32 start, u32 mid, u32 end, const u8 *const *names, u32 first)
 {
     u32 i = start, j = mid;
 
     for (u32 k = start; k < end; k++)
     {
-        if (i < mid && (j == end || Debug_CompareNames(names[src[i] - min], src[i], names[src[j] - min], src[j]) <= 0))
+        if (i < mid && (j == end || Debug_CompareNames(names[src[i] - first], src[i], names[src[j] - first], src[j]) <= 0))
             dest[k] = src[i++];
         else
             dest[k] = src[j++];
     }
 }
 
-// Sorts the values in min..max that have a name (getName returns NULL for the ones name order
+// Sorts the values in first..last that have a name (getName returns NULL for the ones name order
 // leaves out, such as disabled species) into order->values. Does nothing when order already
-// holds that range; Debug_FreeNameOrder frees it. On a failed Alloc the order stays empty.
-void Debug_BuildNameOrder(struct DebugNameOrder *order, u32 min, u32 max, DebugNameFunc getName)
+// holds that range; Debug_FreeNameOrder frees it. On a failed Alloc the order stays empty, and
+// the next call tries again.
+void Debug_BuildNameOrder(struct DebugNameOrder *order, u32 first, u32 last, DebugNameFunc getName)
 {
-    u32 size = max - min + 1, count = 0;
-    const u8 **names;
-    u16 *buffer;
+    u32 size = last - first + 1, count = 0;
 
-    if (order->values != NULL && order->getName == getName && order->min == min && order->max == max)
+    if (order->values != NULL && order->getName == getName && order->first == first && order->last == last)
         return;
     Debug_FreeNameOrder(order);
     order->getName = getName;
-    order->min = min;
-    order->max = max;
+    order->first = first;
+    order->last = last;
     order->values = Alloc(size * sizeof(u16));
     // The names, looked up once, and a merge buffer: only while sorting
-    names = Alloc(size * sizeof(*names));
-    buffer = Alloc(size * sizeof(u16));
-    if (order->values != NULL && names != NULL && buffer != NULL)
+    const u8 **names = Alloc(size * sizeof(*names));
+    u16 *buffer = Alloc(size * sizeof(u16));
+    if (order->values == NULL || names == NULL || buffer == NULL)
     {
-        for (u32 i = min; i <= max; i++)
+        Debug_FreeNameOrder(order);
+    }
+    else
+    {
+        for (u32 i = first; i <= last; i++)
         {
-            names[i - min] = getName(i);
-            if (names[i - min] != NULL)
+            names[i - first] = getName(i);
+            if (names[i - first] != NULL)
                 order->values[count++] = i;
         }
         // Bottom-up merge sort, swapping the source and destination after each pass
@@ -266,15 +269,15 @@ void Debug_BuildNameOrder(struct DebugNameOrder *order, u32 min, u32 max, DebugN
         for (u32 width = 1; width < count; width *= 2)
         {
             for (u32 start = 0; start < count; start += 2 * width)
-                Debug_MergeByName(src, dest, start, min(start + width, count), min(start + 2 * width, count), names, min);
+                Debug_MergeByName(src, dest, start, min(start + width, count), min(start + 2 * width, count), names, first);
             u16 *sorted = dest;
             dest = src;
             src = sorted;
         }
         if (src != order->values)
             memcpy(order->values, src, count * sizeof(u16));
+        order->count = count;
     }
-    order->count = count;
     TRY_FREE_AND_SET_NULL(names);
     TRY_FREE_AND_SET_NULL(buffer);
 }
