@@ -72,7 +72,12 @@ closing comment of issue #113.
   (item ball, hidden item, mart list or script). A script source can be gated
   later than its map's stage (Wattson's Thunderbolt needs New Mauville).
 - **Wild Pokemon by stage**: species added by the restock, the strongest by
-  base stat total, and the first Fairy types. Rods and Surf aren't modelled.
+  base stat total, and the first Fairy types, over every table of the stage's
+  maps (land, water, fishing, Rock Smash). When Surf and each rod become
+  usable isn't modelled, so water species show up before the player can
+  reach them. The level curve's wild battles use the land tables only, with
+  each slot's rate spread evenly over its level range.
+- FRLG maps (`*_Frlg` folders) never belong to a stage.
 - **Economy**: prices, sell values and healing of a basket of items, and the
   prize money of a full clear of each stage.
 
