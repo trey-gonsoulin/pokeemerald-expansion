@@ -126,6 +126,8 @@ static u8 setup##_callback(struct ObjectEvent *objectEvent, struct Sprite *sprit
 static EWRAM_DATA u8 sCurrentReflectionType = 0;
 static EWRAM_DATA u16 sCurrentSpecialObjectPaletteTag = 0;
 static EWRAM_DATA struct LockedAnimObjectEvents *sLockedAnimObjectEvents = {0};
+// The follower Pokémon gave its slot up to a map object, or found none free (#114)
+static EWRAM_DATA bool8 sFollowerAwaitingSlot = FALSE;
 
 static void MoveCoordsInDirection(u32, s16 *, s16 *, s16, s16);
 static bool8 ObjectEventExecSingleMovementAction(struct ObjectEvent *, struct Sprite *);
@@ -176,6 +178,8 @@ static bool8 MovementType_Buried_Callback(struct ObjectEvent *, struct Sprite *)
 static void CreateReflectionEffectSprites(void);
 static u8 GetObjectEventIdByLocalIdAndMapInternal(u8, u8, u8);
 static u32 GetAvailableObjectEventId(u16, u8, u8);
+static u32 TryEvictFollowerToFreeObject(void);
+static void TryRespawnEvictedFollower(s16, s16);
 static void SetObjectEventDynamicGraphicsId(struct ObjectEvent *);
 static void RemoveObjectEventInternal(struct ObjectEvent *);
 static u16 GetObjectEventFlagIdByObjectEventId(u8);
@@ -1393,6 +1397,7 @@ void ResetObjectEvents(void)
     ClearAllObjectEvents();
     ClearPlayerAvatarInfo();
     CreateReflectionEffectSprites();
+    sFollowerAwaitingSlot = FALSE;
 }
 
 static void CreateReflectionEffectSprites(void)
@@ -1668,8 +1673,57 @@ static u32 GetAvailableObjectEventId(u16 localId, u8 mapNum, u8 mapGroup)
         }
     }
     if (availableId == OBJECT_EVENTS_COUNT && !IS_LOCALID_GENERATED_OWE(localId))
-         return TryAndDespawnOldestGeneratedOWE_ToFreeObject();
+    {
+        availableId = TryAndDespawnOldestGeneratedOWE_ToFreeObject();
+        if (availableId == OBJECT_EVENTS_COUNT)
+            availableId = TryEvictFollowerToFreeObject();
+    }
     return availableId;
+}
+
+static bool32 IsScriptControllingObjectEvents(void)
+{
+    return ScriptContext_IsEnabled() || ArePlayerFieldControlsLocked();
+}
+
+// The follower Pokémon gives its slot up to a map object that finds all of them taken,
+// and comes back once one frees up (TryRespawnEvictedFollower). Not while a script runs,
+// which may still move the follower.
+static u32 TryEvictFollowerToFreeObject(void)
+{
+    struct ObjectEvent *follower = GetFollowerObject();
+
+    if (follower == NULL || IsScriptControllingObjectEvents())
+        return OBJECT_EVENTS_COUNT;
+
+    RemoveObjectEvent(follower);
+    sFollowerAwaitingSlot = TRUE;
+    return follower - gObjectEvents;
+}
+
+static void TryRespawnEvictedFollower(s16 cameraX, s16 cameraY)
+{
+    u32 i;
+
+    if (!sFollowerAwaitingSlot || IsScriptControllingObjectEvents())
+        return;
+    if (GetFollowerObject() != NULL)
+    {
+        sFollowerAwaitingSlot = FALSE;
+        return;
+    }
+
+    // Objects that scrolled into view before the ones leaving it freed their slots go first
+    TrySpawnObjectEvents(cameraX, cameraY);
+    for (i = 0; i < OBJECT_EVENTS_COUNT; i++)
+    {
+        if (!gObjectEvents[i].active)
+        {
+            sFollowerAwaitingSlot = FALSE;
+            UpdateFollowingPokemon();
+            return;
+        }
+    }
 }
 
 void RemoveObjectEvent(struct ObjectEvent *objectEvent)
@@ -2383,7 +2437,10 @@ void UpdateFollowingPokemon(void)
             //.trainerRange_berryTreeId = (form & 0x1F) | (shiny << 5),   // ???? what?
         };
         if ((objId = SpawnSpecialObjectEvent(&template)) >= OBJECT_EVENTS_COUNT)
+        {
+            sFollowerAwaitingSlot = TRUE;
             return;
+        }
         objEvent = &gObjectEvents[objId];
         objEvent->invisible = TRUE;
     }
@@ -3488,6 +3545,7 @@ void UpdateObjectEventsForCameraUpdate(s16 x, s16 y)
     UpdateObjectEventCoordsForCameraUpdate();
     TrySpawnObjectEvents(x, y);
     RemoveObjectEventsOutsideView();
+    TryRespawnEvictedFollower(x, y);
 }
 
 // The "CameraObject" functions below are responsible for an invisible sprite
