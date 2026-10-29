@@ -342,9 +342,9 @@ u32 Debug_NextNameInitial(const struct DebugNameOrder *order, u32 value)
 
 #include "data/debug_flag_var_names.h"
 
-// A flag's constant name without FLAG_, or NULL for a flag with no name (a trainer's) or with
-// DEBUG_FLAG_VAR_NAMES off. Where names share a flag, tools/misc/make_debug_flag_var_names.py
-// picks the one shown.
+// A flag's constant name without FLAG_ (or a config's, such as I_EXP_SHARE_FLAG, for an unused
+// flag), or NULL for a flag with no name (a trainer's) or with DEBUG_FLAG_VAR_NAMES off. Where
+// names share a flag, tools/misc/make_debug_flag_var_names.py picks the one shown.
 const u8 *Debug_GetFlagName(u32 flag)
 {
     if (!DEBUG_FLAG_VAR_NAMES || flag == 0 || flag >= FLAGS_COUNT)
