@@ -139,6 +139,9 @@ struct PokemonStats
     u8 friendship;
 };
 
+// The evolution page's icons: up to 2 pre-evolutions, the mon's own and up to 8 evolutions.
+#define EVO_SCREEN_ICON_COUNT 11
+
 struct EvoScreenData
 {
     u32 arrowSpriteDist[10];
@@ -150,18 +153,25 @@ struct EvoScreenData
     u8 numSeen;
     u8 menuPos;
     u8 arrowSpriteId;
+    u8 numIcons;
+    u8 iconSpriteIds[EVO_SCREEN_ICON_COUNT];
 };
 
-// The forms page draws two rows of 7 icons, the first starting with the current form's.
-#define FORMS_SCREEN_ICON_COUNT 13
+// The forms page shows two rows of 7 cells. The first cell is the current form's,
+// and the rows scroll when there are more forms.
+#define FORMS_SCREEN_COLUMNS    7
+#define FORMS_SCREEN_ICON_COUNT (2 * FORMS_SCREEN_COLUMNS)
 
 struct FromScreenData
 {
     u16 formIds[30];
+    enum Species species;
     bool8 inSubmenu;
     u8 numForms;
     u8 menuPos;
     u8 arrowSpriteId;
+    u8 topRow;
+    u8 numIcons;
     u8 iconSpriteIds[FORMS_SCREEN_ICON_COUNT];
 };
 
