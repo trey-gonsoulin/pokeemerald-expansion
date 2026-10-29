@@ -1,7 +1,8 @@
 {
-  "comment": "Emerald's story in order, for the level-curve and TM models. Each stage's map globs (data/maps folder names) hold the trainers, TMs and wild Pokemon reachable in it; a map belongs to the first stage that matches it. The bosses are fought last, in order. A stage's optional land_maps globs place a map's land (grass) table there ahead of its maps globs (Route 103's grass is at its west end, by the first rival fight), and its optional trainers ids override their map's stage (Route 103's two swimmers need Surf). {RIVAL} and {STARTER} are filled in from rival and starter.",
+  "comment": "Emerald's story in order, for the level-curve and TM models. Each stage's map globs (data/maps folder names) hold the trainers, TMs and wild Pokemon reachable in it; a map belongs to the first stage that matches it. The bosses are fought last, in order. A stage's optional land_maps globs place a map's land (grass) table there ahead of its maps globs (Route 103's grass is at its west end, by the first rival fight), and its optional trainers ids override their map's stage (Route 103's two swimmers need Surf). {RIVAL} and {STARTER} are filled in from rival and starter. The model plays that one rival team per fight; the boss raises also go to the other teams that rival_variants fills in (same fight, same levels).",
   "rival": "MAY",
   "starter": "MUDKIP",
+  "rival_variants": {"RIVAL": ["MAY", "BRENDAN"], "STARTER": ["TREECKO", "TORCHIC", "MUDKIP"]},
   "exclude": ["TRAINER_MAY_*", "TRAINER_BRENDAN_*"],
   "unstaged_comment": "Maps with trainers, TMs or wild Pokemon that deliberately belong to no stage: post-game areas, the Elite Four rooms (their trainers are bosses) and unused maps. A unittest checks that every other such map is in a stage.",
   "unstaged": ["SSTidal*", "MeteorFalls_StevensCave", "AlteringCave", "ArtisanCave_*", "DesertUnderpass",

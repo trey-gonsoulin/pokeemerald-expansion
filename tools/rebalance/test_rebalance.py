@@ -4,6 +4,7 @@
 """
 
 import contextlib
+import copy
 import fnmatch
 import io
 import json
@@ -374,6 +375,29 @@ class Analysis(unittest.TestCase):
         share = self.res['share_curve']
         self.assertEqual(sorted(share), sorted(RB.TRAINER_EXP))
         self.assertEqual(len(share['1.5x off']['now']), 2 * len(RB.AFFECTION))
+
+    def test_rival_variants_share_the_raise(self):
+        trainers = G.parse_trainers(os.path.join(FIXTURE, 'src', 'data', 'trainers.party'))
+        with open(FIXTURE_STAGES, encoding='utf-8') as f:
+            cfg = json.load(f)
+        cfg['rival_variants'] = {'STARTER': ['A', 'B']}
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, 'stages.json')
+            with open(path, 'w', encoding='utf-8') as f:
+                json.dump(cfg, f)
+            with self.assertRaises(SystemExit):  # TRAINER_RIVAL_B isn't in trainers.party
+                RB.load_stages(path, trainers, FIXTURE)
+            # A variant team two levels lower is raised to the staged team's raised ace.
+            variant = copy.deepcopy(trainers['TRAINER_RIVAL_A'])
+            for mon in variant.mons:
+                mon.level -= 2
+            trainers['TRAINER_RIVAL_B'] = variant
+            stages = RB.load_stages(path, trainers, FIXTURE)
+        self.assertEqual(stages[0]['variants'], {'TRAINER_RIVAL_A': ['TRAINER_RIVAL_B']})
+        self.assertEqual(stages[1]['variants'], {})
+        self.assertNotIn('TRAINER_RIVAL_B', stages[0]['regular'])
+        self.assertEqual(RB.variant_raises(stages, trainers, {'TRAINER_RIVAL_A': 3}), {'TRAINER_RIVAL_B': 5})
+        self.assertEqual(RB.variant_raises(stages, trainers, {}), {'TRAINER_RIVAL_B': 2})
 
     def test_tms_and_wilds(self):
         tms = {r['tm']: r for r in self.res['tms']}

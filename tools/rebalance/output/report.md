@@ -222,6 +222,16 @@ Target: on a full clear with modelled friendship, each story boss's ace is 1 lev
 | Elite Four | Drake | 63 | +0 -> 63 | +7 -> 70 |
 | Elite Four | Wallace | 63 | +0 -> 63 | +8 -> 71 |
 
+The model plays one rival team per fight. The same fight's other rival and starter teams get the raise that lifts their ace to the staged team's raised ace:
+
+| staged boss | other teams | ace now | 1.5x off: raise -> ace | 1.5x on: raise -> ace |
+|---|---|---|---|---|
+| May Route 103 Mudkip | 5 | 5 | +1 -> 6 | +1 -> 6 |
+| May Rustboro Mudkip | 5 | 15 | +2 -> 17 | +3 -> 18 |
+| May Route 110 Mudkip | 5 | 20 | +6 -> 26 | +8 -> 28 |
+| May Route 119 Mudkip | 5 | 31 | +11 -> 42 | +16 -> 47 |
+| May Lilycove Mudkip | 5 | 34 | +16 -> 50 | +21 -> 55 |
+
 ### After the 1.5x off raises
 
 Full clear: 28 of 30 bosses have the bench (friendship) within 1 of their ace; the others' aces are already higher and aren't lowered. Half clear: 13 of 13 gym leaders, Elite Four and Champion have the bench (friendship) within 8.
@@ -315,11 +325,66 @@ Full clear: 29 of 30 bosses have the bench (friendship) within 1 of their ace; t
 
 ### Default movesets of the raised boss Pokemon (1.5x off)
 
-0 raised boss Pokemon are on default moves; 0 get a different moveset or flags at the raised level (the flags as in "Default movesets" below).
+65 raised boss Pokemon are on default moves; 52 get a different moveset or flags at the raised level (the flags as in "Default movesets" below).
+
+| boss | species | lv | modern default now | raised | flags now -> raised |
+|---|---|---|---|---|---|
+| Brendan Route 103 Mudkip | Treecko | 5 -> 6 | Pound, Leer, Leafage | Pound, Leer, Leafage, Quick Attack | - -> - |
+| Brendan Route 103 Torchic | Mudkip | 5 -> 6 | Tackle, Growl, Water Gun | Tackle, Growl, Water Gun, Rock Smash | - -> - |
+| Brendan Route 103 Treecko | Torchic | 5 -> 6 | Scratch, Growl, Ember | Scratch, Growl, Ember, Quick Attack | - -> - |
+| May Route 103 Torchic | Mudkip | 5 -> 6 | Tackle, Growl, Water Gun | Tackle, Growl, Water Gun, Rock Smash | - -> - |
+| May Route 103 Treecko | Torchic | 5 -> 6 | Scratch, Growl, Ember | Scratch, Growl, Ember, Quick Attack | - -> - |
+| Brendan Rustboro Mudkip | Wingull | 13 -> 15 | Growl, Water Gun, Quick Attack, Supersonic | Water Gun, Quick Attack, Supersonic, Wing Attack | - -> - |
+| Brendan Route 110 Mudkip | Slugma | 18 -> 24 | Yawn, Ember, Rock Throw, Harden | Rock Throw, Harden, Clear Smog, Ancient Power | - -> lost_stab |
+| Brendan Route 110 Mudkip | Wingull | 18 -> 24 | Water Gun, Quick Attack, Supersonic, Wing Attack | Quick Attack, Supersonic, Wing Attack, Water Pulse | - -> - |
+| Brendan Route 110 Mudkip | Grovyle | 20 -> 26 | Mega Drain, Detect, Quick Guard, Assurance | Detect, Quick Guard, Assurance, Giga Drain | - -> new_strong |
+| Brendan Route 110 Torchic | Lombre | 18 -> 24 | Flail, Mist, Mega Drain, Fury Swipes | Mist, Mega Drain, Fury Swipes, Bubble Beam | - -> - |
+| Brendan Route 110 Torchic | Slugma | 18 -> 24 | Yawn, Ember, Rock Throw, Harden | Rock Throw, Harden, Clear Smog, Ancient Power | - -> lost_stab |
+| Brendan Route 110 Torchic | Marshtomp | 20 -> 26 | Rock Throw, Protect, Supersonic, Water Pulse | Protect, Supersonic, Water Pulse, Rock Slide | - -> new_strong |
+| Brendan Route 110 Treecko | Wingull | 18 -> 24 | Water Gun, Quick Attack, Supersonic, Wing Attack | Quick Attack, Supersonic, Wing Attack, Water Pulse | - -> - |
+| Brendan Route 110 Treecko | Lombre | 18 -> 24 | Flail, Mist, Mega Drain, Fury Swipes | Mist, Mega Drain, Fury Swipes, Bubble Beam | - -> - |
+| Brendan Route 110 Treecko | Combusken | 20 -> 26 | Flame Charge, Detect, Sand Attack, Aerial Ace | Detect, Sand Attack, Aerial Ace, Slash | - -> lost_stab above_band |
+| May Route 110 Torchic | Lombre | 18 -> 24 | Flail, Mist, Mega Drain, Fury Swipes | Mist, Mega Drain, Fury Swipes, Bubble Beam | - -> - |
+| May Route 110 Torchic | Slugma | 18 -> 24 | Yawn, Ember, Rock Throw, Harden | Rock Throw, Harden, Clear Smog, Ancient Power | - -> lost_stab |
+| May Route 110 Torchic | Marshtomp | 20 -> 26 | Rock Throw, Protect, Supersonic, Water Pulse | Protect, Supersonic, Water Pulse, Rock Slide | - -> new_strong |
+| May Route 110 Treecko | Wingull | 18 -> 24 | Water Gun, Quick Attack, Supersonic, Wing Attack | Quick Attack, Supersonic, Wing Attack, Water Pulse | - -> - |
+| May Route 110 Treecko | Lombre | 18 -> 24 | Flail, Mist, Mega Drain, Fury Swipes | Mist, Mega Drain, Fury Swipes, Bubble Beam | - -> - |
+| May Route 110 Treecko | Combusken | 20 -> 26 | Flame Charge, Detect, Sand Attack, Aerial Ace | Detect, Sand Attack, Aerial Ace, Slash | - -> lost_stab above_band |
+| Brendan Route 119 Mudkip | Slugma | 29 -> 40 | Clear Smog, Ancient Power, Incinerate, Rock Slide | Incinerate, Rock Slide, Lava Plume, Amnesia | above_band -> new_strong |
+| Brendan Route 119 Mudkip | Pelipper | 29 -> 40 | Water Pulse, Stockpile, Spit Up, Swallow | Stockpile, Spit Up, Swallow, Fling | - -> - |
+| Brendan Route 119 Mudkip | Grovyle | 31 -> 42 | Quick Guard, Assurance, Giga Drain, Slam | Giga Drain, Slam, Double Team, Leaf Blade | above_band new_strong -> new_strong |
+| Brendan Route 119 Torchic | Lombre | 29 -> 40 | Mist, Mega Drain, Fury Swipes, Bubble Beam | Fury Swipes, Bubble Beam, Leech Seed, Giga Drain | - -> new_strong |
+| Brendan Route 119 Torchic | Slugma | 29 -> 40 | Clear Smog, Ancient Power, Incinerate, Rock Slide | Incinerate, Rock Slide, Lava Plume, Amnesia | above_band -> new_strong |
+| Brendan Route 119 Torchic | Marshtomp | 31 -> 42 | Supersonic, Water Pulse, Rock Slide, Take Down | Rock Slide, Take Down, Amnesia, Muddy Water | new_strong -> new_strong |
+| Brendan Route 119 Treecko | Pelipper | 29 -> 40 | Water Pulse, Stockpile, Spit Up, Swallow | Stockpile, Spit Up, Swallow, Fling | - -> - |
+| Brendan Route 119 Treecko | Lombre | 29 -> 40 | Mist, Mega Drain, Fury Swipes, Bubble Beam | Fury Swipes, Bubble Beam, Leech Seed, Giga Drain | - -> new_strong |
+| Brendan Route 119 Treecko | Combusken | 31 -> 42 | Sand Attack, Aerial Ace, Slash, Bounce | Slash, Bounce, Focus Energy, Blaze Kick | lost_stab new_strong -> new_strong |
+| May Route 119 Torchic | Lombre | 29 -> 40 | Mist, Mega Drain, Fury Swipes, Bubble Beam | Fury Swipes, Bubble Beam, Leech Seed, Giga Drain | - -> new_strong |
+| May Route 119 Torchic | Slugma | 29 -> 40 | Clear Smog, Ancient Power, Incinerate, Rock Slide | Incinerate, Rock Slide, Lava Plume, Amnesia | above_band -> new_strong |
+| May Route 119 Torchic | Marshtomp | 31 -> 42 | Supersonic, Water Pulse, Rock Slide, Take Down | Rock Slide, Take Down, Amnesia, Muddy Water | new_strong -> new_strong |
+| May Route 119 Treecko | Pelipper | 29 -> 40 | Water Pulse, Stockpile, Spit Up, Swallow | Stockpile, Spit Up, Swallow, Fling | - -> - |
+| May Route 119 Treecko | Lombre | 29 -> 40 | Mist, Mega Drain, Fury Swipes, Bubble Beam | Fury Swipes, Bubble Beam, Leech Seed, Giga Drain | - -> new_strong |
+| May Route 119 Treecko | Combusken | 31 -> 42 | Sand Attack, Aerial Ace, Slash, Bounce | Slash, Bounce, Focus Energy, Blaze Kick | lost_stab new_strong -> new_strong |
+| Brendan Lilycove Mudkip | Tropius | 31 -> 47 | Stomp, Magical Leaf, Whirlwind, Wide Guard | Wide Guard, Air Slash, Body Slam, Outrage | - -> new_strong |
+| Brendan Lilycove Mudkip | Slugma | 32 -> 48 | Clear Smog, Ancient Power, Incinerate, Rock Slide | Amnesia, Body Slam, Recover, Flamethrower | above_band -> - |
+| Brendan Lilycove Mudkip | Pelipper | 32 -> 48 | Water Pulse, Stockpile, Spit Up, Swallow | Swallow, Fling, Mist, Roost | - -> - |
+| Brendan Lilycove Mudkip | Grovyle | 34 -> 50 | Quick Guard, Assurance, Giga Drain, Slam | Double Team, Leaf Blade, Screech, Endeavor | new_strong -> - |
+| Brendan Lilycove Torchic | Tropius | 31 -> 47 | Stomp, Magical Leaf, Whirlwind, Wide Guard | Wide Guard, Air Slash, Body Slam, Outrage | - -> new_strong |
+| Brendan Lilycove Torchic | Slugma | 32 -> 48 | Clear Smog, Ancient Power, Incinerate, Rock Slide | Amnesia, Body Slam, Recover, Flamethrower | above_band -> - |
+| Brendan Lilycove Torchic | Marshtomp | 34 -> 50 | Supersonic, Water Pulse, Rock Slide, Take Down | Amnesia, Muddy Water, Screech, Endeavor | new_strong -> - |
+| Brendan Lilycove Treecko | Tropius | 31 -> 47 | Stomp, Magical Leaf, Whirlwind, Wide Guard | Wide Guard, Air Slash, Body Slam, Outrage | - -> new_strong |
+| Brendan Lilycove Treecko | Pelipper | 32 -> 48 | Water Pulse, Stockpile, Spit Up, Swallow | Swallow, Fling, Mist, Roost | - -> - |
+| Brendan Lilycove Treecko | Combusken | 34 -> 50 | Sand Attack, Aerial Ace, Slash, Bounce | Focus Energy, Blaze Kick, Bulk Up, Reversal | new_strong -> new_strong |
+| May Lilycove Torchic | Tropius | 31 -> 47 | Stomp, Magical Leaf, Whirlwind, Wide Guard | Wide Guard, Air Slash, Body Slam, Outrage | - -> new_strong |
+| May Lilycove Torchic | Slugma | 32 -> 48 | Clear Smog, Ancient Power, Incinerate, Rock Slide | Amnesia, Body Slam, Recover, Flamethrower | above_band -> - |
+| May Lilycove Torchic | Marshtomp | 34 -> 50 | Supersonic, Water Pulse, Rock Slide, Take Down | Amnesia, Muddy Water, Screech, Endeavor | new_strong -> - |
+| May Lilycove Treecko | Tropius | 31 -> 47 | Stomp, Magical Leaf, Whirlwind, Wide Guard | Wide Guard, Air Slash, Body Slam, Outrage | - -> new_strong |
+| May Lilycove Treecko | Pelipper | 32 -> 48 | Water Pulse, Stockpile, Spit Up, Swallow | Swallow, Fling, Mist, Roost | - -> - |
+| May Lilycove Treecko | Combusken | 34 -> 50 | Sand Attack, Aerial Ace, Slash, Bounce | Focus Energy, Blaze Kick, Bulk Up, Reversal | new_strong -> new_strong |
 
 ### Default movesets of the raised boss Pokemon (1.5x on)
 
-42 raised boss Pokemon are on default moves; 26 get a different moveset or flags at the raised level (the flags as in "Default movesets" below).
+107 raised boss Pokemon are on default moves; 86 get a different moveset or flags at the raised level (the flags as in "Default movesets" below).
 
 | boss | species | lv | modern default now | raised | flags now -> raised |
 |---|---|---|---|---|---|
@@ -349,6 +414,66 @@ Full clear: 29 of 30 bosses have the bench (friendship) within 1 of their ace; t
 | Maxie Mossdeep | Mightyena | 54 -> 60 | Taunt, Yawn, Take Down, Sucker Punch | Yawn, Take Down, Sucker Punch, Play Rough | new_strong -> new_strong |
 | Archie | Mightyena | 54 -> 61 | Taunt, Yawn, Take Down, Sucker Punch | Yawn, Take Down, Sucker Punch, Play Rough | new_strong -> new_strong |
 | Archie | Crobat | 54 -> 61 | Air Cutter, Bite, Haze, Venoshock | Bite, Haze, Venoshock, Confuse Ray | - -> - |
+| Brendan Route 103 Mudkip | Treecko | 5 -> 6 | Pound, Leer, Leafage | Pound, Leer, Leafage, Quick Attack | - -> - |
+| Brendan Route 103 Torchic | Mudkip | 5 -> 6 | Tackle, Growl, Water Gun | Tackle, Growl, Water Gun, Rock Smash | - -> - |
+| Brendan Route 103 Treecko | Torchic | 5 -> 6 | Scratch, Growl, Ember | Scratch, Growl, Ember, Quick Attack | - -> - |
+| May Route 103 Torchic | Mudkip | 5 -> 6 | Tackle, Growl, Water Gun | Tackle, Growl, Water Gun, Rock Smash | - -> - |
+| May Route 103 Treecko | Torchic | 5 -> 6 | Scratch, Growl, Ember | Scratch, Growl, Ember, Quick Attack | - -> - |
+| Brendan Rustboro Mudkip | Wingull | 13 -> 16 | Growl, Water Gun, Quick Attack, Supersonic | Water Gun, Quick Attack, Supersonic, Wing Attack | - -> - |
+| Brendan Rustboro Mudkip | Treecko | 15 -> 18 | Quick Attack, Mega Drain, Detect, Quick Guard | Mega Drain, Detect, Quick Guard, Assurance | - -> - |
+| Brendan Rustboro Torchic | Mudkip | 15 -> 18 | Rock Smash, Rock Throw, Protect, Supersonic | Rock Throw, Protect, Supersonic, Water Pulse | lost_stab -> - |
+| Brendan Rustboro Treecko | Lotad | 13 -> 16 | Absorb, Water Gun, Mist, Mega Drain | Water Gun, Mist, Mega Drain, Flail | - -> - |
+| Brendan Rustboro Treecko | Torchic | 15 -> 18 | Quick Attack, Flame Charge, Detect, Sand Attack | Flame Charge, Detect, Sand Attack, Aerial Ace | - -> - |
+| May Rustboro Torchic | Torkoal | 13 -> 16 | Smog, Withdraw, Rapid Spin, Smokescreen | Withdraw, Rapid Spin, Smokescreen, Clear Smog | lost_stab -> lost_stab |
+| May Rustboro Torchic | Mudkip | 15 -> 18 | Rock Smash, Rock Throw, Protect, Supersonic | Rock Throw, Protect, Supersonic, Water Pulse | lost_stab -> - |
+| May Rustboro Treecko | Lotad | 13 -> 16 | Absorb, Water Gun, Mist, Mega Drain | Water Gun, Mist, Mega Drain, Flail | - -> - |
+| May Rustboro Treecko | Torchic | 15 -> 18 | Quick Attack, Flame Charge, Detect, Sand Attack | Flame Charge, Detect, Sand Attack, Aerial Ace | - -> - |
+| Brendan Route 110 Mudkip | Slugma | 18 -> 26 | Yawn, Ember, Rock Throw, Harden | Rock Throw, Harden, Clear Smog, Ancient Power | - -> lost_stab |
+| Brendan Route 110 Mudkip | Wingull | 18 -> 26 | Water Gun, Quick Attack, Supersonic, Wing Attack | Supersonic, Wing Attack, Water Pulse, Agility | - -> - |
+| Brendan Route 110 Mudkip | Grovyle | 20 -> 28 | Mega Drain, Detect, Quick Guard, Assurance | Detect, Quick Guard, Assurance, Giga Drain | - -> new_strong |
+| Brendan Route 110 Torchic | Lombre | 18 -> 26 | Flail, Mist, Mega Drain, Fury Swipes | Mist, Mega Drain, Fury Swipes, Bubble Beam | - -> - |
+| Brendan Route 110 Torchic | Slugma | 18 -> 26 | Yawn, Ember, Rock Throw, Harden | Rock Throw, Harden, Clear Smog, Ancient Power | - -> lost_stab |
+| Brendan Route 110 Torchic | Marshtomp | 20 -> 28 | Rock Throw, Protect, Supersonic, Water Pulse | Protect, Supersonic, Water Pulse, Rock Slide | - -> new_strong |
+| Brendan Route 110 Treecko | Wingull | 18 -> 26 | Water Gun, Quick Attack, Supersonic, Wing Attack | Supersonic, Wing Attack, Water Pulse, Agility | - -> - |
+| Brendan Route 110 Treecko | Lombre | 18 -> 26 | Flail, Mist, Mega Drain, Fury Swipes | Mist, Mega Drain, Fury Swipes, Bubble Beam | - -> - |
+| Brendan Route 110 Treecko | Combusken | 20 -> 28 | Flame Charge, Detect, Sand Attack, Aerial Ace | Detect, Sand Attack, Aerial Ace, Slash | - -> lost_stab above_band |
+| May Route 110 Torchic | Lombre | 18 -> 26 | Flail, Mist, Mega Drain, Fury Swipes | Mist, Mega Drain, Fury Swipes, Bubble Beam | - -> - |
+| May Route 110 Torchic | Slugma | 18 -> 26 | Yawn, Ember, Rock Throw, Harden | Rock Throw, Harden, Clear Smog, Ancient Power | - -> lost_stab |
+| May Route 110 Torchic | Marshtomp | 20 -> 28 | Rock Throw, Protect, Supersonic, Water Pulse | Protect, Supersonic, Water Pulse, Rock Slide | - -> new_strong |
+| May Route 110 Treecko | Wingull | 18 -> 26 | Water Gun, Quick Attack, Supersonic, Wing Attack | Supersonic, Wing Attack, Water Pulse, Agility | - -> - |
+| May Route 110 Treecko | Lombre | 18 -> 26 | Flail, Mist, Mega Drain, Fury Swipes | Mist, Mega Drain, Fury Swipes, Bubble Beam | - -> - |
+| May Route 110 Treecko | Combusken | 20 -> 28 | Flame Charge, Detect, Sand Attack, Aerial Ace | Detect, Sand Attack, Aerial Ace, Slash | - -> lost_stab above_band |
+| Brendan Route 119 Mudkip | Slugma | 29 -> 45 | Clear Smog, Ancient Power, Incinerate, Rock Slide | Lava Plume, Amnesia, Body Slam, Recover | above_band -> new_strong |
+| Brendan Route 119 Mudkip | Pelipper | 29 -> 45 | Water Pulse, Stockpile, Spit Up, Swallow | Spit Up, Swallow, Fling, Mist | - -> - |
+| Brendan Route 119 Mudkip | Grovyle | 31 -> 47 | Quick Guard, Assurance, Giga Drain, Slam | Slam, Double Team, Leaf Blade, Screech | above_band new_strong -> - |
+| Brendan Route 119 Torchic | Lombre | 29 -> 45 | Mist, Mega Drain, Fury Swipes, Bubble Beam | Fury Swipes, Bubble Beam, Leech Seed, Giga Drain | - -> new_strong |
+| Brendan Route 119 Torchic | Slugma | 29 -> 45 | Clear Smog, Ancient Power, Incinerate, Rock Slide | Lava Plume, Amnesia, Body Slam, Recover | above_band -> new_strong |
+| Brendan Route 119 Torchic | Marshtomp | 31 -> 47 | Supersonic, Water Pulse, Rock Slide, Take Down | Take Down, Amnesia, Muddy Water, Screech | new_strong -> - |
+| Brendan Route 119 Treecko | Pelipper | 29 -> 45 | Water Pulse, Stockpile, Spit Up, Swallow | Spit Up, Swallow, Fling, Mist | - -> - |
+| Brendan Route 119 Treecko | Lombre | 29 -> 45 | Mist, Mega Drain, Fury Swipes, Bubble Beam | Fury Swipes, Bubble Beam, Leech Seed, Giga Drain | - -> new_strong |
+| Brendan Route 119 Treecko | Combusken | 31 -> 47 | Sand Attack, Aerial Ace, Slash, Bounce | Bounce, Focus Energy, Blaze Kick, Bulk Up | lost_stab new_strong -> new_strong |
+| May Route 119 Torchic | Lombre | 29 -> 45 | Mist, Mega Drain, Fury Swipes, Bubble Beam | Fury Swipes, Bubble Beam, Leech Seed, Giga Drain | - -> new_strong |
+| May Route 119 Torchic | Slugma | 29 -> 45 | Clear Smog, Ancient Power, Incinerate, Rock Slide | Lava Plume, Amnesia, Body Slam, Recover | above_band -> new_strong |
+| May Route 119 Torchic | Marshtomp | 31 -> 47 | Supersonic, Water Pulse, Rock Slide, Take Down | Take Down, Amnesia, Muddy Water, Screech | new_strong -> - |
+| May Route 119 Treecko | Pelipper | 29 -> 45 | Water Pulse, Stockpile, Spit Up, Swallow | Spit Up, Swallow, Fling, Mist | - -> - |
+| May Route 119 Treecko | Lombre | 29 -> 45 | Mist, Mega Drain, Fury Swipes, Bubble Beam | Fury Swipes, Bubble Beam, Leech Seed, Giga Drain | - -> new_strong |
+| May Route 119 Treecko | Combusken | 31 -> 47 | Sand Attack, Aerial Ace, Slash, Bounce | Bounce, Focus Energy, Blaze Kick, Bulk Up | lost_stab new_strong -> new_strong |
+| Brendan Lilycove Mudkip | Tropius | 31 -> 52 | Stomp, Magical Leaf, Whirlwind, Wide Guard | Air Slash, Body Slam, Outrage, Synthesis | - -> new_strong |
+| Brendan Lilycove Mudkip | Slugma | 32 -> 53 | Clear Smog, Ancient Power, Incinerate, Rock Slide | Body Slam, Recover, Flamethrower, Earth Power | above_band -> new_strong |
+| Brendan Lilycove Mudkip | Pelipper | 32 -> 53 | Water Pulse, Stockpile, Spit Up, Swallow | Swallow, Fling, Mist, Roost | - -> - |
+| Brendan Lilycove Mudkip | Grovyle | 34 -> 55 | Quick Guard, Assurance, Giga Drain, Slam | Leaf Blade, Screech, Endeavor, Leaf Storm | new_strong -> new_strong |
+| Brendan Lilycove Torchic | Tropius | 31 -> 52 | Stomp, Magical Leaf, Whirlwind, Wide Guard | Air Slash, Body Slam, Outrage, Synthesis | - -> new_strong |
+| Brendan Lilycove Torchic | Slugma | 32 -> 53 | Clear Smog, Ancient Power, Incinerate, Rock Slide | Body Slam, Recover, Flamethrower, Earth Power | above_band -> new_strong |
+| Brendan Lilycove Torchic | Marshtomp | 34 -> 55 | Supersonic, Water Pulse, Rock Slide, Take Down | Muddy Water, Screech, Endeavor, Hydro Pump | new_strong -> new_strong |
+| Brendan Lilycove Treecko | Tropius | 31 -> 52 | Stomp, Magical Leaf, Whirlwind, Wide Guard | Air Slash, Body Slam, Outrage, Synthesis | - -> new_strong |
+| Brendan Lilycove Treecko | Pelipper | 32 -> 53 | Water Pulse, Stockpile, Spit Up, Swallow | Swallow, Fling, Mist, Roost | - -> - |
+| Brendan Lilycove Treecko | Combusken | 34 -> 55 | Sand Attack, Aerial Ace, Slash, Bounce | Blaze Kick, Bulk Up, Reversal, Flare Blitz | new_strong -> new_strong |
+| May Lilycove Torchic | Tropius | 31 -> 52 | Stomp, Magical Leaf, Whirlwind, Wide Guard | Air Slash, Body Slam, Outrage, Synthesis | - -> new_strong |
+| May Lilycove Torchic | Slugma | 32 -> 53 | Clear Smog, Ancient Power, Incinerate, Rock Slide | Body Slam, Recover, Flamethrower, Earth Power | above_band -> new_strong |
+| May Lilycove Torchic | Marshtomp | 34 -> 55 | Supersonic, Water Pulse, Rock Slide, Take Down | Muddy Water, Screech, Endeavor, Hydro Pump | new_strong -> new_strong |
+| May Lilycove Treecko | Tropius | 31 -> 52 | Stomp, Magical Leaf, Whirlwind, Wide Guard | Air Slash, Body Slam, Outrage, Synthesis | - -> new_strong |
+| May Lilycove Treecko | Pelipper | 32 -> 53 | Water Pulse, Stockpile, Spit Up, Swallow | Swallow, Fling, Mist, Roost | - -> - |
+| May Lilycove Treecko | Combusken | 34 -> 55 | Sand Attack, Aerial Ace, Slash, Bounce | Blaze Kick, Bulk Up, Reversal, Flare Blitz | new_strong -> new_strong |
 
 ## Default movesets (Gen 3 vs Gen 9 learnsets)
 
