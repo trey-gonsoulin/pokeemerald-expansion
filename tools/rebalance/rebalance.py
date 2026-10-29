@@ -106,7 +106,10 @@ def load_stages(path, trainers, repo):
     for tid, folder in G.map_trainers(repo).items():
         if tid in bosses or tid not in trainers or any(fnmatch.fnmatchcase(tid, g) for g in excluded):
             continue
-        i = G.stage_of(folder, stages)
+        # A stage's ``trainers`` ids override their map's stage (Route 103's swimmers need Surf).
+        i = next((k for k, st in enumerate(stages) if tid in st.get('trainers', ())), None)
+        if i is None:
+            i = G.stage_of(folder, stages)
         if i is not None:
             stages[i]['regular'].append(tid)
     return stages
@@ -137,34 +140,41 @@ def census(trainers):
 # Default movesets
 # ---------------------------------------------------------------------------
 
-def attacks(gd, moves):
-    return [m for m in moves if m in gd.moves and gd.moves[m].attacking]
+def attacks(gd, moves, ivs=None):
+    """The damaging moves, as Move data resolved for these IVs (Hidden Power)."""
+    return [gd.move(m, ivs) for m in attack_ids(gd, moves, ivs)]
 
 
-def has_stab(gd, species, moves):
+def attack_ids(gd, moves, ivs=None):
+    return [m for m in moves if m in gd.moves and gd.move(m, ivs).attacking]
+
+
+def has_stab(gd, species, moves, ivs=None):
+    """A same-type damaging move. Fixed-damage moves (Seismic Toss, Night
+    Shade) count as attacks but get no STAB bonus, so they don't count here."""
     types = gd.species[species].types
-    return any(gd.moves[m].type in types for m in attacks(gd, moves))
+    return any(mv.type in types and not mv.fixed_damage for mv in attacks(gd, moves, ivs))
 
 
-def best_power(gd, moves):
-    return max((gd.moves[m].power for m in attacks(gd, moves)), default=0)
+def best_power(gd, moves, ivs=None):
+    return max((mv.power for mv in attacks(gd, moves, ivs)), default=0)
 
 
-def default_flags(gd, species, level, van_moves, mod_moves):
+def default_flags(gd, species, level, van_moves, mod_moves, ivs=None):
     """Flags for one trainer Pokemon on default moves (see the README)."""
     v, m = gd['vanilla'], gd['modern']
     flags = []
-    if not attacks(m, mod_moves):
+    if not attacks(m, mod_moves, ivs):
         flags.append('no_attack')
-        if attacks(v, van_moves):
+        if attacks(v, van_moves, ivs):
             flags.append('lost_all_attacks')
-    elif len(attacks(m, mod_moves)) == 1 and len(attacks(v, van_moves)) >= 2:
+    elif len(attacks(m, mod_moves, ivs)) == 1 and len(attacks(v, van_moves, ivs)) >= 2:
         flags.append('one_attack')
-    if has_stab(v, species, van_moves) and not has_stab(m, species, mod_moves):
+    if has_stab(v, species, van_moves, ivs) and not has_stab(m, species, mod_moves, ivs):
         flags.append('lost_stab')
-    strong = [mv for mv in attacks(m, mod_moves) if m.moves[mv].power >= ABOVE_BAND_POWER]
+    strong = [mv for mv in attack_ids(m, mod_moves, ivs) if m.move(mv, ivs).power >= ABOVE_BAND_POWER]
     above = [mv for mv in strong if (v.learn_level(species, mv) or 0) >= level + ABOVE_BAND_LEVELS]
-    new = [mv for mv in strong if v.learn_level(species, mv) is None and mv not in van_moves]
+    new = [mv for mv in strong if v.learn_level(species, mv) is None]
     if above:
         flags.append('above_band')
     if new:
@@ -181,9 +191,9 @@ def default_movesets(trainers, gd, story):
             m = gd['modern'].default_moves(mon.species, mon.level)
             row = {'trainer': t.id, 'slot': i, 'class': t.trainer_class, 'species': mon.species,
                    'level': mon.level, 'set_moves': bool(mon.moves), 'story_stage': story.get(t.id, ''),
-                   'vanilla_default': v, 'modern_default': m, 'flags': [], 'above_band_moves': []}
+                   'vanilla_default': v, 'modern_default': m, 'flags': [], 'above_band_moves': [], 'ivs': mon.ivs}
             if not mon.moves:
-                row['flags'], row['above_band_moves'] = default_flags(gd, mon.species, mon.level, v, m)
+                row['flags'], row['above_band_moves'] = default_flags(gd, mon.species, mon.level, v, m, mon.ivs)
             rows.append(row)
     return rows
 
@@ -201,13 +211,13 @@ def summarize_defaults(rows, gd):
         out[f'flags_{scope}'] = dict(sorted(c.items()))
     v, m = gd['vanilla'], gd['modern']
     out['mean_attacks'] = {
-        'vanilla': round(sum(len(attacks(v, r['vanilla_default'])) for r in d) / len(d), 2),
-        'modern': round(sum(len(attacks(m, r['modern_default'])) for r in d) / len(d), 2)}
+        'vanilla': round(sum(len(attacks(v, r['vanilla_default'], r['ivs'])) for r in d) / len(d), 2),
+        'modern': round(sum(len(attacks(m, r['modern_default'], r['ivs'])) for r in d) / len(d), 2)}
     out['mean_best_power'] = {
-        'vanilla': round(sum(best_power(v, r['vanilla_default']) for r in d) / len(d), 1),
-        'modern': round(sum(best_power(m, r['modern_default']) for r in d) / len(d), 1)}
-    out['best_power_up'] = sum(1 for r in d if best_power(m, r['modern_default']) > best_power(v, r['vanilla_default']))
-    out['best_power_down'] = sum(1 for r in d if best_power(m, r['modern_default']) < best_power(v, r['vanilla_default']))
+        'vanilla': round(sum(best_power(v, r['vanilla_default'], r['ivs']) for r in d) / len(d), 1),
+        'modern': round(sum(best_power(m, r['modern_default'], r['ivs']) for r in d) / len(d), 1)}
+    out['best_power_up'] = sum(1 for r in d if best_power(m, r['modern_default'], r['ivs']) > best_power(v, r['vanilla_default'], r['ivs']))
+    out['best_power_down'] = sum(1 for r in d if best_power(m, r['modern_default'], r['ivs']) < best_power(v, r['vanilla_default'], r['ivs']))
     by_species = collections.defaultdict(collections.Counter)
     for r in d:
         for f in r['flags']:
@@ -245,7 +255,7 @@ def handwritten_changes(trainers, gd, boss_ids):
     for t in trainers.values():
         for i, mon in enumerate(t.mons):
             for mv in mon.moves:
-                a, b = v.moves[mv], m.moves[mv]
+                a, b = v.move(mv, mon.ivs), m.move(mv, mon.ivs)
                 if (not (a.attacking or b.attacking)
                         or (a.type, a.category, a.power, a.accuracy) == (b.type, b.category, b.power, b.accuracy)):
                     continue
@@ -253,8 +263,9 @@ def handwritten_changes(trainers, gd, boss_ids):
                        'level': mon.level, 'move': mv,
                        'type': [a.type, b.type], 'category': [a.category, b.category],
                        'power': [a.power, b.power], 'accuracy': [a.accuracy, b.accuracy]}
-                # Power 1 is fixed or level damage (Night Shade, Sonic Boom): no stat involved.
-                if a.category != b.category and 'DAMAGE_CATEGORY_STATUS' not in (a.category, b.category) and b.power > 1:
+                # Fixed-damage moves (Night Shade, Sonic Boom) use no attacking stat.
+                if (a.category != b.category and 'DAMAGE_CATEGORY_STATUS' not in (a.category, b.category)
+                        and not b.fixed_damage):
                     sa, sb = attack_stat(v, mon.species, a.category), attack_stat(m, mon.species, b.category)
                     row['stat'] = [sa, sb]
                     row['stat_shift'] = ('weaker' if sb < sa * (1 - STAT_SHIFT)
@@ -321,8 +332,8 @@ def mon_moves(gd, mon):
     return mon.moves or gd.default_moves(mon.species, mon.level)
 
 
-def best_vs(gd, moves, def_type):
-    return max((G.effectiveness(gd.chart, gd.moves[mv].type, (def_type,)) for mv in attacks(gd, moves)),
+def best_vs(gd, moves, def_type, ivs=None):
+    return max((G.effectiveness(gd.chart, mv.type, (def_type,)) for mv in attacks(gd, moves, ivs)),
                default=None)
 
 
@@ -345,8 +356,8 @@ def boss_matchups(trainers, gd, boss_ids):
             mv_v, mv_m = mon_moves(v, mon), mon_moves(m, mon)
             offense = {}
             for dt in gen3 + ['TYPE_FAIRY']:
-                a = best_vs(v, mv_v, dt) if dt in G.GEN3_TYPES else None
-                b = best_vs(m, mv_m, dt)
+                a = best_vs(v, mv_v, dt, mon.ivs) if dt in G.GEN3_TYPES else None
+                b = best_vs(m, mv_m, dt, mon.ivs)
                 if a != b and not (a is None and b in (None, 1.0)):
                     offense[dt] = [a, b]
             rows.append({'species': mon.species, 'level': mon.level, 'set_moves': bool(mon.moves),
@@ -384,20 +395,30 @@ def level_for_exp(growth, exp):
     return bisect.bisect_right(exp_table(growth), exp)
 
 
-def exp_award(gd, scaling, yield_, foe_level, getter_level, trainer, sent_in, share_bench=False, sharers=1):
+def exp_award(gd, scaling, yield_, foe_level, getter_level, trainer, sent_in, sent_out=True, holders=0):
     """Cmd_getexp + ApplyExperienceMultipliers for one getter (no Lucky Egg,
-    traded, affection or unevolved bonuses)."""
+    traded, affection or unevolved bonuses).
+
+    ``sent_in`` is viaSentIn (party members that faced the foe), ``sent_out``
+    whether the getter is one of them, and ``holders`` viaExpShare (members
+    getting exp through an Exp. Share). The model only uses the Gen 6 Exp.
+    Share, which makes every member a holder, so the getter holds it
+    whenever ``holders`` is non-zero."""
     scaled = gd.flag('B_SCALED_EXP >= GEN_5 && B_SCALED_EXP != GEN_6')
     calc = yield_ * foe_level // (5 if scaled else 7)
     if trainer and gd.flag('B_TRAINER_EXP_MULTIPLIER <= GEN_7'):
         calc = calc * 150 // 100
     if gd.flag('B_SPLIT_EXP < GEN_6'):
-        if share_bench:
-            reward = max(calc // 2 // sharers, 1)
-        else:
-            reward = max(calc // sent_in, 1)
+        # Half to the sent-in members, half split over every holder; a
+        # sent-in holder gets both shares.
+        sent_share = max(calc // 2 // sent_in, 1) if holders else max(calc // sent_in, 1)
+        reward = (sent_share if sent_out else 0) + (max(calc // 2 // holders, 1) if holders else 0)
+    elif sent_out:
+        reward = calc
     else:
-        reward = calc if not share_bench else max(calc // 2, 1)
+        reward = max(calc // 2, 1) if holders else 0
+    if not reward:
+        return 0  # the game skips a getter that neither faced the foe nor holds a share
     if scaled:
         reward = reward * scaling[foe_level * 2 + 10] // scaling[foe_level + getter_level + 10] + 1
     return reward
@@ -423,9 +444,8 @@ class Party:
         for i, level in enumerate(lv):
             if i != ko and not share:
                 continue
-            bench = i != ko
             self.exp[i] += sum(w * exp_award(gd, scaling, y, foe_level, level, trainer, 1,
-                                             share_bench=bench, sharers=len(lv) - 1)
+                                             sent_out=i == ko, holders=len(lv) if share else 0)
                                for y, foe_level, w in foes)
 
 
@@ -438,11 +458,11 @@ def stage_slots(wild, stages, folders):
         rates = {f['type']: f.get('encounter_rates') or () for f in group.get('fields', ())}
         for enc in group['encounters']:
             folder = by_id.get(enc.get('map'))
-            i = G.stage_of(folder, stages) if folder else None
-            if i is None:
+            if not folder:
                 continue
             for field, table in enc.items():
-                if isinstance(table, dict) and 'mons' in table:
+                i = G.stage_of(folder, stages, land=field == 'land_mons')
+                if i is not None and isinstance(table, dict) and 'mons' in table:
                     rate = rates.get(field, ())
                     for k, slot in enumerate(table['mons']):
                         out[i].append((field, slot, rate[k] if k < len(rate) else 0))

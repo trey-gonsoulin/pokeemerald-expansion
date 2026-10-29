@@ -9,7 +9,8 @@ It reads the repo's own headers twice:
   `GEN_3` (`VANILLA_OVERRIDES` in `gamedata.py`): Gen 3 learnsets, stats,
   types, exp yields, move data and types, the type-based physical/special
   rule, the Gen 3 type chart, the Gen 3 exp formula (/7, 1.5x for trainers,
-  split, no scaling), and Gen 3 prices, healing and sell value. Vanilla wild
+  split, no scaling), IV-based Hidden Power power, and Gen 3 prices,
+  healing and sell value. Vanilla wild
   Pokemon come from the pre-restock snapshot
   `tools/area_archetypes/output/wild_encounters.vanilla.json`.
 
@@ -24,16 +25,17 @@ preprocessor helpers and the species_info macro expansion are imported from
 `species_entries`). The tests run on the small fake repo in `testdata/repo/`,
 plus checks on the real repo: every trainer species and move in
 `src/data/trainers.party` resolves under both regimes, every stage boss
-exists, and every map with trainers, TMs or wild Pokemon is in a stage or
-in `unstaged`.
+exists, every map with trainers, TMs or wild Pokemon is in a stage or
+in `unstaged`, and each Trick House puzzle sits after its badge gate.
 
 ## Outputs
 
 - [`output/findings.md`](output/findings.md): the written-up findings and
-  the proposed balance changes (#113). Hand-written from `report.md`; update
-  it by hand when the numbers move.
+  the proposed balance changes (#113). Hand-written from `report.md`, so
+  update it by hand in the same commit whenever `report.md` changes.
 - `output/report.md`: every table the findings use. Committed as a
-  snapshot; rerun after upstream syncs or balance edits.
+  snapshot; rerun after upstream syncs or balance edits. CI reruns the
+  script and fails if the committed `report.md` differs from its output.
 - `output/trainer_mons.csv`: every trainer Pokemon with its vanilla and
   modern default moveset and its flags (gitignored).
 - `output/summary.json`: the report's numbers, for scripts (gitignored).
@@ -52,7 +54,12 @@ in `unstaged`.
   4-heart Pokemon gets 1.2x more in game) and unevolved bonuses.
 - **Default movesets**: `GiveBoxMonInitialMoveset` (the last four distinct
   level-up moves, level-0 evolution moves skipped) under both learnsets, for
-  every trainer Pokemon without set moves. Flags:
+  every trainer Pokemon without set moves. Fixed-damage moves (Seismic
+  Toss, Night Shade, Sonic Boom, Super Fang, OHKO moves, Counter:
+  `FIXED_DAMAGE_EFFECTS` in `gamedata.py`) count as damaging moves but never
+  as STAB, since their damage ignores the type bonus. Hidden Power takes its
+  type, and in vanilla its power, from the Pokemon's IVs (trainers.party's
+  `IVs:` line, trainerproc's default of 31). Flags:
   - `no_attack`: the modern set has no damaging move; `lost_all_attacks`
     when the vanilla set had one;
   - `one_attack`: one damaging move left where vanilla had two or more;
@@ -64,15 +71,18 @@ in `unstaged`.
 - **Hand-written movesets**: every damaging set move whose type, category,
   power or accuracy changed. A category flip compares the base stat it uses
   now with the one it used in Gen 3 (weaker / similar / stronger at 15%).
-  Fixed-damage moves (power 1) are left out of the flips.
+  Fixed-damage moves use no attacking stat, so they are left out of the
+  flips. Hidden Power is resolved from each Pokemon's IVs, as above.
 - **Split fit**: for the species in `SPLIT_WATCH`, the better attacking stat
   against the Gen 3 category of each STAB type and the split of its modern
   level-up STAB moves.
 - **Boss type matchups**: per boss Pokemon, retypings, changed defensive
   multipliers and changed best offensive multipliers against single types.
 - **TMs by stage**: the first story stage where each TM sits on a map
-  (item ball, hidden item, mart list or script). A script source can be gated
-  later than its map's stage (Wattson's Thunderbolt needs New Mauville).
+  (item ball, hidden item, mart list, script, or reward: a Trick House
+  puzzle's prize, which the entrance and end rooms hand out, filed under
+  that puzzle's map). A script source can be gated later than its map's
+  stage (Wattson's Thunderbolt needs New Mauville).
 - **Wild Pokemon by stage**: species added by the restock, the strongest by
   base stat total, and the first Fairy types, over every table of the stage's
   maps (land, water, fishing, Rock Smash). When Surf and each rod become
@@ -91,9 +101,16 @@ that matches it) and the bosses fought at its end, in order. A trainer
 belongs to the stage of the first map whose script battles it
 (`trainerbattle_*`, rematches skipped). `rival` and `starter` pick the rival
 battles (`TRAINER_{RIVAL}_ROUTE_103_{STARTER}`, default May with the player
-on Mudkip), and `exclude` drops the other rival variants. The stage split
-is approximate: water routes sit after Norman (Surf), Route 103 east with
-Wattson, Dive and Sky Pillar with Juan, Meteor Falls 1F_2R and B1F
+on Mudkip), and `exclude` drops the other rival variants. Two optional
+per-stage keys handle maps that open in parts: `land_maps` globs place a
+map's land (grass) table in that stage ahead of its `maps` match, and
+`trainers` ids override the stage of the map that battles them. Route 103
+uses both: its grass is at the west end, by the first rival fight, so its
+land table is in the Rival stage; the rest of the map (the east side,
+reached from Route 110) is with Wattson, except the swimmers Isabelle and
+Pete, who need Surf and sit with Winona. Its water and fishing tables stay
+with Wattson. The stage split is approximate: water routes sit after
+Norman (Surf), Dive and Sky Pillar with Juan, Meteor Falls 1F_2R and B1F
 (Waterfall) with the Elite Four, and optional areas (Safari Zone, New
 Mauville, Scorched Slab, routes 129-134) in the stage where they open. A
 stage holds what the player can reach before its bosses, so each Trick

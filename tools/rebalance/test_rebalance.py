@@ -200,7 +200,17 @@ class Exp(unittest.TestCase):
         d = fake_regime(B_SCALED_EXP='GEN_3', B_SPLIT_EXP='GEN_6')
         gain = 39 * 10 // 7
         self.assertEqual(RB.exp_award(d, self.scaling, 39, 10, 20, False, 1), gain)
-        self.assertEqual(RB.exp_award(d, self.scaling, 39, 10, 25, False, 1, share_bench=True), gain // 2)
+        self.assertEqual(RB.exp_award(d, self.scaling, 39, 10, 20, False, 1, holders=6), gain)
+        self.assertEqual(RB.exp_award(d, self.scaling, 39, 10, 25, False, 1, sent_out=False, holders=6), gain // 2)
+        self.assertEqual(RB.exp_award(d, self.scaling, 39, 10, 25, False, 1, sent_out=False), 0)
+
+    def test_gen3_split_with_exp_share(self):
+        # Cmd_getexp before Gen 6: half over the sent-in members, half over
+        # every holder, and a sent-in holder gets both.
+        d = fake_regime(B_SCALED_EXP='GEN_3', B_SPLIT_EXP='GEN_3')
+        calc = 98 * 20 // 7
+        self.assertEqual(RB.exp_award(d, self.scaling, 98, 20, 20, False, 1, holders=6), calc // 2 + calc // 2 // 6)
+        self.assertEqual(RB.exp_award(d, self.scaling, 98, 20, 20, False, 1, sent_out=False, holders=6), calc // 2 // 6)
 
     def test_gen3_trainer_bonus_and_split(self):
         d = fake_regime(B_SCALED_EXP='GEN_3', B_SPLIT_EXP='GEN_3', B_TRAINER_EXP_MULTIPLIER='GEN_3')
@@ -320,6 +330,29 @@ class RealRepo(unittest.TestCase):
                     self.assertTrue(d.learnset(mon.species), (regime, mon.species))
                     for mv in mon.moves + d.default_moves(mon.species, mon.level):
                         self.assertIn(mv, d.moves, (regime, t.id, mv))
+
+    def test_move_and_item_details(self):
+        gd = G.load(G.REPO)
+        v, m = gd['vanilla'], gd['modern']
+        # Sitrus Berry: the #if in item_effects.h picks 30 HP in Gen 3, a quarter later.
+        self.assertEqual(v.items['ITEM_SITRUS_BERRY']['heal'], 30)
+        self.assertIsNone(m.items['ITEM_SITRUS_BERRY']['heal'])
+        # Hidden Power: all-0 IVs give Fighting (30 power in Gen 3), all-31 Dark (70).
+        zero = dict.fromkeys(G.IV_STATS, 0)
+        self.assertEqual(G.hidden_power(zero, v), ('TYPE_FIGHTING', 30))
+        self.assertEqual(G.hidden_power(G.DEFAULT_IVS, v), ('TYPE_DARK', 70))
+        self.assertEqual(G.hidden_power(zero, m), ('TYPE_FIGHTING', 60))
+        self.assertEqual(v.move('MOVE_HIDDEN_POWER', zero).category, 'DAMAGE_CATEGORY_PHYSICAL')
+        # Fixed-damage moves are attacks but never STAB.
+        self.assertTrue(RB.attacks(m, ['MOVE_SEISMIC_TOSS']))
+        self.assertFalse(RB.has_stab(m, 'SPECIES_HARIYAMA', ['MOVE_SEISMIC_TOSS']))
+        self.assertTrue(RB.has_stab(m, 'SPECIES_HARIYAMA', ['MOVE_ARM_THRUST']))
+
+    def test_trick_house_prizes_are_filed_under_their_puzzle(self):
+        tms = G.map_tms(G.REPO)
+        self.assertIn(('ITEM_TM_TAUNT', 'reward'), tms['Route110_TrickHousePuzzle5'])
+        self.assertFalse(any(item == 'ITEM_TM_TAUNT' for f in ('Route110_TrickHouseEnd', 'Route110_TrickHouseEntrance')
+                             for item, _ in tms.get(f, ())))
 
     def test_stage_bosses_exist(self):
         trainers = G.parse_trainers(os.path.join(G.REPO, 'src', 'data', 'trainers.party'))

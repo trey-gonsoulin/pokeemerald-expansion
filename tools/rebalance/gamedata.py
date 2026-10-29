@@ -31,7 +31,7 @@ VANILLA_OVERRIDES = {name: 'GEN_3' for name in (
     'B_PHYSICAL_SPECIAL_SPLIT', 'B_UPDATED_TYPE_MATCHUPS',
     'B_SCALED_EXP', 'B_SPLIT_EXP', 'B_TRAINER_EXP_MULTIPLIER', 'B_UNEVOLVED_EXP_MULTIPLIER',
     'I_PRICE', 'I_HEALTH_RECOVERY', 'I_SELL_VALUE_FRACTION', 'I_SITRUS_BERRY_HEAL',
-    'I_KEY_ESCAPE_ROPE', 'B_WHITEOUT_MONEY')}
+    'I_KEY_ESCAPE_ROPE', 'B_WHITEOUT_MONEY', 'B_HIDDEN_POWER_DMG')}
 
 REGIMES = ('vanilla', 'modern')
 # Types that exist in Gen 3. Fairy and Stellar columns are meaningless there.
@@ -248,15 +248,28 @@ class Move:
     power: int
     accuracy: int
     category: str  # DAMAGE_CATEGORY_PHYSICAL / SPECIAL / STATUS, as the battle engine resolves it
+    effect: str = 'EFFECT_HIT'
 
     @property
     def attacking(self):
         return self.category != 'DAMAGE_CATEGORY_STATUS' and self.power > 0
 
+    @property
+    def fixed_damage(self):
+        """Damage that ignores the attacking stat, the move's power and STAB
+        (Seismic Toss, Sonic Boom, Super Fang, OHKO moves, Counter...)."""
+        return self.effect in FIXED_DAMAGE_EFFECTS
+
+
+# Move effects whose damage doesn't come from the damage formula.
+FIXED_DAMAGE_EFFECTS = frozenset((
+    'EFFECT_FIXED_HP_DAMAGE', 'EFFECT_LEVEL_DAMAGE', 'EFFECT_PSYWAVE', 'EFFECT_FIXED_PERCENT_DAMAGE',
+    'EFFECT_ENDEAVOR', 'EFFECT_FINAL_GAMBIT', 'EFFECT_OHKO', 'EFFECT_REFLECT_DAMAGE', 'EFFECT_BIDE'))
+
 
 def parse_moves(repo, defines, type_categories):
     raw = parse_table(os.path.join(repo, 'src', 'data', 'moves_info.h'), defines, 'MOVE',
-                      ('type', 'power', 'accuracy', 'category'))
+                      ('type', 'power', 'accuracy', 'category', 'effect'))
     split = R.c_eval('B_PHYSICAL_SPECIAL_SPLIT >= GEN_4', defines)
     out = {}
     for move, f in raw.items():
@@ -264,7 +277,7 @@ def parse_moves(repo, defines, type_categories):
         typ = f.get('type', 'TYPE_NORMAL')
         if not split and cat != 'DAMAGE_CATEGORY_STATUS':
             cat = type_categories.get(typ, cat)  # GetBattleMoveCategory before Gen 4
-        out[move] = Move(typ, _int(f.get('power', 0)), _int(f.get('accuracy', 0)), cat)
+        out[move] = Move(typ, _int(f.get('power', 0)), _int(f.get('accuracy', 0)), cat, f.get('effect', 'EFFECT_HIT'))
     return out
 
 
@@ -309,11 +322,12 @@ def parse_items(repo, defines):
     the item's gItemEffect_* byte 6 (ITEM6_HEAL_HP_* constants are None)."""
     items = parse_table(os.path.join(repo, 'src', 'data', 'items.h'), defines, 'ITEM', ('price', 'effect'))
     heals = {}
-    with open(os.path.join(repo, 'src', 'data', 'pokemon', 'item_effects.h'), encoding='utf-8') as f:
-        for name, body in re.findall(r'const u8 (gItemEffect_\w+)\[\w*\]\s*=\s*\{(.*?)\};', f.read(), re.S):
-            m = re.search(r'\[6\]\s*=\s*([^,\n]+)', body)
-            if m and 'ITEM4_HEAL_HP' in body:
-                heals[name] = _int(c_value(m[1], defines)) or None
+    path = os.path.join(repo, 'src', 'data', 'pokemon', 'item_effects.h')
+    text = ''.join(R.active_lines(path, dict(defines)))  # #if branches such as I_SITRUS_BERRY_HEAL
+    for name, body in re.findall(r'const u8 (gItemEffect_\w+)\[\w*\]\s*=\s*\{(.*?)\};', text, re.S):
+        m = re.search(r'\[6\]\s*=\s*([^,\n]+)', body)
+        if m and 'ITEM4_HEAL_HP' in body:
+            heals[name] = _int(c_value(m[1], defines)) or None
     return {k: {'price': _int(f.get('price', 0)), 'heal': heals.get(f.get('effect'))} for k, f in items.items()}
 
 
@@ -350,6 +364,9 @@ class GameData:
         self.learnsets = parse_learnsets(learnset_file(repo, defines), defines)
         self.chart, self.type_categories = parse_type_chart(repo, defines)
         self.moves = parse_moves(repo, defines, self.type_categories)
+        self.hidden_power_types = [t for t, f in parse_table(os.path.join(repo, 'src', 'data', 'types_info.h'),
+                                                             defines, 'TYPE', ('isHiddenPowerType',)).items()
+                                   if str(f.get('isHiddenPowerType')) in ('TRUE', '1')]
         self.items = parse_items(repo, defines)
 
     def flag(self, expr):
@@ -364,6 +381,20 @@ class GameData:
 
     def default_moves(self, species, level):
         return default_moveset(self.learnset(species), level)
+
+    def move(self, move, ivs=None):
+        """``move`` as a Pokemon with these IVs (default trainerproc's 31s)
+        uses it: Hidden Power takes its type (and before Gen 6 its power)
+        from the IVs, and without the physical/special split its category
+        from that type."""
+        mv = self.moves[move]
+        if mv.effect != 'EFFECT_HIDDEN_POWER':
+            return mv
+        typ, power = hidden_power(ivs or DEFAULT_IVS, self)
+        cat = mv.category
+        if not self.flag('B_PHYSICAL_SPECIAL_SPLIT >= GEN_4'):
+            cat = self.type_categories.get(typ, cat)
+        return dataclasses.replace(mv, type=typ, power=power, category=cat)
 
     def learn_level(self, species, move):
         """First level the species learns ``move`` by level up, or None."""
@@ -400,6 +431,25 @@ class TrainerMon:
     level: int
     moves: list
     item: str = None
+    ivs: dict = None  # None: trainerproc's default, DEFAULT_IVS
+
+
+# trainers.party IV labels, in Hidden Power's bit order (HP, Atk, Def, Spe, SpA, SpD).
+IV_STATS = ('HP', 'Atk', 'Def', 'Spe', 'SpA', 'SpD')
+DEFAULT_IVS = dict.fromkeys(IV_STATS, 31)  # trainerproc's default
+
+
+def hidden_power(ivs, gd):
+    """(type, power) of Hidden Power for these IVs, as GetDynamicMoveType and
+    CalcMoveBasePower work them out: the type from each IV's lowest bit over
+    the types with isHiddenPowerType, the power from the second bit before
+    B_HIDDEN_POWER_DMG GEN_6 (60 after)."""
+    bits = [ivs[s] for s in IV_STATS]
+    type_bits = sum((iv & 1) << k for k, iv in enumerate(bits))
+    power_bits = sum(((iv & 2) >> 1) << k for k, iv in enumerate(bits))
+    types = gd.hidden_power_types
+    power = 60 if gd.flag('B_HIDDEN_POWER_DMG >= GEN_6') else 40 * power_bits // 63 + 30
+    return types[(len(types) - 1) * type_bits // 63], power
 
 
 @dataclasses.dataclass
@@ -429,13 +479,16 @@ def parse_trainers(path):
             species = m[2] if m else species
             level = 100
             moves = []
+            ivs = dict(DEFAULT_IVS)
             for ln in lines[1:]:
                 if ln.startswith('- '):
                     moves.append(constant('MOVE', ln[2:].strip()))
                 elif ln.startswith('Level:'):
                     level = int(ln.split(':', 1)[1])
+                elif ln.startswith('IVs:'):
+                    ivs.update((stat, int(n)) for n, stat in re.findall(r'(\d+)\s+(\w+)', ln))
             mons.append(TrainerMon(species_constant(species.strip()), level, moves,
-                                   constant('ITEM', item.strip()) if item else None))
+                                   constant('ITEM', item.strip()) if item else None, ivs))
         ai = [a.strip() for a in head.get('AI', '').split('/') if a.strip()]
         trainers[tid] = Trainer(tid, head.get('Name', ''), constant('TRAINER_CLASS', head.get('Class', 'Pkmn Trainer 1')),
                                 ai, head.get('Double Battle', 'No').strip() == 'Yes', mons)
@@ -472,7 +525,8 @@ def map_trainers(repo):
 
 
 def map_tms(repo):
-    """Map folder -> [(ITEM_TM_X, source)], source being ball, hidden, mart or script."""
+    """Map folder -> [(ITEM_TM_X, source)], source being ball, hidden, mart,
+    script or reward (a Trick House puzzle prize, filed under the puzzle's map)."""
     out = collections.defaultdict(list)
     root = os.path.join(repo, 'data', 'maps')
     for folder in sorted(os.listdir(root)):
@@ -490,17 +544,33 @@ def map_tms(repo):
         si = os.path.join(root, folder, 'scripts.inc')
         if os.path.exists(si):
             with open(si, encoding='utf-8') as f:
+                where = folder
                 for line in f:
+                    label = re.match(r'(\w+)::', line)
+                    if label:
+                        # The Trick House end room and entrance hand out each puzzle's prize:
+                        # file it under the puzzle, which is staged by the badge it needs.
+                        puzzle = re.search(r'_(?:CompletedPuzzle|GivePuzzle)(\d)(?:Reward)?$', label[1])
+                        trick = puzzle and folder.startswith('Route110_TrickHouse')
+                        where = f'Route110_TrickHousePuzzle{puzzle[1]}' if trick else folder
                     for item in re.findall(r'\bITEM_TM_\w+', line):
-                        out[folder].append((item, 'mart' if '.2byte' in line else 'script'))
+                        source = 'mart' if '.2byte' in line else 'reward' if where != folder else 'script'
+                        out[where].append((item, source))
     return out
 
 
-def stage_of(folder, stages):
+def stage_of(folder, stages, land=False):
     """Index of the first stage whose map globs match the folder, or None.
-    FRLG maps (``*_Frlg``) aren't in Emerald, whatever the globs say."""
+    FRLG maps (``*_Frlg``) aren't in Emerald, whatever the globs say. With
+    ``land``, for a land encounter table, a stage's ``land_maps`` globs come
+    first: a map whose grass is reachable before the rest of it (Route 103's
+    west end)."""
     if folder.endswith('_Frlg'):
         return None
+    if land:
+        for i, st in enumerate(stages):
+            if any(fnmatch.fnmatchcase(folder, g) for g in st.get('land_maps', ())):
+                return i
     for i, st in enumerate(stages):
         if any(fnmatch.fnmatchcase(folder, g) for g in st.get('maps', ())):
             return i

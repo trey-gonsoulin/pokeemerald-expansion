@@ -49,32 +49,32 @@ Party level just before each boss. Every party member is Medium Slow (the starte
 | Roxanne | Roxanne 1 | 15 | 13.0 | 18 | 12.2 | 15 | 11.0 | 15 | 13.0 |
 | Brawly | May Rustboro Mudkip | 15 | 14.0 | 22 | 14.8 | 18 | 13.0 | 18 | 15.0 |
 | Brawly | Brawly 1 | 19 | 17.0 | 22 | 14.8 | 18 | 13.2 | 18 | 16.0 |
-| Wattson | May Route 110 Mudkip | 20 | 18.7 | 35 | 23.0 | 29 | 21.5 | 29 | 25.0 |
-| Wattson | Wally Mauville | 16 | 16.0 | 35 | 23.0 | 29 | 21.5 | 29 | 25.0 |
-| Wattson | Wattson 1 | 24 | 21.5 | 35 | 23.0 | 29 | 21.5 | 29 | 25.0 |
-| Flannery | Tabitha Mt Chimney | 22 | 20.5 | 47 | 31.0 | 38 | 27.5 | 38 | 32.0 |
-| Flannery | Maxie Mt Chimney | 25 | 24.3 | 48 | 31.2 | 38 | 27.5 | 38 | 32.0 |
-| Flannery | Flannery 1 | 29 | 25.8 | 48 | 31.2 | 38 | 27.8 | 38 | 32.0 |
-| Norman | Norman 1 | 31 | 28.5 | 49 | 32.2 | 39 | 28.8 | 39 | 34.0 |
-| Winona | May Route 119 Mudkip | 31 | 29.7 | 59 | 38.2 | 46 | 34.0 | 46 | 40.0 |
+| Wattson | May Route 110 Mudkip | 20 | 18.7 | 34 | 23.0 | 29 | 21.0 | 29 | 25.0 |
+| Wattson | Wally Mauville | 16 | 16.0 | 35 | 23.0 | 29 | 21.2 | 29 | 25.0 |
+| Wattson | Wattson 1 | 24 | 21.5 | 35 | 23.0 | 29 | 21.2 | 29 | 25.0 |
+| Flannery | Tabitha Mt Chimney | 22 | 20.5 | 47 | 31.0 | 37 | 27.5 | 37 | 32.0 |
+| Flannery | Maxie Mt Chimney | 25 | 24.3 | 47 | 31.0 | 38 | 27.5 | 38 | 32.0 |
+| Flannery | Flannery 1 | 29 | 25.8 | 48 | 31.2 | 38 | 27.5 | 38 | 32.0 |
+| Norman | Norman 1 | 31 | 28.5 | 49 | 32.0 | 39 | 28.8 | 39 | 34.0 |
+| Winona | May Route 119 Mudkip | 31 | 29.7 | 59 | 38.0 | 46 | 33.8 | 46 | 40.0 |
 | Winona | Shelly Weather Institute | 28 | 28.0 | 59 | 38.2 | 46 | 34.0 | 46 | 40.0 |
-| Winona | Winona 1 | 33 | 30.4 | 59 | 38.2 | 47 | 34.0 | 47 | 40.0 |
-| Tate and Liza | May Lilycove Mudkip | 34 | 32.2 | 69 | 44.8 | 54 | 40.0 | 54 | 47.0 |
-| Tate and Liza | Tabitha Magma Hideout | 33 | 29.2 | 69 | 45.2 | 55 | 40.0 | 55 | 47.0 |
-| Tate and Liza | Maxie Magma Hideout | 39 | 38.0 | 70 | 45.2 | 55 | 40.0 | 55 | 47.0 |
+| Winona | Winona 1 | 33 | 30.4 | 59 | 38.5 | 47 | 34.2 | 47 | 40.0 |
+| Tate and Liza | May Lilycove Mudkip | 34 | 32.2 | 69 | 44.8 | 54 | 39.8 | 54 | 47.0 |
+| Tate and Liza | Tabitha Magma Hideout | 33 | 29.2 | 69 | 44.8 | 55 | 40.2 | 55 | 47.0 |
+| Tate and Liza | Maxie Magma Hideout | 39 | 38.0 | 70 | 44.8 | 55 | 40.2 | 55 | 47.0 |
 | Tate and Liza | Matt | 34 | 34.0 | 70 | 45.2 | 55 | 40.2 | 55 | 47.0 |
-| Tate and Liza | Tate And Liza 1 | 42 | 41.5 | 70 | 45.2 | 55 | 40.2 | 55 | 47.0 |
-| Juan | Tabitha Mossdeep | 40 | 38.0 | 76 | 49.2 | 60 | 44.0 | 60 | 51.0 |
-| Juan | Maxie Mossdeep | 44 | 43.0 | 77 | 49.5 | 60 | 44.0 | 60 | 52.0 |
+| Tate and Liza | Tate And Liza 1 | 42 | 41.5 | 70 | 45.5 | 55 | 40.2 | 55 | 47.0 |
+| Juan | Tabitha Mossdeep | 40 | 38.0 | 76 | 49.5 | 60 | 44.0 | 60 | 51.0 |
+| Juan | Maxie Mossdeep | 44 | 43.0 | 77 | 49.5 | 60 | 44.2 | 60 | 52.0 |
 | Juan | Shelly Seafloor Cavern | 37 | 37.0 | 77 | 49.8 | 60 | 44.2 | 60 | 52.0 |
 | Juan | Archie | 43 | 41.7 | 77 | 49.8 | 61 | 44.2 | 61 | 52.0 |
 | Juan | Juan 1 | 46 | 42.8 | 77 | 50.0 | 61 | 44.2 | 61 | 52.0 |
-| Elite Four | Wally Vr 1 | 45 | 43.4 | 82 | 52.5 | 65 | 47.8 | 65 | 56.0 |
-| Elite Four | Sidney | 49 | 47.4 | 82 | 52.8 | 65 | 47.8 | 65 | 56.0 |
+| Elite Four | Wally Vr 1 | 45 | 43.4 | 82 | 52.8 | 65 | 47.5 | 65 | 56.0 |
+| Elite Four | Sidney | 49 | 47.4 | 82 | 53.0 | 65 | 47.8 | 65 | 56.0 |
 | Elite Four | Phoebe | 51 | 49.4 | 82 | 53.0 | 66 | 48.0 | 66 | 56.0 |
 | Elite Four | Glacia | 53 | 51.4 | 83 | 53.2 | 66 | 48.2 | 66 | 57.0 |
 | Elite Four | Drake | 55 | 53.4 | 83 | 53.5 | 67 | 48.8 | 67 | 57.0 |
-| Elite Four | Wallace | 58 | 56.3 | 84 | 53.8 | 67 | 49.0 | 67 | 58.0 |
+| Elite Four | Wallace | 58 | 56.3 | 84 | 54.0 | 67 | 49.0 | 67 | 58.0 |
 
 ### half clear (gym leaders, Elite Four, Champion)
 
@@ -82,17 +82,17 @@ Party level just before each boss. Every party member is Medium Slow (the starte
 |---|---|---|---|---|---|---|---|---|---|
 | Roxanne | Roxanne 1 | 15 | 13.0 | 15 | 9.8 | 13 | 9.2 | 13 | 11.0 |
 | Brawly | Brawly 1 | 19 | 17.0 | 19 | 12.5 | 17 | 12.2 | 17 | 14.0 |
-| Wattson | Wattson 1 | 24 | 21.5 | 29 | 19.5 | 25 | 18.8 | 25 | 22.0 |
+| Wattson | Wattson 1 | 24 | 21.5 | 29 | 19.2 | 25 | 18.5 | 25 | 22.0 |
 | Flannery | Flannery 1 | 29 | 25.8 | 39 | 25.8 | 33 | 24.0 | 33 | 28.0 |
-| Norman | Norman 1 | 31 | 28.5 | 41 | 27.0 | 34 | 25.0 | 34 | 29.0 |
-| Winona | Winona 1 | 33 | 30.4 | 49 | 31.5 | 41 | 29.5 | 41 | 35.0 |
-| Tate and Liza | Tate And Liza 1 | 42 | 41.5 | 58 | 37.5 | 48 | 35.2 | 48 | 41.0 |
-| Juan | Juan 1 | 46 | 42.8 | 64 | 41.2 | 54 | 39.2 | 54 | 46.0 |
-| Elite Four | Sidney | 49 | 47.4 | 67 | 43.8 | 57 | 41.8 | 57 | 49.0 |
+| Norman | Norman 1 | 31 | 28.5 | 41 | 26.8 | 34 | 25.0 | 34 | 29.0 |
+| Winona | Winona 1 | 33 | 30.4 | 49 | 31.8 | 41 | 29.8 | 41 | 35.0 |
+| Tate and Liza | Tate And Liza 1 | 42 | 41.5 | 58 | 37.2 | 48 | 35.2 | 48 | 41.0 |
+| Juan | Juan 1 | 46 | 42.8 | 64 | 41.5 | 54 | 39.0 | 54 | 46.0 |
+| Elite Four | Sidney | 49 | 47.4 | 67 | 43.5 | 57 | 41.8 | 57 | 49.0 |
 | Elite Four | Phoebe | 51 | 49.4 | 68 | 43.8 | 58 | 42.0 | 58 | 49.0 |
-| Elite Four | Glacia | 53 | 51.4 | 68 | 44.2 | 58 | 42.2 | 58 | 50.0 |
-| Elite Four | Drake | 55 | 53.4 | 69 | 44.8 | 59 | 43.0 | 59 | 50.0 |
-| Elite Four | Wallace | 58 | 56.3 | 70 | 45.0 | 60 | 43.8 | 60 | 51.0 |
+| Elite Four | Glacia | 53 | 51.4 | 68 | 44.2 | 58 | 42.8 | 58 | 50.0 |
+| Elite Four | Drake | 55 | 53.4 | 69 | 44.5 | 59 | 43.0 | 59 | 50.0 |
+| Elite Four | Wallace | 58 | 56.3 | 70 | 44.8 | 60 | 43.8 | 60 | 51.0 |
 
 ### full clear + 20 wild battles per stage (gym leaders, Elite Four, Champion)
 
@@ -100,17 +100,17 @@ Party level just before each boss. Every party member is Medium Slow (the starte
 |---|---|---|---|---|---|---|---|---|---|
 | Roxanne | Roxanne 1 | 15 | 13.0 | 20 | 13.0 | 16 | 12.0 | 16 | 14.0 |
 | Brawly | Brawly 1 | 19 | 17.0 | 24 | 16.0 | 20 | 14.5 | 20 | 17.0 |
-| Wattson | Wattson 1 | 24 | 21.5 | 36 | 24.0 | 30 | 21.8 | 30 | 26.0 |
-| Flannery | Flannery 1 | 29 | 25.8 | 49 | 32.0 | 39 | 28.2 | 39 | 33.0 |
-| Norman | Norman 1 | 31 | 28.5 | 51 | 33.2 | 40 | 29.8 | 40 | 35.0 |
-| Winona | Winona 1 | 33 | 30.4 | 61 | 39.2 | 48 | 35.0 | 48 | 41.0 |
-| Tate and Liza | Tate And Liza 1 | 42 | 41.5 | 72 | 46.2 | 56 | 41.2 | 56 | 48.0 |
+| Wattson | Wattson 1 | 24 | 21.5 | 37 | 24.0 | 30 | 22.2 | 30 | 26.0 |
+| Flannery | Flannery 1 | 29 | 25.8 | 49 | 32.0 | 39 | 28.5 | 39 | 33.0 |
+| Norman | Norman 1 | 31 | 28.5 | 51 | 33.5 | 41 | 29.8 | 41 | 35.0 |
+| Winona | Winona 1 | 33 | 30.4 | 61 | 39.8 | 48 | 35.2 | 48 | 41.0 |
+| Tate and Liza | Tate And Liza 1 | 42 | 41.5 | 72 | 46.8 | 56 | 41.2 | 56 | 48.0 |
 | Juan | Juan 1 | 46 | 42.8 | 79 | 51.2 | 62 | 45.2 | 62 | 53.0 |
 | Elite Four | Sidney | 49 | 47.4 | 84 | 54.2 | 67 | 49.0 | 67 | 57.0 |
-| Elite Four | Phoebe | 51 | 49.4 | 85 | 54.5 | 67 | 49.0 | 67 | 58.0 |
-| Elite Four | Glacia | 53 | 51.4 | 85 | 54.8 | 68 | 49.5 | 68 | 58.0 |
+| Elite Four | Phoebe | 51 | 49.4 | 85 | 54.8 | 67 | 49.0 | 67 | 58.0 |
+| Elite Four | Glacia | 53 | 51.4 | 85 | 55.0 | 68 | 49.5 | 68 | 58.0 |
 | Elite Four | Drake | 55 | 53.4 | 85 | 55.0 | 68 | 49.8 | 68 | 58.0 |
-| Elite Four | Wallace | 58 | 56.3 | 86 | 55.2 | 69 | 50.2 | 69 | 59.0 |
+| Elite Four | Wallace | 58 | 56.3 | 86 | 55.2 | 69 | 50.0 | 69 | 59.0 |
 
 ## Default movesets (Gen 3 vs Gen 9 learnsets)
 
@@ -123,7 +123,7 @@ Party level just before each boss. Every party member is Medium Slow (the starte
 | moves shared with vanilla (0-4): count | {0: 292, 1: 594, 2: 386, 3: 109, 4: 8} |
 | mean attacking moves vanilla -> modern | 2.09 -> 2.28 |
 | mean best attack power vanilla -> modern | 61.7 -> 69.5 |
-| best attack power up / down | 677 / 248 |
+| best attack power up / down | 679 / 248 |
 
 Flags (all default Pokemon / story trainers only):
 
@@ -132,7 +132,7 @@ Flags (all default Pokemon / story trainers only):
 | no_attack | 15 | 9 |
 | lost_all_attacks | 6 | 0 |
 | one_attack | 132 | 59 |
-| lost_stab | 82 | 41 |
+| lost_stab | 85 | 43 |
 | above_band | 39 | 14 |
 | new_strong | 429 | 157 |
 
@@ -176,11 +176,11 @@ Flags (all default Pokemon / story trainers only):
 | Hariyama | 31 | Zander | Tate and Liza | Vital Throw, Fake Out, Whirlwind, Knock Off | Knock Off, Bulk Up, Belly Drum, Detect | - |
 | Spoink | 31 | Leah | Tate and Liza | Psybeam, Psych Up, Confuse Ray, Magic Coat | Psych Up, Confuse Ray, Rest, Power Gem | Power Gem |
 | Kecleon | 42 | Owen | Elite Four | Psybeam, Screech, Slash, Substitute | Detect, Shadow Claw, Screech, Substitute | Shadow Claw |
+| Duskull | 30 | Kindra | Tate and Liza | Foresight, Astonish, Confuse Ray, Pursuit | Night Shade, Payback, Will O Wisp, Mean Look | - |
+| Duskull | 29 | Tammy | Tate and Liza | Foresight, Astonish, Confuse Ray, Pursuit | Night Shade, Payback, Will O Wisp, Mean Look | - |
 | Makuhita | 26 | Yuji | Winona | Arm Thrust, Vital Throw, Fake Out, Whirlwind | Whirlwind, Knock Off, Bulk Up, Belly Drum | - |
 | Hariyama | 32 | Atsushi | Tate and Liza | Vital Throw, Fake Out, Whirlwind, Knock Off | Knock Off, Bulk Up, Belly Drum, Detect | - |
 | Slugma | 22 | Jeff | Flannery | Yawn, Ember, Rock Throw, Harden | Rock Throw, Harden, Clear Smog, Ancient Power | - |
-| Slugma | 23 | Jace | Flannery | Yawn, Ember, Rock Throw, Harden | Rock Throw, Harden, Clear Smog, Ancient Power | - |
-| Xatu | 36 | Samantha | Tate and Liza | Night Shade, Teleport, Wish, Future Sight | Night Shade, Psycho Shift, Power Swap, Guard Swap | - |
 
 ### above_band (story examples)
 
@@ -238,7 +238,7 @@ Flags (all default Pokemon / story trainers only):
 |   Pokemon with at least one flip | 143 |
 |   Pokemon with a flip onto a weaker stat | 31 |
 |   type changes | 0 |
-|   power changes | 267 |
+|   power changes | 269 |
 |   accuracy changes | 71 |
 
 Changed attacking moves (set-move slots; weaker/similar/stronger: the category flipped onto that stat; data: only power, accuracy or type changed):
@@ -563,7 +563,6 @@ First stage where each TM is on a stage map (ball, hidden item, mart list or scr
 | Wattson | Shock Wave | Electric | 60 | Special | MauvilleCity_Gym | script |
 | Wattson | Thief | Dark | 60 | Physical | SlateportCity_OceanicMuseum_1F | script |
 | Wattson | Double Team | Normal | - | Status | MauvilleCity_GameCorner | script |
-| Wattson | Taunt | Dark | - | Status | Route110_TrickHouseEnd | script |
 | Wattson | Torment | Dark | - | Status | SlateportCity_BattleTentLobby | script |
 | Flannery | Focus Punch | Fighting | 150 | Physical | Route115 | ball |
 | Flannery | Overheat | Fire | 130 | Special | LavaridgeTown_Gym_1F | script |
@@ -593,6 +592,7 @@ First stage where each TM is on a stage map (ball, hidden item, mart list or scr
 | Tate and Liza | Rest | Psychic | - | Status | LilycoveCity_House2 | script |
 | Tate and Liza | Safeguard | Normal | - | Status | LilycoveCity_DepartmentStore_4F | mart |
 | Tate and Liza | Skill Swap | Psychic | - | Status | MtPyre_Exterior | ball |
+| Tate and Liza | Taunt | Dark | - | Status | Route110_TrickHousePuzzle5 | reward |
 | Juan | Earthquake | Ground | 100 | Physical | SeafloorCavern_Room9 | ball |
 | Juan | Brick Break | Fighting | 75 | Physical | SootopolisCity_House1 | script |
 | Juan | Water Pulse | Water | 60 | Special | SootopolisCity_Gym_1F | script |
@@ -605,8 +605,8 @@ Species on the stage maps so far (every table), vanilla tables vs the restocked 
 
 | stage | species so far vanilla / modern | new this stage | strongest new (BST, lv) | Fairy first met |
 |---|---|---|---|---|
-| Rival (Route 103) | 3 / 6 | 3 | Doduo (310, 3), Purrloin (281, 3), Rattata (253, 2) | - |
-| Roxanne | 21 / 40 | 18 | Basculin Red Striped (460, 20), Tentacool (335, 5), Finneon (330, 10), Psyduck (320, 10), Slowpoke (315, 20), Mankey (305, 4) | Marill, Ralts |
+| Rival (Route 103) | 4 / 9 | 5 | Doduo (310, 3), Geodude (300, 3), Purrloin (281, 3), Rattata (253, 2), Pidgey (251, 2) | - |
+| Roxanne | 21 / 41 | 18 | Basculin Red Striped (460, 20), Tentacool (335, 5), Finneon (330, 10), Psyduck (320, 10), Slowpoke (315, 20), Mankey (305, 4) | Marill, Ralts |
 | Brawly | 29 / 58 | 14 | Solrock (460, 10), Drilbur (328, 9), Dwebble (325, 15), Krabby (325, 10), Shellos (325, 5), Woobat (323, 7) | - |
 | Wattson | 35 / 73 | 13 | Clawitzer (500, 40), Lanturn (460, 30), Quagsire (430, 25), Frillish (335, 5), Chinchou (330, 20), Clauncher (330, 35) | - |
 | Flannery | 58 / 111 | 29 | Shuckle (505, 5), Slowbro (490, 40), Maractus (461, 19), Basculin Blue Striped (460, 15), Masquerain (454, 30), Seaking (450, 35) | Jigglypuff |
@@ -653,10 +653,10 @@ Prize money from a full clear of each stage (same in both: 4 x last Pokemon's le
 | Rival (Route 103) | 1 | 300 | 300 |
 | Roxanne | 28 | 11224 | 11524 |
 | Brawly | 10 | 5844 | 17368 |
-| Wattson | 51 | 27432 | 44800 |
-| Flannery | 95 | 62936 | 107736 |
-| Norman | 11 | 13468 | 121204 |
-| Winona | 84 | 66720 | 187924 |
+| Wattson | 49 | 27192 | 44560 |
+| Flannery | 95 | 62936 | 107496 |
+| Norman | 11 | 13468 | 120964 |
+| Winona | 86 | 66960 | 187924 |
 | Tate and Liza | 113 | 112056 | 299980 |
 | Juan | 76 | 103064 | 403044 |
 | Elite Four | 31 | 84052 | 487096 |
