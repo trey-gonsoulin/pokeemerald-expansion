@@ -165,11 +165,11 @@ TEST("Flag and var names: NULL outside the flags and for trainer flags")
 }
 
 // The test ROM links test/battle/trainer_control.party as gTrainers, not the game's trainers:
-// trainer 1 is RED and 2 is LEAF (both Rival, "{PKMN} TRAINER"). The IDs after its 17 trainers are
-// zero-filled, so their names have no EOS: the game's table defines every ID below TRAINERS_COUNT.
+// trainer 1 is RED and 2 is LEAF (both Rival, "{PKMN} TRAINER"), and the IDs after its 17 trainers
+// are zero-filled: no party, and no EOS in the name
 TEST("Flag and var names: trainer flags show the trainer's class and name")
 {
-    u8 name[64];
+    u8 name[DEBUG_TRAINER_FLAG_NAME_SIZE];
 
     EXPECT(Debug_CopyTrainerFlagName(name, TRAINER_FLAGS_START + 1));
     EXPECT(NameIs(name, COMPOUND_STRING("{PKMN} TRAINER RED")));
@@ -177,12 +177,13 @@ TEST("Flag and var names: trainer flags show the trainer's class and name")
     EXPECT(NameIs(name, COMPOUND_STRING("{PKMN} TRAINER LEAF")));
 }
 
-TEST("Flag and var names: no trainer for TRAINER_NONE, unused trainer IDs and other flags")
+TEST("Flag and var names: no trainer for TRAINER_NONE, trainers without a party, unused trainer IDs and other flags")
 {
-    u8 name[64];
+    u8 name[DEBUG_TRAINER_FLAG_NAME_SIZE];
 
     name[0] = EOS;
     EXPECT(!Debug_CopyTrainerFlagName(name, TRAINER_FLAGS_START + TRAINER_NONE));
+    EXPECT(!Debug_CopyTrainerFlagName(name, TRAINER_FLAGS_START + TRAINERS_COUNT - 1));
     EXPECT(!Debug_CopyTrainerFlagName(name, TRAINER_FLAGS_START + TRAINERS_COUNT));
     EXPECT(!Debug_CopyTrainerFlagName(name, TRAINER_FLAGS_END));
     EXPECT(!Debug_CopyTrainerFlagName(name, TRAINER_FLAGS_END + 1));

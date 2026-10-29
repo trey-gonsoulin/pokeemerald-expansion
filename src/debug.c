@@ -3407,6 +3407,7 @@ static void DebugSelectionStep_PrintFlagVarId(u8 taskId, const u8 *const *digitI
 static void DebugSelectionStep_UpdateFlag(u8 taskId, u8 digits, u32 min, u32 max)
 {
     u32 flag = DEBUG_TASK_INPUT(taskId);
+    u8 trainerName[DEBUG_TRAINER_FLAG_NAME_SIZE];
     u8 *end;
 
     Debug_InputToDecimalString(gStringVar1, taskId, digits);
@@ -3414,8 +3415,10 @@ static void DebugSelectionStep_UpdateFlag(u8 taskId, u8 digits, u32 min, u32 max
     end = ConvertIntToHexStringN(end, flag, STR_CONV_MODE_LEFT_ALIGN, 3);
     end = StringCopy(end, COMPOUND_STRING("  "));
     StringCopy(end, FlagGet(flag) ? sDebugText_True : sDebugText_False);
-    // A trainer flag shows its trainer, which is short enough for the window in every font
-    if (!DEBUG_FLAG_VAR_NAMES || !Debug_CopyTrainerFlagName(gStringVar2, flag))
+    // A trainer flag has no constant name, so it shows its trainer
+    if (Debug_CopyTrainerFlagName(trainerName, flag))
+        DebugSelectionStep_CopyFlagVarName(trainerName);
+    else
         DebugSelectionStep_CopyFlagVarName(Debug_GetFlagName(flag));
     DebugSelectionStep_PrintFlagVarId(taskId, gText_DigitIndicator);
 }

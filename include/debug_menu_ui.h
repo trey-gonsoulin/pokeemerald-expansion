@@ -67,6 +67,7 @@ u32 Debug_NextNameInitial(const struct DebugNameOrder *order, u32 value);
 const u8 *Debug_GetFlagName(u32 flag);
 const u8 *Debug_GetVarName(u32 varId);
 // Trainer flags have no constant name: this gives the trainer's class and name instead
+#define DEBUG_TRAINER_FLAG_NAME_SIZE 32
 bool32 Debug_CopyTrainerFlagName(u8 *dest, u32 flag);
 
 // List menus
