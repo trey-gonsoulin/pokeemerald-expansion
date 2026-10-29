@@ -3414,7 +3414,9 @@ static void DebugSelectionStep_UpdateFlag(u8 taskId, u8 digits, u32 min, u32 max
     end = ConvertIntToHexStringN(end, flag, STR_CONV_MODE_LEFT_ALIGN, 3);
     end = StringCopy(end, COMPOUND_STRING("  "));
     StringCopy(end, FlagGet(flag) ? sDebugText_True : sDebugText_False);
-    DebugSelectionStep_CopyFlagVarName(Debug_GetFlagName(flag));
+    // A trainer flag shows its trainer, which is short enough for the window in every font
+    if (!DEBUG_FLAG_VAR_NAMES || !Debug_CopyTrainerFlagName(gStringVar2, flag))
+        DebugSelectionStep_CopyFlagVarName(Debug_GetFlagName(flag));
     DebugSelectionStep_PrintFlagVarId(taskId, gText_DigitIndicator);
 }
 
