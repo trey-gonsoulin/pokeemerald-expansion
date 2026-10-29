@@ -26,6 +26,8 @@ struct WindowTemplate;
 
 // "<+1>" ... "<+10000000>", indexed by the highlighted digit
 extern const u8 *const gText_DigitIndicator[];
+// "<+0x1>" ... "<+0x1000>", for inputs dialed in hex
+extern const u8 *const gText_HexDigitIndicator[];
 
 // Where the cursor was in a menu, so returning to it lands on the same entry
 struct DebugMenuPosition
@@ -37,10 +39,12 @@ struct DebugMenuPosition
 
 // Numeric input
 u32 Debug_CountDigits(u32 max);
+u32 Debug_CountHexDigits(u32 max);
 void Debug_StartNumericInput(u8 taskId, u32 input);
-void Debug_HandleInput_Numeric(u8 taskId, u32 min, u32 max, u32 digits);
+void Debug_HandleInput_Numeric(u8 taskId, u32 min, u32 max, u32 digits, bool32 hex);
 bool32 Debug_NumericInputMovedDown(void);
 void Debug_InputToDecimalString(u8 *dest, u8 taskId, u32 digits);
+void Debug_InputToHexString(u8 *dest, u8 taskId, u32 digits);
 
 // List menus
 s32 Debug_ListMenu_ProcessInput(u8 listTaskId);
