@@ -183,7 +183,7 @@ TEST("Flag and var names: no trainer for TRAINER_NONE, trainers without a party,
 
     name[0] = EOS;
     EXPECT(!Debug_CopyTrainerFlagName(name, TRAINER_FLAGS_START + TRAINER_NONE));
-    EXPECT(!Debug_CopyTrainerFlagName(name, TRAINER_FLAGS_START + TRAINERS_COUNT - 1));
+    EXPECT(!Debug_CopyTrainerFlagName(name, TRAINER_FLAGS_START + TRAINERS_COUNT - 1)); // zero-filled here, a real trainer in the game
     EXPECT(!Debug_CopyTrainerFlagName(name, TRAINER_FLAGS_START + TRAINERS_COUNT));
     EXPECT(!Debug_CopyTrainerFlagName(name, TRAINER_FLAGS_END));
     EXPECT(!Debug_CopyTrainerFlagName(name, TRAINER_FLAGS_END + 1));
