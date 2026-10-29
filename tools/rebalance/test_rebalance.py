@@ -226,6 +226,52 @@ class Exp(unittest.TestCase):
         self.assertGreater(RB.exp_award(d, self.scaling, 39, 5, 5, False, 1),
                            RB.exp_award(d, self.scaling, 39, 5, 10, False, 1))
 
+    def test_affection_boost_before_scaling(self):
+        # ApplyExperienceMultipliers: 4+ hearts give 4915/4096, before the level scaling.
+        d = fake_regime(B_SCALED_EXP='GEN_3', B_SPLIT_EXP='GEN_6', B_AFFECTION_MECHANICS='TRUE')
+        gain = 39 * 10 // 7
+        self.assertEqual(RB.exp_award(d, self.scaling, 39, 10, 20, False, 1, affection=True), gain * 4915 // 4096)
+        self.assertEqual(RB.exp_award(d, self.scaling, 39, 10, 25, False, 1, sent_out=False, holders=6,
+                                      affection=True), gain // 2 * 4915 // 4096)
+        off = fake_regime(B_SCALED_EXP='GEN_3', B_SPLIT_EXP='GEN_6', B_AFFECTION_MECHANICS='FALSE')
+        self.assertEqual(RB.exp_award(off, self.scaling, 39, 10, 20, False, 1, affection=True), gain)
+        scaled = fake_regime(B_AFFECTION_MECHANICS='TRUE')
+        self.assertEqual(RB.exp_award(scaled, self.scaling, 39, 5, 5, False, 1, affection=True),
+                         39 * 4915 // 4096 + 1)
+
+    def test_trainer_bonus_up_to_gen7(self):
+        # Cmd_getexp checks B_TRAINER_EXP_MULTIPLIER <= GEN_7.
+        calc = 98 * 20 // 7
+        for value, expected in (('GEN_6', calc * 150 // 100), ('GEN_7', calc * 150 // 100), ('GEN_8', calc)):
+            d = fake_regime(B_SCALED_EXP='GEN_3', B_SPLIT_EXP='GEN_6', B_TRAINER_EXP_MULTIPLIER=value)
+            self.assertEqual(RB.exp_award(d, self.scaling, 98, 20, 20, True, 1), expected, value)
+
+    def test_friendship_events(self):
+        self.assertEqual([RB.friendship_gain(f, 'level') for f in (50, 99, 100, 199, 200)], [5, 5, 3, 3, 2])
+        self.assertEqual([RB.friendship_gain(f, 'league') for f in (0, 150, 250)], [3, 2, 1])
+        party = RB.Party(2, friendship=98)
+        party.befriend('walk', 4, chance=0.5)
+        self.assertEqual(party.friendship, [100.0, 100.0])
+        party.befriend('league')
+        self.assertEqual(party.friendship, [102.0, 102.0])
+        party.friendship = [254.0, 0.0]
+        party.befriend('level')
+        self.assertEqual(party.friendship, [255.0, 5.0])
+
+    def test_level_ups_add_friendship_and_unlock_affection(self):
+        d = fake_regime(B_SCALED_EXP='GEN_3', B_SPLIT_EXP='GEN_6', B_AFFECTION_MECHANICS='TRUE')
+        party = RB.Party(1, friendship=50, affection='friendship')
+        # 101 exp takes a Medium Slow level 5 (135) to level 7 (236): two level-ups.
+        party.defeat(d, self.scaling, [(101, 7, 1.0)], False, False)
+        self.assertEqual((party.levels(), party.friendship), ([7], [60.0]))
+        self.assertFalse(party.has_affection(0))
+        party.friendship = [220.0]
+        self.assertTrue(party.has_affection(0))
+        self.assertTrue(RB.Party(1, affection='always').has_affection(0))
+        self.assertFalse(RB.Party(1, friendship=255, affection='none').has_affection(0))
+        with self.assertRaises(ValueError):
+            RB.Party(1, affection='sometimes')
+
     def test_growth(self):
         self.assertEqual(RB.exp_for_level('GROWTH_MEDIUM_SLOW', 5), 135)
         self.assertEqual(RB.level_for_exp('GROWTH_MEDIUM_SLOW', 135), 5)
@@ -292,6 +338,42 @@ class Analysis(unittest.TestCase):
         self.assertGreaterEqual(leader['modern_share6'], leader['modern_share6_bench'])
         wild = self.res['level_curve']['full clear + 20 wild battles per stage']
         self.assertGreaterEqual(wild[1]['modern_solo'], leader['modern_solo'])
+
+    def test_share_curve(self):
+        gd = G.load(FIXTURE)['modern']
+        trainers = G.parse_trainers(os.path.join(FIXTURE, 'src', 'data', 'trainers.party'))
+        stages = RB.load_stages(FIXTURE_STAGES, trainers, FIXTURE)
+        scaling = G.parse_scaling_factors(FIXTURE)
+        wilds = RB.load_wilds(FIXTURE, stages)['modern']
+
+        def curve(d=gd, **kw):
+            return RB.share_curve(stages, trainers, d, scaling, wilds, **kw)
+        # Catch exp only counts when B_EXP_CATCH gives it (the fixture's wild
+        # Pokemon are far below the party, so it takes many to gain a level).
+        base = curve(catches=0)[0]['bench']
+        self.assertGreater(curve(catches=100)[0]["bench"], base)
+        self.assertEqual(curve(RB.with_configs(gd, B_EXP_CATCH='GEN_5'), catches=100)[0]['bench'], base)
+        on_cfg = RB.with_configs(gd, B_TRAINER_EXP_MULTIPLIER='GEN_6')
+        self.assertTrue(on_cfg.flag('B_TRAINER_EXP_MULTIPLIER <= GEN_7'))
+        self.assertFalse(gd.flag('B_TRAINER_EXP_MULTIPLIER <= GEN_7'))  # the original is untouched
+        # Margin raises: each boss's ace ends margin above the bench, never lowered.
+        rows = curve(margin=2)
+        for r in rows:
+            self.assertEqual(r['boss_ace'], max(r['base_ace'], r['bench'] + 2))
+        again = curve(raises={r['boss']: r['raise'] for r in rows})
+        self.assertEqual([r['boss_ace'] for r in again], [r['boss_ace'] for r in rows])
+        self.assertEqual(curve(margin=-100)[0]['raise'], 0)
+        # The 1.5x and affection only add exp.
+        on = curve(RB.with_configs(gd, B_TRAINER_EXP_MULTIPLIER='GEN_6'), affection='always')
+        self.assertGreaterEqual(on[-1]['bench'], curve(affection='none')[-1]['bench'])
+        # Only default-move Pokemon of a raised team are listed (the leader's Sableye has set moves).
+        rows = RB.raised_defaults(trainers, G.load(FIXTURE), {'TRAINER_LEADER_X': 5, 'TRAINER_RIVAL_A': 0})
+        self.assertEqual([(r['species'], r['levels']) for r in rows], [('SPECIES_MR_MIME', [15, 20])])
+        self.assertEqual(RB.stage_trainer_levels(stages, trainers),
+                         [{'stage': 'One', 'trainers': 1, 'mean_ace': 20.0, 'max_ace': 20}])
+        share = self.res['share_curve']
+        self.assertEqual(sorted(share), sorted(RB.TRAINER_EXP))
+        self.assertEqual(len(share['1.5x off']['now']), 2 * len(RB.AFFECTION))
 
     def test_tms_and_wilds(self):
         tms = {r['tm']: r for r in self.res['tms']}

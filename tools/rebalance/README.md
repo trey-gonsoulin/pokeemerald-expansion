@@ -52,6 +52,25 @@ in `unstaged`, and each Trick House puzzle sits after its badge gate.
   against the expected values in `test/battle/exp.c`. It leaves out the
   Lucky Egg, traded, affection (`B_AFFECTION_MECHANICS` is TRUE, so a
   4-heart Pokemon gets 1.2x more in game) and unevolved bonuses.
+- **Exp. Share curve** (#127): the share6 party on modern data before
+  each story boss (`share_curve`), with `B_TRAINER_EXP_MULTIPLIER` at
+  GEN_LATEST and at GEN_6 (`TRAINER_EXP`; `Cmd_getexp` gives the 1.5x for
+  GEN_7 and earlier), on a full and a half clear, in three affection
+  brackets (`AFFECTION`): none, modelled friendship, and 4 hearts from the
+  start. Affection is `ApplyExperienceMultipliers`' 4915/4096 at 4+ hearts
+  (friendship 220). The friendship model starts at 50
+  (`P_UPDATED_FRIENDSHIP`) and adds `sFriendshipEventModifiers`' level-up
+  and league-battle gains plus `WALK_STEPS_PER_STAGE` of walking (one +1 per
+  128 steps, half the time). Each stage adds `CATCHES_PER_STAGE` catches
+  (`B_EXP_CATCH`: a catch gives the exp of a KO) at its land-table average.
+  The Lucky Egg, traded and unevolved bonuses (`B_UNEVOLVED_EXP_MULTIPLIER`
+  is on, but only for a Pokemon kept from evolving) stay out. From that
+  curve it proposes boss raises: every Pokemon of a story boss's team goes
+  up by the same amount so its ace sits `TARGET_MARGIN` above the
+  full-clear bench (modelled friendship), in story order, never lowered,
+  and it reruns the curve and the default-moveset flags of the raised
+  Pokemon with them. A sensitivity table varies the catches, the walking
+  and the stage trainers' levels.
 - **Default movesets**: `GiveBoxMonInitialMoveset` (the last four distinct
   level-up moves, level-0 evolution moves skipped) under both learnsets, for
   every trainer Pokemon without set moves. Fixed-damage moves (Seismic

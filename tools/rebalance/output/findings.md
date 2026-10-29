@@ -138,13 +138,97 @@ Prize money is unchanged: 11,524 by Roxanne, 44,560 by Wattson, 120,964 by Norma
 - The Escape Rope is a free key item, and a whiteout costs a badge-based amount.
 - **Verdict:** money gets tight only with bulk Hyper Potions, Revives or Game Corner TMs.
 
+## 7. Exp. Share curve and boss levels (#127)
+The owner's baseline (#113): the Gen 6 Exp. Share on; balance by raising opponent levels, lower ordinary trainers only carefully, never a level cap; evaluate the 1.5x trainer exp; include catch exp and affection; leave the Lucky Egg and traded bonuses out. Numbers are from `report.md`, "Exp. Share curve (#127)".
+
+**Model** (share6: one KO-taker, five on the bench, Medium Slow from 5; modern data):
+- **1.5x:** `B_TRAINER_EXP_MULTIPLIER` GEN_LATEST (off, as built) and GEN_6 (on). Upstream's `Cmd_getexp` checks `<= GEN_7`, so GEN_7 also turns it on, against its config comment.
+- **Catch exp** (`B_EXP_CATCH`, on): 3 catches per stage at the stage's land-table average. A catch runs `getexp` like a KO, so the active Pokémon gets full exp and the bench half.
+- **Affection** (`B_AFFECTION_MECHANICS` TRUE): 4915/4096 at 4+ hearts (friendship 220), applied before the level scaling, as in `ApplyExperienceMultipliers`. Three brackets: none, modelled friendship, and 4 hearts from the start. The friendship model starts at 50 (`P_UPDATED_FRIENDSHIP`) and adds +5/+3/+2 per level (bands 0-99/100-199/200+), +3/+2/+1 per gym, Elite Four or Champion battle, and 4,096 steps of walking per stage (+1 per 128 steps, half the time). The bench reaches 220 by Flannery under both settings.
+- **Left out:** the Lucky Egg, traded Pokémon, Soothe Bell and Luxury Ball. `B_UNEVOLVED_EXP_MULTIPLIER` is on (GEN_LATEST), but it only pays 1.2x to a Pokémon kept from evolving past its evolution level, which is a player choice like the Lucky Egg.
+- **Checks:** the new math is unit-tested against the code: affection before scaling, the `<= GEN_7` trainer check, the friendship bands and caps, and level-up friendship. `test/battle/exp.c` covers catch exp only as "exp is given" (Gen 6+), with the same `getexp` path the model uses.
+
+**What the extra terms add** (full clear, bench before Wallace, now):
+- Catches add 0-1 level anywhere. The wild Pokémon are far below the party, so the scaled formula pays little for them.
+- Affection adds about 2 levels late (Wallace: 58 with none, 60 with friendship, 60 always), and no walking or twice as much moves it by at most 2.
+- The 1.5x adds 6 (Wallace bench 60 -> 66 with friendship; the KO-taker 70 -> 77).
+- With no catches and no affection the curve matches #113's share6 bench (58 at Wallace).
+
+**Step 2, targets (owner to confirm):**
+- **Full clear:** each story boss's ace sits 1 level above the Exp. Share bench (`TARGET_MARGIN` 1), with modelled friendship. After the raises the bench sits against each raised boss's ace at -1 to -4 with no affection, -1 with friendship, and -1 to +1 with 4 hearts from the start. The KO-taker ends 0 (Roxanne) to 10-11 (the Elite Four) levels above.
+- **Half clear:** the bench at most 8 below each gym leader, Elite Four member and Champion (`HALF_CLEAR_GAP`).
+- **Why these margins:** the half-clear bench trails the full-clear one by 4-7 levels late, so no single boss level is within 1 of one and within a few levels of the other. A margin of 0 would put the "always" bracket up to 2 above the ace. A margin of 2 or more would leave a half-clear party 9-10 levels short.
+- **Rule:** bosses are only raised, never lowered. Every Pokémon on the team goes up by the same amount, which keeps the team's spread. The raises go in story order, so each one counts toward the later stages' exp.
+- Roxanne and Brawly already sit 2-3 above the bench and stay as they are.
+
+**Step 3, proposed levels** (raise on every Pokémon of the team -> new ace; ace now in brackets):
+
+| boss | 1.5x off | 1.5x on |
+|---|---|---|
+| May, Route 103 (5) | +1 -> 6 | +1 -> 6 |
+| Roxanne (15), Brawly (19) | +0 | +0 |
+| May, Rustboro (15) | +2 -> 17 | +3 -> 18 |
+| May, Route 110 (20) | +6 -> 26 | +8 -> 28 |
+| Wally, Mauville (16) | +10 -> 26 | +13 -> 29 |
+| Wattson (24) | +2 -> 26 | +5 -> 29 |
+| Tabitha, Mt. Chimney (22) | +11 -> 33 | +15 -> 37 |
+| Maxie, Mt. Chimney (25) | +9 -> 34 | +13 -> 38 |
+| Flannery (29) | +5 -> 34 | +9 -> 38 |
+| Norman (31) | +5 -> 36 | +9 -> 40 |
+| May, Route 119 (31) | +11 -> 42 | +16 -> 47 |
+| Shelly, Weather Institute (28) | +15 -> 43 | +19 -> 47 |
+| Winona (33) | +10 -> 43 | +15 -> 48 |
+| May, Lilycove (34) | +16 -> 50 | +21 -> 55 |
+| Tabitha, Magma Hideout (33) | +17 -> 50 | +23 -> 56 |
+| Maxie, Magma Hideout (39) | +12 -> 51 | +17 -> 56 |
+| Matt (34) | +17 -> 51 | +23 -> 57 |
+| Tate and Liza (42) | +9 -> 51 | +15 -> 57 |
+| Tabitha, Mossdeep (40) | +16 -> 56 | +21 -> 61 |
+| Maxie, Mossdeep (44) | +12 -> 56 | +18 -> 62 |
+| Shelly, Seafloor Cavern (37) | +19 -> 56 | +25 -> 62 |
+| Archie (43) | +13 -> 56 | +20 -> 63 |
+| Juan (46) | +11 -> 57 | +17 -> 63 |
+| Wally, Victory Road (45) | +15 -> 60 | +22 -> 67 |
+| Sidney (49) | +12 -> 61 | +19 -> 68 |
+| Phoebe (51) | +11 -> 62 | +18 -> 69 |
+| Glacia (53) | +9 -> 62 | +16 -> 69 |
+| Drake (55) | +8 -> 63 | +15 -> 70 |
+| Wallace (58) | +5 -> 63 | +13 -> 71 |
+
+- **Rerun with the raises** ("After the ... raises" in `report.md`): on a full clear the bench is 1 below the ace at 28 of 30 bosses (1.5x off) and 29 of 30 (1.5x on). The exceptions are Brawly, and Roxanne with 1.5x off, whose aces are already higher. On a half clear it is 3 to 8 below every gym leader, Elite Four member and Champion in both settings, so both meet the targets.
+- **The raised bosses feed the curve:** with them the bench before Wallace is 62 (off) or 70 (on), not 60 or 66.
+- **The Elite Four bunch up:** with 1.5x off they are 61/62/62/63 and Wallace is 63, because the bench gains little between their fights. Keeping their original steps (2-3 levels apart: 61/63/65/67, Wallace 70) would put Wallace about 7 above the bench, which breaks the full-clear target. That is the owner's call.
+- **Recommendation: 1.5x off** (as built). It needs smaller raises (Wallace +5 vs +13; the Magma and Aqua bosses +9 to +19 vs +13 to +25) and ends at 63 rather than 71. Fewer raised Pokémon pass their evolution level (11 vs 15, below). It also keeps the un-raised route trainers closer: the 1.5x lifts the bench another 1-6 levels above each stage's trainers (4-6 from Flannery on). The 1.5x-on table meets the same targets if the owner prefers it.
+- **Stage trainers stay as they are:** each stage's regular trainers average 3 (Brawly) to 18 (Juan) levels below the full-clear bench ("Stage trainers against the bench"). Raising them doesn't close that gap, because their extra exp lifts the bench too: every stage trainer +3 moves the bench +2 to +3 (Juan 54 -> 57, Wallace 60 -> 62, 1.5x off). Lowering them (the secondary lever) would widen the gap. So the curve rests on the bosses alone. The routes being easy for an Exp. Share party is the cost of that baseline, and only a playtest can say how it feels.
+- **Wild tables: no change needed for the curve.** Catches move it by at most 1 level. Higher wild levels would make wild Pokémon more of a threat, not change the curve, so that belongs to the restock (#4/#5), which owns `src/data/wild_encounters.json`.
+- **Under-evolved after the raise** (levels only, no species swaps; species at or past their `EVO_LEVEL` level only after the raise, 1.5x off; a one-off check of the species_info `EVOLUTION` entries, not in `report.md`):
+  - May, Rustboro: Treecko 17 (evolves at 16);
+  - Wally, Mauville: Ralts 26 (20);
+  - Tabitha, Mt. Chimney: Numel 33 (33);
+  - May, Route 119: Slugma 40 (38) and Grovyle 42 (36);
+  - Shelly, Weather Institute: Carvanha 43 (30);
+  - Winona: Swablu 39 (35);
+  - May, Lilycove: Slugma 48 and Grovyle 50;
+  - Tabitha, Magma Hideout: Numel 43;
+  - Juan: Sealeo 54 (44).
+
+  1.5x on adds Wingull, Numel (Flannery's and a second of Tabitha's) and Norman's Vigoroth 36 (36). Evolving them is a follow-up for #131/#132.
+- **Default movesets change with the levels** (the last four level-up moves). 43 raised boss Pokémon are on default moves (the gym leaders and Elite Four all have set moves), and 42 of them get a different set under 1.5x off ("Default movesets of the raised boss Pokemon" in `report.md`). New flags:
+  - Lost STAB: May's Route 110 Slugma (Ember drops out).
+  - One damaging move left and lost STAB: the Mightyena of Maxie (Magma Hideout) and Matt.
+  - New strong moves: 15 slots, up from 9 (Liquidation on Carvanha and Sharpedo, Outrage on Tropius, Sucker Punch and Play Rough on Mightyena, Giga Drain and Leaf Blade on Grovyle).
+
+  #131 and #132 should work from that list once the levels land. The full-game flag table in "Default movesets" updates with them too.
+
+The last commit of the #127 branch applies the 1.5x-off column to `src/data/trainers.party`: levels only, the 28 raised bosses, with `B_TRAINER_EXP_MULTIPLIER` unchanged. The coordinator can drop that commit if the owner picks another margin or 1.5x on.
+
 ## Proposed balance changes (owner to accept or reject; each can be its own issue)
 1. **Soft level cap at each gym ace** (config). Set `B_LEVEL_CAP_TYPE LEVEL_CAP_FLAG_LIST` and `B_EXP_CAP_TYPE EXP_CAP_SOFT`. `sLevelCapFlagMap` in `src/caps.c` already holds exactly the measured aces (15/19/24/29/31/33/42/46/58). Consider `B_RARE_CANDY_CAP` too.
 2. **Boss AI to `Smart Trainer`** (data) for the gym leaders, the Elite Four, Wallace, and optionally the rivals and team leaders.
 3. **Fix the four boss sets the split weakened** (data): Wallace's Gyarados Hyper Beam, Phoebe's Banettes' Shadow Ball (-> Shadow Claw), Glacia's Sealeo Ice Ball, Wattson's Voltorb Spark.
 4. **Hand-write movesets for the story Pokémon that lost STAB or kept one attack** (43 and 59 slots; the list is in `output/trainer_mons.csv`). Start with the Makuhita/Hariyama line, the Museum Carvanha and Jeff's and Jace's Slugma.
 5. **Review the 157 story slots with strong new default moves** route by route (they may be welcome). A trainers-only Gen 3 learnset would need code: `P_LVL_UP_LEARNSETS` is a single include.
-6. **Optional `B_TRAINER_EXP_MULTIPLIER GEN_7`**, only if the Exp. Share isn't the intended way to play.
+6. **Optional `B_TRAINER_EXP_MULTIPLIER GEN_6`** to restore the 1.5x (GEN_7 also restores it: `Cmd_getexp` checks `<= GEN_7`), only if the Exp. Share isn't the intended way to play. Evaluated with the Exp. Share in section 7.
 7. **One Steel or Poison coverage move each for Drake and Sidney**, whose whole teams are weak to Fairy (low priority).
 8. **Sludge Bomb at Dewford:** move it later, or accept it (low priority).
 9. **Economy:** leave it, or set `I_HEALTH_RECOVERY GEN_3` if late-game healing feels too expensive in a playtest.
@@ -153,6 +237,6 @@ Not proposed: reverting `P_LVL_UP_LEARNSETS` globally, which would also change e
 
 **Caveats:**
 - The full clear is an upper bound.
-- The model has no catch exp. Affection (1.2x at 4 hearts, `B_AFFECTION_MECHANICS` TRUE), the Lucky Egg and traded bonuses would all push levels higher.
+- Sections 1-6 have no catch exp or affection (1.2x at 4 hearts, `B_AFFECTION_MECHANICS` TRUE); section 7 adds both. The Lucky Egg and traded bonuses push levels higher still.
 - The stages are approximate, and some TMs and wild slots open later than their map's stage. A stage holds what's reachable before its bosses, so each Trick House puzzle sits in the stage after the badge it needs (Puzzle 2, badge 3, with Flannery, up to Puzzle 7, badge 8, with the Elite Four), and Meteor Falls 1F_2R (Waterfall) is with the Elite Four. Route 103's grass counts from the first rival fight, its Surf-only swimmers from Winona. Post-game maps (`unstaged` in `story_stages.json`, including Trick House Puzzle 8) are left out.
 - Spot-check Phoebe and Sidney against a Steel lead, Drake against a Fairy, and Wallace's Gyarados on the debug ROM before items 3 and 7.
