@@ -1,0 +1,12 @@
+RouteA_EventScript_Hiker::
+	trainerbattle_single TRAINER_HIKER_A, RouteA_Text_HikerIntro, RouteA_Text_HikerDefeat
+	msgbox RouteA_Text_HikerPostBattle, MSGBOX_AUTOCLOSE
+	end
+
+RouteA_EventScript_Rival::
+	trainerbattle_no_intro TRAINER_RIVAL_A, RouteA_Text_RivalDefeat
+	end
+
+RouteA_EventScript_SwimmerRematch::
+	trainerbattle_rematch TRAINER_SWIMMER_B, RouteA_Text_SwimmerRematchIntro, RouteA_Text_SwimmerDefeat
+	end

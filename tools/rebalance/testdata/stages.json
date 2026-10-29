@@ -1,0 +1,9 @@
+{
+  "rival": "RIVAL",
+  "starter": "A",
+  "exclude": ["TRAINER_RIVAL_*"],
+  "stages": [
+    {"name": "One", "maps": ["RouteA"], "bosses": ["TRAINER_{RIVAL}_{STARTER}"]},
+    {"name": "Two", "maps": ["TownA_*"], "bosses": ["TRAINER_LEADER_X"]}
+  ]
+}

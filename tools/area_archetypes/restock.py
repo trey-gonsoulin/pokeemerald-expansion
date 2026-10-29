@@ -202,44 +202,53 @@ def expand_macros(text, macros, pattern, depth=0):
     return ''.join(out)
 
 
+def species_entries(repo, defines):
+    """Each species_info entry's text with the family files' own macros
+    expanded, as the preprocessor sees it under ``defines``, plus the family
+    file each species is first defined in."""
+    info_dir = os.path.join(repo, 'src', 'data', 'pokemon', 'species_info')
+    entries = collections.defaultdict(list)
+    entry_files = {}
+    macros = {}  # name -> (params or None, body)
+    for name in sorted(os.listdir(info_dir)):
+        if not re.fullmatch(r'gen_\d+_families\.h', name):
+            continue
+        current = None
+        macro = None  # [name, params, body lines] while reading a multi-line #define
+        for line in active_lines(os.path.join(info_dir, name), defines):
+            line = line.rstrip('\n')
+            if macro:
+                macro[2].append(line.rstrip().removesuffix('\\'))
+                if not line.rstrip().endswith('\\'):
+                    macros[macro[0]] = (macro[1], '\n'.join(macro[2]))
+                    macro = None
+                continue
+            m = re.match(r'\s*#\s*define\s+(\w+)(?:\(([^)]*)\))?\s*(.*)', line)
+            if m:
+                params = [x.strip() for x in m[2].split(',')] if m[2] is not None else None
+                body = m[3].rstrip()
+                if body.endswith('\\'):
+                    macro = [m[1], params, [body.removesuffix('\\')]]
+                else:
+                    macros[m[1]] = (params, body)
+                continue
+            m = re.match(r'\s*\[(SPECIES_\w+)\]\s*=', line)
+            if m:
+                current = m[1]
+                entry_files.setdefault(current, name)
+            if current:
+                entries[current].append(line + '\n')
+    pattern = re.compile(r'\b(' + '|'.join(map(re.escape, macros)) + r')\b') if macros else None
+    texts = {sp: expand_macros(''.join(lines), macros, pattern) for sp, lines in entries.items()}
+    return texts, entry_files
+
+
 class SpeciesInfo:
     """Which species the build enables, their flags, and their pre-evolutions."""
 
     def __init__(self, repo):
         self.constants = AA.load_species_constants(repo)
-        defines = parse_defines(repo)
-        info_dir = os.path.join(repo, 'src', 'data', 'pokemon', 'species_info')
-        entries = collections.defaultdict(list)
-        entry_files = {}
-        macros = {}  # name -> (params or None, body)
-        for name in sorted(os.listdir(info_dir)):
-            if not re.fullmatch(r'gen_\d+_families\.h', name):
-                continue
-            current = None
-            macro = None  # [name, params, body lines] while reading a multi-line #define
-            for line in active_lines(os.path.join(info_dir, name), defines):
-                line = line.rstrip('\n')
-                if macro:
-                    macro[2].append(line.rstrip().removesuffix('\\'))
-                    if not line.rstrip().endswith('\\'):
-                        macros[macro[0]] = (macro[1], '\n'.join(macro[2]))
-                        macro = None
-                    continue
-                m = re.match(r'\s*#\s*define\s+(\w+)(?:\(([^)]*)\))?\s*(.*)', line)
-                if m:
-                    params = [x.strip() for x in m[2].split(',')] if m[2] is not None else None
-                    body = m[3].rstrip()
-                    if body.endswith('\\'):
-                        macro = [m[1], params, [body.removesuffix('\\')]]
-                    else:
-                        macros[m[1]] = (params, body)
-                    continue
-                m = re.match(r'\s*\[(SPECIES_\w+)\]\s*=', line)
-                if m:
-                    current = m[1]
-                    entry_files.setdefault(current, name)
-                if current:
-                    entries[current].append(line + '\n')
+        entries, entry_files = species_entries(repo, parse_defines(repo))
         with open(os.path.join(repo, 'include', 'constants', 'species.h'), encoding='utf-8') as f:
             # SPECIES_BURMY = SPECIES_BURMY_PLANT and the like
             self.alias = dict(re.findall(r'^\s*(SPECIES_\w+)\s*=\s*(SPECIES_\w+)\s*,', f.read(), re.M))
@@ -249,9 +258,7 @@ class SpeciesInfo:
         self.pre_evos = collections.defaultdict(list)  # species -> [(from, method, param)]
         # Generation of each species' family file; restock() refines it from the pools.
         self.gen = {sp: int(re.search(r'\d+', name)[0]) for sp, name in entry_files.items()}
-        pattern = re.compile(r'\b(' + '|'.join(map(re.escape, macros)) + r')\b') if macros else None
-        for sp, lines in entries.items():
-            text = expand_macros(''.join(lines), macros, pattern)
+        for sp, text in entries.items():
             self.flags[sp] = set(re.findall(r'\.(is\w+)\s*=\s*TRUE', text))
             m = re.search(r'\.evolutions\s*=\s*EVOLUTION\(', text)
             if not m:

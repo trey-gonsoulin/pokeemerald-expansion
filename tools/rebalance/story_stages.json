@@ -1,0 +1,32 @@
+{
+  "comment": "Emerald's story in order, for the level-curve and TM models. Each stage's map globs (data/maps folder names) hold the trainers, TMs and wild Pokemon reachable in it; a map belongs to the first stage that matches it. The bosses are fought last, in order. A stage's optional land_maps globs place a map's land (grass) table there ahead of its maps globs (Route 103's grass is at its west end, by the first rival fight), and its optional trainers ids override their map's stage (Route 103's two swimmers need Surf). {RIVAL} and {STARTER} are filled in from rival and starter.",
+  "rival": "MAY",
+  "starter": "MUDKIP",
+  "exclude": ["TRAINER_MAY_*", "TRAINER_BRENDAN_*"],
+  "unstaged_comment": "Maps with trainers, TMs or wild Pokemon that deliberately belong to no stage: post-game areas, the Elite Four rooms (their trainers are bosses) and unused maps. A unittest checks that every other such map is in a stage.",
+  "unstaged": ["SSTidal*", "MeteorFalls_StevensCave", "AlteringCave", "ArtisanCave_*", "DesertUnderpass",
+               "Underwater_MarineCave", "Underwater_SealedChamber", "CaveOfOrigin_UnusedRubySapphireMap*",
+               "EverGrandeCity_*Room", "Route110_TrickHousePuzzle8"],
+  "stages": [
+    {"name": "Rival (Route 103)", "maps": ["Route101", "LittlerootTown*", "OldaleTown*"], "land_maps": ["Route103"],
+     "bosses": ["TRAINER_{RIVAL}_ROUTE_103_{STARTER}"]},
+    {"name": "Roxanne", "maps": ["Route102", "PetalburgCity", "PetalburgCity_[!G]*", "Route104*", "PetalburgWoods", "RustboroCity_Gym", "Route116"],
+     "bosses": ["TRAINER_ROXANNE_1"]},
+    {"name": "Brawly", "maps": ["RustboroCity*", "RusturfTunnel", "Route116_*", "DewfordTown*", "GraniteCave_*"],
+     "bosses": ["TRAINER_{RIVAL}_RUSTBORO_{STARTER}", "TRAINER_BRAWLY_1"]},
+    {"name": "Wattson", "maps": ["Route109*", "SlateportCity*", "Route110", "Route110_SeasideCyclingRoad*", "Route110_TrickHouseEntrance", "Route110_TrickHouseCorridor", "Route110_TrickHouseEnd", "Route110_TrickHousePuzzle1", "Route103", "MauvilleCity*"],
+     "bosses": ["TRAINER_{RIVAL}_ROUTE_110_{STARTER}", "TRAINER_WALLY_MAUVILLE", "TRAINER_WATTSON_1"]},
+    {"name": "Flannery", "maps": ["Route110_TrickHousePuzzle2", "Route117*", "VerdanturfTown*", "Route111*", "Route112*", "FieryPath", "Route113*", "FallarborTown*", "Route114*", "MeteorFalls_1F_1R", "Route115*", "MtChimney*", "JaggedPass", "LavaridgeTown*"],
+     "bosses": ["TRAINER_TABITHA_MT_CHIMNEY", "TRAINER_MAXIE_MT_CHIMNEY", "TRAINER_FLANNERY_1"]},
+    {"name": "Norman", "maps": ["PetalburgCity_Gym", "Route110_TrickHousePuzzle3", "MirageTower*", "DesertRuins"],
+     "bosses": ["TRAINER_NORMAN_1"]},
+    {"name": "Winona", "trainers": ["TRAINER_ISABELLE", "TRAINER_PETE"], "maps":["Route110_TrickHousePuzzle4", "Route105", "Route106", "Route107", "Route108", "AbandonedShip_*", "Route118*", "Route119*", "Route120*", "FortreeCity*", "ScorchedSlab", "NewMauville_*"],
+     "bosses": ["TRAINER_{RIVAL}_ROUTE_119_{STARTER}", "TRAINER_SHELLY_WEATHER_INSTITUTE", "TRAINER_WINONA_1"]},
+    {"name": "Tate and Liza", "maps": ["Route110_TrickHousePuzzle5", "Route121*", "Route122", "MtPyre_*", "SafariZone_*", "LilycoveCity*", "Route123*", "MagmaHideout_*", "AquaHideout_*", "Route124*", "Route125", "Route126", "Route127", "ShoalCave_*", "MossdeepCity", "MossdeepCity_[!S]*"],
+     "bosses": ["TRAINER_{RIVAL}_LILYCOVE_{STARTER}", "TRAINER_TABITHA_MAGMA_HIDEOUT", "TRAINER_MAXIE_MAGMA_HIDEOUT", "TRAINER_MATT", "TRAINER_TATE_AND_LIZA_1"]},
+    {"name": "Juan", "maps": ["Route110_TrickHousePuzzle6", "MossdeepCity_SpaceCenter_*", "Route128", "SeafloorCavern_*", "SootopolisCity*", "Route129", "Route130", "Route131", "Route132", "Route133", "Route134", "PacifidlogTown*", "Underwater_Route*", "Underwater_SeafloorCavern", "Underwater_SootopolisCity", "CaveOfOrigin_Entrance", "CaveOfOrigin_1F", "CaveOfOrigin_B1F", "SkyPillar_*"],
+     "bosses": ["TRAINER_TABITHA_MOSSDEEP", "TRAINER_MAXIE_MOSSDEEP", "TRAINER_SHELLY_SEAFLOOR_CAVERN", "TRAINER_ARCHIE", "TRAINER_JUAN_1"]},
+    {"name": "Elite Four", "maps": ["VictoryRoad_*", "MeteorFalls_1F_2R", "MeteorFalls_B1F_*", "Route110_TrickHousePuzzle7", "EverGrandeCity", "EverGrandeCity_PokemonCenter*", "EverGrandeCity_PokemonLeague*"],
+     "bosses": ["TRAINER_WALLY_VR_1", "TRAINER_SIDNEY", "TRAINER_PHOEBE", "TRAINER_GLACIA", "TRAINER_DRAKE", "TRAINER_WALLACE"]}
+  ]
+}
