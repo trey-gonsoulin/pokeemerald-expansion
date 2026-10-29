@@ -166,20 +166,20 @@ The owner's baseline (#113): the Gen 6 Exp. Share on; balance by raising opponen
 
 | boss | 1.5x off | 1.5x on |
 |---|---|---|
-| May, Route 103 (5) | +1 -> 6 | +1 -> 6 |
+| Rival, Route 103 (5) | +1 -> 6 | +1 -> 6 |
 | Roxanne (15), Brawly (19) | +0 | +0 |
-| May, Rustboro (15) | +2 -> 17 | +3 -> 18 |
-| May, Route 110 (20) | +6 -> 26 | +8 -> 28 |
+| Rival, Rustboro (15) | +2 -> 17 | +3 -> 18 |
+| Rival, Route 110 (20) | +6 -> 26 | +8 -> 28 |
 | Wally, Mauville (16) | +10 -> 26 | +13 -> 29 |
 | Wattson (24) | +2 -> 26 | +5 -> 29 |
 | Tabitha, Mt. Chimney (22) | +11 -> 33 | +15 -> 37 |
 | Maxie, Mt. Chimney (25) | +9 -> 34 | +13 -> 38 |
 | Flannery (29) | +5 -> 34 | +9 -> 38 |
 | Norman (31) | +5 -> 36 | +9 -> 40 |
-| May, Route 119 (31) | +11 -> 42 | +16 -> 47 |
+| Rival, Route 119 (31) | +11 -> 42 | +16 -> 47 |
 | Shelly, Weather Institute (28) | +15 -> 43 | +19 -> 47 |
 | Winona (33) | +10 -> 43 | +15 -> 48 |
-| May, Lilycove (34) | +16 -> 50 | +21 -> 55 |
+| Rival, Lilycove (34) | +16 -> 50 | +21 -> 55 |
 | Tabitha, Magma Hideout (33) | +17 -> 50 | +23 -> 56 |
 | Maxie, Magma Hideout (39) | +12 -> 51 | +17 -> 56 |
 | Matt (34) | +17 -> 51 | +23 -> 57 |
@@ -196,36 +196,46 @@ The owner's baseline (#113): the Gen 6 Exp. Share on; balance by raising opponen
 | Drake (55) | +8 -> 63 | +15 -> 70 |
 | Wallace (58) | +5 -> 63 | +13 -> 71 |
 
+Each rival row goes on all six teams of that fight: May or Brendan, with each starter counter. The model plays May's team for a Mudkip player (`story_stages.json`), and the other five have the same levels, so they get the same raise (`rival_variants`; "Proposed boss raises" in `report.md` lists them).
+
 - **Rerun with the raises** ("After the ... raises" in `report.md`): on a full clear the bench is 1 below the ace at 28 of 30 bosses (1.5x off) and 29 of 30 (1.5x on). The exceptions are Brawly, and Roxanne with 1.5x off, whose aces are already higher. On a half clear it is 3 to 8 below every gym leader, Elite Four member and Champion in both settings, so both meet the targets.
 - **The raised bosses feed the curve:** with them the bench before Wallace is 62 (off) or 70 (on), not 60 or 66.
 - **The Elite Four bunch up:** with 1.5x off they are 61/62/62/63 and Wallace is 63, because the bench gains little between their fights. Keeping their original steps (2-3 levels apart: 61/63/65/67, Wallace 70) would put Wallace about 7 above the bench, which breaks the full-clear target. That is the owner's call.
-- **Recommendation: 1.5x off** (as built). It needs smaller raises (Wallace +5 vs +13; the Magma and Aqua bosses +9 to +19 vs +13 to +25) and ends at 63 rather than 71. Fewer raised Pokémon pass their evolution level (11 vs 15, below). It also keeps the un-raised route trainers closer: the 1.5x lifts the bench another 1-6 levels above each stage's trainers (4-6 from Flannery on). The 1.5x-on table meets the same targets if the owner prefers it.
+- **Recommendation: 1.5x off** (as built). It needs smaller raises (Wallace +5 vs +13; the Magma and Aqua bosses +9 to +19 vs +13 to +25) and ends at 63 rather than 71. Fewer raised Pokémon pass their evolution level (34 vs 41, rival teams included, below). It also keeps the un-raised route trainers closer: the 1.5x lifts the bench another 1-6 levels above each stage's trainers (4-6 from Flannery on). The 1.5x-on table meets the same targets if the owner prefers it.
 - **Stage trainers stay as they are:** each stage's regular trainers average 3 (Brawly) to 18 (Juan) levels below the full-clear bench ("Stage trainers against the bench"). Raising them doesn't close that gap, because their extra exp lifts the bench too: every stage trainer +3 moves the bench +2 to +3 (Juan 54 -> 57, Wallace 60 -> 62, 1.5x off). Lowering them (the secondary lever) would widen the gap. So the curve rests on the bosses alone. The routes being easy for an Exp. Share party is the cost of that baseline, and only a playtest can say how it feels.
 - **Wild tables: no change needed for the curve.** Catches move it by at most 1 level. Higher wild levels would make wild Pokémon more of a threat, not change the curve, so that belongs to the restock (#4/#5), which owns `src/data/wild_encounters.json`.
-- **Under-evolved after the raise** (levels only, no species swaps; species at or past their `EVO_LEVEL` level only after the raise, 1.5x off; a one-off check of the species_info `EVOLUTION` entries, not in `report.md`):
-  - May, Rustboro: Treecko 17 (evolves at 16);
-  - Wally, Mauville: Ralts 26 (20);
+- **Under-evolved after the raise** (levels only, no species swaps; species at or past their `EVO_LEVEL` level only after the raise, 1.5x off; a one-off check of the species_info `EVOLUTION` entries, not in `report.md`). 34 Pokémon, 28 of them on the rival teams:
+  - Wally, Mauville: Ralts 26 (evolves at 20);
   - Tabitha, Mt. Chimney: Numel 33 (33);
-  - May, Route 119: Slugma 40 (38) and Grovyle 42 (36);
   - Shelly, Weather Institute: Carvanha 43 (30);
   - Winona: Swablu 39 (35);
-  - May, Lilycove: Slugma 48 and Grovyle 50;
   - Tabitha, Magma Hideout: Numel 43;
-  - Juan: Sealeo 54 (44).
+  - Juan: Sealeo 54 (44);
+  - Rival, Rustboro (each of the 8 is on a May and a Brendan team): the starter counter at 17 (Treecko, Torchic or Mudkip, 16), and Lotad 15 (14) on the Treecko-player teams;
+  - Rival, Route 119: Slugma 40 (38) on the Mudkip- and Torchic-player teams (4), and the starter at 42 (36: Grovyle, Combusken or Marshtomp, 6);
+  - Rival, Lilycove: the same as Route 119, at 48 and 50 (10).
 
-  1.5x on adds Wingull, Numel (Flannery's and a second of Tabitha's) and Norman's Vigoroth 36 (36). Evolving them is a follow-up for #131/#132.
+  1.5x on (41) adds Wingull 26 (25) on four Route 110 rival teams, Numel (Flannery's and a second of Tabitha's) and Norman's Vigoroth 36 (36). Evolving them is a follow-up for #131/#132.
 - **Default movesets change with the levels** (the last four level-up moves). 43 raised boss Pokémon are on default moves (the gym leaders and Elite Four all have set moves), and 42 of them get a different set under 1.5x off ("Default movesets of the raised boss Pokemon" in `report.md`). New flags:
   - Lost STAB: May's Route 110 Slugma (Ember drops out).
   - One damaging move left and lost STAB: the Mightyena of Maxie (Magma Hideout) and Matt.
   - New strong moves: 15 slots, up from 9 (Liquidation on Carvanha and Sharpedo, Outrage on Tropius, Sucker Punch and Play Rough on Mightyena, Giga Drain and Leaf Blade on Grovyle).
 
+  The other 25 rival teams add 65 Pokémon on default moves, and 52 of them get a different set (the 1.5x-off list in `report.md` at the commit before the levels commit, "Give the other rival and starter teams ..."):
+  - Lost STAB: the Route 110 Slugma on the Brendan-Mudkip, Brendan-Torchic and May-Torchic teams (Ember drops out, as on May's Mudkip team), and the Route 110 Combusken 26 on both Treecko-player teams (Flame Charge drops out; Slash also puts it above the band).
+  - New strong moves: 15 more Pokémon (Giga Drain on the Route 110 Grovyle, Rock Slide on the Route 110 Marshtomp, Giga Drain on Lombre, Lava Plume on Slugma, Outrage on Tropius).
+
   #131 and #132 should work from that list once the levels land. The full-game flag table in "Default movesets" updates with them too.
 
-**Applied:** `src/data/trainers.party` has the 1.5x-off column: levels only, 100 Pokémon on the 28 raised bosses, with `B_TRAINER_EXP_MULTIPLIER` unchanged. The numbers above (and in the table) are from before the raises. `report.md` now measures the raised data:
+**Applied:** `src/data/trainers.party` has the 1.5x-off column: levels only, 165 Pokémon on 53 teams (the 28 raised bosses, 100 Pokémon, and the other 25 rival teams, 65), with `B_TRAINER_EXP_MULTIPLIER` unchanged. The numbers above (and in the table) are from before the raises. `report.md` now measures the raised data:
 - Its "Proposed boss raises" show +0 for 1.5x off. The 1.5x-on column is now relative to the applied levels (Juan +6 -> 63, Wallace +8 -> 71), and its after-raise curve is unchanged.
 - Its "Default movesets of the raised boss Pokemon" lists none for 1.5x off.
-- Its story flags in "Default movesets" moved from 9 / 59 / 43 / 14 / 157 (no attack / one attack / lost STAB / above band / new strong) to 9 / 61 / 46 / 12 / 163.
+- Its story flags in "Default movesets" moved from 9 / 59 / 43 / 14 / 157 (no attack / one attack / lost STAB / above band / new strong) to 9 / 61 / 46 / 12 / 163. The story counts leave out the five rival teams the model doesn't play; over every trainer they moved from 15 / 132 / 85 / 39 / 429 to 15 / 134 / 91 / 32 / 447.
 - The #113 level curve's boss aces are the raised ones.
+
+**Side effects of the applied levels (owner to decide; not changed here):**
+- **Steven in the Mossdeep Space Center multi battle** (`PARTNER_STEVEN`, `src/data/battle_partners.party`) stays at 42, while Maxie and Tabitha go from aces 44/40 to 56/56. He now fights 14 levels under the foes. Raising him by the same +12 to +16 would keep the fight as it was; the model doesn't cover partners.
+- **Post-game rematches now sit below some first fights:** Tate and Liza's rematch 2 has ace 50 against 51 for the first fight, Juan's rematches 2 and 3 have 51 and 56 against 57, and Wally's Victory Road rematches 2-5 have 48-57 against 60. The rematches are outside the story model. Lifting each rematch ladder above its raised first fight would be the follow-up.
 
 ## Proposed balance changes (owner to accept or reject; each can be its own issue)
 1. **Soft level cap at each gym ace** (config). Set `B_LEVEL_CAP_TYPE LEVEL_CAP_FLAG_LIST` and `B_EXP_CAP_TYPE EXP_CAP_SOFT`. `sLevelCapFlagMap` in `src/caps.c` already holds exactly the measured aces (15/19/24/29/31/33/42/46/58). Consider `B_RARE_CANDY_CAP` too.
