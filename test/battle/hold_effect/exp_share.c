@@ -3,15 +3,15 @@
 
 // With I_EXP_SHARE_ITEM >= GEN_6 the Exp. Share is a key item that can't be given to a Pokemon,
 // but a Pokemon that already holds one still gets the hold effect.
-// Under WITH_EXP_SHARE_CONFIGS, every participant gains expYield * level / 7 (Cmd_getexp, no level scaling
-// or bonus multipliers) and every Exp. Share mon gains half that. Cmd_getexp reads the raw B_SPLIT_EXP macro
-// when it decides whether a sent-in holder also gets the share, hence the ASSUME.
+// In these wild battles under WITH_EXP_SHARE_CONFIGS, every participant gains expYield * level / 7 (Cmd_getexp,
+// no level scaling, unevolved or affection boost) and every Exp. Share mon gains half that. Cmd_getexp reads the
+// raw B_SPLIT_EXP macro when it decides whether a sent-in holder also gets the share, hence the ASSUME.
 #define WITH_EXP_SHARE_CONFIGS()                        \
     ASSUME(B_SPLIT_EXP >= GEN_6);                       \
     WITH_CONFIG(B_SPLIT_EXP, GEN_6);                    \
     WITH_CONFIG(B_SCALED_EXP, GEN_3);                   \
     WITH_CONFIG(B_UNEVOLVED_EXP_MULTIPLIER, GEN_3);     \
-    WITH_CONFIG(B_TRAINER_EXP_MULTIPLIER, GEN_8)
+    WITH_CONFIG(B_AFFECTION_MECHANICS, FALSE)
 #define EXP_YIELD(species, level) (gSpeciesInfo[species].expYield * (level) / 7)
 #define EXP_AT_LEVEL(species, level) (gExperienceTables[gSpeciesInfo[species].growthRate][level])
 
@@ -85,6 +85,7 @@ WILD_BATTLE_TEST("Exp Share(held) with the Gen 6 Exp. Share on gives every mon t
 {
     GIVEN {
         ASSUME(I_EXP_SHARE_FLAG > TEMP_FLAGS_END);
+        ASSUME(EXP_YIELD(SPECIES_CATERPIE, 10) / 2 == 27);
         WITH_EXP_SHARE_CONFIGS();
         FLAG_SET(I_EXP_SHARE_FLAG);
         PLAYER(SPECIES_WOBBUFFET) { Level(20); Item(ITEM_EXP_SHARE); }
@@ -97,6 +98,7 @@ WILD_BATTLE_TEST("Exp Share(held) with the Gen 6 Exp. Share on gives every mon t
         MESSAGE("The wild Caterpie fainted!");
         EXPERIENCE_BAR(player);
         // The benched holder prints its own "gained" message, so the team message comes from the other benched mon.
+        MESSAGE("Wynaut gained 27 Exp. Points!");
         MESSAGE("The rest of your team gained Exp. Points thanks to the Exp. Share!");
         NOT MESSAGE("The rest of your team gained Exp. Points thanks to the Exp. Share!");
     } THEN {
