@@ -46,6 +46,23 @@ bool32 Debug_NumericInputMovedDown(void);
 void Debug_InputToDecimalString(u8 *dest, u8 taskId, u32 digits);
 void Debug_InputToHexString(u8 *dest, u8 taskId, u32 digits);
 
+// Name order, for numeric inputs whose values have names (species, items, moves): the value
+// before or after one in A-Z order, or the first one with the next initial letter.
+// getName returns NULL for a value to leave out. The range must fit in a u16.
+typedef const u8 *(*DebugNameFunc)(u32 value);
+struct DebugNameOrder
+{
+    u16 *values; // the named values in first..last, sorted by name; Alloc'd, freed by Debug_FreeNameOrder
+    u16 count;
+    u16 first;
+    u16 last;
+    DebugNameFunc getName;
+};
+void Debug_BuildNameOrder(struct DebugNameOrder *order, u32 first, u32 last, DebugNameFunc getName);
+void Debug_FreeNameOrder(struct DebugNameOrder *order);
+u32 Debug_StepByName(const struct DebugNameOrder *order, u32 value, bool32 previous);
+u32 Debug_NextNameInitial(const struct DebugNameOrder *order, u32 value);
+
 // List menus
 s32 Debug_ListMenu_ProcessInput(u8 listTaskId);
 u8 Debug_AddListScrollArrows(const struct WindowTemplate *listWindow, u32 totalItems, u32 maxShowed, u16 *scrollOffset);
