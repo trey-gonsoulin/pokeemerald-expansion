@@ -56,5 +56,6 @@ void Debug_RestoreMenuPosition(struct DebugMenuPosition *position, const struct 
 
 // Text
 void Debug_PrintLinesToFit(u32 windowId, u32 fontId, u32 lineHeight, const u8 *const *lines, u32 count);
+void Debug_CopyStringEndToFit(u8 *dest, u32 destSize, const u8 *src, u32 fontId, u32 widthPx);
 
 #endif // GUARD_DEBUG_MENU_UI_H
