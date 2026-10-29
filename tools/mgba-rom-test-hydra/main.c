@@ -830,6 +830,9 @@ int main(int argc, char *argv[])
             fwrite(runners[i].output_buffer, 1, runners[i].output_buffer_size, stdout);
         if (WIFEXITED(wstatus) && WEXITSTATUS(wstatus) > exit_code)
             exit_code = WEXITSTATUS(wstatus);
+        // A runner killed by a signal never reported its remaining tests.
+        else if (WIFSIGNALED(wstatus))
+            exit_code = 2;
         passes += runners[i].passes;
         expected_fails += runners[i].expected_fails;
         expected_fails_passing += runners[i].expected_fails_passing;
@@ -840,6 +843,11 @@ int main(int argc, char *argv[])
         fails += runners[i].fails;
         results += runners[i].results;
     }
+
+    // The ROM resets a runner's exit code when it restarts after a crash (e.g. "Tests resume
+    // after CRASH"), so a result that ran earlier on that runner and should fail is lost there.
+    if (exit_code == 0 && (fails > 0 || known_fails_passing > 0 || expected_fails_passing > 0))
+        exit_code = 1;
 
     if (results == 0)
     {
