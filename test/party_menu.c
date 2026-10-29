@@ -48,17 +48,35 @@ TEST("Full multi partner party menu wraps cancel up to partner party count")
 
 TEST("Party menu Switch resets the follower steps only when the leader changes")
 {
-    u32 slotId = 0, slotId2 = 0;
+    enum { LEAD_LIVE, LEAD_EGG, LEAD_FAINTED } lead = LEAD_LIVE;
+    u32 slot1 = 0, slot2 = 0, steps;
     bool32 resets = FALSE;
 
-    PARAMETRIZE { slotId = 2; slotId2 = 0; resets = TRUE; }
-    PARAMETRIZE { slotId = 0; slotId2 = 3; resets = TRUE; }
-    PARAMETRIZE { slotId = 1; slotId2 = 2; resets = FALSE; }
-    PARAMETRIZE { slotId = 0; slotId2 = 0; resets = FALSE; }
-    PARAMETRIZE { slotId = 4; slotId2 = 4; resets = FALSE; }
+    PARAMETRIZE { lead = LEAD_LIVE;    slot1 = 2; slot2 = 0; resets = TRUE; }
+    PARAMETRIZE { lead = LEAD_LIVE;    slot1 = 0; slot2 = 3; resets = TRUE; }
+    PARAMETRIZE { lead = LEAD_LIVE;    slot1 = 1; slot2 = 2; resets = FALSE; }
+    PARAMETRIZE { lead = LEAD_LIVE;    slot1 = 0; slot2 = 0; resets = FALSE; }
+    PARAMETRIZE { lead = LEAD_EGG;     slot1 = 1; slot2 = 2; resets = TRUE; }
+    PARAMETRIZE { lead = LEAD_EGG;     slot1 = 2; slot2 = 3; resets = FALSE; }
+    PARAMETRIZE { lead = LEAD_FAINTED; slot1 = 0; slot2 = 1; resets = FALSE; }
 
+    SetTestPartySize(B_TRAINER_PLAYER, PARTY_SIZE);
+    for (u32 i = 0; i < PARTY_SIZE; i++)
+        CalculateMonStats(&gParties[B_TRAINER_PLAYER][i]); // CreateMon leaves HP at 0
+    if (lead == LEAD_EGG)
+    {
+        bool32 isEgg = TRUE;
+        SetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_IS_EGG, &isEgg);
+    }
+    else if (lead == LEAD_FAINTED)
+    {
+        u32 hp = 0;
+        SetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_HP, &hp);
+    }
     gFollowerSteps = 100;
-    Test_ResetFollowerStepsOnLeaderSwitch(slotId, slotId2);
+    Test_SwapPlayerPartySlots(slot1, slot2);
+    steps = gFollowerSteps;
+    gFollowerSteps = 0;
 
-    EXPECT_EQ(gFollowerSteps, resets ? 0 : 100);
+    EXPECT_EQ(steps, resets ? 0 : 100);
 }

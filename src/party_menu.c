@@ -3196,19 +3196,11 @@ static void CursorCb_Switch(u8 taskId)
 #define tSlot1SlideDir data[10]
 #define tSlot2SlideDir data[11]
 
-// Reset follower steps when the party leader is changed
-static void ResetFollowerStepsOnLeaderSwitch(void)
-{
-    if (gPartyMenu.slotId != gPartyMenu.slotId2 && (gPartyMenu.slotId == 0 || gPartyMenu.slotId2 == 0))
-        gFollowerSteps = 0;
-}
-
 static void SwitchSelectedMons(u8 taskId)
 {
     s16 *data = gTasks[taskId].data;
     u8 windowIds[2];
 
-    ResetFollowerStepsOnLeaderSwitch();
     if (gPartyMenu.slotId2 == gPartyMenu.slotId)
     {
         FinishTwoMonAction(taskId);
@@ -3398,21 +3390,30 @@ static void SwitchMenuBoxSprites(u8 *spriteIdPtr1, u8 *spriteIdPtr2)
     gSprites[*spriteIdPtr2].y2 = yBuffer2;
 }
 
+// Swaps two player party slots, and resets the follower steps when the leader
+// (the first live mon, as the PC and IF_MIN_OVERWORLD_STEPS see it) changes
+static void SwapPlayerPartySlots(u8 slot1, u8 slot2)
+{
+    struct Pokemon *mon1 = &gParties[B_TRAINER_PLAYER][slot1];
+    struct Pokemon *mon2 = &gParties[B_TRAINER_PLAYER][slot2];
+    struct Pokemon *leaderAfterSwap = GetFirstLiveMon();
+
+    if (leaderAfterSwap == mon1)
+        leaderAfterSwap = mon2;
+    else if (leaderAfterSwap == mon2)
+        leaderAfterSwap = mon1;
+    SwapPartyPokemon(mon1, mon2);
+    if (GetFirstLiveMon() != leaderAfterSwap)
+        gFollowerSteps = 0;
+}
+
 static void SwitchPartyMon(void)
 {
     struct PartyMenuBox *menuBoxes[2];
-    struct Pokemon *mon1, *mon2;
-    struct Pokemon *monBuffer;
 
     menuBoxes[0] = &sPartyMenuBoxes[gPartyMenu.slotId];
     menuBoxes[1] = &sPartyMenuBoxes[gPartyMenu.slotId2];
-    mon1 = &gParties[B_TRAINER_PLAYER][gPartyMenu.slotId];
-    mon2 = &gParties[B_TRAINER_PLAYER][gPartyMenu.slotId2];
-    monBuffer = Alloc(sizeof(struct Pokemon));
-    *monBuffer = *mon1;
-    *mon1 = *mon2;
-    *mon2 = *monBuffer;
-    Free(monBuffer);
+    SwapPlayerPartySlots(gPartyMenu.slotId, gPartyMenu.slotId2);
     SwitchMenuBoxSprites(&menuBoxes[0]->pokeballSpriteId, &menuBoxes[1]->pokeballSpriteId);
     SwitchMenuBoxSprites(&menuBoxes[0]->itemSpriteId, &menuBoxes[1]->itemSpriteId);
     SwitchMenuBoxSprites(&menuBoxes[0]->monSpriteId, &menuBoxes[1]->monSpriteId);
@@ -8629,10 +8630,8 @@ s8 Test_UpdatePartySelectionSingleLayout(s8 slotId, s8 movementDir, bool8 choose
     return slotId;
 }
 
-void Test_ResetFollowerStepsOnLeaderSwitch(u8 slotId, u8 slotId2)
+void Test_SwapPlayerPartySlots(u8 slot1, u8 slot2)
 {
-    gPartyMenu.slotId = slotId;
-    gPartyMenu.slotId2 = slotId2;
-    ResetFollowerStepsOnLeaderSwitch();
+    SwapPlayerPartySlots(slot1, slot2);
 }
 #endif
