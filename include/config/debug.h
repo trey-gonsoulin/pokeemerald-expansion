@@ -6,6 +6,7 @@
 #define DEBUG_OVERWORLD_HELD_KEYS       (R_BUTTON)          // The keys required to be held to open the debug menu.
 #define DEBUG_OVERWORLD_TRIGGER_EVENT   pressedStartButton  // The event that opens the menu when holding the key(s) defined in DEBUG_OVERWORLD_HELD_KEYS.
 #define DEBUG_OVERWORLD_IN_MENU         FALSE               // Replaces the overworld debug menu button combination with a start menu entry (above Pokédex).
+#define DEBUG_FLAG_VAR_NAMES            TRUE                // Shows flag and var constant names in the overworld debug menu's Set Flag and Set Var, with Start for A-Z order. The name tables cost about 50 KB of ROM when the debug menu is on (none in release builds).
 
 // Battle Debug Menu
 #define DEBUG_BATTLE_MENU               DISABLED_ON_RELEASE // If set to TRUE, enables a debug menu to use in battles by pressing the Select button.

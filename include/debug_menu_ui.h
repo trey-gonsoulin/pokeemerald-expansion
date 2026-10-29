@@ -63,6 +63,10 @@ void Debug_FreeNameOrder(struct DebugNameOrder *order);
 u32 Debug_StepByName(const struct DebugNameOrder *order, u32 value, bool32 previous);
 u32 Debug_NextNameInitial(const struct DebugNameOrder *order, u32 value);
 
+// Flag and var constant names (DEBUG_FLAG_VAR_NAMES), from the generated src/data/debug_flag_var_names.h
+const u8 *Debug_GetFlagName(u32 flag);
+const u8 *Debug_GetVarName(u32 varId);
+
 // List menus
 s32 Debug_ListMenu_ProcessInput(u8 listTaskId);
 u8 Debug_AddListScrollArrows(const struct WindowTemplate *listWindow, u32 totalItems, u32 maxShowed, u16 *scrollOffset);
