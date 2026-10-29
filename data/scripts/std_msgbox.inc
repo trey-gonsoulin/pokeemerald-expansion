@@ -14,7 +14,12 @@ Std_MsgboxSign:
 	waitmessage
 	waitbuttonpress
 	releaseall
+@ The setflag above keeps lockall from freezing the follower. With OW_FOLLOWERS_SCRIPT_MOVEMENT
+@ the calling script keeps the flag until its `end`, so clearing it here would put the follower
+@ in its Poké Ball as soon as that script moves an NPC (the Lilycove Museum curator).
+.if OW_FOLLOWERS_SCRIPT_MOVEMENT == FALSE
 	clearflag FLAG_SAFE_FOLLOWER_MOVEMENT
+.endif
 	return
 
 Std_MsgboxDefault:
