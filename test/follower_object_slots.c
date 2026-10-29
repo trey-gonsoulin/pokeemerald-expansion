@@ -28,6 +28,17 @@ static u8 SpawnTestNpc(u8 localId)
                                                 gSaveBlock1Ptr->pos.y + MAP_OFFSET + 1 + localId / 8, 3);
 }
 
+// Spawns OBJECT_EVENTS_COUNT NPCs, enough to take every slot, and returns the first one's object ID
+static u8 FillObjectSlotsWithTestNpcs(void)
+{
+    u32 i;
+    u8 firstNpc = SpawnTestNpc(1);
+
+    for (i = 2; i <= OBJECT_EVENTS_COUNT; i++)
+        SpawnTestNpc(i);
+    return firstNpc;
+}
+
 static void CleanUpFollowerSlotsTest(void)
 {
     ResetObjectEvents();
@@ -68,14 +79,11 @@ TEST("Follower object slots: the follower keeps its slot while a script runs")
 
 TEST("Follower object slots: an evicted follower comes back once a slot frees")
 {
-    u32 i;
     u8 firstNpc;
 
     SetUpFollowerSlotsTest();
     UpdateFollowingPokemon();
-    firstNpc = SpawnTestNpc(1);
-    for (i = 2; i <= OBJECT_EVENTS_COUNT; i++)
-        SpawnTestNpc(i);
+    firstNpc = FillObjectSlotsWithTestNpcs();
     EXPECT(GetFollowerObject() == NULL);
 
     UpdateObjectEventsForCameraUpdate(0, 0);
@@ -89,13 +97,10 @@ TEST("Follower object slots: an evicted follower comes back once a slot frees")
 
 TEST("Follower object slots: a follower that found no slot on map load spawns once one frees")
 {
-    u32 i;
     u8 firstNpc;
 
     SetUpFollowerSlotsTest();
-    firstNpc = SpawnTestNpc(1);
-    for (i = 2; i <= OBJECT_EVENTS_COUNT; i++)
-        SpawnTestNpc(i);
+    firstNpc = FillObjectSlotsWithTestNpcs();
     UpdateFollowingPokemon();
     EXPECT(GetFollowerObject() == NULL);
 
@@ -107,14 +112,11 @@ TEST("Follower object slots: a follower that found no slot on map load spawns on
 
 TEST("Follower object slots: an evicted follower stays away while the field controls are locked")
 {
-    u32 i;
     u8 firstNpc;
 
     SetUpFollowerSlotsTest();
     UpdateFollowingPokemon();
-    firstNpc = SpawnTestNpc(1);
-    for (i = 2; i <= OBJECT_EVENTS_COUNT; i++)
-        SpawnTestNpc(i);
+    firstNpc = FillObjectSlotsWithTestNpcs();
     RemoveObjectEvent(&gObjectEvents[firstNpc]);
 
     LockPlayerFieldControls();
@@ -147,12 +149,9 @@ TEST("Follower object slots: an object that left the view frees its slot before 
 
 TEST("Follower object slots: the follower doesn't come back after a map load")
 {
-    u32 i;
-
     SetUpFollowerSlotsTest();
     UpdateFollowingPokemon();
-    for (i = 1; i <= OBJECT_EVENTS_COUNT; i++)
-        SpawnTestNpc(i);
+    FillObjectSlotsWithTestNpcs();
     EXPECT(GetFollowerObject() == NULL);
 
     // A fresh map with no follower, such as a Fly arrival, which removes it on purpose
