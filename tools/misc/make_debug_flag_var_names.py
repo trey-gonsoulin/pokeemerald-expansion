@@ -1,0 +1,148 @@
+"""Generate src/data/debug_flag_var_names.h, the flag and var names for the overworld debug menu.
+
+Usage: make_debug_flag_var_names.py <output> --flags <header>... --vars <header>...
+       [--frlg-vars <header>...] [--aliases <header>...]
+
+Reads every `#define FLAG_*` (or `VAR_*`) in the headers and writes a table indexed by the flag
+(or by the var minus VARS_START) holding the name without its prefix. The values are left to the
+compiler, because many need enums (REMATCH_*, TRAINERS_COUNT) or other headers. So every entry
+is wrapped in #ifdef, which drops names a game doesn't define (flags_frlg.h in Emerald, the
+TESTING ones outside tests), and indexed through a macro that sends values outside the table
+(FRLG-only flags defined as 0 in Emerald, special flags and vars) to its last slot, which the
+lookup never reads.
+
+When several names share a value, the last initializer wins (C11 6.7.9p19), so the entries are
+written from the least to the most preferred name. The primary name is the first one defined,
+preferring real names over config aliases (--aliases: a define whose value is a flag or var, such
+as I_EXP_SHARE_FLAG, shown whole), and those over placeholders (UNUSED in the name) and range
+markers (ending in _START, _END or _COUNT: FLAG_HIDDEN_ITEMS_START is the first hidden item's
+flag, but FLAG_SYS_TV_START is a flag of its own, so a marker still shows when nothing else names
+its value).
+
+vars.h includes vars_frlg.h in every game, so its names are defined in Emerald too. --frlg-vars
+names go last, under #if IS_FRLG, so they win in FRLG builds only.
+"""
+
+import argparse
+import os
+import re
+
+DEFINE_PAT = re.compile(r"^\s*#\s*define\s+((?:FLAG|VAR)_\w+)\s+[^\s/]")
+ALIAS_PAT = re.compile(r"^\s*#\s*define\s+(\w+)\s+\(?((?:FLAG|VAR)_\w+)\)?\s*(?://.*)?$")
+MARKER_PAT = re.compile(r"_(START|END|COUNT)$")
+
+KINDS = {
+    # prefix: (table, index macro, table size, the macro's body: the index, or the unread last slot)
+    "FLAG_": ("sDebugFlagNames", "DEBUG_FLAG_NAME_INDEX", "FLAGS_COUNT + 1",
+              "((f) > 0 && (f) < FLAGS_COUNT ? (f) : FLAGS_COUNT)"),
+    "VAR_": ("sDebugVarNames", "DEBUG_VAR_NAME_INDEX", "VARS_END - VARS_START + 2",
+             "((f) >= VARS_START && (f) <= VARS_END ? (f) - VARS_START : VARS_END - VARS_START + 1)"),
+}
+
+
+def read_names(paths, prefix):
+    """The names defined with prefix in paths, in definition order, each once."""
+    names = []
+    seen = set()
+    for path in paths:
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                match = DEFINE_PAT.match(line)
+                if match and match.group(1).startswith(prefix) and match.group(1) not in seen:
+                    seen.add(match.group(1))
+                    names.append(match.group(1))
+    return names
+
+
+def read_aliases(paths, prefix):
+    """(alias, target) for the defines in paths whose whole value is a prefix constant."""
+    aliases = []
+    for path in paths:
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                match = ALIAS_PAT.match(line)
+                if match and match.group(2).startswith(prefix) and not match.group(1).startswith(prefix):
+                    aliases.append((match.group(1), match.group(2)))
+    return aliases
+
+
+def is_placeholder(name):
+    return "UNUSED" in name or MARKER_PAT.search(name) is not None
+
+
+def emit_order(names, prefix, aliases=()):
+    """(macro, name shown, macros it needs) from the least to the most preferred, so that the
+    preferred one is the last initializer for its value."""
+    def entry(name):
+        return (name, name[len(prefix):], (name,))
+    placeholders = [entry(n) for n in names if is_placeholder(n)]
+    config = [(alias, alias, (alias, target)) for alias, target in aliases]
+    real = [entry(n) for n in names if not is_placeholder(n)]
+    return placeholders[::-1] + config[::-1] + real[::-1]
+
+
+def entry_lines(entries, index_macro):
+    lines = []
+    for macro, shown, needs in entries:
+        lines += [
+            "#if " + " && ".join(f"defined({m})" for m in needs),
+            f'    [{index_macro}({macro})] = COMPOUND_STRING("{shown}"),',
+            "#endif",
+        ]
+    return lines
+
+
+def table_lines(prefix, names, aliases=(), frlg_names=()):
+    table, index_macro, size, check = KINDS[prefix]
+    lines = [
+        f"#define {index_macro}(f) {check}",
+        "",
+        f"static const u8 *const {table}[{size}] =",
+        "{",
+    ]
+    lines += entry_lines(emit_order(names, prefix, aliases), index_macro)
+    if frlg_names:
+        lines.append("#if IS_FRLG")
+        lines += entry_lines(emit_order(frlg_names, prefix), index_macro)
+        lines.append("#endif // IS_FRLG")
+    lines += ["};", "", f"#undef {index_macro}", ""]
+    return lines
+
+
+def generate(flag_names, var_names, flag_aliases=(), var_aliases=(), frlg_var_names=()):
+    lines = [
+        "//",
+        "// DO NOT MODIFY THIS FILE! It is auto-generated by tools/misc/make_debug_flag_var_names.py",
+        "//",
+        "",
+        "// Several names can share a value: later initializers override earlier ones on purpose",
+        "#pragma GCC diagnostic push",
+        '#pragma GCC diagnostic ignored "-Woverride-init"',
+        "",
+    ]
+    lines += table_lines("FLAG_", flag_names, flag_aliases)
+    lines += table_lines("VAR_", var_names, var_aliases, frlg_var_names)
+    lines += ["#pragma GCC diagnostic pop", ""]
+    return "\n".join(lines)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("output")
+    parser.add_argument("--flags", nargs="+", required=True)
+    parser.add_argument("--vars", nargs="+", required=True)
+    parser.add_argument("--frlg-vars", nargs="+", default=[])
+    parser.add_argument("--aliases", nargs="+", default=[])
+    args = parser.parse_args()
+    text = generate(read_names(args.flags, "FLAG_"), read_names(args.vars, "VAR_"),
+                    read_aliases(args.aliases, "FLAG_"), read_aliases(args.aliases, "VAR_"),
+                    read_names(args.frlg_vars, "VAR_"))
+    # Write next to the output and rename, so an interrupted run can't leave a newer, truncated header
+    temp = args.output + ".tmp"
+    with open(temp, "w", encoding="utf-8") as f:
+        f.write(text)
+    os.replace(temp, args.output)
+
+
+if __name__ == "__main__":
+    main()

@@ -192,6 +192,55 @@ void TestRunner_CheckMemory(void)
     }
 }
 
+// Test builds give these arrays one extra element (the + TESTING in their
+// declarations). Filling it before each test and checking it after catches
+// a write one element past the end. Reads and writes further out aren't caught.
+#define GUARD_FILL 0xFF
+#define GUARD_ELEMENT(array) { &array[ARRAY_COUNT(array) - 1], sizeof(array[0]), #array }
+
+static const struct GuardElement
+{
+    void *address;
+    u32 size;
+    const char *name;
+} sGuardElements[] =
+{
+    GUARD_ELEMENT(gBattleMons),
+    GUARD_ELEMENT(gBattlerPartyIndexes),
+    GUARD_ELEMENT(gObjectEvents),
+};
+
+static void FillGuardElements(void)
+{
+    u32 i;
+    for (i = 0; i < ARRAY_COUNT(sGuardElements); i++)
+        memset(sGuardElements[i].address, GUARD_FILL, sGuardElements[i].size);
+}
+
+static void CheckGuardElements(void)
+{
+    u32 i, j;
+    // Only a test expected to pass: failing a KNOWN_FAILING or EXPECT_FAIL
+    // test that passed would report it as the failure it expects.
+    if (gTestRunnerState.result != TEST_RESULT_PASS
+     || gTestRunnerState.expectedResult != TEST_RESULT_PASS)
+        return;
+
+    for (i = 0; i < ARRAY_COUNT(sGuardElements); i++)
+    {
+        const u8 *guard = sGuardElements[i].address;
+        for (j = 0; j < sGuardElements[i].size; j++)
+        {
+            if (guard[j] != GUARD_FILL)
+            {
+                Test_MgbaPrintf("%s:%d: out-of-bounds write: %s guard element byte %d is %d, not %d", gTestRunnerState.test->filename, SourceLine(0), sGuardElements[i].name, j, guard[j], GUARD_FILL);
+                gTestRunnerState.result = TEST_RESULT_FAIL;
+                break;
+            }
+        }
+    }
+}
+
 static void ClearSaveBlocks(void)
 {
     ClearSav1();
@@ -338,6 +387,7 @@ top:
         ResetGlobalVariables();
         SeedRng(0);
         SeedRng2(0);
+        FillGuardElements();
         if (gTestRunnerState.test->runner->setUp)
             gTestRunnerState.test->runner->setUp(gTestRunnerState.test->data);
         gTestRunnerState.tearDown = TRUE;
@@ -364,6 +414,7 @@ top:
         gTestRunnerState.tearDown = FALSE;
 
         TestRunner_CheckMemory();
+        CheckGuardElements();
 
         if (gTestRunnerState.test->runner == &gAssumptionsRunner)
         {
