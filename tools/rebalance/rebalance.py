@@ -136,19 +136,21 @@ def load_stages(path, trainers, repo):
     fill = {'RIVAL': cfg.get('rival', 'MAY'), 'STARTER': cfg.get('starter', 'MUDKIP')}
     choices = {k: cfg.get('rival_variants', {}).get(k, [v]) for k, v in fill.items()}
     stages = cfg['stages']
-    for st in stages:
-        templates = st.get('bosses', ())
-        st['bosses'] = [b.format(**fill) for b in templates]
-        # The same fight's other rival and starter teams, which the model leaves out.
-        st['variants'] = {}
-        for b, bid in zip(templates, st['bosses']):
-            ids = {b.format(**dict(zip(choices, c))) for c in itertools.product(*choices.values())} - {bid}
-            if ids:
-                st['variants'][bid] = sorted(ids)
+    templates = [st.get('bosses', ()) for st in stages]
+    for st, ts in zip(stages, templates):
+        st['bosses'] = [b.format(**fill) for b in ts]
         st['regular'] = []
-    bosses = {b for st in stages for b in st['bosses']}
-    missing = sorted(b for st in stages for b in itertools.chain(st['bosses'], *st['variants'].values())
-                     if b not in trainers)
+    staged = {b for st in stages for b in st['bosses']}
+    for st, ts in zip(stages, templates):
+        # The same fight's other rival and starter teams, which the model doesn't play.
+        st['variants'] = {}
+        for b, bid in zip(ts, st['bosses']):
+            ids = {b.format(**dict(zip(choices, c))) for c in itertools.product(*choices.values())} - staged
+            if '{' in b and ids:
+                st['variants'][bid] = sorted(ids)
+    # Variants are kept out of the regular trainers and overrides like the bosses.
+    bosses = staged.union(*(ids for st in stages for ids in st['variants'].values()))
+    missing = sorted(b for b in bosses if b not in trainers)
     if missing:
         raise SystemExit(f'{path}: unknown boss trainers {missing}')
     excluded = cfg.get('exclude', ())
@@ -693,6 +695,11 @@ def with_configs(gd, **values):
     return out
 
 
+def team_ace(trainer):
+    """A team's highest level."""
+    return max(mon.level for mon in trainer.mons)
+
+
 def share_curve(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friendship',
                 catches=CATCHES_PER_STAGE, walk_steps=WALK_STEPS_PER_STAGE, trainer_raise=0, raises=None,
                 margin=None, unevolved=False):
@@ -728,7 +735,7 @@ def share_curve(stages, trainers, gd, scaling, wilds, clear=1.0, affection='frie
             fight(tid, trainer_raise)
         for bid in st['bosses']:
             levels = party.levels()
-            base = max(mon.level for mon in trainers[bid].mons)
+            base = team_ace(trainers[bid])
             if margin is not None:
                 raises[bid] = max(0, levels[1] + margin - base)
             delta = raises.get(bid, 0)
@@ -746,22 +753,27 @@ def stage_trainer_levels(stages, trainers):
     of their aces (each trainer's highest level)."""
     rows = []
     for st in stages:
-        aces = [max(mon.level for mon in trainers[t].mons) for t in st['regular']]
+        aces = [team_ace(trainers[t]) for t in st['regular']]
         if aces:
             rows.append({'stage': st['name'], 'trainers': len(aces), 'mean_ace': round(sum(aces) / len(aces), 1),
                          'max_ace': max(aces)})
     return rows
 
 
-def variant_raises(stages, trainers, raises):
-    """The raise for each rival variant of a staged boss (the same fight's
-    other rival and starter teams) that lifts its ace to the boss's raised ace."""
+def stage_variants(stages, trainers):
+    """Staged boss -> {rival variant (the same fight's other rival and
+    starter teams): its ace}."""
+    return {bid: {v: team_ace(trainers[v]) for v in ids} for st in stages for bid, ids in st['variants'].items()}
+
+
+def variant_raises(variants, trainers, raises):
+    """The raise for each of ``variants`` (from stage_variants) that lifts
+    its ace to its staged boss's raised ace."""
     out = {}
-    for st in stages:
-        for bid, ids in st['variants'].items():
-            target = max(mon.level for mon in trainers[bid].mons) + raises.get(bid, 0)
-            for v in ids:
-                out[v] = max(0, target - max(mon.level for mon in trainers[v].mons))
+    for bid, aces in variants.items():
+        target = min(team_ace(trainers[bid]) + raises.get(bid, 0), 100)
+        for v, ace in aces.items():
+            out[v] = max(0, target - ace)
     return out
 
 
@@ -772,6 +784,7 @@ def share_curves(stages, trainers, gd, scaling, wilds):
     curve after them, and how the full-clear bench (now) moves with
     SHARE_SENSITIVITY's assumptions."""
     out = {}
+    variants = stage_variants(stages, trainers)
     for name, value in TRAINER_EXP.items():
         d = with_configs(gd, B_TRAINER_EXP_MULTIPLIER=value)
 
@@ -780,10 +793,9 @@ def share_curves(stages, trainers, gd, scaling, wilds):
                     for clear_name, clear in (('full', 1.0), ('half', 0.5)) for aff in AFFECTION}
         raises = {r['boss']: r['raise']
                   for r in share_curve(stages, trainers, d, scaling, wilds, margin=TARGET_MARGIN)}
-        raises.update(variant_raises(stages, trainers, raises))
+        raises.update(variant_raises(variants, trainers, raises))
         out[name] = {'now': curves(None), 'raises': raises, 'after': curves(raises),
-                     'variants': {bid: {v: max(mon.level for mon in trainers[v].mons) for v in ids}
-                                  for st in stages for bid, ids in st['variants'].items()},
+                     'variants': variants,
                      'sensitivity': {label: share_curve(stages, trainers, d, scaling, wilds, **kw)
                                      for label, kw in SHARE_SENSITIVITY.items()}}
     return out
