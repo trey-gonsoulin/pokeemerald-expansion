@@ -404,11 +404,20 @@ class Analysis(unittest.TestCase):
                 mon.level -= 2
             trainers['TRAINER_RIVAL_B'] = variant
             stages = RB.load_stages(path, trainers, FIXTURE)
+            # A variant is no stage trainer override, even when no exclude glob covers it.
+            cfg['exclude'] = []
+            cfg['stages'][1]['trainers'] = ['TRAINER_RIVAL_B']
+            with open(path, 'w', encoding='utf-8') as f:
+                json.dump(cfg, f)
+            with self.assertRaises(SystemExit):
+                RB.load_stages(path, trainers, FIXTURE)
         self.assertEqual(stages[0]['variants'], {'TRAINER_RIVAL_A': ['TRAINER_RIVAL_B']})
         self.assertEqual(stages[1]['variants'], {})
-        self.assertNotIn('TRAINER_RIVAL_B', stages[0]['regular'])
-        self.assertEqual(RB.variant_raises(stages, trainers, {'TRAINER_RIVAL_A': 3}), {'TRAINER_RIVAL_B': 5})
-        self.assertEqual(RB.variant_raises(stages, trainers, {}), {'TRAINER_RIVAL_B': 2})
+        variants = RB.stage_variants(stages, trainers)
+        self.assertEqual(variants, {'TRAINER_RIVAL_A': {'TRAINER_RIVAL_B': 3}})
+        self.assertEqual(RB.variant_raises(variants, trainers, {'TRAINER_RIVAL_A': 3}), {'TRAINER_RIVAL_B': 5})
+        self.assertEqual(RB.variant_raises(variants, trainers, {}), {'TRAINER_RIVAL_B': 2})
+        self.assertEqual(RB.variant_raises(variants, trainers, {'TRAINER_RIVAL_A': 200}), {'TRAINER_RIVAL_B': 97})
 
     def test_tms_and_wilds(self):
         tms = {r['tm']: r for r in self.res['tms']}
