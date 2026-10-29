@@ -171,6 +171,7 @@ enum DebugMenuTypes
     DEBUG_FLAGS_MENU,
     DEBUG_TRAINERS_MENU,
     DEBUG_OUTBREAK_MENU,
+    DEBUG_RECENT_WARPS_MENU,
 };
 
 // *******************************
@@ -184,6 +185,8 @@ enum DebugMenuTypes
 
 #define DEBUG_MENU_WIDTH_EXTRA 10
 #define DEBUG_MENU_HEIGHT_EXTRA 4
+
+#define DEBUG_MENU_WIDTH_WARP 28
 
 #define DEBUG_MENU_WIDTH_WEATHER 15
 #define DEBUG_MENU_HEIGHT_WEATHER 3
@@ -229,8 +232,8 @@ struct DebugMenuListData
     DebugFunc pendingInputFunc; // input handler that takes over from DebugTask_StartMenuInput
     struct ListMenuItem listItems[DEBUG_MAX_MENU_ITEMS + 1];
     u8 itemNames[DEBUG_MAX_MENU_ITEMS + 1][26];
-    enum DebugMenuTypes menuType:2;
-    u32 padding:30;
+    enum DebugMenuTypes menuType:3;
+    u32 padding:29;
     s16 data[8];
     s16 savedData[8]; // data as Choose trainer from map found it, restored when B cancels the picker
 };
@@ -257,18 +260,31 @@ struct DebugSelectionStep
 
 typedef const struct DebugSelectionStep *SelectionStep;
 
+#define DEBUG_RECENT_WARPS_COUNT 8
+
+struct DebugWarp
+{
+    u8 mapGroup;
+    u8 mapNum;
+    u8 warpId;
+};
+
 struct DebugSelection
 {
     DebugFunc onInit;
     DebugFunc onCancel;
     bool32 (*onComplete)(u8 taskId);
     u8 maxSteps;
+    bool8 showMapNames; // the map group and map steps show map.json names, which need the Warp window's width
     const SelectionStep steps[];
 };
 
 // EWRAM
 static EWRAM_DATA struct DebugMenuListData *sDebugMenuListData = NULL;
 static EWRAM_DATA struct DebugMenuPosition sDebugMainMenuPosition = {0}; // kept between openings until reset
+// This session's warp destinations, most recent first. Warp to map warp… starts from the first one.
+static EWRAM_DATA struct DebugWarp sDebugRecentWarps[DEBUG_RECENT_WARPS_COUNT] = {0};
+static EWRAM_DATA u8 sDebugRecentWarpsCount = 0;
 EWRAM_DATA bool8 gIsDebugBattle = FALSE;
 EWRAM_DATA u64 gDebugAIFlags = 0;
 
@@ -279,6 +295,7 @@ static u32 Debug_GenerateListBasicMenu(const struct DebugMenuOption *items);
 static u32 Debug_GenerateListTrainerMenu(const struct DebugMenuOption *items);
 static u32 Debug_GenerateListFlagsMenu(const struct DebugMenuOption *items);
 static u32 Debug_GenerateListOutbreakMenu(const struct DebugMenuOption *items);
+static u32 Debug_GenerateListRecentWarpsMenu(const struct DebugMenuOption *items);
 static void Debug_DestroyMenu(u8 taskId);
 static void DebugAction_Cancel(u8 taskId);
 static u8 DebugNativeStep_CreateDebugWindow(void);
@@ -289,6 +306,7 @@ static void DebugAction_OpenSubMenuTrainers(u8 taskId, const struct DebugMenuOpt
 static void Debug_Trainers_ResetTrainersData(void);
 static void DebugAction_OpenSubMenuFlagsVars(u8 taskId, const struct DebugMenuOption *items);
 static void DebugAction_OpenOutbreakMenu(u8 taskId, const struct DebugMenuOption *items);
+static void DebugAction_OpenSubMenuRecentWarps(u8 taskId, const struct DebugMenuOption *items);
 static void DebugAction_OpenSubMenuFakeRTC(u8 taskId, const struct DebugMenuOption *items);
 static void DebugAction_OpenSubMenuCreateFollowerNPC(u8 taskId, const struct DebugMenuOption *items);
 static void DebugAction_ExecuteScript(u8 taskId, void *script);
@@ -299,6 +317,7 @@ static void DebugAction_Selection_StepUpdate(u8 taskId);
 static void DebugAction_Selection_NextStep(u8 taskId);
 
 static void DebugAction_Util_Fly(u8 taskId);
+static void DebugAction_Util_RecentWarp(u8 taskId, const void *params);
 static void DebugAction_Util_WatchCredits(u8 taskId);
 static void DebugAction_Util_CheatStart(u8 taskId);
 
@@ -448,7 +467,7 @@ static const struct DebugSelection sTrainer1Selection;
 static const struct DebugSelection sTrainer2Selection;
 static const struct DebugSelection sPartnerSelection;
 
-#include "data/map_group_count.h"
+#include "data/debug_map_names.h"
 
 // Text
 // General
@@ -504,7 +523,8 @@ static u32 (*const generateListFunctions[])(const struct DebugMenuOption *) =
     [DEBUG_BASIC_MENU] = Debug_GenerateListBasicMenu,
     [DEBUG_FLAGS_MENU] = Debug_GenerateListFlagsMenu,
     [DEBUG_TRAINERS_MENU] = Debug_GenerateListTrainerMenu,
-    [DEBUG_OUTBREAK_MENU] = Debug_GenerateListOutbreakMenu
+    [DEBUG_OUTBREAK_MENU] = Debug_GenerateListOutbreakMenu,
+    [DEBUG_RECENT_WARPS_MENU] = Debug_GenerateListRecentWarpsMenu,
 };
 
 // *******************************
@@ -570,8 +590,25 @@ static const struct DebugMenuOption sDebugMenu_Actions_FollowerNPCMenu[] =
     { NULL }
 };
 
+// Debug_GenerateListRecentWarpsMenu writes the labels, so the text only has to be non-NULL
+static const struct DebugMenuOption sDebugMenu_Actions_RecentWarps[] =
+{
+    { COMPOUND_STRING(""), DebugAction_Util_RecentWarp, &sDebugRecentWarps[0] },
+    { COMPOUND_STRING(""), DebugAction_Util_RecentWarp, &sDebugRecentWarps[1] },
+    { COMPOUND_STRING(""), DebugAction_Util_RecentWarp, &sDebugRecentWarps[2] },
+    { COMPOUND_STRING(""), DebugAction_Util_RecentWarp, &sDebugRecentWarps[3] },
+    { COMPOUND_STRING(""), DebugAction_Util_RecentWarp, &sDebugRecentWarps[4] },
+    { COMPOUND_STRING(""), DebugAction_Util_RecentWarp, &sDebugRecentWarps[5] },
+    { COMPOUND_STRING(""), DebugAction_Util_RecentWarp, &sDebugRecentWarps[6] },
+    { COMPOUND_STRING(""), DebugAction_Util_RecentWarp, &sDebugRecentWarps[7] },
+    { NULL }
+};
+STATIC_ASSERT(ARRAY_COUNT(sDebugMenu_Actions_RecentWarps) == DEBUG_RECENT_WARPS_COUNT + 1, DebugRecentWarpsOptionCount);
+
 static const struct DebugMenuOption sDebugMenu_Actions_Utilities[] =
 {
+    // First, so the last warp is three A presses from opening the menu on Utilities
+    { COMPOUND_STRING("Recent warps…"),             DebugAction_OpenSubMenuRecentWarps, sDebugMenu_Actions_RecentWarps },
     { COMPOUND_STRING("Fly to map…"),               DebugAction_Util_Fly },
     { COMPOUND_STRING("Warp to map warp…"),         DebugAction_Selection_Init, &sWarpSelection},
     { COMPOUND_STRING("Set weather…"),              DebugAction_Selection_Init, &sSetWeatherSelection },
@@ -805,6 +842,18 @@ static const struct WindowTemplate sDebugMenuWindowTemplateExtra =
     .baseBlock = 1,
 };
 
+// Warp to map warp…: as wide as the screen allows, for the map names
+static const struct WindowTemplate sDebugMenuWindowTemplateWarp =
+{
+    .bg = 0,
+    .tilemapLeft = 30 - DEBUG_MENU_WIDTH_WARP - 1,
+    .tilemapTop = 1,
+    .width = DEBUG_MENU_WIDTH_WARP,
+    .height = 2 * DEBUG_MENU_HEIGHT_EXTRA,
+    .paletteNum = 15,
+    .baseBlock = 1,
+};
+
 static const struct WindowTemplate sDebugMenuWindowTemplateWeather =
 {
     .bg = 0,
@@ -937,7 +986,8 @@ static bool32 IsSubMenuAction(const void *action)
         || action == DebugAction_OpenSubMenuFakeRTC
         || action == DebugAction_OpenSubMenuCreateFollowerNPC
         || action == DebugAction_OpenSubMenuTrainers
-        || action == DebugAction_OpenOutbreakMenu;
+        || action == DebugAction_OpenOutbreakMenu
+        || action == DebugAction_OpenSubMenuRecentWarps;
 }
 
 static u32 Debug_GenerateListBasicMenu(const struct DebugMenuOption *items)
@@ -1072,16 +1122,21 @@ static void Debug_RemoveMainWindow(u8 taskId)
     Debug_RemoveWindowIfShown(&gTasks[taskId].tWindowId);
 }
 
-static void Debug_CreateInputDisplayWindow(u8 taskId)
+static void Debug_CreateInputDisplayWindowFromTemplate(u8 taskId, const struct WindowTemplate *template)
 {
     u8 windowId;
 
     Debug_RemoveMainWindow(taskId);
     LoadMessageBoxAndBorderGfx();
-    windowId = AddWindow(&sDebugMenuWindowTemplateExtra);
+    windowId = AddWindow(template);
     DrawStdWindowFrame(windowId, FALSE);
     CopyWindowToVram(windowId, COPYWIN_FULL);
     gTasks[taskId].tSubWindowId = windowId;
+}
+
+static void Debug_CreateInputDisplayWindow(u8 taskId)
+{
+    Debug_CreateInputDisplayWindowFromTemplate(taskId, &sDebugMenuWindowTemplateExtra);
 }
 
 static void DestroyDebugIcon(u8 taskId)
@@ -1140,6 +1195,16 @@ static void DebugNativeStep_PrintWindowSelectionIndicator(u8 taskId, const u8 *c
 static void DebugNativeStep_PrintWindowSelection(u8 taskId)
 {
     DebugNativeStep_PrintWindowSelectionIndicator(taskId, gText_DigitIndicator);
+}
+
+// Like DebugNativeStep_PrintWindowSelection, but a line too long for the window (a map name) drops to a narrower font
+static void DebugNativeStep_PrintWindowSelectionToFit(u8 taskId)
+{
+    const u8 *const lines[] = {gStringVar1, gStringVar2, gStringVar3, gStringVar4};
+    u32 windowId = gTasks[taskId].tSubWindowId;
+    StringCopy(gStringVar4, gText_DigitIndicator[gTasks[taskId].tDigit]);
+    FillWindowPixelBuffer(windowId, PIXEL_FILL(1));
+    Debug_PrintLinesToFit(windowId, DEBUG_MENU_FONT, DEBUG_LINE_HEIGHT, lines, ARRAY_COUNT(lines));
 }
 
 // Removes the menu's windows, list and input task but keeps the menu data,
@@ -1823,6 +1888,11 @@ static void DebugAction_OpenOutbreakMenu(u8 taskId, const struct DebugMenuOption
     DebugAction_OpenSubMenuWithType(taskId, items, DEBUG_OUTBREAK_MENU);
 }
 
+static void DebugAction_OpenSubMenuRecentWarps(u8 taskId, const struct DebugMenuOption *items)
+{
+    DebugAction_OpenSubMenuWithType(taskId, items, DEBUG_RECENT_WARPS_MENU);
+}
+
 static void DebugAction_OpenSubMenu(u8 taskId, const struct DebugMenuOption *items)
 {
     DebugAction_OpenSubMenuWithType(taskId, items, DEBUG_BASIC_MENU);
@@ -1865,31 +1935,64 @@ static void DebugAction_Util_Fly(u8 taskId)
     SetMainCallback2(CB2_OpenFlyMap);
 }
 
+// Copies the map's name from its map.json, or "?" for a map this game doesn't have
+static u8 *Debug_CopyMapName(u8 *dest, u32 mapGroup, u32 mapNum)
+{
+    // sDebugMapNames lists only this game's maps, which a group in map_groups.json can outnumber
+    if (mapGroup >= MAP_GROUPS_COUNT || sDebugMapNames[mapGroup] == NULL || mapNum >= sDebugMapNameCounts[mapGroup])
+        return StringCopy(dest, COMPOUND_STRING("?"));
+    return StringCopy(dest, sDebugMapNames[mapGroup][mapNum]);
+}
+
+STATIC_ASSERT(ARRAY_COUNT(sDebugMapNames) == MAP_GROUPS_COUNT, DebugMapNamesCount);
+STATIC_ASSERT(ARRAY_COUNT(sDebugMapGroupNames) == MAP_GROUPS_COUNT, DebugMapGroupNamesCount);
+STATIC_ASSERT(ARRAY_COUNT(sDebugMapNameCounts) == MAP_GROUPS_COUNT, DebugMapNameCountsCount);
+
+// Only Warp to map warp… has room for the map.json names. The outbreak location pickers share
+// the map group and map steps but keep the narrow window, so they show the region map section.
+static bool32 DebugSelection_ShowsMapNames(u8 taskId)
+{
+    const struct DebugSelection *selection = (const struct DebugSelection *)GetWordTaskArg(taskId, DEBUG_SELECTION_PTR_ARG);
+    return selection->showMapNames;
+}
+
 static void DebugSelectionStep_UpdateMapGroup(u8 taskId, u8 digits, u32 min, u32 max)
 {
+    u32 mapGroup = DEBUG_TASK_INPUT(taskId);
     Debug_InputToDecimalString(gStringVar2, taskId, digits);
     ConvertIntToDecimalStringN(gStringVar3, max, STR_CONV_MODE_LEADING_ZEROS, digits);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Group: {STR_VAR_2} / {STR_VAR_3}"));
-    StringCopy(gStringVar2, COMPOUND_STRING(""));
-    StringCopy(gStringVar3, COMPOUND_STRING(""));
-    DebugNativeStep_PrintWindowSelection(taskId);
+    StringCopy(gStringVar2, DebugSelection_ShowsMapNames(taskId) ? sDebugMapGroupNames[mapGroup] : COMPOUND_STRING(""));
+    StringCopy(gStringVar3, sDebugMapNames[mapGroup] == NULL ? COMPOUND_STRING("Not in this game") : COMPOUND_STRING(""));
+    DebugNativeStep_PrintWindowSelectionToFit(taskId);
+}
+
+// The other game's groups have no maps in this ROM: gMapGroups has NULL for them
+static bool32 DebugSelectionStep_CanConfirmMapGroup(u8 taskId)
+{
+    return sDebugMapNames[DEBUG_TASK_INPUT(taskId)] != NULL;
 }
 
 static void DebugSelectionStep_UpdateMapNum(u8 taskId, u8 digits, u32 min, u32 max)
 {
     u16 mapGroup = DebugSelection_GetStepData(taskId, gTasks[taskId].tStep - 1);
+    u16 mapNum = DEBUG_TASK_INPUT(taskId);
     Debug_InputToDecimalString(gStringVar2, taskId, digits);
     ConvertIntToDecimalStringN(gStringVar3, max, STR_CONV_MODE_LEADING_ZEROS, digits);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Map: {STR_VAR_2} / {STR_VAR_3}"));
-    StringCopy(gStringVar2, COMPOUND_STRING("MapSec:"));
-    GetMapName(gStringVar3, Overworld_GetMapHeaderByGroupAndId(mapGroup, gTasks[taskId].tInput)->regionMapSectionId, 0);
-    DebugNativeStep_PrintWindowSelection(taskId);
+    if (DebugSelection_ShowsMapNames(taskId))
+        Debug_CopyMapName(gStringVar2, mapGroup, mapNum);
+    else
+        StringCopy(gStringVar2, COMPOUND_STRING("MapSec:"));
+    GetMapName(gStringVar3, Overworld_GetMapHeaderByGroupAndId(mapGroup, mapNum)->regionMapSectionId, 0);
+    DebugNativeStep_PrintWindowSelectionToFit(taskId);
 }
 
 static u32 DebugSelectionStep_GetLastMapNum(u8 taskId)
 {
     u16 mapGroup = DebugSelection_GetStepData(taskId, gTasks[taskId].tStep - 1);
-    return (MAP_GROUP_COUNT[mapGroup] - 1);
+    // The map group step refuses a group with no maps in this game
+    return sDebugMapNameCounts[mapGroup] - 1;
 }
 
 // The map dialed in the two steps before the Warp step
@@ -1907,17 +2010,30 @@ static void DebugSelectionStep_UpdateWarp(u8 taskId, u8 digits, u32 min, u32 max
     {
         // Warp 0 doesn't exist, so SetPlayerCoordsFromWarp puts the player in the middle of the map
         StringCopy(gStringVar1, COMPOUND_STRING("Warp: none"));
+        Debug_CopyMapName(gStringVar2, DebugSelection_GetStepData(taskId, gTasks[taskId].tStep - 2),
+            DebugSelection_GetStepData(taskId, gTasks[taskId].tStep - 1));
         StringCopy(gStringVar3, COMPOUND_STRING("To map center"));
     }
     else
     {
+        const struct WarpEvent *warp = &mapHeader->events->warps[DEBUG_TASK_INPUT(taskId)];
+        u8 *end;
         Debug_InputToDecimalString(gStringVar2, taskId, digits);
         ConvertIntToDecimalStringN(gStringVar3, max, STR_CONV_MODE_LEADING_ZEROS, digits);
         StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Warp: {STR_VAR_2} / {STR_VAR_3}"));
-        StringCopy(gStringVar3, COMPOUND_STRING(""));
+        // Where stepping on the warp leads, which tells a map's doors apart
+        end = StringCopy(gStringVar2, COMPOUND_STRING("Leads to "));
+        if (warp->mapGroup == MAP_GROUP(MAP_DYNAMIC) && warp->mapNum == MAP_NUM(MAP_DYNAMIC))
+            StringCopy(end, COMPOUND_STRING("a dynamic warp"));
+        else
+            Debug_CopyMapName(end, warp->mapGroup, warp->mapNum);
+        // Where the player lands
+        end = StringCopy(gStringVar3, COMPOUND_STRING("At X "));
+        end = ConvertIntToDecimalStringN(end, warp->x, STR_CONV_MODE_LEFT_ALIGN, 3);
+        end = StringCopy(end, COMPOUND_STRING(", Y "));
+        ConvertIntToDecimalStringN(end, warp->y, STR_CONV_MODE_LEFT_ALIGN, 3);
     }
-    GetMapName(gStringVar2, mapHeader->regionMapSectionId, 0);
-    DebugNativeStep_PrintWindowSelection(taskId);
+    DebugNativeStep_PrintWindowSelectionToFit(taskId);
 }
 
 // A map with no warps has only warp 0, which lands in the middle of the map
@@ -1927,20 +2043,115 @@ static u32 DebugSelectionStep_GetLastWarp(u8 taskId)
     return count > 0 ? count - 1 : 0;
 }
 
-static bool32 DebugSelection_SetWarp_OnComplete(u8 taskId)
+// Moves the warp to the front of the recent warps, dropping the oldest one when the list is full
+static void Debug_AddRecentWarp(struct DebugWarp warp)
 {
-    SetWarpDestinationToMapWarp(DebugSelection_GetData(taskId, 0),
-        DebugSelection_GetData(taskId, 1), DebugSelection_GetData(taskId, 2));
+    u32 i;
+    for (i = 0; i < sDebugRecentWarpsCount; i++)
+    {
+        if (sDebugRecentWarps[i].mapGroup == warp.mapGroup
+         && sDebugRecentWarps[i].mapNum == warp.mapNum
+         && sDebugRecentWarps[i].warpId == warp.warpId)
+            break;
+    }
+    if (i == sDebugRecentWarpsCount && sDebugRecentWarpsCount < DEBUG_RECENT_WARPS_COUNT)
+        sDebugRecentWarpsCount++;
+    else if (i == DEBUG_RECENT_WARPS_COUNT)
+        i--;
+    for (; i > 0; i--)
+        sDebugRecentWarps[i] = sDebugRecentWarps[i - 1];
+    sDebugRecentWarps[0] = warp;
+}
+
+static void Debug_WarpTo(u8 taskId, struct DebugWarp warp)
+{
+    Debug_AddRecentWarp(warp);
+    SetWarpDestinationToMapWarp(warp.mapGroup, warp.mapNum, warp.warpId);
     DoWarp();
     ResetInitialPlayerAvatarState();
     Debug_DestroyMenu_Full(taskId);
     ScriptContext_Stop();
+}
+
+// Starts from the last warp, or from the player's map before the first one
+static void DebugSelection_SetWarp_Init(u8 taskId)
+{
+    Debug_CreateInputDisplayWindowFromTemplate(taskId, &sDebugMenuWindowTemplateWarp);
+    if (sDebugRecentWarpsCount > 0)
+    {
+        DebugSelection_SetData(taskId, 0, sDebugRecentWarps[0].mapGroup);
+        DebugSelection_SetData(taskId, 1, sDebugRecentWarps[0].mapNum);
+        DebugSelection_SetData(taskId, 2, sDebugRecentWarps[0].warpId);
+    }
+    else
+    {
+        DebugSelection_SetData(taskId, 0, gSaveBlock1Ptr->location.mapGroup);
+        DebugSelection_SetData(taskId, 1, gSaveBlock1Ptr->location.mapNum);
+    }
+}
+
+static bool32 DebugSelection_SetWarp_OnComplete(u8 taskId)
+{
+    struct DebugWarp warp = {
+        .mapGroup = DebugSelection_GetData(taskId, 0),
+        .mapNum = DebugSelection_GetData(taskId, 1),
+        .warpId = DebugSelection_GetData(taskId, 2),
+    };
+    Debug_WarpTo(taskId, warp);
     return TRUE;
+}
+
+static void DebugAction_Util_RecentWarp(u8 taskId, const void *params)
+{
+    const struct DebugWarp *warp = params;
+    // The empty list's one entry
+    if (warp - sDebugRecentWarps >= sDebugRecentWarpsCount)
+    {
+        PlaySE(SE_FAILURE);
+        return;
+    }
+    Debug_WarpTo(taskId, *warp);
+}
+
+// The recent warps, most recent first: the map name, then the warp unless the map has none
+static u32 Debug_GenerateListRecentWarpsMenu(const struct DebugMenuOption *items)
+{
+    // The list's textNarrowWidth (window minus item_X). A label that fits it in FONT_NARROWER,
+    // the narrowest font the list drops to, isn't clipped.
+    const u32 labelWidth = sDebugMenuWindowTemplateMain.width * 8 - 8;
+    u32 i;
+
+    if (sDebugRecentWarpsCount == 0)
+    {
+        StringCopy(sDebugMenuListData->itemNames[0], COMPOUND_STRING("No warps yet"));
+        sDebugMenuListData->listItems[0].id = 0;
+        sDebugMenuListData->listItems[0].name = sDebugMenuListData->itemNames[0];
+        return 1;
+    }
+    for (i = 0; i < sDebugRecentWarpsCount; i++)
+    {
+        const struct DebugWarp *warp = &sDebugRecentWarps[i];
+        u8 *end = Debug_CopyMapName(gStringVar4, warp->mapGroup, warp->mapNum);
+
+        if (Overworld_GetMapHeaderByGroupAndId(warp->mapGroup, warp->mapNum)->events->warpCount > 0)
+        {
+            end = StringCopy(end, COMPOUND_STRING(" ("));
+            end = ConvertIntToDecimalStringN(end, warp->warpId, STR_CONV_MODE_LEFT_ALIGN, 2);
+            StringCopy(end, COMPOUND_STRING(")"));
+        }
+        // An over-long label keeps its end, which tells apart maps such as a house's 1F and 2F
+        Debug_CopyStringEndToFit(sDebugMenuListData->itemNames[i], ARRAY_COUNT(sDebugMenuListData->itemNames[i]),
+            gStringVar4, FONT_NARROWER, labelWidth);
+        sDebugMenuListData->listItems[i].id = i;
+        sDebugMenuListData->listItems[i].name = sDebugMenuListData->itemNames[i];
+    }
+    return i;
 }
 
 static const struct DebugSelectionStep sMapGroupSelectionStep = {
     .stepUpdate = DebugSelectionStep_UpdateMapGroup,
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
+    .canConfirm = DebugSelectionStep_CanConfirmMapGroup,
     .minValue = 0,
     .maxValue = MAP_GROUPS_COUNT - 1,
 };
@@ -1962,11 +2173,12 @@ static const struct DebugSelectionStep sWarpSelectionStep = {
 };
 
 static const struct DebugSelection sWarpSelection = {
-    .onInit = Debug_CreateInputDisplayWindow,
+    .onInit = DebugSelection_SetWarp_Init,
     .onCancel = DebugSelectionStep_ReturnToUtilMenu,
     .onComplete = DebugSelection_SetWarp_OnComplete,
     .steps = {&sMapGroupSelectionStep, &sMapNumSelectionStep, &sWarpSelectionStep},
     .maxSteps = 3,
+    .showMapNames = TRUE,
 };
 
 void CheckSaveBlock1Size(struct ScriptContext *ctx)
