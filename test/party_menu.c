@@ -45,3 +45,20 @@ TEST("Full multi partner party menu wraps cancel up to partner party count")
 
     EXPECT_EQ(Test_UpdatePartySelectionSingleLayout(PARTY_SIZE + 1, TEST_MENU_DIR_UP, FALSE, 0), 1);
 }
+
+TEST("Party menu Switch resets the follower steps only when the leader changes")
+{
+    u32 slotId = 0, slotId2 = 0;
+    bool32 resets = FALSE;
+
+    PARAMETRIZE { slotId = 2; slotId2 = 0; resets = TRUE; }
+    PARAMETRIZE { slotId = 0; slotId2 = 3; resets = TRUE; }
+    PARAMETRIZE { slotId = 1; slotId2 = 2; resets = FALSE; }
+    PARAMETRIZE { slotId = 0; slotId2 = 0; resets = FALSE; }
+    PARAMETRIZE { slotId = 4; slotId2 = 4; resets = FALSE; }
+
+    gFollowerSteps = 100;
+    Test_ResetFollowerStepsOnLeaderSwitch(slotId, slotId2);
+
+    EXPECT_EQ(gFollowerSteps, resets ? 0 : 100);
+}
