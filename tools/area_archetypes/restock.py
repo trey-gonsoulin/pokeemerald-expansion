@@ -770,40 +770,47 @@ def wild_headers(wild):
     return next(g for g in wild['wild_encounter_groups'] if g['label'] == 'gWildMonHeaders')
 
 
+def pooled_tables(wild, emerald_maps, pools, settings):
+    """(encounter, field, rod, slot indices, archetype info, pool) for every table of the
+    selected regions that has an archetype pool to draw from."""
+    group = wild_headers(wild)
+    field_defs = {fd['type']: fd for fd in group['fields']}
+    for enc in group['encounters']:
+        em = emerald_maps.get(enc['base_label'])
+        if not em or em.get('region') not in settings.regions:
+            continue
+        for field, rod, idxs, arch in tables_of(enc, em, field_defs):
+            pool = pools['archetypes'].get(arch['archetype'], {}).get('pools', {}).get(arch['pool'])
+            if pool:
+                yield enc, field, rod, idxs, arch, pool
+
+
 def restock(wild, emerald_maps, pools, info, settings):
     """Restocked copy of wild_encounters.json, plus a list of changed tables."""
     wild = copy.deepcopy(wild)
     group = wild_headers(wild)
     field_defs = {fd['type']: fd for fd in group['fields']}
-    archetypes = pools['archetypes']
     info.learn_gens(pools)
     changes = []
     unmapped = [e['base_label'] for e in group['encounters'] if e['base_label'] not in emerald_maps]
     if unmapped:
         print(f'warning: {len(unmapped)} gWildMonHeaders labels have no emerald_maps entry and are '
               f'left alone (rerun build?): {", ".join(unmapped)}', file=sys.stderr)
-    for enc in group['encounters']:
+    for enc, field, rod, idxs, arch, pool in pooled_tables(wild, emerald_maps, pools, settings):
         label = enc['base_label']
-        em = emerald_maps.get(label)
-        if not em or em.get('region') not in settings.regions:
+        mons = [enc[field]['mons'][i] for i in idxs]
+        rates = [field_defs[field]['encounter_rates'][i] for i in idxs]
+        table = f'{field}:{rod}' if rod else field
+        new = restock_table(mons, rates, pool, info, settings, label, table)
+        if new is None or new == [m['species'] for m in mons]:
             continue
-        for field, rod, idxs, arch in tables_of(enc, em, field_defs):
-            pool = archetypes.get(arch['archetype'], {}).get('pools', {}).get(arch['pool'])
-            if not pool:
-                continue
-            mons = [enc[field]['mons'][i] for i in idxs]
-            rates = [field_defs[field]['encounter_rates'][i] for i in idxs]
-            table = f'{field}:{rod}' if rod else field
-            new = restock_table(mons, rates, pool, info, settings, label, table)
-            if new is None or new == [m['species'] for m in mons]:
-                continue
-            changes.append({'label': label, 'map': enc.get('map'), 'table': table,
-                            'archetype': arch['archetype'],
-                            'slots': [{'rate': r, 'levels': [m['min_level'], m['max_level']],
-                                       'before': m['species'], 'after': s}
-                                      for m, r, s in zip(mons, rates, new)]})
-            for m, s in zip(mons, new):
-                m['species'] = s
+        changes.append({'label': label, 'map': enc.get('map'), 'table': table,
+                        'archetype': arch['archetype'],
+                        'slots': [{'rate': r, 'levels': [m['min_level'], m['max_level']],
+                                   'before': m['species'], 'after': s}
+                                  for m, r, s in zip(mons, rates, new)]})
+        for m, s in zip(mons, new):
+            m['species'] = s
     return wild, changes
 
 
@@ -938,6 +945,15 @@ def main(argv=None):
                  f'a hand edit?), and --write would lose that; refresh the baseline (README), '
                  f'or --force to overwrite anyway')
     new, changes = restock(base, emerald_maps, pools, info, settings)
+    # A ratio of 0 changes nothing on purpose; above 0, nothing could be drawn.
+    if not changes and any(not (ms := settings.for_map(enc['base_label'])).skip and ms.ratio > 0
+                           for enc, *_ in pooled_tables(base, emerald_maps, pools, settings)):
+        nothing = ('no table changed although the ratio is above 0: nothing could be drawn (check '
+                   'allow/deny, gens, the legendary and regional-form flags, devolving and new_species)')
+        if args.write and not args.force:
+            p.error(f'{nothing}, and --write would put the species of {args.base} back over '
+                    f'{args.wild}; --force to write anyway')
+        print(f'warning: {nothing}', file=sys.stderr)
     stamp = {'base_sha256': base_sha256, 'seed': settings.seed, 'ratio': settings.ratio}
     if AA.RESTOCK_STAMP in base:  # --force on a restocked base: keep its history
         stamp['base_restocked_by'] = base[AA.RESTOCK_STAMP]
@@ -950,17 +966,6 @@ def main(argv=None):
     print(f'{s["maps_changed"]} maps / {s["tables_changed"]} tables / {s["slots_changed"]} slots changed; '
           f'{s["distinct_species_added"]} species added, {s["distinct_species_removed"]} removed')
     print(f'  report: {report}\n  preview: {preview}')
-    # A ratio of 0 legitimately changes nothing; above 0, the filters left nothing to draw.
-    drawing = any(not ms.skip and ms.ratio > 0
-                  for ms in map(settings.for_map, (label for label, em in emerald_maps.items()
-                                                   if em.get('region') in settings.regions)))
-    if drawing and not changes:
-        nothing = ('no table changed although the ratio is above 0: the allow/deny lists, gens, the '
-                   'legendary or regional-form flags or devolving leave nothing to draw')
-        if args.write and not args.force:
-            p.error(f'{nothing}, and --write would put {args.base} back over {args.wild}; '
-                    f'--force to write anyway')
-        print(f'warning: {nothing}', file=sys.stderr)
     if args.write:
         dump_wild(new, args.wild)
         print(f'  wrote {args.wild}')

@@ -517,20 +517,23 @@ class CliTests(unittest.TestCase):
             written = read(wild)
             argv = ['--wild', wild, '--out-dir', out, '--allow', 'MEWTWO']
             err = io.StringIO()
-            with contextlib.redirect_stderr(err):
-                _, changes = run_quietly(argv)
-            self.assertEqual(changes, [])
-            self.assertIn('warning: no table changed although the ratio is above 0', err.getvalue())
-            err = io.StringIO()
             with contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as cm:
                 run_quietly(argv + ['--write'])
             self.assertEqual(cm.exception.code, 2)
-            self.assertIn('--write would put', err.getvalue())
+            self.assertIn('no table changed although the ratio is above 0', err.getvalue())
+            self.assertIn('--write would put the species of', err.getvalue())
             self.assertEqual(read(wild), written)
+            self.assertFalse(os.path.exists(out))
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err):
+                _, changes = run_quietly(argv)
+            self.assertEqual(changes, [])
+            self.assertIn('warning: no table changed', err.getvalue())
             with contextlib.redirect_stderr(io.StringIO()):
-                run_quietly(argv + ['--write', '--force'])
-            self.assertEqual(R.skeleton(R.load_json(wild)), R.skeleton(R.load_json(WILD)))
-            self.assertNotEqual(read(wild), written)
+                forced, _ = run_quietly(argv + ['--write', '--force'])
+            self.assertEqual(R.load_json(wild), forced)
+            del forced[AA.RESTOCK_STAMP]
+            self.assertEqual(forced, R.load_json(WILD))
 
     def test_ratio_zero_writes_without_a_warning(self):
         with tempfile.TemporaryDirectory() as tmp:
