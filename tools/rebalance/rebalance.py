@@ -145,8 +145,10 @@ def load_stages(path, trainers, repo):
         # The same fight's other rival and starter teams, which the model doesn't play.
         st['variants'] = {}
         for b, bid in zip(ts, st['bosses']):
+            if '{' not in b:
+                continue
             ids = {b.format(**dict(zip(choices, c))) for c in itertools.product(*choices.values())} - staged
-            if '{' in b and ids:
+            if ids:
                 st['variants'][bid] = sorted(ids)
     # Variants are kept out of the regular trainers and overrides like the bosses.
     bosses = staged.union(*(ids for st in stages for ids in st['variants'].values()))
