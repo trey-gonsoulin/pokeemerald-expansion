@@ -72,9 +72,9 @@ Party level just before each boss. Every party member is Medium Slow (the starte
 | Elite Four | Wally Vr 1 | 60 | 58.4 | 83 | 53.0 | 67 | 49.0 | 67 | 57.0 |
 | Elite Four | Sidney | 61 | 59.4 | 83 | 53.5 | 67 | 49.2 | 67 | 58.0 |
 | Elite Four | Phoebe | 62 | 60.4 | 83 | 54.0 | 68 | 49.5 | 68 | 58.0 |
-| Elite Four | Glacia | 62 | 60.4 | 84 | 54.0 | 68 | 50.0 | 68 | 59.0 |
-| Elite Four | Drake | 63 | 61.4 | 84 | 54.2 | 69 | 50.2 | 69 | 59.0 |
-| Elite Four | Wallace | 63 | 61.3 | 85 | 54.8 | 70 | 50.8 | 70 | 60.0 |
+| Elite Four | Glacia | 63 | 61.4 | 84 | 54.0 | 68 | 50.0 | 68 | 59.0 |
+| Elite Four | Drake | 64 | 62.4 | 84 | 54.2 | 69 | 50.2 | 69 | 59.0 |
+| Elite Four | Wallace | 66 | 64.3 | 85 | 55.0 | 70 | 50.8 | 70 | 60.0 |
 
 ### half clear (gym leaders, Elite Four, Champion)
 
@@ -90,9 +90,9 @@ Party level just before each boss. Every party member is Medium Slow (the starte
 | Juan | Juan 1 | 57 | 53.8 | 65 | 42.5 | 56 | 41.0 | 56 | 48.0 |
 | Elite Four | Sidney | 61 | 59.4 | 69 | 44.5 | 60 | 43.5 | 60 | 51.0 |
 | Elite Four | Phoebe | 62 | 60.4 | 69 | 45.0 | 61 | 44.2 | 61 | 52.0 |
-| Elite Four | Glacia | 62 | 60.4 | 70 | 45.5 | 62 | 44.8 | 62 | 53.0 |
-| Elite Four | Drake | 63 | 61.4 | 71 | 45.8 | 63 | 45.5 | 63 | 53.0 |
-| Elite Four | Wallace | 63 | 61.3 | 71 | 46.5 | 64 | 46.2 | 64 | 54.0 |
+| Elite Four | Glacia | 63 | 61.4 | 70 | 45.5 | 62 | 44.8 | 62 | 53.0 |
+| Elite Four | Drake | 64 | 62.4 | 71 | 45.8 | 63 | 45.5 | 63 | 53.0 |
+| Elite Four | Wallace | 66 | 64.3 | 72 | 46.5 | 64 | 46.2 | 64 | 54.0 |
 
 ### full clear + 20 wild battles per stage (gym leaders, Elite Four, Champion)
 
@@ -108,9 +108,9 @@ Party level just before each boss. Every party member is Medium Slow (the starte
 | Juan | Juan 1 | 57 | 53.8 | 80 | 51.8 | 64 | 46.5 | 64 | 55.0 |
 | Elite Four | Sidney | 61 | 59.4 | 85 | 55.0 | 69 | 50.2 | 69 | 59.0 |
 | Elite Four | Phoebe | 62 | 60.4 | 86 | 55.0 | 69 | 50.8 | 69 | 59.0 |
-| Elite Four | Glacia | 62 | 60.4 | 86 | 55.8 | 70 | 51.0 | 70 | 60.0 |
-| Elite Four | Drake | 63 | 61.4 | 87 | 56.0 | 70 | 51.2 | 70 | 60.0 |
-| Elite Four | Wallace | 63 | 61.3 | 87 | 56.0 | 71 | 51.8 | 71 | 61.0 |
+| Elite Four | Glacia | 63 | 61.4 | 86 | 55.8 | 70 | 51.0 | 70 | 60.0 |
+| Elite Four | Drake | 64 | 62.4 | 87 | 56.0 | 70 | 51.2 | 70 | 60.0 |
+| Elite Four | Wallace | 66 | 64.3 | 87 | 56.0 | 71 | 51.8 | 71 | 61.0 |
 
 ## Exp. Share curve (#127)
 
@@ -147,9 +147,9 @@ The share6 party on modern data: one Pokemon takes every KO (KO-taker) and five 
 | Elite Four | Wally Vr 1 | 60 | 70 | 57 / 59 / 60 | 255 | 76 | 63 / 65 / 65 | 255 |
 | Elite Four | Sidney | 61 | 70 | 58 / 60 / 60 | 255 | 77 | 63 / 66 / 66 | 255 |
 | Elite Four | Phoebe | 62 | 71 | 58 / 61 / 61 | 255 | 77 | 64 / 66 / 66 | 255 |
-| Elite Four | Glacia | 62 | 71 | 59 / 61 / 61 | 255 | 78 | 64 / 67 / 67 | 255 |
-| Elite Four | Drake | 63 | 72 | 59 / 62 / 62 | 255 | 79 | 65 / 67 / 68 | 255 |
-| Elite Four | Wallace | 63 | 73 | 60 / 62 / 62 | 255 | 80 | 66 / 68 / 68 | 255 |
+| Elite Four | Glacia | 63 | 71 | 59 / 61 / 61 | 255 | 78 | 64 / 67 / 67 | 255 |
+| Elite Four | Drake | 64 | 72 | 59 / 62 / 62 | 255 | 79 | 65 / 67 / 68 | 255 |
+| Elite Four | Wallace | 66 | 73 | 60 / 62 / 62 | 255 | 80 | 66 / 68 / 68 | 255 |
 
 ### Now: half clear (gym leaders, Elite Four, Champion)
 
@@ -165,9 +165,9 @@ The share6 party on modern data: one Pokemon takes every KO (KO-taker) and five 
 | Juan | Juan 1 | 57 | 59 | 48 / 50 / 50 | 255 | 64 | 53 / 55 / 55 | 255 |
 | Elite Four | Sidney | 61 | 63 | 52 / 54 / 54 | 255 | 69 | 57 / 59 / 59 | 255 |
 | Elite Four | Phoebe | 62 | 64 | 52 / 54 / 55 | 255 | 70 | 57 / 60 / 60 | 255 |
-| Elite Four | Glacia | 62 | 65 | 53 / 55 / 55 | 255 | 71 | 58 / 60 / 61 | 255 |
-| Elite Four | Drake | 63 | 65 | 54 / 56 / 56 | 255 | 72 | 59 / 61 / 61 | 255 |
-| Elite Four | Wallace | 63 | 67 | 55 / 57 / 57 | 255 | 73 | 60 / 62 / 62 | 255 |
+| Elite Four | Glacia | 63 | 65 | 53 / 55 / 55 | 255 | 71 | 58 / 60 / 61 | 255 |
+| Elite Four | Drake | 64 | 66 | 54 / 56 / 56 | 255 | 72 | 59 / 61 / 61 | 255 |
+| Elite Four | Wallace | 66 | 67 | 55 / 57 / 57 | 255 | 73 | 60 / 62 / 62 | 255 |
 
 ### Stage trainers against the bench
 
@@ -218,9 +218,9 @@ Target: on a full clear with modelled friendship, each story boss's ace is 1 lev
 | Elite Four | Wally Vr 1 | 60 | +0 -> 60 | +7 -> 67 |
 | Elite Four | Sidney | 61 | +0 -> 61 | +7 -> 68 |
 | Elite Four | Phoebe | 62 | +0 -> 62 | +7 -> 69 |
-| Elite Four | Glacia | 62 | +0 -> 62 | +7 -> 69 |
-| Elite Four | Drake | 63 | +0 -> 63 | +7 -> 70 |
-| Elite Four | Wallace | 63 | +0 -> 63 | +8 -> 71 |
+| Elite Four | Glacia | 63 | +0 -> 63 | +6 -> 69 |
+| Elite Four | Drake | 64 | +0 -> 64 | +6 -> 70 |
+| Elite Four | Wallace | 66 | +0 -> 66 | +5 -> 71 |
 
 The model plays one rival team per fight. The same fight's other rival and starter teams get the raise that lifts their ace to the staged team's raised ace:
 
@@ -234,7 +234,7 @@ The model plays one rival team per fight. The same fight's other rival and start
 
 ### After the 1.5x off raises
 
-Full clear: 28 of 30 bosses have the bench (friendship) within 1 of their ace; the others' aces are already higher and aren't lowered. Half clear: 13 of 13 gym leaders, Elite Four and Champion have the bench (friendship) within 8.
+Full clear: 25 of 30 bosses have the bench (friendship) within 1 of their ace; the others' aces are already higher and aren't lowered. Half clear: 12 of 13 gym leaders, Elite Four and Champion have the bench (friendship) within 8.
 
 | stage | boss | ace | KO-taker | full bench (none / friendship / always) | full bench - ace | half bench (none / friendship / always) | half bench - ace |
 |---|---|---|---|---|---|---|---|
@@ -265,9 +265,9 @@ Full clear: 28 of 30 bosses have the bench (friendship) within 1 of their ace; t
 | Elite Four | Wally Vr 1 | 60 | 70 | 57 / 59 / 60 | -1 | 51 / 53 / 53 | -7 |
 | Elite Four | Sidney | 61 | 70 | 58 / 60 / 60 | -1 | 52 / 54 / 54 | -7 |
 | Elite Four | Phoebe | 62 | 71 | 58 / 61 / 61 | -1 | 52 / 54 / 55 | -8 |
-| Elite Four | Glacia | 62 | 71 | 59 / 61 / 61 | -1 | 53 / 55 / 55 | -7 |
-| Elite Four | Drake | 63 | 72 | 59 / 62 / 62 | -1 | 54 / 56 / 56 | -7 |
-| Elite Four | Wallace | 63 | 73 | 60 / 62 / 62 | -1 | 55 / 57 / 57 | -6 |
+| Elite Four | Glacia | 63 | 71 | 59 / 61 / 61 | -2 | 53 / 55 / 55 | -8 |
+| Elite Four | Drake | 64 | 72 | 59 / 62 / 62 | -2 | 54 / 56 / 56 | -8 |
+| Elite Four | Wallace | 66 | 73 | 60 / 62 / 62 | -4 | 55 / 57 / 57 | -9 |
 
 ### After the 1.5x on raises
 
@@ -598,22 +598,22 @@ Changed attacking moves (set-move slots; weaker/similar/stronger: the category f
 | Phoebe | Sableye | 61 | Feint Attack | Special -> Physical | 65 -> 75 | stronger |
 | Phoebe | Banette | 60 | Shadow Ball | Physical -> Special | 115 -> 83 | weaker |
 | Phoebe | Dusclops | 62 | Shadow Ball | Physical -> Special | 70 -> 60 | similar |
-| Glacia | Sealeo | 59 | Ice Ball | Special -> Physical | 75 -> 60 | weaker |
-| Glacia | Glalie | 59 | Crunch | Special -> Physical | 80 -> 80 | similar |
-| Glacia | Glalie | 61 | Shadow Ball | Physical -> Special | 80 -> 80 | similar |
-| Drake | Shelgon | 60 | Dragon Claw | Special -> Physical | 60 -> 95 | stronger |
-| Drake | Flygon | 61 | Crunch | Special -> Physical | 80 -> 100 | stronger |
-| Drake | Salamence | 63 | Dragon Claw | Special -> Physical | 110 -> 135 | stronger |
-| Drake | Salamence | 63 | Crunch | Special -> Physical | 110 -> 135 | stronger |
+| Glacia | Sealeo | 60 | Ice Ball | Special -> Physical | 75 -> 60 | weaker |
+| Glacia | Glalie | 60 | Crunch | Special -> Physical | 80 -> 80 | similar |
+| Glacia | Glalie | 62 | Shadow Ball | Physical -> Special | 80 -> 80 | similar |
+| Drake | Shelgon | 61 | Dragon Claw | Special -> Physical | 60 -> 95 | stronger |
+| Drake | Flygon | 62 | Crunch | Special -> Physical | 80 -> 100 | stronger |
+| Drake | Salamence | 64 | Dragon Claw | Special -> Physical | 110 -> 135 | stronger |
+| Drake | Salamence | 64 | Crunch | Special -> Physical | 110 -> 135 | stronger |
 | Wattson 1 | Voltorb | 22 | Spark | Special -> Physical | 55 -> 30 | weaker |
 | Flannery 1 | Slugma | 29 | Smog | Physical -> Special | 40 -> 70 | stronger |
 | Norman 1 | Vigoroth | 32 | Feint Attack | Special -> Physical | 55 -> 80 | stronger |
 | Norman 1 | Slaking | 36 | Feint Attack | Special -> Physical | 95 -> 160 | stronger |
 | Tate And Liza 1 | Claydol | 50 | Ancient Power | Physical -> Special | 70 -> 70 | similar |
 | Juan 1 | Crawdaunt | 54 | Crabhammer | Special -> Physical | 90 -> 120 | stronger |
-| Wallace | Tentacruel | 60 | Sludge Bomb | Physical -> Special | 70 -> 80 | similar |
-| Wallace | Whiscash | 61 | Hyper Beam | Physical -> Special | 78 -> 76 | similar |
-| Wallace | Gyarados | 61 | Hyper Beam | Physical -> Special | 125 -> 60 | weaker |
+| Wallace | Tentacruel | 63 | Sludge Bomb | Physical -> Special | 70 -> 80 | similar |
+| Wallace | Whiscash | 64 | Hyper Beam | Physical -> Special | 78 -> 76 | similar |
+| Wallace | Gyarados | 64 | Hyper Beam | Physical -> Special | 125 -> 60 | weaker |
 | Wally Vr 1 | Delcatty | 58 | Feint Attack | Special -> Physical | 55 -> 65 | stronger |
 | Wally Vr 1 | Magneton | 56 | Tri Attack | Physical -> Special | 60 -> 120 | stronger |
 
@@ -812,20 +812,20 @@ Per boss Pokemon: retyping, defensive multipliers that changed (attacking type: 
 
 ### Glacia
 
-- Glalie 59: hits Steel 0.5x->1x
-- Glalie 61: hits Steel 0.5x->1x
+- Glalie 60: hits Steel 0.5x->1x
+- Glalie 62: hits Steel 0.5x->1x
 
 ### Drake
 
-- Shelgon 60: takes Fairy new->2x
-- Altaria 62: takes Fairy new->2x
-- Kingdra 61: takes Fairy new->2x
-- Flygon 61: takes Fairy new->2x
-- Salamence 63: takes Fairy new->2x
+- Shelgon 61: takes Fairy new->2x
+- Altaria 63: takes Fairy new->2x
+- Kingdra 62: takes Fairy new->2x
+- Flygon 62: takes Fairy new->2x
+- Salamence 64: takes Fairy new->2x
 
 ### Wallace
 
-- Tentacruel 60: takes Fairy new->0.5x; hits Fairy new->2x
+- Tentacruel 63: takes Fairy new->0.5x; hits Fairy new->2x
 
 ## TMs by story stage
 
@@ -943,4 +943,4 @@ Prize money from a full clear of each stage (same in both: 4 x last Pokemon's le
 | Winona | 86 | 69220 | 193684 |
 | Tate and Liza | 113 | 117136 | 310820 |
 | Juan | 76 | 107564 | 418384 |
-| Elite Four | 31 | 89952 | 508336 |
+| Elite Four | 31 | 90752 | 509136 |
