@@ -361,22 +361,23 @@ const u8 *Debug_GetVarName(u32 varId)
     return sDebugVarNames[varId - VARS_START];
 }
 
-// For a trainer flag, copies the trainer's class and name ("LEADER ROXANNE") into dest and returns TRUE.
-// Returns FALSE and leaves dest alone for any other flag, TRAINER_NONE, the unused IDs from
-// TRAINERS_COUNT up to TRAINER_FLAGS_END, and a trainer without a name.
+STATIC_ASSERT(DEBUG_TRAINER_FLAG_NAME_SIZE >= sizeof(gTrainerClasses[0].name) + 1 + TRAINER_NAME_LENGTH + 1, DebugTrainerFlagNameSize);
+
+// For a trainer flag, copies the trainer's class and name ("LEADER ROXANNE") into dest, which holds
+// DEBUG_TRAINER_FLAG_NAME_SIZE, and returns TRUE. Returns FALSE and leaves dest alone with
+// DEBUG_FLAG_VAR_NAMES off, for any other flag, and for a trainer without a party: TRAINER_NONE, and
+// IDs left out of the table (zero-filled, so the name has no EOS). IDs from TRAINERS_COUNT are unused.
 bool32 Debug_CopyTrainerFlagName(u8 *dest, u32 flag)
 {
     u32 trainerId = flag - TRAINER_FLAGS_START;
-    const u8 *name;
 
-    if (flag < TRAINER_FLAGS_START || trainerId == TRAINER_NONE || trainerId >= TRAINERS_COUNT)
-        return FALSE;
-    name = GetTrainerNameFromId(trainerId);
-    if (name[0] == EOS)
+    if (!DEBUG_FLAG_VAR_NAMES || flag < TRAINER_FLAGS_START || trainerId >= TRAINERS_COUNT
+     || GetTrainerPartySizeFromId(trainerId) == 0)
         return FALSE;
     dest = StringCopy(dest, GetTrainerClassNameFromId(trainerId));
     *dest++ = CHAR_SPACE;
-    StringCopy(dest, name);
+    StringCopyN(dest, GetTrainerNameFromId(trainerId), TRAINER_NAME_LENGTH + 1);
+    dest[TRAINER_NAME_LENGTH] = EOS;
     return TRUE;
 }
 
