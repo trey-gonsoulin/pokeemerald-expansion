@@ -211,6 +211,10 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 Mightyena
 Level: 47
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Assurance
+- Crunch
+- Taunt
+- Yawn
 
 Linoone
 Level: 47
@@ -292,6 +296,10 @@ AI: Check Bad Move
 Zangoose
 Level: 51
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- X-Scissor
+- Crush Claw
+- Swords Dance
+- Close Combat
 
 Seviper
 Level: 51
@@ -484,6 +492,10 @@ AI: Check Bad Move
 Mightyena
 Level: 51
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Crunch
+- Taunt
+- Yawn
+- Take Down
 
 Sharpedo
 Level: 51
@@ -548,6 +560,10 @@ IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 Machoke
 Level: 51
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Strength
+- Dual Chop
+- Vital Throw
+- Seismic Toss
 
 === TRAINER_MATT ===
 Name: MATT
@@ -752,6 +768,10 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 Gloom
 Level: 47
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Giga Drain
+- Moonblast
+- Grassy Terrain
+- Moonlight
 
 === TRAINER_ROSE_2 ===
 Name: ROSE
@@ -1498,6 +1518,10 @@ IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 Makuhita
 Level: 26
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Force Palm
+- Knock Off
+- Bulk Up
+- Belly Drum
 
 === TRAINER_EDGAR ===
 Name: EDGAR
@@ -1530,6 +1554,10 @@ AI: Basic Trainer
 Magneton
 Level: 67
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Discharge
+- Light Screen
+- Lock-On
+- Zap Cannon
 
 Muk
 Level: 67
@@ -1841,6 +1869,10 @@ IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 Roselia
 Level: 26
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Mega Drain
+- Magical Leaf
+- Toxic Spikes
+- Sweet Scent
 
 === TRAINER_JENNIFER ===
 Name: JENNIFER
@@ -1923,6 +1955,10 @@ AI: Basic Trainer
 Skarmory
 Level: 67
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Drill Peck
+- Spikes
+- Iron Defense
+- Brave Bird
 
 Sableye
 Level: 67
@@ -2216,6 +2252,10 @@ AI: Check Bad Move
 Zigzagoon @ Nugget
 Level: 10
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Tackle
+- Sand Attack
+- Tail Whip
+- Covet
 
 === TRAINER_DAPHNE ===
 Name: DAPHNE
@@ -2624,6 +2664,10 @@ AI: Check Bad Move
 Zigzagoon @ Nugget
 Level: 10
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Tackle
+- Sand Attack
+- Tail Whip
+- Covet
 
 === TRAINER_MOLLIE ===
 Name: MOLLIE
@@ -2741,6 +2785,10 @@ AI: Check Bad Move
 Wailmer
 Level: 42
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Bounce
+- Body Slam
+- Brine
+- Amnesia
 
 Seadra
 Level: 42
@@ -2955,6 +3003,10 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 Sharpedo
 Level: 42
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Night Slash
+- Swagger
+- Crunch
+- Agility
 
 === TRAINER_SPENCER ===
 Name: SPENCER
@@ -4333,14 +4385,26 @@ AI: Check Bad Move
 Gardevoir
 Level: 47
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Dazzling Gleam
+- Wish
+- Calm Mind
+- Psychic
 
 Gardevoir
 Level: 47
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Dazzling Gleam
+- Wish
+- Calm Mind
+- Psychic
 
 Gardevoir
 Level: 47
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Dazzling Gleam
+- Wish
+- Calm Mind
+- Psychic
 
 === TRAINER_JOSHUA ===
 Name: JOSHUA
@@ -5835,6 +5899,10 @@ AI: Check Bad Move / Try To Faint
 Roselia @ Oran Berry
 Level: 26
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
+- Mega Drain
+- Magical Leaf
+- Toxic Spikes
+- Sweet Scent
 
 === TRAINER_VANESSA ===
 Name: VANESSA
@@ -6073,6 +6141,10 @@ IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 Hariyama
 Level: 30
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
+- Knock Off
+- Force Palm
+- Belly Drum
+- Detect
 
 === TRAINER_SHELBY_2 ===
 Name: SHELBY
@@ -6668,6 +6740,10 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 Sharpedo
 Level: 42
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Night Slash
+- Swagger
+- Crunch
+- Agility
 
 === TRAINER_WADE ===
 Name: WADE
@@ -6694,6 +6770,10 @@ AI: Check Bad Move
 Wailmer
 Level: 42
 IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
+- Bounce
+- Body Slam
+- Brine
+- Amnesia
 
 Tentacruel
 Level: 42
@@ -7695,6 +7775,10 @@ AI: Check Bad Move
 Altaria
 Level: 46
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Dragon Pulse
+- Cotton Guard
+- Take Down
+- Moonblast
 
 === TRAINER_BENNY ===
 Name: BENNY
@@ -8183,6 +8267,10 @@ IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 Hariyama
 Level: 27
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Force Palm
+- Knock Off
+- Bulk Up
+- Belly Drum
 
 === TRAINER_CORA ===
 Name: CORA
@@ -8323,6 +8411,10 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 Wailord
 Level: 45
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Bounce
+- Body Slam
+- Brine
+- Amnesia
 
 === TRAINER_ANGELICA ===
 Name: ANGELICA
@@ -8441,6 +8533,10 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 Wailmer
 Level: 42
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Bounce
+- Body Slam
+- Brine
+- Amnesia
 
 === TRAINER_IMANI ===
 Name: IMANI
@@ -8969,6 +9065,10 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 Swablu
 Level: 32
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Dragon Breath
+- Round
+- Sing
+- Cotton Guard
 
 === TRAINER_DIANA_1 ===
 Name: DIANA
@@ -9934,6 +10034,10 @@ IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 Sceptile
 Level: 55
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
+- Slam
+- Energy Ball
+- Screech
+- Endeavor
 
 === TRAINER_BRENDAN_ROUTE_103_TREECKO ===
 Name: BRENDAN
@@ -10115,6 +10219,10 @@ IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 Sceptile
 Level: 55
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
+- Slam
+- Energy Ball
+- Screech
+- Endeavor
 
 === TRAINER_MAY_ROUTE_103_TREECKO ===
 Name: MAY
@@ -10250,6 +10358,10 @@ AI: Check Bad Move
 Whismur
 Level: 20
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Echoed Voice
+- Pound
+- Rest
+- Sleep Talk
 
 Zigzagoon
 Level: 20
@@ -11264,6 +11376,10 @@ AI: Check Bad Move
 Claydol
 Level: 58
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Earth Power
+- Power Split
+- Sandstorm
+- Explosion
 
 === TRAINER_GRUNT_SPACE_CENTER_5 ===
 Name: GRUNT
@@ -11303,6 +11419,10 @@ AI: Check Bad Move
 Claydol
 Level: 58
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Earth Power
+- Power Split
+- Sandstorm
+- Explosion
 
 === TRAINER_MACEY ===
 Name: MACEY
@@ -11444,6 +11564,10 @@ AI: Check Bad Move / Try To Faint / Force Setup First Turn
 Kecleon
 Level: 59
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Slash
+- Substitute
+- Sucker Punch
+- Foul Play
 
 Exploud
 Level: 59
@@ -12543,14 +12667,26 @@ AI: Check Bad Move
 Altaria
 Level: 44
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Dragon Pulse
+- Cotton Guard
+- Take Down
+- Moonblast
 
 Altaria
 Level: 44
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Dragon Pulse
+- Cotton Guard
+- Take Down
+- Moonblast
 
 Altaria
 Level: 44
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Dragon Pulse
+- Cotton Guard
+- Take Down
+- Moonblast
 
 === TRAINER_WALLY_MAUVILLE ===
 Name: WALLY
@@ -13076,6 +13212,10 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 Skarmory
 Level: 53
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Drill Peck
+- Spikes
+- Iron Defense
+- Brave Bird
 
 === TRAINER_REED ===
 Name: REED
@@ -13467,6 +13607,10 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 Sharpedo
 Level: 40
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Night Slash
+- Swagger
+- Crunch
+- Agility
 
 === TRAINER_DAWSON ===
 Name: DAWSON
@@ -13480,6 +13624,10 @@ AI: Check Bad Move
 Zigzagoon @ Nugget
 Level: 11
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Tackle
+- Sand Attack
+- Tail Whip
+- Covet
 
 Poochyena
 Level: 11
@@ -13502,6 +13650,10 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 Zigzagoon @ Nugget
 Level: 11
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Tackle
+- Sand Attack
+- Tail Whip
+- Covet
 
 === TRAINER_DARIAN ===
 Name: DARIAN
@@ -13644,6 +13796,10 @@ AI: Check Bad Move
 Roselia
 Level: 27
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Mega Drain
+- Magical Leaf
+- Toxic Spikes
+- Sweet Scent
 
 === TRAINER_BIANCA ===
 Name: BIANCA
@@ -13828,6 +13984,10 @@ AI: Check Bad Move
 Mightyena
 Level: 50
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Crunch
+- Taunt
+- Yawn
+- Take Down
 
 === TRAINER_GRUNT_MAGMA_HIDEOUT_3 ===
 Name: GRUNT
@@ -13854,6 +14014,10 @@ AI: Check Bad Move
 Claydol
 Level: 49
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Earth Power
+- Power Split
+- Sandstorm
+- Explosion
 
 Golbat
 Level: 49
@@ -13871,6 +14035,10 @@ AI: Check Bad Move
 Claydol
 Level: 49
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Earth Power
+- Power Split
+- Sandstorm
+- Explosion
 
 Camerupt
 Level: 49
@@ -13888,6 +14056,10 @@ AI: Check Bad Move
 Mightyena
 Level: 50
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Crunch
+- Taunt
+- Yawn
+- Take Down
 
 === TRAINER_GRUNT_MAGMA_HIDEOUT_7 ===
 Name: GRUNT
@@ -13914,6 +14086,10 @@ AI: Check Bad Move
 Mightyena
 Level: 50
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Crunch
+- Taunt
+- Yawn
+- Take Down
 
 === TRAINER_GRUNT_MAGMA_HIDEOUT_9 ===
 Name: GRUNT
@@ -13940,6 +14116,10 @@ AI: Check Bad Move
 Mightyena
 Level: 50
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Crunch
+- Taunt
+- Yawn
+- Take Down
 
 === TRAINER_GRUNT_MAGMA_HIDEOUT_11 ===
 Name: GRUNT
@@ -13953,6 +14133,10 @@ AI: Check Bad Move
 Claydol
 Level: 50
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Earth Power
+- Power Split
+- Sandstorm
+- Explosion
 
 === TRAINER_GRUNT_MAGMA_HIDEOUT_12 ===
 Name: GRUNT
@@ -13992,6 +14176,10 @@ AI: Check Bad Move
 Mightyena
 Level: 50
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Crunch
+- Taunt
+- Yawn
+- Take Down
 
 === TRAINER_GRUNT_MAGMA_HIDEOUT_15 ===
 Name: GRUNT
@@ -14018,6 +14206,10 @@ AI: Check Bad Move
 Claydol
 Level: 50
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Earth Power
+- Power Split
+- Sandstorm
+- Explosion
 
 === TRAINER_TABITHA_MAGMA_HIDEOUT ===
 Name: TABITHA
@@ -14301,6 +14493,10 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 Roselia
 Level: 27
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Mega Drain
+- Magical Leaf
+- Toxic Spikes
+- Sweet Scent
 
 === TRAINER_KYRA ===
 Name: KYRA
@@ -14314,10 +14510,18 @@ AI: Check Bad Move
 Dodrio
 Level: 35
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Pluck
+- Uproar
+- Acupressure
+- Swords Dance
 
 Dodrio
 Level: 35
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Pluck
+- Uproar
+- Acupressure
+- Swords Dance
 
 === TRAINER_JAIDEN ===
 Name: JAIDEN
@@ -17386,6 +17590,10 @@ Double Battle: No
 Chimecho
 Level: 65
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Uproar
+- Extrasensory
+- Double-Edge
+- Heal Pulse
 
 === TRAINER_ALVARO ===
 Name: ALVARO

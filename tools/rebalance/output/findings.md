@@ -441,8 +441,24 @@ Owner's decisions (2026-10-30):
   - Nicolas's Salamence: Focus Energy -> Dragon Claw;
   - Thalia's Wailord: Rest -> Brine (over the proposed Dive's charge turn).
 - **Flags now** (all / story): one_attack 46 / 38, lost_stab 27 / 24. The 8 and 3 left outside the story are on non-rematch teams.
-  - The story counts are #150's: its raises moved the story teams' default sets after #131 had cleared them. That is a follow-up.
-- **Hand-written movesets stay** on raised and evolved Pokémon: a raise or an evolution doesn't change them, and an evolved Pokémon keeps its pre-evolution's moves. Many are vanilla Gen 3 sets that the Gen 9 learnsets no longer teach (#139's review found 88 such slots on the rematch teams alone, such as Flannery 2-5's Rapidash Bounce); checking set moves against the learnsets is #145. Default-move Pokémon take the Gen 9 defaults at their new level.
+  - The story counts are #150's: its raises moved the story teams' default sets after #131 had cleared them. #159 hand-wrote them (section 11).
+- **Hand-written movesets stay** on raised and evolved Pokémon: a raise or an evolution doesn't change them, and an evolved Pokémon keeps its pre-evolution's moves. Many are vanilla Gen 3 sets that the Gen 9 learnsets no longer teach (#139's review counted 88 such slots on the rematch teams alone, such as Flannery 2-5's Rapidash Bounce; #145's check, which also accepts pre-evolution moves and teachables, counts 68 moves there, section 11). Default-move Pokémon take the Gen 9 defaults at their new level.
+
+## 11. Story default sets after #150, and the learnable-move check (#159, #145)
+
+**#159:** #150's raises left 38 `one_attack` and 24 `lost_stab` flags on story default sets (52 slots on 47 teams, counting the second Route 119 rival team). Each is now hand-written by #131's rule, as section 10 did for the rematches: the Gen 9 default with one move (the first status move, or the weakest attack) swapped for the strongest attack the species learns by that level or on evolving (power × STAB × the attacking stat), a same-type one for `lost_stab`. Levels and species are unchanged.
+- Like #139's Thalia, the pick skips Hyper Beam, Giga Impact, Self-Destruct, Explosion and two-turn moves (Dive, Solar Beam): the Magma and Space Center grunts' Claydol take Earth Power, not Self-Destruct (Explosion is already their attack), and the Wailmer and Wailord take Brine, not Dive.
+- Swaps: Mightyena Scary Face -> Crunch (7 slots), Claydol Guard Split -> Earth Power (6), Zigzagoon Growl -> Tackle (4), Roselia Leech Seed -> Mega Drain (4), Altaria Sing -> Dragon Pulse (4, evolution move), Wailmer and Wailord Rest -> Brine (4), Sharpedo Screech -> Night Slash (3), Gardevoir Life Dew -> Dazzling Gleam (3, evolution move), the Makuhita and Hariyama Force Palm (3), Skarmory Metal Sound -> Drill Peck (2), Dodrio Agility -> Pluck (2), the Route 119 rival Sceptile Double Team -> Energy Ball (2 teams, special like the Lilycove one), and one each: Chimecho Extrasensory, Gloom Giga Drain, Kecleon Slash, Machoke Vital Throw, Magneton Discharge, Swablu Round, Whismur Pound, Zangoose Crush Claw.
+  - Kyra's Dodrio take Pluck where #139's review gave Dylan 2's and Maria 2's Tri Attack: by the rule's measure Pluck (Atk 110, STAB) beats Tri Attack (SpA 60).
+  - The rival fights' other teams had no flagged slot: the Sceptile is on the two Mudkip-player teams only.
+- **Flags now** (all / story): no_attack 6 / 6 (Magikarp, Silcoon and Cascoon), one_attack 8 / 0, lost_stab 2 / 0. The ones left are off-stage teams: Gabby and Ty 1-5's Whismur and Loudred, Thomas's Zangoose, Leonard's Machop and Lea and Jed's Luvdisc.
+
+**#145:** `RealRepo.test_set_moves_are_learnable` now checks every set move in `trainers.party` and `battle_partners.party`: the species or a pre-evolution has to learn it by level up at or below the slot's level, on evolving (level 0) or from the teachable list (README). Every move #131, #139 and #159 wrote passes. 143 upstream moves don't, all illegal in upstream's own slot too (a raise or an evolution only adds learnable moves), and `move_allowlist.json` lists them by cause:
+- `rematch`: 68 on the rematch teams #139 raised, such as Flannery 2-5's Rapidash Bounce, Brawly's Machamp Karate Chop and Hitmontop Pursuit and Triple Kick, Norman 3-5's Kangaskhan Dizzy Punch;
+- `story`: 45 on the first-fight teams #127 and #150 raised or evolved, such as Phoebe's Banette Grudge and Feint Attack, Drake's, Winona's and Wally's Altaria Dragon Dance, Sidney's Cacturne Needle Arm;
+- `unchanged`: 30 on teams the fork left as they were, such as Colton's Skitty Assist and Heal Bell, Roxanne's Geodude Rock Throw (Gen 9 learns it at 16) and Brawly's Machop Karate Chop.
+
+The most common are Feint Attack (27), Odor Sleuth (13), Dragon Dance and Assist (11 each) and Magnitude (7). Replacing them is the owner's call, so they stay; the test fails on an entry that becomes learnable or goes away, so the list only shrinks.
 
 ## Proposed balance changes (owner to accept or reject; each can be its own issue)
 1. **Soft level cap at each gym ace** (config). Set `B_LEVEL_CAP_TYPE LEVEL_CAP_FLAG_LIST` and `B_EXP_CAP_TYPE EXP_CAP_SOFT`. `sLevelCapFlagMap` in `src/caps.c` already holds exactly the measured aces (15/19/24/29/31/33/42/46/58). Consider `B_RARE_CANDY_CAP` too.
