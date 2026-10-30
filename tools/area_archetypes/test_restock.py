@@ -410,6 +410,14 @@ def read(path):
         return f.read()
 
 
+def no_levels(tmp):
+    """An empty --levels file: for tests about the species, not the level offsets."""
+    path = os.path.join(tmp, 'no_levels.json')
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write('{}')
+    return path
+
+
 def run_quietly(argv):
     with contextlib.redirect_stdout(io.StringIO()):
         return R.main(argv)
@@ -467,8 +475,29 @@ class CliTests(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 run_quietly(['--wild', wild, '--out-dir', out, '--write'])
             self.assertEqual(R.load_json(wild), edited)
-            run_quietly(['--wild', wild, '--out-dir', out, '--write', '--force'])
+            run_quietly(['--wild', wild, '--out-dir', out, '--write', '--force', '--levels', no_levels(tmp)])
             self.assertEqual(R.skeleton(R.load_json(wild)), R.skeleton(R.load_json(WILD)))
+
+    def test_write_checks_levels_against_its_stamp(self):
+        # A file restock wrote with level offsets is rewritten without --force, even with other
+        # offsets; a hand-edited level on top of it is refused.
+        with tempfile.TemporaryDirectory() as tmp:
+            wild = os.path.join(tmp, 'wild_encounters.json')
+            out = os.path.join(tmp, 'out')
+            levels = os.path.join(tmp, 'levels.json')
+            for shift in (5, 7):
+                with open(levels, 'w', encoding='utf-8') as f:
+                    json.dump({'MAP_ROUTE101': {'land_mons': shift}}, f)
+                written, _ = run_quietly(['--wild', wild, '--out-dir', out, '--write', '--levels', levels])
+                self.assertEqual(written[AA.RESTOCK_STAMP]['level_offsets'], {'MAP_ROUTE101': {'land_mons': shift}})
+            edited = R.load_json(wild)
+            enc = next(e for e in R.wild_headers(edited)['encounters'] if e.get('map') == 'MAP_ROUTE101')
+            enc['land_mons']['mons'][0]['max_level'] += 1
+            R.dump_wild(edited, wild)
+            with self.assertRaises(SystemExit):
+                run_quietly(['--wild', wild, '--out-dir', out, '--write', '--levels', levels])
+            with self.assertRaises(SystemExit):
+                run_quietly(['--out-dir', out, '--levels', os.path.join(tmp, 'typo.json')])
 
     def test_baseline_copies_a_vanilla_file(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -554,8 +583,7 @@ class CliTests(unittest.TestCase):
             R.dump_wild(R.load_json(AA.SRC_WILD), wild)
             written = read(wild)
             # No level offsets: this is about the species draw.
-            argv = ['--wild', wild, '--out-dir', out, '--allow', 'MEWTWO',
-                    '--levels', os.path.join(tmp, 'no_offsets.json')]
+            argv = ['--wild', wild, '--out-dir', out, '--allow', 'MEWTWO', '--levels', no_levels(tmp)]
             err = io.StringIO()
             with contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as cm:
                 run_quietly(argv + ['--write'])

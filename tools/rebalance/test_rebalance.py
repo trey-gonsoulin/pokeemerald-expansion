@@ -683,15 +683,22 @@ Aron
             return evolve.get((species, level), species)
         text, evolved = RB.raise_party(self.PARTY, {'TRAINER_A': 5, 'TRAINER_WALLY_MAUVILLE': 5, 'PARTNER_B': 5},
                                        evolver)
-        # The nickname, gender and item stay; levels cap at 100; EVOLVE_EXEMPT's Ralts only rises;
-        # a Pokemon without a Level line (100) is left alone.
+        # The nickname, gender and item stay; levels cap at 100; EVOLVE_EXEMPT's Ralts and the
+        # partner only rise; a Pokemon without a Level line (100) keeps it.
         self.assertEqual(text, self.PARTY.replace('Nick (Aron) (F)', 'Nick (Lairon) (F)')
                          .replace('Level: 33', 'Level: 38').replace('Level: 98', 'Level: 100')
-                         .replace('Level: 16', 'Level: 21').replace('Mr. Mime\nLevel: 40', 'Mr Rime\nLevel: 45'))
-        self.assertEqual(evolved, [('TRAINER_A', 'SPECIES_ARON', 'SPECIES_LAIRON', 38),
-                                   ('PARTNER_B', 'SPECIES_MR_MIME', 'SPECIES_MR_RIME', 45)])
+                         .replace('Level: 16', 'Level: 21').replace('Level: 40', 'Level: 45'))
+        self.assertEqual(evolved, [('TRAINER_A', 'SPECIES_ARON', 'SPECIES_LAIRON', 38)])
         self.assertIn(('SPECIES_ARON', 38, 'MON_FEMALE'), seen)
-        self.assertEqual(G.parse_trainers_text(text)['PARTNER_B'].mons[0].species, 'SPECIES_MR_RIME')
+        # A species name with punctuation is replaced whole, and parses back.
+        mime = self.PARTY.replace('=== PARTNER_B ===', '=== TRAINER_B ===')
+        text, _ = RB.raise_party(mime, {'TRAINER_B': 5}, evolver)
+        self.assertIn('Mr Rime\nLevel: 45', text)
+        self.assertEqual(G.parse_trainers_text(text)['TRAINER_B'].mons[0].species, 'SPECIES_MR_RIME')
+        # A boss's team (unique) doesn't evolve into a species it already has.
+        boss = '=== TRAINER_C ===\nName: C\n\nAron\nLevel: 33\n\nLairon\nLevel: 40\n'
+        self.assertEqual(RB.raise_party(boss, {'TRAINER_C': 5}, evolver, {'TRAINER_C'})[1], [])
+        self.assertEqual(len(RB.raise_party(boss, {'TRAINER_C': 5}, evolver)[1]), 1)
         # Teams not in raises, and a raise of 0, change nothing.
         self.assertEqual(RB.raise_party(self.PARTY, {'TRAINER_B': 3}, evolver)[0], self.PARTY)
         self.assertEqual(RB.raise_party(self.PARTY, {'TRAINER_A': 0}, evolver), (self.PARTY, []))

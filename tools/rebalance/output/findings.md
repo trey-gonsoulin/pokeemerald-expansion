@@ -348,25 +348,34 @@ Each rival row goes on all six teams of that fight: May or Brendan, with each st
 | Rival (Route 103) | 0 | - | - | +1 (3.6) |
 | Roxanne | 27 | +3 | 10.2, 5.9% below | 0 (4.9) |
 | Brawly | 8 | +1 | 14.1, 5.8% below | +3 (11.5) |
-| Wattson | 46 | +5 | 21.2, 9.3% below | +1 (13.4) |
-| Flannery | 92 | +11 | 30.4, 9.8% below | +4 (21.3) |
-| Norman | 10 | +12 | 37.1, 8.1% below | +11 (31.9) |
-| Winona | 83 | +19 | 44.2, 9.2% below | +9 (33.9) |
-| Tate and Liza | 108 | +23 | 54.4, 9.2% below | +16 (44.1) |
-| Juan | 71 | +28 | 62.6, 9.1% below | +21 (53.0) |
-| Elite Four (Victory Road) | 24 | +26 | 68.0, 9.0% below | +21 (58.3) |
+| Wattson | 39 | +5 | 19.5, 7.7% below | +1 (13.4) |
+| Flannery | 92 | +9 | 28.4, 9.0% below | +2 (19.3) |
+| Norman | 10 | +9 | 34.1, 9.8% below | +9 (29.9) |
+| Winona | 90 | +17 | 42.2, 9.8% below | +6 (30.9) |
+| Tate and Liza | 108 | +21 | 52.4, 9.7% below | +15 (42.6) |
+| Juan | 71 | +26 | 60.6, 9.4% below | +19 (51.0) |
+| Elite Four (Victory Road) | 24 | +24 | 66.0, 9.3% below | +19 (56.3) |
 
 - **Bosses** (each ace 5% above the bench, the Elite Four stepped):
-  - Wattson 28, Flannery 41, Norman 43, Winona 57, Tate and Liza 68, Juan 77;
-  - the Elite Four 81 / 82 / 83 / 84, Wallace 87.
-  - The raises run from +1 (the Route 110 rival) to +21 (Wallace). Roxanne, Brawly and the first two rival fights already met the target.
-  - The bench reaches Wallace at 79 and the lead at 84. Nothing reaches level 100.
+  - Flannery 39, Norman 40, Winona 56, Tate and Liza 66, Juan 75;
+  - the Elite Four 79 / 80 / 81 / 82, Wallace 85.
+  - The raises run from +4 (Maxie at Mt. Chimney, Norman) to +19 (Wallace). Roxanne, Brawly, Wattson and the first three rival fights already met the target.
+  - The bench reaches Wallace at 77 and the lead at 82. Nothing reaches level 100.
 - **Rival variants:** the other five teams of each rival fight go up to the staged team's ace.
-- **Steven at Mossdeep** goes up to his foes' ace: his Metang, Skarmory and Aggron are now 74-76, and the Metang evolved to Metagross.
-- **Evolutions:** 316 raised trainer Pokémon evolved, 3 levels past their level evolution (Geodude -> Graveler, Zubat -> Golbat, Carvanha -> Sharpedo and so on). Wally's Mauville Ralts (`EVOLVE_EXEMPT`) stays a Ralts.
-- **Wild levels:** 183 tables on 103 maps (every table of a stage's maps, not only land) moved by their stage's offset over the vanilla levels, through restock's new `--levels` (`tools/area_archetypes/level_offsets.json`). Raised slots evolve the same way.
-- **Not changed:** the post-game rematches (#139), including the post-Hall of Fame Wally at the Victory Road exit (`TRAINER_WALLY_VR_2`, now in `story_stages.json`'s `exclude`, so the curve no longer counts him either), and trainers outside the stages (off-route, the Battle Frontier, Trainer Hill).
-  - Several rematch 2 teams now sit far below the raised first fight, for example Juan 2 at 51 against Juan's 77.
+- **Steven at Mossdeep** goes up to his foes' ace (Metang, Skarmory and Aggron at 72-74). Partners don't evolve.
+- **Evolutions:** 299 raised trainer Pokémon evolved, 3 levels past their level evolution (Geodude -> Graveler, Zubat -> Golbat, Carvanha -> Sharpedo and so on), through `evolve_team`, which the model's fights use too.
+  - Owner's decision (2026-10-30): a boss's Pokémon (staged bosses and their rival variants) doesn't evolve into a species its team already has. Drake keeps his Shelgon beside his Salamence, Glacia her two Sealeo, Norman his Vigoroth, Flannery and Tabitha (Mt. Chimney) their Numel.
+  - Wally's Mauville Ralts (`EVOLVE_EXEMPT`) stays a Ralts.
+- **Wild levels:** 181 tables on 104 maps moved by their stage's offset over the vanilla levels, through restock's new `--levels` (`tools/area_archetypes/level_offsets.json`), up to +19. Raised slots evolve the same way.
+  - Every table of a stage's maps moves, not only land.
+  - Owner's decision (2026-10-30): a water table counts from Winona's stage at the earliest (`SURF_STAGE`), since Surf comes from Wally's father after Norman. Route 103's and Dewford's water is met no sooner than their swimmers.
+- **Staging fixes found in review:**
+  - Route 109's southern trainers (David, Alice, Gwen, Austina, Carter, Mel & Paul, Elijah, vanilla aces 24-27) need Surf, like Route 103's Isabelle and Pete, so they moved to Winona's stage.
+  - The post-game Safari Zone extension (Northeast, Southeast) is now unstaged.
+  - The post-Hall of Fame Wally at the Victory Road exit (`TRAINER_WALLY_VR_2`, the first fight of his rematch ladder) is excluded, so the curve no longer counts him and apply leaves him to #139.
+  - These moved the curve down 1-2 levels from section 8's numbers (Juan 77 -> 75, Wallace 87 -> 85).
+- **Not changed:** the post-game rematches (#139), and trainers outside the stages (off-route, the Battle Frontier, Trainer Hill).
+  - Several rematch 2 teams now sit far below the raised first fight, for example Juan 2 at 51 against Juan's 75.
 - **Hand-written movesets stay** on raised and evolved Pokémon. Every move was legal at the old level, and an evolved Pokémon keeps its pre-evolution's moves. Default-move Pokémon take the Gen 9 defaults at their new level.
 
 ## Proposed balance changes (owner to accept or reject; each can be its own issue)
