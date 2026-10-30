@@ -276,6 +276,7 @@ struct DebugSelectionStep
 typedef const struct DebugSelectionStep *SelectionStep;
 
 #define DEBUG_RECENT_WARPS_COUNT 8
+#define DEBUG_WARP_BACK_OPTION DEBUG_RECENT_WARPS_COUNT // its index in sDebugMenu_Actions_RecentWarps
 
 struct DebugWarp
 {
@@ -300,6 +301,8 @@ static EWRAM_DATA struct DebugMenuPosition sDebugMainMenuPosition = {0}; // kept
 // This session's warp destinations, most recent first. Warp to map warp… starts from the first one.
 static EWRAM_DATA struct DebugWarp sDebugRecentWarps[DEBUG_RECENT_WARPS_COUNT] = {0};
 static EWRAM_DATA u8 sDebugRecentWarpsCount = 0;
+// Where the player stood before the last debug warp: map and coordinates, with warpId WARP_ID_NONE once set
+static EWRAM_DATA struct WarpData sDebugWarpBack = {0};
 EWRAM_DATA bool8 gIsDebugBattle = FALSE;
 EWRAM_DATA u64 gDebugAIFlags = 0;
 
@@ -333,6 +336,7 @@ static void DebugAction_Selection_NextStep(u8 taskId);
 
 static void DebugAction_Util_Fly(u8 taskId);
 static void DebugAction_Util_RecentWarp(u8 taskId, const void *params);
+static void DebugAction_Util_WarpBack(u8 taskId);
 static void DebugAction_Util_WatchCredits(u8 taskId);
 static void DebugAction_Util_CheatStart(u8 taskId);
 
@@ -605,7 +609,8 @@ static const struct DebugMenuOption sDebugMenu_Actions_FollowerNPCMenu[] =
     { NULL }
 };
 
-// Debug_GenerateListRecentWarpsMenu writes the labels, so the text only has to be non-NULL
+// Debug_GenerateListRecentWarpsMenu writes the labels, so the text only has to be non-NULL.
+// The warp back option comes after the recent warps here, but heads the list.
 static const struct DebugMenuOption sDebugMenu_Actions_RecentWarps[] =
 {
     { COMPOUND_STRING(""), DebugAction_Util_RecentWarp, &sDebugRecentWarps[0] },
@@ -616,9 +621,10 @@ static const struct DebugMenuOption sDebugMenu_Actions_RecentWarps[] =
     { COMPOUND_STRING(""), DebugAction_Util_RecentWarp, &sDebugRecentWarps[5] },
     { COMPOUND_STRING(""), DebugAction_Util_RecentWarp, &sDebugRecentWarps[6] },
     { COMPOUND_STRING(""), DebugAction_Util_RecentWarp, &sDebugRecentWarps[7] },
+    [DEBUG_WARP_BACK_OPTION] = { COMPOUND_STRING(""), DebugAction_Util_WarpBack },
     { NULL }
 };
-STATIC_ASSERT(ARRAY_COUNT(sDebugMenu_Actions_RecentWarps) == DEBUG_RECENT_WARPS_COUNT + 1, DebugRecentWarpsOptionCount);
+STATIC_ASSERT(ARRAY_COUNT(sDebugMenu_Actions_RecentWarps) == DEBUG_WARP_BACK_OPTION + 2, DebugRecentWarpsOptionCount);
 
 static const struct DebugMenuOption sDebugMenu_Actions_Utilities[] =
 {
@@ -2174,14 +2180,50 @@ static void Debug_AddRecentWarp(struct DebugWarp warp)
     sDebugRecentWarps[0] = warp;
 }
 
-static void Debug_WarpTo(u8 taskId, struct DebugWarp warp)
+// Records the player's spot for the warp back, replacing the last one
+static void Debug_SaveWarpBack(void)
 {
-    Debug_AddRecentWarp(warp);
-    SetWarpDestinationToMapWarp(warp.mapGroup, warp.mapNum, warp.warpId);
+    sDebugWarpBack = gSaveBlock1Ptr->location;
+    sDebugWarpBack.warpId = WARP_ID_NONE;
+    sDebugWarpBack.x = gSaveBlock1Ptr->pos.x;
+    sDebugWarpBack.y = gSaveBlock1Ptr->pos.y;
+}
+
+static void Debug_DoWarp(u8 taskId)
+{
     DoWarp();
     ResetInitialPlayerAvatarState();
     Debug_DestroyMenu_Full(taskId);
     ScriptContext_Stop();
+}
+
+static void Debug_WarpTo(u8 taskId, struct DebugWarp warp)
+{
+    Debug_AddRecentWarp(warp);
+    Debug_SaveWarpBack();
+    SetWarpDestinationToMapWarp(warp.mapGroup, warp.mapNum, warp.warpId);
+    Debug_DoWarp(taskId);
+}
+
+// Lands on the spot the last debug warp left, and records the spot it leaves in its place,
+// so that the next warp back returns here. It isn't a recent warp: those are map warps.
+static void DebugAction_Util_WarpBack(u8 taskId)
+{
+    struct WarpData back = sDebugWarpBack;
+    struct WarpData dynamicWarp = gSaveBlock1Ptr->dynamicWarp;
+
+    if (back.warpId != WARP_ID_NONE)
+    {
+        PlaySE(SE_FAILURE);
+        return;
+    }
+    Debug_SaveWarpBack();
+    // SetWarpDestination takes s8 coordinates, which cut off Route 111's and 119's rows past 127 and the
+    // Route 123 and Desert Underpass columns, so the warp goes through the dynamic warp, which is copied whole.
+    gSaveBlock1Ptr->dynamicWarp = back;
+    SetWarpDestinationToDynamicWarp(0);
+    gSaveBlock1Ptr->dynamicWarp = dynamicWarp;
+    Debug_DoWarp(taskId);
 }
 
 // Starts from the last warp, or from the player's map before the first one
@@ -2224,13 +2266,13 @@ static void DebugAction_Util_RecentWarp(u8 taskId, const void *params)
     Debug_WarpTo(taskId, *warp);
 }
 
-// The recent warps, most recent first: the map name, then the warp unless the map has none
+// The warp back, then the recent warps, most recent first: the map name, then the warp unless the map has none
 static u32 Debug_GenerateListRecentWarpsMenu(const struct DebugMenuOption *items)
 {
     // The list's textNarrowWidth (window minus item_X). A label that fits it in FONT_NARROWER,
     // the narrowest font the list drops to, isn't clipped.
     const u32 labelWidth = sDebugMenuWindowTemplateMain.width * 8 - 8;
-    u32 i;
+    u32 i, count = 0;
 
     if (sDebugRecentWarpsCount == 0)
     {
@@ -2239,7 +2281,21 @@ static u32 Debug_GenerateListRecentWarpsMenu(const struct DebugMenuOption *items
         sDebugMenuListData->listItems[0].name = sDebugMenuListData->itemNames[0];
         return 1;
     }
-    for (i = 0; i < sDebugRecentWarpsCount; i++)
+    if (sDebugWarpBack.warpId == WARP_ID_NONE)
+    {
+        static const u8 sText_WarpBack[] = _("Back to ");
+        u8 *label = sDebugMenuListData->itemNames[0];
+        u8 *end = StringCopy(label, sText_WarpBack);
+
+        // The map name keeps its end, as below, after the whole prefix
+        Debug_CopyMapName(gStringVar4, sDebugWarpBack.mapGroup, sDebugWarpBack.mapNum);
+        Debug_CopyStringEndToFit(end, ARRAY_COUNT(sDebugMenuListData->itemNames[0]) - (end - label),
+            gStringVar4, FONT_NARROWER, labelWidth - GetStringWidth(FONT_NARROWER, sText_WarpBack, 0));
+        sDebugMenuListData->listItems[0].id = DEBUG_WARP_BACK_OPTION;
+        sDebugMenuListData->listItems[0].name = label;
+        count++;
+    }
+    for (i = 0; i < sDebugRecentWarpsCount; i++, count++)
     {
         const struct DebugWarp *warp = &sDebugRecentWarps[i];
         u8 *end = Debug_CopyMapName(gStringVar4, warp->mapGroup, warp->mapNum);
@@ -2251,12 +2307,12 @@ static u32 Debug_GenerateListRecentWarpsMenu(const struct DebugMenuOption *items
             StringCopy(end, COMPOUND_STRING(")"));
         }
         // An over-long label keeps its end, which tells apart maps such as a house's 1F and 2F
-        Debug_CopyStringEndToFit(sDebugMenuListData->itemNames[i], ARRAY_COUNT(sDebugMenuListData->itemNames[i]),
+        Debug_CopyStringEndToFit(sDebugMenuListData->itemNames[count], ARRAY_COUNT(sDebugMenuListData->itemNames[count]),
             gStringVar4, FONT_NARROWER, labelWidth);
-        sDebugMenuListData->listItems[i].id = i;
-        sDebugMenuListData->listItems[i].name = sDebugMenuListData->itemNames[i];
+        sDebugMenuListData->listItems[count].id = i;
+        sDebugMenuListData->listItems[count].name = sDebugMenuListData->itemNames[count];
     }
-    return i;
+    return count;
 }
 
 static const struct DebugSelectionStep sMapGroupSelectionStep = {
