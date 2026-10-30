@@ -13,9 +13,9 @@ Gender: Male
 Music: Male
 AI: Basic Trainer
 
-Metang
+Metagross
 Brave Nature
-Level: 54
+Level: 74
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 EVs: 252 Atk / 252 Def / 6 SpA
 - Light Screen
@@ -25,7 +25,7 @@ EVs: 252 Atk / 252 Def / 6 SpA
 
 Skarmory
 Impish Nature
-Level: 55
+Level: 75
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 EVs: 252 HP / 6 SpA / 252 SpD
 - Toxic
@@ -35,7 +35,7 @@ EVs: 252 HP / 6 SpA / 252 SpD
 
 Aggron
 Adamant Nature
-Level: 56
+Level: 76
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 EVs: 252 Atk / 252 SpA / 6 SpD
 - Thunder

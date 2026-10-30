@@ -477,8 +477,13 @@ class Trainer:
 
 def parse_trainers(path):
     with open(path, encoding='utf-8') as f:
-        text = re.sub(r'/\*.*?\*/', '', f.read(), flags=re.S)
-    parts = re.split(r'^=== (TRAINER_\w+) ===[ \t]*$', text, flags=re.M)
+        return parse_trainers_text(f.read())
+
+
+def parse_trainers_text(text):
+    """A .party file's teams (trainers.party's, or battle_partners.party's PARTNER_ ones)."""
+    text = re.sub(r'/\*.*?\*/', '', text, flags=re.S)
+    parts = re.split(r'^=== ((?:TRAINER|PARTNER)_\w+) ===[ \t]*$', text, flags=re.M)
     trainers = {}
     for tid, body in zip(parts[1::2], parts[2::2]):
         paras = [p for p in re.split(r'\n[ \t]*\n', body.strip('\n')) if p.strip()]

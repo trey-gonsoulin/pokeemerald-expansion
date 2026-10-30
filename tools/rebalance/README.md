@@ -96,6 +96,33 @@ The knobs:
   `gap_unit` puts the margin and both gaps in percent of the reference
   instead of levels.
 
+### Applying a curve (#150)
+
+```sh
+python3 tools/rebalance/rebalance.py apply    # writes the data for curve_settings.json
+python3 tools/rebalance/rebalance.py          # then refresh report.md and curve_data.json
+```
+
+`curve_settings.json` holds the explorer settings the data is built for
+(the owner's choice, `findings.md` section 8). `apply` runs `explore_run` on
+the repo's own data with them, through `apply_plan`, and writes:
+- the raises (`raise_party`, every Pokemon of a team by the same amount,
+  capped at 100, a raised Pokemon evolving unless its team is
+  `EVOLVE_EXEMPT`) into `src/data/trainers.party`: the staged bosses, their
+  rival variants (to the boss's ace, `variant_raises`) and every regular
+  trainer of each stage;
+- `PARTNER_FIGHTS`' partners (Steven at Mossdeep, to his foes' highest ace)
+  into `src/data/battle_partners.party`;
+- each stage's wild offset over the vanilla levels, for every table of its
+  maps, into `tools/area_archetypes/level_offsets.json`. Then it reruns
+  `restock --write`.
+
+It only raises. On data it already wrote it asks for nothing, which
+`RealRepo.test_data_meets_the_curve_settings` checks. After a change to
+`trainers.party`, the wild tables or the exp formula, rerun `apply` and
+`rebalance.py` (or change the settings and do the same).
+Rematches (#139) and trainers outside the stages aren't touched.
+
 The page's files are `explorer/index.html`, `app.js` (the controls and the
 Chart.js chart), `worker.js` and `model.js` (the module list and the Python
 bootstrap). The repo's `.gitignore` ignores `*.js`, so add new ones with

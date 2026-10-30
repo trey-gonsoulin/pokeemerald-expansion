@@ -110,7 +110,14 @@ need the PokeAPI cache. For each table of each selected map it:
    allow, gens...), or the species isn't drawn for that table: denying Zubat
    also keeps Golbat out of tables with low-level slots.
 
-Slot counts, encounter rates and every slot's levels stay as they are. Only
+5. Raises the levels by `--levels` (default `level_offsets.json`, map ->
+   table field -> levels; none if the file is missing), each slot capped at
+   100. A raised slot's species evolves for its new min level
+   (`SpeciesInfo.evolve`, 3 levels past a level evolution, enabled species
+   only). `tools/rebalance`'s `apply` writes the file (#150).
+
+Slot counts and encounter rates stay as they are, and the levels change only
+through `--levels`. Only
 species enabled by `include/config/species_enabled.h` (`P_GEN_*`,
 `P_FAMILY_*`, regional forms...) are placed. Legendary, mythical, Ultra Beast
 and Paradox species and battle-only forms are left out. Battle Pyramid/Pike
