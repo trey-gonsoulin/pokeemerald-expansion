@@ -335,9 +335,9 @@ def parse_items(repo, defines):
     return {k: {'price': _int(f.get('price', 0)), 'heal': heals.get(f.get('effect'))} for k, f in items.items()}
 
 
-def parse_scaling_factors(repo, name='sExperienceScalingFactors'):
-    """sExperienceScalingFactors (or another s32 table) from battle_script_commands.c."""
-    with open(os.path.join(repo, 'src', 'battle_script_commands.c'), encoding='utf-8') as f:
+def parse_scaling_factors(repo, name='sExperienceScalingFactors', source='battle_script_commands.c'):
+    """sExperienceScalingFactors (or another number table) from a file in src/."""
+    with open(os.path.join(repo, 'src', source), encoding='utf-8') as f:
         text = f.read()
     m = re.search(name + r'\[\d*\]\s*=\s*\{(.*?)\};', text, re.S)
     return [int(x) for x in re.findall(r'\d+', re.sub(r'//.*', '', m[1]))]

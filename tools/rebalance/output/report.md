@@ -318,7 +318,7 @@ Full clear: 4 of 30 bosses have the bench (friendship) within 1 of their ace; th
 | 1.5x off | whole party unevolved (1.2x) | 11 | 16 | 24 | 30 | 31 | 36 | 44 | 49 | 53 | 54 | 55 | 56 | 57 |
 | 1.5x on | as modelled | 11 | 16 | 25 | 31 | 32 | 37 | 45 | 50 | 54 | 55 | 56 | 57 | 59 |
 | 1.5x on | no catches | 11 | 16 | 25 | 31 | 32 | 37 | 45 | 50 | 54 | 55 | 56 | 57 | 59 |
-| 1.5x on | 6 catches per stage | 11 | 16 | 25 | 31 | 32 | 37 | 45 | 50 | 54 | 55 | 56 | 57 | 59 |
+| 1.5x on | 6 catches per stage | 11 | 16 | 25 | 30 | 32 | 37 | 45 | 50 | 54 | 55 | 56 | 57 | 59 |
 | 1.5x on | no walking | 11 | 16 | 25 | 31 | 32 | 36 | 44 | 49 | 53 | 54 | 55 | 56 | 58 |
 | 1.5x on | 8,192 steps per stage | 11 | 16 | 26 | 31 | 32 | 37 | 45 | 50 | 54 | 55 | 56 | 57 | 59 |
 | 1.5x on | every stage trainer +3 | 14 | 18 | 27 | 33 | 34 | 39 | 47 | 52 | 56 | 57 | 58 | 59 | 60 |
