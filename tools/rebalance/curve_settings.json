@@ -1,0 +1,7 @@
+{
+ "wild_battles": 6,
+ "gap_unit": "percent",
+ "margin": 5,
+ "trainer_gap": 10,
+ "wild_gap": 20
+}

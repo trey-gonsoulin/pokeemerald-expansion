@@ -93,6 +93,26 @@ class SpeciesInfoTests(unittest.TestCase):
         self.assertEqual(i.devolve('SPECIES_CROBAT', 25), 'SPECIES_GOLBAT')
         self.assertEqual(i.devolve('SPECIES_PIKACHU', 3), 'SPECIES_PIKACHU')
 
+    def test_shift_levels(self):
+        # Offsets raise every slot of the named tables (capped at 100), and a raised slot evolves
+        # for its new min level; a lowered one keeps its species.
+        wild = {'wild_encounter_groups': [{'label': 'gWildMonHeaders', 'encounters': [
+            {'map': 'MAP_A', 'base_label': 'a',
+             'land_mons': {'mons': [{'min_level': 30, 'max_level': 33, 'species': 'SPECIES_ARON'},
+                                    {'min_level': 95, 'max_level': 99, 'species': 'SPECIES_ZUBAT'}]},
+             'water_mons': {'mons': [{'min_level': 20, 'max_level': 30, 'species': 'SPECIES_ARON'}]}},
+            {'map': 'MAP_B', 'base_label': 'b',
+             'land_mons': {'mons': [{'min_level': 10, 'max_level': 12, 'species': 'SPECIES_ARON'}]}}]}]}
+        n = R.shift_levels(wild, {'MAP_A': {'land_mons': 5, 'fishing_mons': 3}, 'MAP_B': {'land_mons': -20}},
+                           self.info)
+        self.assertEqual(n, 2)  # MAP_A has no fishing table
+        a, b = wild['wild_encounter_groups'][0]['encounters']
+        self.assertEqual(a['land_mons']['mons'], [
+            {'min_level': 35, 'max_level': 38, 'species': 'SPECIES_LAIRON'},
+            {'min_level': 100, 'max_level': 100, 'species': 'SPECIES_GOLBAT'}])
+        self.assertEqual(a['water_mons']['mons'][0], {'min_level': 20, 'max_level': 30, 'species': 'SPECIES_ARON'})
+        self.assertEqual(b['land_mons']['mons'][0], {'min_level': 1, 'max_level': 1, 'species': 'SPECIES_ARON'})
+
     def test_evolve(self):
         i = self.info
         # EVOLVE_GRACE levels past each EVO_LEVEL, up the whole line.
@@ -533,7 +553,9 @@ class CliTests(unittest.TestCase):
             out = os.path.join(tmp, 'out')
             R.dump_wild(R.load_json(AA.SRC_WILD), wild)
             written = read(wild)
-            argv = ['--wild', wild, '--out-dir', out, '--allow', 'MEWTWO']
+            # No level offsets: this is about the species draw.
+            argv = ['--wild', wild, '--out-dir', out, '--allow', 'MEWTWO',
+                    '--levels', os.path.join(tmp, 'no_offsets.json')]
             err = io.StringIO()
             with contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as cm:
                 run_quietly(argv + ['--write'])

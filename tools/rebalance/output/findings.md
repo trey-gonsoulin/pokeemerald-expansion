@@ -339,6 +339,36 @@ Each rival row goes on all six teams of that fight: May or Brendan, with each st
 - **The game's formula with today's levels is too hard:** the bench reaches Roxanne at 11 (her ace is 15), Juan at 48 (57) and Wallace at 55 (66). #154 needs #150's raises before a playthrough.
 - **The scaling table:** `ApplyExperienceMultipliers` already scales in u64. The level^3.5 table tops out at about 3.4e7 (index 210), so it fits the s32 `sExperienceScalingFactors` and can be swapped in.
 
+## 9. The chosen curve applied (#150)
+
+`rebalance.py apply` wrote the owner's curve (`curve_settings.json`, section 8, with #154's exp formula) into the data. Measured with those settings, 1 lead and 5 benched:
+
+| stage | regular trainers | trainer raise | their aces when fought | wild offset (land mean) |
+|---|---|---|---|---|
+| Rival (Route 103) | 0 | - | - | +1 (3.6) |
+| Roxanne | 27 | +3 | 10.2, 5.9% below | 0 (4.9) |
+| Brawly | 8 | +1 | 14.1, 5.8% below | +3 (11.5) |
+| Wattson | 46 | +5 | 21.2, 9.3% below | +1 (13.4) |
+| Flannery | 92 | +11 | 30.4, 9.8% below | +4 (21.3) |
+| Norman | 10 | +12 | 37.1, 8.1% below | +11 (31.9) |
+| Winona | 83 | +19 | 44.2, 9.2% below | +9 (33.9) |
+| Tate and Liza | 108 | +23 | 54.4, 9.2% below | +16 (44.1) |
+| Juan | 71 | +28 | 62.6, 9.1% below | +21 (53.0) |
+| Elite Four (Victory Road) | 24 | +26 | 68.0, 9.0% below | +21 (58.3) |
+
+- **Bosses** (each ace 5% above the bench, the Elite Four stepped):
+  - Wattson 28, Flannery 41, Norman 43, Winona 57, Tate and Liza 68, Juan 77;
+  - the Elite Four 81 / 82 / 83 / 84, Wallace 87.
+  - The raises run from +1 (the Route 110 rival) to +21 (Wallace). Roxanne, Brawly and the first two rival fights already met the target.
+  - The bench reaches Wallace at 79 and the lead at 84. Nothing reaches level 100.
+- **Rival variants:** the other five teams of each rival fight go up to the staged team's ace.
+- **Steven at Mossdeep** goes up to his foes' ace: his Metang, Skarmory and Aggron are now 74-76, and the Metang evolved to Metagross.
+- **Evolutions:** 316 raised trainer Pokémon evolved, 3 levels past their level evolution (Geodude -> Graveler, Zubat -> Golbat, Carvanha -> Sharpedo and so on). Wally's Mauville Ralts (`EVOLVE_EXEMPT`) stays a Ralts.
+- **Wild levels:** 183 tables on 103 maps (every table of a stage's maps, not only land) moved by their stage's offset over the vanilla levels, through restock's new `--levels` (`tools/area_archetypes/level_offsets.json`). Raised slots evolve the same way.
+- **Not changed:** the post-game rematches (#139), including the post-Hall of Fame Wally at the Victory Road exit (`TRAINER_WALLY_VR_2`, now in `story_stages.json`'s `exclude`, so the curve no longer counts him either), and trainers outside the stages (off-route, the Battle Frontier, Trainer Hill).
+  - Several rematch 2 teams now sit far below the raised first fight, for example Juan 2 at 51 against Juan's 77.
+- **Hand-written movesets stay** on raised and evolved Pokémon. Every move was legal at the old level, and an evolved Pokémon keeps its pre-evolution's moves. Default-move Pokémon take the Gen 9 defaults at their new level.
+
 ## Proposed balance changes (owner to accept or reject; each can be its own issue)
 1. **Soft level cap at each gym ace** (config). Set `B_LEVEL_CAP_TYPE LEVEL_CAP_FLAG_LIST` and `B_EXP_CAP_TYPE EXP_CAP_SOFT`. `sLevelCapFlagMap` in `src/caps.c` already holds exactly the measured aces (15/19/24/29/31/33/42/46/58). Consider `B_RARE_CANDY_CAP` too.
 2. **Boss AI to `Smart Trainer`** (data) for the gym leaders, the Elite Four, Wallace, and optionally the rivals and team leaders. Done in #129 for all of them, without Omniscient and Smart Tera (see "Corrections").
