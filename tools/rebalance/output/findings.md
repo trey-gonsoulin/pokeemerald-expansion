@@ -442,7 +442,7 @@ Owner's decisions (2026-10-30):
   - Thalia's Wailord: Rest -> Brine (over the proposed Dive's charge turn).
 - **Flags now** (all / story): one_attack 46 / 38, lost_stab 27 / 24. The 8 and 3 left outside the story are on non-rematch teams.
   - The story counts are #150's: its raises moved the story teams' default sets after #131 had cleared them. #159 hand-wrote them (section 11).
-- **Hand-written movesets stay** on raised and evolved Pokémon: a raise or an evolution doesn't change them, and an evolved Pokémon keeps its pre-evolution's moves. Many are vanilla Gen 3 sets that the Gen 9 learnsets no longer teach (#139's review counted 88 such slots on the rematch teams alone, such as Flannery 2-5's Rapidash Bounce; #145's check, which also accepts pre-evolution moves and teachables, counts 68 moves there, section 11). Default-move Pokémon take the Gen 9 defaults at their new level.
+- **Hand-written movesets stay** on raised and evolved Pokémon: a raise or an evolution doesn't change them, and an evolved Pokémon keeps its pre-evolution's moves. Many are vanilla Gen 3 sets that the Gen 9 learnsets no longer teach (#139's review counted 88 such slots on the rematch teams alone, such as Flannery 2-5's Rapidash Bounce; #145's check, which also accepts pre-evolution moves, teachables and egg moves, counts 55 slot moves there, section 11). Default-move Pokémon take the Gen 9 defaults at their new level.
 
 ## 11. Story default sets after #150, and the learnable-move check (#159, #145)
 
@@ -453,10 +453,10 @@ Owner's decisions (2026-10-30):
   - The rival fights' other teams had no flagged slot: the Sceptile is on the two Mudkip-player teams only.
 - **Flags now** (all / story): no_attack 6 / 6 (Magikarp, Silcoon and Cascoon), one_attack 8 / 0, lost_stab 2 / 0. The ones left are off-stage teams: Gabby and Ty 1-5's Whismur and Loudred, Thomas's Zangoose, Leonard's Machop and Lea and Jed's Luvdisc.
 
-**#145:** `RealRepo.test_set_moves_are_learnable` now checks every set move in `trainers.party` and `battle_partners.party`: the species or a pre-evolution has to learn it by level up at or below the slot's level, on evolving (level 0) or from the teachable list (README). Every move #131, #139 and #159 wrote passes. 143 upstream moves don't, all illegal in upstream's own slot too (a raise or an evolution only adds learnable moves), and `move_allowlist.json` lists them by cause:
-- `rematch`: 68 on the rematch teams #139 raised, such as Flannery 2-5's Rapidash Bounce, Brawly's Machamp Karate Chop and Hitmontop Pursuit and Triple Kick, Norman 3-5's Kangaskhan Dizzy Punch;
-- `story`: 45 on the first-fight teams #127 and #150 raised or evolved, such as Phoebe's Banette Grudge and Feint Attack, Drake's, Winona's and Wally's Altaria Dragon Dance, Sidney's Cacturne Needle Arm;
-- `unchanged`: 30 on teams the fork left as they were, such as Colton's Skitty Assist and Heal Bell, Roxanne's Geodude Rock Throw (Gen 9 learns it at 16) and Brawly's Machop Karate Chop.
+**#145:** `RealRepo.test_set_moves_are_learnable` now checks every set move in `trainers.party` and `battle_partners.party`: the species or a pre-evolution has to learn it by level up at or below the slot's level, on evolving (level 0), from the teachable list or as an egg move (README). Every move #131, #139 and #159 wrote passes. 127 upstream slot moves don't, all illegal in upstream's own slot too (a raise or an evolution only adds learnable moves). `move_allowlist.json` lists them as 112 trainer, species and move entries (one per team, so a reordered team still matches), by cause:
+- `rematch`: 55 slot moves (55 entries) on the rematch teams #139 raised, such as Flannery 2-5's Rapidash Bounce, Brawly 2-4's Machamp Karate Chop and Norman 3-5's Kangaskhan Dizzy Punch (Brawly's Hitmontop Pursuit and Winona's Skarmory Whirlwind are egg moves, so they pass);
+- `story`: 43 (41 entries) on the first-fight teams #127 and #150 raised or evolved, such as Phoebe's Banette Grudge and Feint Attack, Drake's, Winona's and Wally's Altaria Dragon Dance, Sidney's Cacturne Needle Arm;
+- `unchanged`: 29 (16 entries) on teams the fork left as they were, such as Colton's Skitty Assist and Heal Bell, Roxanne's Geodude Rock Throw (Gen 9 learns it at 16) and Brawly's Machop Karate Chop.
 
 The most common are Feint Attack (27), Odor Sleuth (13), Dragon Dance and Assist (11 each) and Magnitude (7). Replacing them is the owner's call, so they stay; the test fails on an entry that becomes learnable or goes away, so the list only shrinks.
 

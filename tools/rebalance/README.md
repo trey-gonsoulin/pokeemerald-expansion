@@ -219,12 +219,13 @@ bootstrap). The repo's `.gitignore` ignores `*.js`, so add new ones with
   `RealRepo.test_set_moves_are_learnable` fails on a set move in
   `trainers.party` or `battle_partners.party` that neither the species nor a
   pre-evolution learns as a level-up move at or below the slot's level, an
-  evolution move (level 0) or a teachable (`learnable_moves`). Teachables
-  come from the gitignored `src/data/pokemon/teachable_learnsets.h`, which
-  the test regenerates through the Makefile's pure-Python rule
-  (`gamedata.teachable_learnsets`), so it needs `make`. `move_allowlist.json`
-  lists the upstream Gen 3 moves that break the rule, by cause; the test also
-  fails on an entry that no longer does, so the list only shrinks.
+  evolution move (level 0), a teachable or an egg move (`learnable_moves`).
+  The build generates the teachables header (gitignored), so
+  `gamedata.move_lists` runs the same `tools/learnset_helpers` functions and
+  reads their output instead of a header an older build left. `move_allowlist.json`
+  lists the upstream Gen 3 moves that break the rule as trainer, species and
+  move, by cause; the test also fails on an entry that no longer breaks it, so
+  the list only shrinks.
 - **Split fit**: for the species in `SPLIT_WATCH`, the better attacking stat
   against the Gen 3 category of each STAB type and the split of its modern
   level-up STAB moves.
