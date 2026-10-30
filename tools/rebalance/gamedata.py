@@ -369,6 +369,14 @@ class GameData:
                                    if str(f.get('isHiddenPowerType')) in ('TRUE', '1')]
         self.items = parse_items(repo, defines)
 
+    @classmethod
+    def from_parts(cls, defines, species):
+        """A GameData with only these defines and species (the exp model's
+        part, as the curve explorer's snapshot holds it)."""
+        gd = cls.__new__(cls)
+        gd.defines, gd._flags, gd.species = defines, {}, species
+        return gd
+
     def flag(self, expr):
         """A config condition, cached: the exp model asks the same few for every KO."""
         if expr not in self._flags:
@@ -432,6 +440,7 @@ class TrainerMon:
     moves: list
     item: str = None
     ivs: dict = None  # None: trainerproc's default, DEFAULT_IVS
+    gender: str = None  # MON_MALE / MON_FEMALE from (M) / (F); None: unset
 
 
 # trainers.party IV labels, in Hidden Power's bit order (HP, Atk, Def, Spe, SpA, SpD).
@@ -474,7 +483,8 @@ def parse_trainers(path):
         for para in paras[1:]:
             lines = [ln.strip() for ln in para.splitlines() if ln.strip()]
             species, _, item = lines[0].partition(' @ ')
-            species = re.sub(r'\s*\((M|F)\)\s*$', '', species.strip())
+            gender = re.search(r'\s*\((M|F)\)\s*$', species)
+            species = species[:gender.start()] if gender else species.strip()
             m = re.fullmatch(r'(.*?)\s*\(([^()]+)\)', species)
             species = m[2] if m else species
             level = 100
@@ -488,7 +498,8 @@ def parse_trainers(path):
                 elif ln.startswith('IVs:'):
                     ivs.update((stat, int(n)) for n, stat in re.findall(r'(\d+)\s+(\w+)', ln))
             mons.append(TrainerMon(species_constant(species.strip()), level, moves,
-                                   constant('ITEM', item.strip()) if item else None, ivs))
+                                   constant('ITEM', item.strip()) if item else None, ivs,
+                                   gender and {'M': 'MON_MALE', 'F': 'MON_FEMALE'}[gender[1]]))
         ai = [a.strip() for a in head.get('AI', '').split('/') if a.strip()]
         trainers[tid] = Trainer(tid, head.get('Name', ''), constant('TRAINER_CLASS', head.get('Class', 'Pkmn Trainer 1')),
                                 ai, head.get('Double Battle', 'No').strip() == 'Yes', mons)
@@ -521,6 +532,19 @@ def map_trainers(repo):
                 t = m and 'rematch' not in m[1] and re.search(r'\bTRAINER_(?!NONE\b)\w+', line)
                 if t:
                     out.setdefault(t[0], folder)
+    return out
+
+
+def parse_rematches(repo):
+    """First fight -> [its gRematchTable rows' trainer ids] (src/battle_setup.c)."""
+    path = os.path.join(repo, 'src', 'battle_setup.c')
+    out = collections.defaultdict(list)
+    if not os.path.exists(path):
+        return out
+    with open(path, encoding='utf-8') as f:
+        for ids in re.findall(r'=\s*REMATCH\(([^)]*)\)', f.read()):
+            ids = [t.strip() for t in ids.split(',') if t.strip().startswith('TRAINER_')]
+            out[ids[0]].append(ids)
     return out
 
 

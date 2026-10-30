@@ -93,6 +93,24 @@ class SpeciesInfoTests(unittest.TestCase):
         self.assertEqual(i.devolve('SPECIES_CROBAT', 25), 'SPECIES_GOLBAT')
         self.assertEqual(i.devolve('SPECIES_PIKACHU', 3), 'SPECIES_PIKACHU')
 
+    def test_evolve(self):
+        i = self.info
+        # EVOLVE_GRACE levels past each EVO_LEVEL, up the whole line.
+        self.assertEqual(i.evolve('SPECIES_ARON', 34), 'SPECIES_ARON')
+        self.assertEqual(i.evolve('SPECIES_ARON', 35), 'SPECIES_LAIRON')
+        self.assertEqual(i.evolve('SPECIES_ARON', 44), 'SPECIES_LAIRON')
+        self.assertEqual(i.evolve('SPECIES_ARON', 45), 'SPECIES_AGGRON')
+        self.assertEqual(i.evolve('SPECIES_ARON', 45, grace=0), 'SPECIES_AGGRON')
+        # Conditioned branches: the first allowed one (Wurmple's PID split), never
+        # another region's (Galarian Weezing), the Pokemon's own gender (Burmy).
+        self.assertEqual(i.evolve('SPECIES_WURMPLE', 20), 'SPECIES_BEAUTIFLY')
+        self.assertEqual(i.evolve('SPECIES_KOFFING', 50), 'SPECIES_WEEZING')
+        self.assertEqual(i.evolve('SPECIES_BURMY', 30, gender='MON_MALE'), 'SPECIES_MOTHIM_PLANT')
+        self.assertEqual(i.evolve('SPECIES_BURMY', 30, gender='MON_FEMALE'), 'SPECIES_WORMADAM_PLANT')
+        # Friendship and item evolutions are never taken.
+        self.assertEqual(i.evolve('SPECIES_GOLBAT', 60), 'SPECIES_GOLBAT')
+        self.assertEqual(i.evolve('SPECIES_KIRLIA', 40, gender='MON_MALE'), 'SPECIES_GARDEVOIR')
+
     def test_species_built_from_macros(self):
         i = self.info
         self.assertEqual(i.min_level('SPECIES_SPEWPA'), 9)  # SPEWPA_SPECIES_INFO(...)
