@@ -415,6 +415,41 @@ def summarize_handwritten(changes, trainers):
     return out
 
 
+# Set moves no species or pre-evolution can learn that the data had before #145's
+# check: cause -> {note, slots [trainer, slot, species, move]}.
+MOVE_ALLOWLIST = os.path.join(G.HERE, 'move_allowlist.json')
+
+
+def evolution_line(info, species):
+    """``species`` and every pre-evolution it can come from."""
+    line, todo = [], [species]
+    while todo:
+        sp = todo.pop()
+        if sp not in line:
+            line.append(sp)
+            todo.extend(src for src, _, _ in info.pre_evos.get(info.canon(sp), ()))
+    return line
+
+
+def learnable_moves(gd, info, teachables, species, level):
+    """The moves a ``species`` at ``level`` can know (#145): the level-up moves
+    of it and its pre-evolutions at or below ``level``, their evolution moves
+    (level 0) and their teachables (TMs, tutors, near-universal moves)."""
+    moves = set()
+    for sp in evolution_line(info, species):
+        moves.update(mv for lvl, mv in gd.learnset(sp) if lvl <= level)
+        if sp in gd.species:
+            moves |= teachables.get(gd.species[sp].teachables, frozenset())
+    return moves
+
+
+def unlearnable_set_moves(teams, gd, info, teachables):
+    """[trainer, slot, species, move] of every set move its Pokemon can't learn."""
+    return [[t.id, i, mon.species, mv]
+            for t in teams.values() for i, mon in enumerate(t.mons) for mv in mon.moves
+            if mv not in learnable_moves(gd, info, teachables, mon.species, mon.level)]
+
+
 def better_stat(stats):
     atk, spa = stats['baseAttack'], stats['baseSpAttack']
     if atk > spa * (1 + STAT_SHIFT):
