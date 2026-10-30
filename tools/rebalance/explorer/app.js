@@ -2,6 +2,7 @@
 // The model runs in worker.js; each change posts the knobs and redraws.
 
 const pct = v => `${Math.round(v * 100)}%`;
+const UNITS = of => [['levels', 'levels'], ['percent', `% of ${of}`]];
 const REFS = {
     bench: 'bench (lowest off the KO rotation, or lowest)',
     ko_mean: 'KO-takers\' mean',
@@ -10,7 +11,9 @@ const REFS = {
 };
 
 // key -> control. type: range, optional (a range with an on/off box; off
-// sends null), select, check. help is the line under the control.
+// sends null), select, check. help is the line under the control. A knob
+// with a unit (the key of a levels/percent select) takes its range from pct
+// in percent, and fmt gets the unit's suffix.
 const KNOBS = [
     { group: 'Play style' },
     { key: 'ko_takers', label: 'KO rotation', type: 'range', min: 1, max: 6, step: 1,
@@ -34,23 +37,29 @@ const KNOBS = [
     { key: 'scaling_power', label: 'Scaling exponent', type: 'range', min: 1.5, max: 4, step: 0.1,
       fmt: v => v.toFixed(1),
       help: 'The game\'s table is level^2.5. Higher punishes an over-levelled getter harder. Not a game option yet.' },
+    { key: 'overlevel_unit', label: 'Over-level cutoff in', type: 'select', options: UNITS('the foe\'s level') },
     { key: 'overlevel_cutoff', label: 'Over-level cutoff', type: 'optional', min: 0, max: 20, step: 1,
-      fmt: v => `1 exp past +${v}`,
-      help: 'A getter more than this many levels above the foe gets 1 exp. Not a game option yet.' },
+      unit: 'overlevel_unit', pct: [0, 60, 1], fmt: (v, u) => `past +${v}${u}`,
+      help: 'Past this far above the foe, the getter gets 1 exp, or less and less with the falloff. Not a game option yet.' },
+    { key: 'overlevel_halflife', label: 'Over-level falloff', type: 'optional', min: 1, max: 20, step: 1,
+      unit: 'overlevel_unit', pct: [1, 50, 1], fmt: (v, u) => `halves every ${v}${u}`,
+      help: 'Past the cutoff, the exp halves every this far further above the foe (at least 1). Off: straight to 1.' },
     { key: 'share_fraction', label: 'Exp. Share bench share', type: 'range', min: 0, max: 1, step: 0.05, fmt: pct,
       help: 'What a member that didn\'t take the KO gets. The Gen 6+ share gives 50%. Not a game option yet.' },
     { group: 'Targets' },
     { key: 'boss_ref', label: 'Measure against', type: 'select', options: Object.entries(REFS),
       help: 'The party level the boss margin and the trainer and wild gaps use.' },
+    { key: 'gap_unit', label: 'Margin and gaps in', type: 'select', options: UNITS('the reference level') },
     { key: 'margin', label: 'Boss margin', type: 'optional', min: -3, max: 8, step: 1,
-      fmt: v => `ace ${v >= 0 ? '+' : ''}${v}`,
+      unit: 'gap_unit', pct: [-5, 20, 1], fmt: (v, u) => `ace ${v >= 0 ? '+' : ''}${v}${u}`,
       help: 'Raise each boss (never lower) so its ace sits this far above the reference. Off: today\'s levels.' },
     { key: 'league_steps', label: 'Elite Four spacing', type: 'check',
       help: 'With the margin: each Elite Four member at least 1 above the last, Wallace 3 above Drake.' },
     { key: 'trainer_gap', label: 'Route trainer gap', type: 'optional', min: 0, max: 15, step: 1,
-      fmt: v => `${v} below`,
+      unit: 'gap_unit', pct: [0, 40, 1], fmt: (v, u) => `${v}${u} below`,
       help: 'Raise each stage\'s ordinary trainers until their aces average this far below the reference when fought.' },
-    { key: 'wild_gap', label: 'Wild gap', type: 'optional', min: 0, max: 25, step: 1, fmt: v => `${v} below`,
+    { key: 'wild_gap', label: 'Wild gap', type: 'optional', min: 0, max: 25, step: 1,
+      unit: 'gap_unit', pct: [0, 50, 1], fmt: (v, u) => `${v}${u} below`,
       help: 'Raise each stage\'s wild levels until the land average sits this far below the reference at its start.' },
     { key: 'evolve', label: 'Evolve raised Pokémon', type: 'check',
       help: 'A raised trainer or wild Pokémon evolves 3 levels past a level evolution.' },
@@ -89,9 +98,25 @@ function buildControls() {
             control = `<select>${k.options.map(([v, t]) => `<option value="${v}">${t}</option>`).join('')}</select>`;
         row.innerHTML = `<label>${k.label} <output></output></label><div class="control">${control}</div>`
             + (k.help ? `<p class="help">${k.help}</p>` : '');
-        row.addEventListener('input', () => { showValue(k, row); changed(); });
+        row.addEventListener('input', () => {
+            showValue(k, row);
+            for (const d of KNOBS.filter(d => d.unit === k.key))
+                applyUnit(d);
+            changed();
+        });
         panel.append(row);
     }
+}
+
+const inPercent = k => k.unit && $(`.knob[data-key="${k.unit}"] select`).value === 'percent';
+
+// Puts the knob's range in its unit's bounds (the value clamps to them).
+function applyUnit(k) {
+    const row = $(`.knob[data-key="${k.key}"]`);
+    const range = row.querySelector('input[type=range]');
+    const [min, max, step] = inPercent(k) ? k.pct : [k.min, k.max, k.step];
+    Object.assign(range, { min, max, step });
+    showValue(k, row);
 }
 
 function readKnobs() {
@@ -111,7 +136,13 @@ function readKnobs() {
 }
 
 function setKnobs(knobs) {
-    for (const k of KNOBS.filter(k => k.key)) {
+    // The selects first, so the ranges get their unit's bounds before their values.
+    const keyed = KNOBS.filter(k => k.key);
+    for (const k of keyed.filter(k => k.type === 'select'))
+        $(`.knob[data-key="${k.key}"] select`).value = knobs[k.key];
+    for (const k of keyed.filter(k => k.unit))
+        applyUnit(k);
+    for (const k of keyed) {
         const row = $(`.knob[data-key="${k.key}"]`);
         const v = knobs[k.key];
         if (k.type === 'check')
@@ -138,7 +169,7 @@ function showValue(k, row) {
     const off = k.type === 'optional' && !row.querySelector('.on').checked;
     range.disabled = off;
     const v = Number(range.value);
-    out.textContent = off ? 'off' : (k.fmt ? k.fmt(v) : String(v));
+    out.textContent = off ? 'off' : (k.fmt ? k.fmt(v, inPercent(k) ? '%' : '') : String(v));
 }
 
 // The knobs that differ from the defaults: the settings box and the URL hash.
@@ -271,7 +302,7 @@ function drawTables(res) {
         <td>${Math.min(...b.levels)}–${Math.max(...b.levels)}</td><td>${b.ref}</td></tr>`).join('');
     $('#stages tbody').innerHTML = res.stages.map(s => `<tr><td>${s.stage}</td><td>${+s.start_ref.toFixed(1)}</td>
         <td>${s.trainers}</td><td>${s.raise ? '+' + s.raise : ''}</td><td>${s.trainer_ace_mean ?? ''}</td>
-        <td>${s.gap ?? ''}</td><td>${s.wild_offset ? '+' + s.wild_offset : ''}</td>
+        <td>${s.gap ?? ''}${s.gap !== null && res.knobs.gap_unit === 'percent' ? '%' : ''}</td><td>${s.wild_offset ? '+' + s.wild_offset : ''}</td>
         <td>${s.wild_land_mean ?? ''}</td></tr>`).join('');
 }
 

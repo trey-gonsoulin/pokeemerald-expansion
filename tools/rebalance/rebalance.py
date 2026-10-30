@@ -509,8 +509,29 @@ def scaling_factors(power=2.5, size=211):
     return [int(i ** power / 4) for i in range(size)]
 
 
+class Overlevel(collections.namedtuple('Overlevel', 'cutoff relative halflife', defaults=(False, None))):
+    """An over-level penalty (#151): past ``cutoff`` levels above the foe
+    (``relative``: percent above the foe's level), exp drops to 1, or with
+    ``halflife`` halves every that many levels (percent) past the cutoff."""
+
+    def limit(self, foe_level):
+        return foe_level * (100 + self.cutoff) / 100 if self.relative else foe_level + self.cutoff
+
+    def factor(self, foe_level, getter_level):
+        """The multiplier in 4096ths (as the game's UQ4_12 multipliers):
+        4096 up to the cutoff, 0 for the hard drop to 1 exp."""
+        over = getter_level - self.limit(foe_level)
+        if over <= 0:
+            return 4096
+        if not self.halflife:
+            return 0
+        if self.relative:
+            over = over * 100 / foe_level
+        return round(4096 * 0.5 ** (over / self.halflife))
+
+
 def exp_award(gd, scaling, yield_, foe_level, getter_level, trainer, sent_in, sent_out=True, holders=0,
-              affection=False, unevolved=False, share_fraction=0.5, overlevel_cutoff=None):
+              affection=False, unevolved=False, share_fraction=0.5, overlevel=None):
     """Cmd_getexp + ApplyExperienceMultipliers for one getter (no Lucky Egg
     or traded bonuses).
 
@@ -525,9 +546,8 @@ def exp_award(gd, scaling, yield_, foe_level, getter_level, trainer, sent_in, se
 
     Formula options the game doesn't have (#151): ``share_fraction``, the
     Gen 6+ Exp. Share bench share (the game's half; B_SPLIT_EXP < GEN_6
-    ignores it), and
-    ``overlevel_cutoff``, 1 exp for a getter more than that many levels
-    above the foe. ``scaling`` can be any scaling_factors table."""
+    ignores it), and ``overlevel``, an Overlevel penalty applied last (at
+    least 1 exp). ``scaling`` can be any scaling_factors table."""
     scaled = gd.flag('B_SCALED_EXP >= GEN_5 && B_SCALED_EXP != GEN_6')
     calc = yield_ * foe_level // (5 if scaled else 7)
     if trainer and gd.flag('B_TRAINER_EXP_MULTIPLIER <= GEN_7'):
@@ -544,7 +564,8 @@ def exp_award(gd, scaling, yield_, foe_level, getter_level, trainer, sent_in, se
         reward = max(calc * round(share_fraction * 1000) // 1000, 1) if holders and share_fraction else 0
     if not reward:
         return 0  # the game skips a getter that neither faced the foe nor holds a share
-    if overlevel_cutoff is not None and getter_level > foe_level + overlevel_cutoff:
+    penalty = overlevel.factor(foe_level, getter_level) if overlevel else 4096
+    if not penalty:
         return 1
     if unevolved and gd.flag('B_UNEVOLVED_EXP_MULTIPLIER >= GEN_6'):
         reward = reward * 4915 // 4096
@@ -552,6 +573,8 @@ def exp_award(gd, scaling, yield_, foe_level, getter_level, trainer, sent_in, se
         reward = reward * 4915 // 4096
     if scaled:
         reward = reward * scaling[foe_level * 2 + 10] // scaling[foe_level + getter_level + 10] + 1
+    if penalty < 4096:
+        reward = max(reward * penalty // 4096, 1)
     return reward
 
 
@@ -567,11 +590,11 @@ class Party:
     ``unevolved``: every member gets the unevolved 1.2x (kept from evolving).
     ``ko_takers``: with the Exp. Share, the KOs rotate over the first this
     many members (1: one lead and five benched, 6: the whole team in turn).
-    ``share_fraction`` and ``overlevel_cutoff`` go to exp_award."""
+    ``share_fraction`` and ``overlevel`` go to exp_award."""
 
     def __init__(self, size, growth='GROWTH_MEDIUM_SLOW', level=START_LEVEL, affection='none',
                  friendship=STANDARD_FRIENDSHIP, unevolved=False, ko_takers=1, share_fraction=0.5,
-                 overlevel_cutoff=None):
+                 overlevel=None):
         if affection not in AFFECTION:
             raise ValueError(affection)
         if not 1 <= ko_takers <= size:
@@ -580,7 +603,7 @@ class Party:
         self.unevolved = unevolved
         self.ko_takers = ko_takers
         self.share_fraction = share_fraction
-        self.overlevel_cutoff = overlevel_cutoff
+        self.overlevel = overlevel
         self.exp = [float(exp_for_level(growth, level))] * size
         self.friendship = [float(friendship)] * size
         self.affection = affection
@@ -619,7 +642,7 @@ class Party:
                                              sent_out=i == ko, holders=len(lv) if share else 0,
                                              affection=self.has_affection(i), unevolved=self.unevolved,
                                              share_fraction=self.share_fraction,
-                                             overlevel_cutoff=self.overlevel_cutoff)
+                                             overlevel=self.overlevel)
                                for y, foe_level, w in foes)
             self.befriend('level', level_for_exp(self.growth, int(self.exp[i])) - level, members=(i,))
 
@@ -796,7 +819,7 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
               catches=CATCHES_PER_STAGE, walk_steps=WALK_STEPS_PER_STAGE, trainer_raise=0, raises=None,
               margin=None, unevolved=False, stage_raises=None, wild_offsets=None, trainer_gap=None,
               wild_gap=None, vanilla_wilds=None, evolve=None, ko_takers=1, boss_ref='bench',
-              share_fraction=0.5, overlevel_cutoff=None, league_steps=True, wild_battles=0):
+              share_fraction=0.5, overlevel=None, league_steps=True, wild_battles=0, relative_gaps=False):
     """The share6 party (KO-taker plus five on the Gen 6 Exp. Share bench)
     just before each story boss, on ``gd``'s data and configs: (boss rows,
     stage rows).
@@ -821,11 +844,13 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
     the stage's start; with ``trainer_gap``, each stage's raise is the
     smallest one that leaves its regular trainers' aces at most
     ``trainer_gap`` below the reference when fought, on average. All in one
-    pass, so a raise counts toward the later stages' exp. ``unevolved``
-    gives the whole party the unevolved 1.2x.
+    pass, so a raise counts toward the later stages' exp. With
+    ``relative_gaps`` the margin and the gaps are percent of the reference
+    instead of levels. ``unevolved`` gives the whole party the unevolved
+    1.2x.
 
     The party (#151): the KOs rotate over ``ko_takers`` members (Party),
-    and ``share_fraction`` and ``overlevel_cutoff`` change the exp
+    and ``share_fraction`` and ``overlevel`` change the exp
     (exp_award). ``boss_ref`` picks the reference level from REFERENCES;
     each row's ``bench`` is the lowest member off the KO rotation (the
     lowest member when all six take KOs), ``ref`` the reference level and
@@ -835,12 +860,19 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
     reference = REFERENCES[boss_ref]
     friendship = STANDARD_FRIENDSHIP if gd.flag('P_UPDATED_FRIENDSHIP >= GEN_8') else 70
     party = Party(6, affection=affection, friendship=friendship, unevolved=unevolved, ko_takers=ko_takers,
-                  share_fraction=share_fraction, overlevel_cutoff=overlevel_cutoff)
+                  share_fraction=share_fraction, overlevel=overlevel)
     catch = catches if gd.flag('B_EXP_CATCH >= GEN_6') else 0
     rows, stage_rows = [], []
 
     def ref(p):
         return reference(p.levels(), ko_takers)
+
+    def above(level, gap):
+        """The level ``gap`` above ``level``, in levels or percent."""
+        return level * (100 + gap) / 100 if relative_gaps else level + gap
+
+    def gap_of(level, ace):
+        return (level - ace) * 100 / level if relative_gaps else level - ace
 
     def fight(p, tid, delta=0):
         for mon in trainers[tid].mons:
@@ -851,11 +883,12 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
             p.defeat(gd, scaling, [(gd.species[species].exp_yield, level, 1.0)], True, True)
 
     def fight_trainers(p, st, d):
-        """The stage's cleared trainers: each one's reference - ace, and its ace."""
+        """The stage's cleared trainers: each one's gap below the reference
+        (gap_of), and its ace."""
         gaps, aces = [], []
         for tid in cleared(st['regular'], clear):
             aces.append(min(team_ace(trainers[tid]) + trainer_raise + d, 100))
-            gaps.append(ref(p) - aces[-1])
+            gaps.append(gap_of(ref(p), aces[-1]))
             fight(p, tid, trainer_raise + d)
         return gaps, aces
 
@@ -870,7 +903,7 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
         base, now = land_mean((vanilla_wilds or {}).get(i, ())), land_mean(slots)
         applied = round(now - base) if base is not None and now is not None else 0
         if wild_gap is not None and base is not None:
-            offset = max(0, applied, round(start - wild_gap - base))  # only ever raised
+            offset = max(0, applied, round(above(start, -wild_gap) - base))  # only ever raised
         else:
             offset = wild_offsets.get(st['name'], applied)
         here = shifted_slots(slots, offset - applied, evolve)
@@ -893,7 +926,7 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
             level = reference(levels, ko_takers)
             base_ace = team_ace(trainers[bid])
             if margin is not None:
-                raises[bid] = max(0, int(level + margin - base_ace + 0.5))
+                raises[bid] = max(0, int(above(level, margin) - base_ace + 0.5))
                 if league_steps and bid in LEAGUE_STEPS:
                     prev, step = LEAGUE_STEPS[bid]
                     raises[bid] = max(raises[bid], team_ace(trainers[prev]) + raises.get(prev, 0) + step - base_ace)
@@ -1008,9 +1041,11 @@ def load_snapshot(data):
 EXPLORER_KNOBS = {
     'ko_takers': 1, 'boss_ref': 'bench', 'clear': 1.0, 'catches': CATCHES_PER_STAGE, 'wild_battles': 0,
     'walk_steps': WALK_STEPS_PER_STAGE, 'affection': 'friendship', 'trainer_exp': '1.5x off',
-    'scaled_exp': True, 'scaling_power': 2.5, 'overlevel_cutoff': None, 'share_fraction': 0.5,
-    'margin': None, 'league_steps': True, 'trainer_gap': None, 'wild_gap': None, 'evolve': True,
+    'scaled_exp': True, 'scaling_power': 2.5, 'overlevel_cutoff': None, 'overlevel_unit': 'levels',
+    'overlevel_halflife': None, 'share_fraction': 0.5, 'gap_unit': 'levels', 'margin': None,
+    'league_steps': True, 'trainer_gap': None, 'wild_gap': None, 'evolve': True,
 }
+UNITS = ('levels', 'percent')
 
 
 def explore_run(snap, knobs=None):
@@ -1023,6 +1058,11 @@ def explore_run(snap, knobs=None):
     if unknown:
         raise ValueError(f'unknown knobs {sorted(unknown)}')
     k = {**EXPLORER_KNOBS, **(knobs or {})}
+    for key in ('overlevel_unit', 'gap_unit'):
+        if k[key] not in UNITS:
+            raise ValueError(f'{key} must be one of {UNITS}')
+    overlevel = None if k['overlevel_cutoff'] is None else Overlevel(
+        k['overlevel_cutoff'], k['overlevel_unit'] == 'percent', k['overlevel_halflife'])
     gd = with_configs(snap['gd'], B_TRAINER_EXP_MULTIPLIER=TRAINER_EXP[k['trainer_exp']],
                       B_SCALED_EXP='GEN_LATEST' if k['scaled_exp'] else 'GEN_6')
     # The game's own table at its exponent (scaling_factors matches it, tested).
@@ -1033,8 +1073,8 @@ def explore_run(snap, knobs=None):
         affection=k['affection'], catches=k['catches'], walk_steps=k['walk_steps'], margin=k['margin'],
         trainer_gap=k['trainer_gap'], wild_gap=k['wild_gap'], vanilla_wilds=snap['wilds']['vanilla'],
         evolve=snap['evolve'] if k['evolve'] else None, ko_takers=k['ko_takers'], boss_ref=k['boss_ref'],
-        share_fraction=k['share_fraction'], overlevel_cutoff=k['overlevel_cutoff'],
-        league_steps=k['league_steps'], wild_battles=k['wild_battles'])
+        share_fraction=k['share_fraction'], overlevel=overlevel, league_steps=k['league_steps'],
+        wild_battles=k['wild_battles'], relative_gaps=k['gap_unit'] == 'percent')
     for r in bosses:
         r['name'] = short(r['boss'])
         r['refs'] = {name: round(f(r['levels'], k['ko_takers']), 1) for name, f in REFERENCES.items()}
