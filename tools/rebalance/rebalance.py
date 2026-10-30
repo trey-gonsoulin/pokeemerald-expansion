@@ -22,15 +22,18 @@ import copy
 import csv
 import fnmatch
 import functools
+import http.server
 import itertools
 import json
 import os
+import re
 import sys
 
 import gamedata as G
 
 DEFAULT_OUT_DIR = os.path.join(G.HERE, 'output')
 DEFAULT_STAGES = os.path.join(G.HERE, 'story_stages.json')
+CURVE_DATA = 'curve_data.json'  # the explorer's snapshot, in the output dir
 # area_archetypes' vanilla snapshot, relative to the repo so --repo can point elsewhere.
 VANILLA_WILD = os.path.relpath(G.R.AA.VANILLA_WILD, G.R.AA.REPO)
 
@@ -110,6 +113,17 @@ LEAGUE_STEPS = {'TRAINER_PHOEBE': ('TRAINER_SIDNEY', 1), 'TRAINER_GLACIA': ('TRA
 TRAINER_GAP = 5
 WILD_GAP = 10
 EVOLVE_EXEMPT = frozenset({'TRAINER_WALLY_MAUVILLE'})
+# The party level the boss margin and the trainer and wild gaps measure
+# against (#151), from the six members' levels and the KO-takers' count:
+# the lowest member off the KO rotation (with five benched, the bench; with
+# all six rotating, the lowest), the KO-takers' mean, the party's mean, the
+# highest member.
+REFERENCES = {
+    'bench': lambda levels, ko_takers: min(levels[ko_takers:] or levels),
+    'ko_mean': lambda levels, ko_takers: sum(levels[:ko_takers]) / ko_takers,
+    'party_mean': lambda levels, ko_takers: sum(levels) / len(levels),
+    'ace': lambda levels, ko_takers: max(levels),
+}
 # Full-clear runs (modelled friendship) that vary one assumption.
 SHARE_SENSITIVITY = {
     'as modelled': {},
@@ -256,37 +270,19 @@ def default_flags(gd, species, level, van_moves, mod_moves, ivs=None):
     return flags, above + new
 
 
-def raised_defaults(trainers, gd, raises, evolve=None):
-    """Pokemon on default moves whose team ``raises`` lifts: the species
-    (evolved by ``evolve`` when raised, #150) and the modern default
-    moveset and flags at the current and the raised level."""
+def raised_defaults(trainers, gd, raises):
+    """Boss Pokemon on default moves whose team ``raises`` lifts: the modern
+    default moveset and flags at the current and the raised level."""
     rows = []
     for tid, delta in raises.items():
         for mon in trainers[tid].mons:
             if mon.moves or not delta:
                 continue
-            level = min(mon.level + delta, 100)
-            raised = evolve(mon.species, level, mon.gender) if evolve and tid not in EVOLVE_EXEMPT else mon.species
-            row = {'trainer': tid, 'species': [mon.species, raised], 'levels': [mon.level, level]}
-            for key, species, lv in zip(('now', 'raised'), row['species'], row['levels']):
-                v, m = gd['vanilla'].default_moves(species, lv), gd['modern'].default_moves(species, lv)
-                row[key] = {'moves': m, 'flags': default_flags(gd, species, lv, v, m, mon.ivs)[0]}
+            row = {'trainer': tid, 'species': mon.species, 'levels': [mon.level, min(mon.level + delta, 100)]}
+            for key, level in zip(('now', 'raised'), row['levels']):
+                v, m = gd['vanilla'].default_moves(mon.species, level), gd['modern'].default_moves(mon.species, level)
+                row[key] = {'moves': m, 'flags': default_flags(gd, mon.species, level, v, m, mon.ivs)[0]}
             rows.append(row)
-    return rows
-
-
-def raised_evolutions(trainers, raises, evolve):
-    """[(trainer, slot, species, raised level, evolved species)] for every
-    Pokemon ``raises`` lifts past an evolution (#150)."""
-    rows = []
-    for tid, delta in raises.items():
-        if not delta or tid in EVOLVE_EXEMPT:
-            continue
-        for k, mon in enumerate(trainers[tid].mons):
-            level = min(mon.level + delta, 100)
-            evolved = evolve(mon.species, level, mon.gender)
-            if evolved != mon.species:
-                rows.append((tid, k, mon.species, level, evolved))
     return rows
 
 
@@ -507,8 +503,14 @@ def level_for_exp(growth, exp):
     return bisect.bisect_right(exp_table(growth), exp)
 
 
+def scaling_factors(power=2.5, size=211):
+    """sExperienceScalingFactors as (i^power)/4: the game's table at 2.5,
+    a steeper level-gap penalty above it (#151)."""
+    return [int(i ** power / 4) for i in range(size)]
+
+
 def exp_award(gd, scaling, yield_, foe_level, getter_level, trainer, sent_in, sent_out=True, holders=0,
-              affection=False, unevolved=False):
+              affection=False, unevolved=False, share_fraction=0.5, overlevel_cutoff=None):
     """Cmd_getexp + ApplyExperienceMultipliers for one getter (no Lucky Egg
     or traded bonuses).
 
@@ -519,7 +521,12 @@ def exp_award(gd, scaling, yield_, foe_level, getter_level, trainer, sent_in, se
     whenever ``holders`` is non-zero. ``affection``: the getter has 4+
     hearts, worth 4915/4096 (1.2x) under B_AFFECTION_MECHANICS.
     ``unevolved``: the getter is at or past its EVO_LEVEL level unevolved,
-    another 4915/4096 (applied first) under B_UNEVOLVED_EXP_MULTIPLIER."""
+    another 4915/4096 (applied first) under B_UNEVOLVED_EXP_MULTIPLIER.
+
+    Formula options the game doesn't have (#151): ``share_fraction``, the
+    Gen 6+ Exp. Share bench share (the game's half), and
+    ``overlevel_cutoff``, 1 exp for a getter more than that many levels
+    above the foe. ``scaling`` can be any scaling_factors table."""
     scaled = gd.flag('B_SCALED_EXP >= GEN_5 && B_SCALED_EXP != GEN_6')
     calc = yield_ * foe_level // (5 if scaled else 7)
     if trainer and gd.flag('B_TRAINER_EXP_MULTIPLIER <= GEN_7'):
@@ -531,10 +538,14 @@ def exp_award(gd, scaling, yield_, foe_level, getter_level, trainer, sent_in, se
         reward = (sent_share if sent_out else 0) + (max(calc // 2 // holders, 1) if holders else 0)
     elif sent_out:
         reward = calc
-    else:
+    elif share_fraction == 0.5:
         reward = max(calc // 2, 1) if holders else 0
+    else:
+        reward = max(int(calc * share_fraction), 1) if holders and share_fraction else 0
     if not reward:
         return 0  # the game skips a getter that neither faced the foe nor holds a share
+    if overlevel_cutoff is not None and getter_level > foe_level + overlevel_cutoff:
+        return 1
     if unevolved and gd.flag('B_UNEVOLVED_EXP_MULTIPLIER >= GEN_6'):
         reward = reward * 4915 // 4096
     if affection and gd.flag('B_AFFECTION_MECHANICS == TRUE'):
@@ -553,14 +564,23 @@ def friendship_gain(friendship, event):
 class Party:
     """``affection``: 'none' (no 1.2x), 'always' (4 hearts from the start) or
     'friendship' (1.2x once a member's modelled friendship reaches 220).
-    ``unevolved``: every member gets the unevolved 1.2x (kept from evolving)."""
+    ``unevolved``: every member gets the unevolved 1.2x (kept from evolving).
+    ``ko_takers``: with the Exp. Share, the KOs rotate over the first this
+    many members (1: one lead and five benched, 6: the whole team in turn).
+    ``share_fraction`` and ``overlevel_cutoff`` go to exp_award."""
 
     def __init__(self, size, growth='GROWTH_MEDIUM_SLOW', level=START_LEVEL, affection='none',
-                 friendship=STANDARD_FRIENDSHIP, unevolved=False):
+                 friendship=STANDARD_FRIENDSHIP, unevolved=False, ko_takers=1, share_fraction=0.5,
+                 overlevel_cutoff=None):
         if affection not in AFFECTION:
             raise ValueError(affection)
+        if not 1 <= ko_takers <= size:
+            raise ValueError(ko_takers)
         self.growth = growth
         self.unevolved = unevolved
+        self.ko_takers = ko_takers
+        self.share_fraction = share_fraction
+        self.overlevel_cutoff = overlevel_cutoff
         self.exp = [float(exp_for_level(growth, level))] * size
         self.friendship = [float(friendship)] * size
         self.affection = affection
@@ -583,20 +603,23 @@ class Party:
             self.friendship[i] = f
 
     def defeat(self, gd, scaling, foes, trainer, share):
-        """One KO by a single sent-in member (round-robin), the rest of the
-        party sharing through the Gen 6 Exp. Share when ``share``. ``foes``
-        is [(exp yield, level, weight)]: one foe, or a wild battle's
+        """One KO by a single sent-in member (round-robin over the party, or
+        over the ``ko_takers`` with the Exp. Share), the rest of the party
+        sharing through the Gen 6 Exp. Share when ``share``. ``foes`` is
+        [(exp yield, level, weight)]: one foe, or a wild battle's
         rate-weighted average over its slots. Each level gained adds the
         level-up friendship."""
         lv = self.levels()
-        ko = 0 if share else self.turn % len(self.exp)
+        ko = self.turn % (self.ko_takers if share else len(self.exp))
         self.turn += 1
         for i, level in enumerate(lv):
             if i != ko and not share:
                 continue
             self.exp[i] += sum(w * exp_award(gd, scaling, y, foe_level, level, trainer, 1,
                                              sent_out=i == ko, holders=len(lv) if share else 0,
-                                             affection=self.has_affection(i), unevolved=self.unevolved)
+                                             affection=self.has_affection(i), unevolved=self.unevolved,
+                                             share_fraction=self.share_fraction,
+                                             overlevel_cutoff=self.overlevel_cutoff)
                                for y, foe_level, w in foes)
             self.befriend('level', level_for_exp(self.growth, int(self.exp[i])) - level, members=(i,))
 
@@ -741,6 +764,8 @@ def evolver(info, gd):
 def team_ace(trainer):
     """A team's highest level."""
     return max(mon.level for mon in trainer.mons)
+
+
 def land_mean(slots):
     """The encounter-weighted mean level of ``slots``' land tables, or None."""
     foes = land_foes(slots)
@@ -770,14 +795,16 @@ def share_curve(*args, **kwargs):
 def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friendship',
               catches=CATCHES_PER_STAGE, walk_steps=WALK_STEPS_PER_STAGE, trainer_raise=0, raises=None,
               margin=None, unevolved=False, stage_raises=None, wild_offsets=None, trainer_gap=None,
-              wild_gap=None, vanilla_wilds=None, evolve=None):
+              wild_gap=None, vanilla_wilds=None, evolve=None, ko_takers=1, boss_ref='bench',
+              share_fraction=0.5, overlevel_cutoff=None, league_steps=True, wild_battles=0, detail=False):
     """The share6 party (KO-taker plus five on the Gen 6 Exp. Share bench)
     just before each story boss, on ``gd``'s data and configs: (boss rows,
     stage rows).
 
-    Each stage starts with ``walk_steps`` of walking and ``catches``
-    catches (wild exp at the stage's land-table average, when B_EXP_CATCH
-    gives it), then its cleared trainers, then its bosses. A gym leader,
+    Each stage starts with ``walk_steps`` of walking, ``catches`` catches
+    (wild exp at the stage's land-table average, when B_EXP_CATCH gives it)
+    and ``wild_battles`` wild KOs at the same average, then its cleared
+    trainers, then its bosses. A gym leader,
     Elite Four or Champion battle adds league friendship. ``raises`` adds
     levels to every Pokemon of a boss's team, ``stage_raises`` (stage name
     -> levels) and ``trainer_raise`` to every Pokemon of a stage's regular
@@ -787,21 +814,34 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
     ``evolve(species, level, gender)`` evolves the raised Pokemon (not
     EVOLVE_EXEMPT's teams) and the raised wild slots.
 
-    With ``margin``, each boss is raised, when its ace is lower, to the bench
-    level plus ``margin`` and then to LEAGUE_STEPS above the boss before it.
-    With ``wild_gap``, each stage's wild offset puts its land average
-    ``wild_gap`` below the bench at the stage's start; with ``trainer_gap``,
-    each stage's raise is the smallest one that leaves its regular trainers'
-    aces at most ``trainer_gap`` below the bench when fought, on average.
-    All in one pass, so a raise counts toward the later stages' exp.
-    ``unevolved`` gives the whole party the unevolved 1.2x."""
+    With ``margin``, each boss is raised, when its ace is lower, to the
+    reference level plus ``margin`` and then (``league_steps``) to
+    LEAGUE_STEPS above the boss before it. With ``wild_gap``, each stage's
+    wild offset puts its land average ``wild_gap`` below the reference at
+    the stage's start; with ``trainer_gap``, each stage's raise is the
+    smallest one that leaves its regular trainers' aces at most
+    ``trainer_gap`` below the reference when fought, on average. All in one
+    pass, so a raise counts toward the later stages' exp. ``unevolved``
+    gives the whole party the unevolved 1.2x.
+
+    The party (#151): the KOs rotate over ``ko_takers`` members (Party),
+    and ``share_fraction`` and ``overlevel_cutoff`` change the exp
+    (exp_award). ``boss_ref`` picks the reference level from REFERENCES;
+    each row's ``bench`` is the lowest member off the KO rotation (the
+    lowest member when all six take KOs). ``detail`` adds every member's
+    level to the boss rows."""
     raises = dict(raises or {})
     stage_raises = dict(stage_raises or {})
     wild_offsets = dict(wild_offsets or {})
+    reference = REFERENCES[boss_ref]
     friendship = STANDARD_FRIENDSHIP if gd.flag('P_UPDATED_FRIENDSHIP >= GEN_8') else 70
-    party = Party(6, affection=affection, friendship=friendship, unevolved=unevolved)
+    party = Party(6, affection=affection, friendship=friendship, unevolved=unevolved, ko_takers=ko_takers,
+                  share_fraction=share_fraction, overlevel_cutoff=overlevel_cutoff)
     catch = catches if gd.flag('B_EXP_CATCH >= GEN_6') else 0
     rows, stage_rows = [], []
+
+    def ref(p):
+        return reference(p.levels(), ko_takers)
 
     def fight(p, tid, delta=0):
         for mon in trainers[tid].mons:
@@ -812,18 +852,20 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
             p.defeat(gd, scaling, [(gd.species[species].exp_yield, level, 1.0)], True, True)
 
     def play_stage(p, st, foes, d):
-        """The stage's catches and trainers; each trainer's bench - ace."""
-        gaps = []
-        for _ in range(catch if foes else 0):
+        """The stage's catches, wild battles and trainers: each trainer's
+        reference - ace, and its ace."""
+        gaps, aces = [], []
+        for _ in range((catch + wild_battles) if foes else 0):
             p.defeat(gd, scaling, foes, False, True)
         for tid in cleared(st['regular'], clear):
-            gaps.append(p.levels()[1] - min(team_ace(trainers[tid]) + trainer_raise + d, 100))
+            aces.append(min(team_ace(trainers[tid]) + trainer_raise + d, 100))
+            gaps.append(ref(p) - aces[-1])
             fight(p, tid, trainer_raise + d)
-        return gaps
+        return gaps, aces
 
     for i, st in enumerate(stages):
         party.befriend('walk', walk_steps // 128, chance=0.5)
-        start = party.levels()[1]
+        start = ref(party)
         slots = wilds.get(i, ())
         base, now = land_mean((vanilla_wilds or {}).get(i, ())), land_mean(slots)
         applied = round(now - base) if base is not None and now is not None else 0
@@ -835,30 +877,34 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
         if trainer_gap is not None and st['regular']:
             d = 0
             while d < 100:
-                gaps = play_stage(copy.deepcopy(party), st, foes, d)
+                gaps, _ = play_stage(copy.deepcopy(party), st, foes, d)
                 if not gaps or sum(gaps) / len(gaps) <= trainer_gap:
                     break
                 d += 1
             stage_raises[st['name']] = d
         d = stage_raises.get(st['name'], 0)
-        gaps = play_stage(party, st, foes, d)
+        gaps, aces = play_stage(party, st, foes, d)
         mean = land_mean(here)
         stage_rows.append({'stage': st['name'], 'start_bench': start, 'trainers': len(gaps),
                            'gap': round(sum(gaps) / len(gaps), 1) if gaps else None, 'raise': d,
+                           'trainer_ace_mean': round(sum(aces) / len(aces), 1) if aces else None,
                            'wild_land_mean': round(mean, 1) if mean is not None else None,
                            'wild_offset': offset, 'wild_applied': applied})
         for bid in st['bosses']:
             levels = party.levels()
             base_ace = team_ace(trainers[bid])
             if margin is not None:
-                raises[bid] = max(0, levels[1] + margin - base_ace)
-                if bid in LEAGUE_STEPS:
+                raises[bid] = max(0, int(ref(party) + margin - base_ace + 0.5))
+                if league_steps and bid in LEAGUE_STEPS:
                     prev, step = LEAGUE_STEPS[bid]
                     raises[bid] = max(raises[bid], team_ace(trainers[prev]) + raises.get(prev, 0) + step - base_ace)
             delta = raises.get(bid, 0)
             rows.append({'stage': st['name'], 'boss': bid, 'class': trainers[bid].trainer_class,
                          'base_ace': base_ace, 'raise': delta, 'boss_ace': min(base_ace + delta, 100),
-                         'ace': levels[0], 'bench': levels[1], 'friendship': int(party.friendship[1])})
+                         'ace': levels[0], 'bench': REFERENCES['bench'](levels, ko_takers),
+                         'friendship': int(party.friendship[-1])})
+            if detail:
+                rows[-1]['levels'] = levels
             if trainers[bid].trainer_class in CURVE_CLASSES:
                 party.befriend('league')
             fight(party, bid, delta)
@@ -894,55 +940,150 @@ def variant_raises(variants, trainers, raises):
     return out
 
 
-def share_curves(stages, trainers, gd, scaling, wilds, vanilla_wilds=None, evolve=None):
+def share_curves(stages, trainers, gd, scaling, wilds):
     """Per TRAINER_EXP setting: the share6 curve now (full and half clear,
-    every AFFECTION bracket), the proposal on a full clear with modelled
-    friendship (the boss raises that meet TARGET_MARGIN and LEAGUE_STEPS,
-    the rival variants' included, the stage-trainer raises that meet
-    TRAINER_GAP and the wild offsets that meet WILD_GAP, #150), the curve
-    after it, and how the full-clear bench (now) moves with
+    every AFFECTION bracket), the boss raises that meet TARGET_MARGIN on a
+    full clear with modelled friendship (the rival variants' included), the
+    curve after them, and how the full-clear bench (now) moves with
     SHARE_SENSITIVITY's assumptions."""
     out = {}
     variants = stage_variants(stages, trainers)
     for name, value in TRAINER_EXP.items():
         d = with_configs(gd, B_TRAINER_EXP_MULTIPLIER=value)
 
-        def curves(**plan):
-            return {f'{clear_name} / {aff}': share_curve(stages, trainers, d, scaling, wilds, clear, aff, **plan)
+        def curves(raises):
+            return {f'{clear_name} / {aff}': share_curve(stages, trainers, d, scaling, wilds, clear, aff, raises=raises)
                     for clear_name, clear in (('full', 1.0), ('half', 0.5)) for aff in AFFECTION}
-        bosses, proposed = share_run(stages, trainers, d, scaling, wilds, margin=TARGET_MARGIN,
-                                     trainer_gap=TRAINER_GAP, wild_gap=WILD_GAP, vanilla_wilds=vanilla_wilds,
-                                     evolve=evolve)
-        raises = {r['boss']: r['raise'] for r in bosses}
+        raises = {r['boss']: r['raise']
+                  for r in share_curve(stages, trainers, d, scaling, wilds, margin=TARGET_MARGIN, league_steps=False)}
         raises.update(variant_raises(variants, trainers, raises))
-        plan = {'raises': raises, 'stage_raises': {r['stage']: r['raise'] for r in proposed},
-                'wild_offsets': {r['stage']: r['wild_offset'] for r in proposed}}
-        out[name] = {'now': curves(), 'stages_now': share_run(stages, trainers, d, scaling, wilds)[1],
-                     **plan, 'stages_proposed': proposed,
-                     'after': curves(**plan, vanilla_wilds=vanilla_wilds, evolve=evolve),
-                     'stages_after': share_run(stages, trainers, d, scaling, wilds, **plan,
-                                               vanilla_wilds=vanilla_wilds, evolve=evolve)[1],
+        out[name] = {'now': curves(None), 'raises': raises, 'after': curves(raises),
                      'variants': variants,
                      'sensitivity': {label: share_curve(stages, trainers, d, scaling, wilds, **kw)
                                      for label, kw in SHARE_SENSITIVITY.items()}}
     return out
 
 
-def trainer_raises(stages, trainers, plan, rematches):
-    """Trainer id -> levels ``plan`` (a share_curves entry) adds to its whole
-    team: the bosses' and rival variants' raises, each stage's raise on its
-    regular trainers and on their rematches (gRematchTable rows whose first
-    fight is a regular trainer; the bosses' rematches are #139's)."""
-    out = {tid: r for tid, r in plan['raises'].items() if r}
-    for st in stages:
-        d = plan['stage_raises'].get(st['name'], 0)
-        if not d:
-            continue
-        for tid in st['regular']:
-            out[tid] = d
-            for ids in rematches.get(tid, ()):
-                out.update((r, d) for r in ids if r != tid and r in trainers)
-    return out
+# ---------------------------------------------------------------------------
+# Curve explorer (#151)
+# ---------------------------------------------------------------------------
+
+def curve_snapshot(stages, trainers, gd, scaling, wilds, info):
+    """share_run's inputs as JSON data (output/curve_data.json), so the
+    explorer runs the same model without the repo: the story stages and
+    their trainers, the exp yields, the level evolutions, the scaling
+    table, both regimes' wild slots, and the config defines the curve's
+    conditions read (with every name they refer to)."""
+    # One run that reaches every condition the curve asks, cached in gd._flags.
+    share_run(stages, trainers, gd, scaling, wilds['modern'], affection='always', unevolved=True)
+    names = [n for expr in gd._flags for n in re.findall(r'\b[A-Za-z_]\w*\b', expr)]
+    names += [n for n in gd.defines if n.startswith('GEN_')]
+    defines = {}
+    while names:
+        n = names.pop()
+        if n in gd.defines and n not in defines:
+            defines[n] = gd.defines[n]
+            names += re.findall(r'\b[A-Za-z_]\w*\b', str(gd.defines[n]))
+    story = sorted({t for st in stages for t in st['regular'] + st['bosses']})
+    return {
+        'stages': [{k: st[k] for k in ('name', 'regular', 'bosses')} for st in stages],
+        'trainers': {t: {'class': trainers[t].trainer_class,
+                         'mons': [[m.species, m.level, m.gender] for m in trainers[t].mons]} for t in story},
+        'exp_yield': {sp: s.exp_yield for sp, s in gd.species.items()},
+        'alias': info.alias,
+        'evolutions': {sp: [list(e[:3]) + [[list(c) for c in e[3]]] for e in evos if e[0] == 'EVO_LEVEL']
+                       for sp, evos in info.evos.items() if any(e[0] == 'EVO_LEVEL' for e in evos)},
+        'scaling': scaling,
+        'wilds': {regime: {str(i): [[field, {k: slot[k] for k in ('species', 'min_level', 'max_level')}, rate]
+                                    for field, slot, rate in slots]
+                           for i, slots in sorted(by_stage.items())}
+                  for regime, by_stage in wilds.items()},
+        'defines': dict(sorted(defines.items())),
+    }
+
+
+def load_snapshot(data):
+    """curve_snapshot's data back as share_run's inputs: {stages, trainers,
+    gd, scaling, wilds, evolve}."""
+    gd = G.GameData.__new__(G.GameData)
+    gd.defines, gd._flags = data['defines'], {}
+    gd.species = {sp: G.Species((), {}, y, '', '') for sp, y in data['exp_yield'].items()}
+    trainers = {t: G.Trainer(t, '', v['class'], [], False,
+                             [G.TrainerMon(sp, level, [], gender=gender) for sp, level, gender in v['mons']])
+                for t, v in data['trainers'].items()}
+    info = G.R.SpeciesInfo.__new__(G.R.SpeciesInfo)
+    info.alias = data['alias']
+    info.evos = {sp: [(m, p, t, [tuple(c) for c in conds]) for m, p, t, conds in evos]
+                 for sp, evos in data['evolutions'].items()}
+    wilds = {regime: {int(i): [tuple(s) for s in slots] for i, slots in by_stage.items()}
+             for regime, by_stage in data['wilds'].items()}
+    return {'stages': data['stages'], 'trainers': trainers, 'gd': gd, 'scaling': data['scaling'],
+            'wilds': wilds, 'evolve': evolver(info, gd)}
+
+
+# The explorer's knobs and their defaults: the game as report.md models it
+# (share6, full clear, modelled friendship, 1.5x off, today's levels).
+EXPLORER_KNOBS = {
+    'ko_takers': 1, 'boss_ref': 'bench', 'clear': 1.0, 'catches': CATCHES_PER_STAGE, 'wild_battles': 0,
+    'walk_steps': WALK_STEPS_PER_STAGE, 'affection': 'friendship', 'trainer_exp': '1.5x off',
+    'scaled_exp': True, 'scaling_power': 2.5, 'overlevel_cutoff': None, 'share_fraction': 0.5,
+    'margin': None, 'league_steps': True, 'trainer_gap': None, 'wild_gap': None, 'evolve': True,
+}
+
+
+def explore_run(snap, knobs=None):
+    """share_run on a load_snapshot for EXPLORER_KNOBS settings: {knobs,
+    bosses (share_run's rows with every member's level, the reference level
+    and a short name), stages, lv100 (the first boss the party's highest
+    member meets at 100, or None)}."""
+    unknown = set(knobs or {}) - set(EXPLORER_KNOBS)
+    if unknown:
+        raise ValueError(f'unknown knobs {sorted(unknown)}')
+    k = {**EXPLORER_KNOBS, **(knobs or {})}
+    gd = with_configs(snap['gd'], B_TRAINER_EXP_MULTIPLIER=TRAINER_EXP[k['trainer_exp']],
+                      B_SCALED_EXP='GEN_LATEST' if k['scaled_exp'] else 'GEN_6')
+    scaling = snap['scaling'] if k['scaling_power'] == 2.5 else scaling_factors(k['scaling_power'],
+                                                                                   len(snap['scaling']))
+    bosses, stage_rows = share_run(
+        snap['stages'], snap['trainers'], gd, scaling, snap['wilds']['modern'], clear=k['clear'],
+        affection=k['affection'], catches=k['catches'], walk_steps=k['walk_steps'], margin=k['margin'],
+        trainer_gap=k['trainer_gap'], wild_gap=k['wild_gap'], vanilla_wilds=snap['wilds']['vanilla'],
+        evolve=snap['evolve'] if k['evolve'] else None, ko_takers=k['ko_takers'], boss_ref=k['boss_ref'],
+        share_fraction=k['share_fraction'], overlevel_cutoff=k['overlevel_cutoff'],
+        league_steps=k['league_steps'], wild_battles=k['wild_battles'], detail=True)
+    reference = REFERENCES[k['boss_ref']]
+    for r in bosses:
+        r['name'] = short(r['boss'])
+        r['ref'] = round(reference(r['levels'], k['ko_takers']), 1)
+    return {'knobs': k, 'bosses': bosses, 'stages': stage_rows,
+            'lv100': next((r['name'] for r in bosses if max(r['levels']) >= 100), None)}
+
+
+def print_curve(res):
+    """explore_run's result as text tables, for the ``curve`` command."""
+    print(table(['boss', 'stage', 'boss ace (now)', 'raise', 'boss ace', 'party levels', 'reference'],
+                [[r['name'], r['stage'], r['base_ace'], f"+{r['raise']}", r['boss_ace'],
+                  ' '.join(map(str, r['levels'])), r['ref']] for r in res['bosses']]))
+    print()
+    print(table(['stage', 'reference at start', 'trainers', 'trainer raise', 'trainer ace mean', 'gap when fought',
+                 'wild offset', 'wild land mean'],
+                [[s['stage'], round(s['start_bench'], 1), s['trainers'], f"+{s['raise']}", s['trainer_ace_mean'],
+                  s['gap'], s['wild_offset'], s['wild_land_mean']] for s in res['stages']]))
+    print(f"\nLv 100 by: {res['lv100'] or '-'}")
+
+
+def serve_explorer(port):
+    """Serve tools/ on localhost (the explorer page fetches the tool's
+    modules and curve_data.json) until interrupted."""
+    handler = functools.partial(http.server.SimpleHTTPRequestHandler,
+                                directory=os.path.dirname(G.HERE))
+    with http.server.ThreadingHTTPServer(('127.0.0.1', port), handler) as httpd:
+        print(f'explorer: http://127.0.0.1:{httpd.server_address[1]}/rebalance/explorer/  (Ctrl-C to stop)')
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            pass
+    return 0
 
 
 # ---------------------------------------------------------------------------
@@ -1306,10 +1447,7 @@ def analyze(repo, stages_path):
     wilds = load_wilds(repo, stages)
     rows = default_movesets(trainers, gd, story)
     changes = handwritten_changes(trainers, gd, set(boss_ids))
-    evolve = evolver(G.R.SpeciesInfo(repo), gd['modern'])
-    share = share_curves(stages, trainers, gd['modern'], scaling, wilds['modern'], wilds['vanilla'], evolve)
-    rematches = G.parse_rematches(repo)
-    raised = {name: trainer_raises(stages, trainers, sc, rematches) for name, sc in share.items()}
+    share = share_curves(stages, trainers, gd['modern'], scaling, wilds['modern'])
     return {
         'census': census(trainers),
         'story_trainers': len(story),
@@ -1324,16 +1462,39 @@ def analyze(repo, stages_path):
                         for name, (clear, wild) in SCENARIOS.items()},
         'share_curve': share,
         'stage_trainers': stage_trainer_levels(stages, trainers),
-        'trainer_raises': raised,
-        'raised_defaults': {name: raised_defaults(trainers, gd, r, evolve) for name, r in raised.items()},
-        'raised_evolutions': {name: raised_evolutions(trainers, r, evolve) for name, r in raised.items()},
+        'raised_defaults': {name: raised_defaults(trainers, gd, sc['raises']) for name, sc in share.items()},
         'tms': tm_availability(repo, stages, gd),
         'wild': wild_availability(wilds, stages, gd),
         'economy': economy(stages, trainers, gd, G.parse_class_money(repo)),
+        'curve_data': curve_snapshot(stages, trainers, gd['modern'], scaling, wilds, G.R.SpeciesInfo(repo)),
     }
 
 
+def curve_main(argv):
+    """``curve``: explore_run on curve_data.json for knob settings (JSON, as
+    the explorer's settings box gives them), printed as tables."""
+    p = argparse.ArgumentParser(prog='rebalance.py curve', description=curve_main.__doc__.split('\n')[0])
+    p.add_argument('knobs', nargs='?', default='{}', help='knob settings as JSON, or a JSON file')
+    p.add_argument('--data', default=os.path.join(DEFAULT_OUT_DIR, CURVE_DATA))
+    args = p.parse_args(argv)
+    knobs = args.knobs
+    if os.path.isfile(knobs):
+        with open(knobs, encoding='utf-8') as f:
+            knobs = f.read()
+    with open(args.data, encoding='utf-8') as f:
+        snap = load_snapshot(json.load(f))
+    print_curve(explore_run(snap, json.loads(knobs)))
+    return 0
+
+
 def main(argv=None):
+    argv = sys.argv[1:] if argv is None else argv
+    if argv[:1] == ['curve']:
+        return curve_main(argv[1:])
+    if argv[:1] == ['explore']:
+        p = argparse.ArgumentParser(prog='rebalance.py explore', description='Serve the curve explorer (#151).')
+        p.add_argument('--port', type=int, default=8151)
+        return serve_explorer(p.parse_args(argv[1:]).port)
     p = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
     p.add_argument('--repo', default=G.REPO, help='repo root (default: this checkout)')
     p.add_argument('--stages', default=DEFAULT_STAGES, help='story stage file (default: story_stages.json)')
@@ -1343,9 +1504,12 @@ def main(argv=None):
     os.makedirs(args.out_dir, exist_ok=True)
     write_report(os.path.join(args.out_dir, 'report.md'), res)
     write_csv(os.path.join(args.out_dir, 'trainer_mons.csv'), res['default_rows'])
-    summary = {k: v for k, v in res.items() if k not in ('default_rows', 'handwritten_rows')}
+    summary = {k: v for k, v in res.items() if k not in ('default_rows', 'handwritten_rows', 'curve_data')}
     with open(os.path.join(args.out_dir, 'summary.json'), 'w', encoding='utf-8') as f:
         json.dump(summary, f, indent=2, sort_keys=True)
+        f.write('\n')
+    with open(os.path.join(args.out_dir, CURVE_DATA), 'w', encoding='utf-8') as f:
+        json.dump(res['curve_data'], f, sort_keys=True, separators=(',', ':'))
         f.write('\n')
     print(f"wrote {args.out_dir}: {res['census']['mons']} trainer Pokemon, "
           f"{res['defaults']['default_mons']} on default moves, {len(res['matchups'])} bosses")

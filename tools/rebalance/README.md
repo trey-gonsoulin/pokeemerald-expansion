@@ -16,6 +16,7 @@ It reads the repo's own headers twice:
 
 ```sh
 python3 tools/rebalance/rebalance.py                  # writes tools/rebalance/output/
+python3 tools/rebalance/rebalance.py explore          # the curve explorer (below)
 python3 -m unittest discover -s tools/rebalance       # tests
 ```
 
@@ -39,6 +40,56 @@ in `unstaged`, and each Trick House puzzle sits after its badge gate.
 - `output/trainer_mons.csv`: every trainer Pokemon with its vanilla and
   modern default moveset and its flags (gitignored).
 - `output/summary.json`: the report's numbers, for scripts (gitignored).
+- `output/curve_data.json`: the Exp. Share curve's inputs for the curve
+  explorer (below). Committed, and CI checks it for drift like
+  `report.md`.
+
+## Curve explorer (#151)
+
+```sh
+python3 tools/rebalance/rebalance.py explore     # serves http://127.0.0.1:8151/rebalance/explorer/
+python3 tools/rebalance/rebalance.py curve '{"ko_takers": 6, "margin": 1}'   # the same run as text
+```
+
+A page with sliders for the Exp. Share curve's knobs (`EXPLORER_KNOBS`)
+and a chart of the levels before each story boss: the boss aces (with the
+knobs and today's), the party (a reference level, its lowest and highest
+member), the stage's route trainers' mean ace and its wild land average.
+It runs this tool's own Python in the browser through Pyodide (loaded from
+the jsDelivr CDN, so it needs internet), in a Web Worker. Nothing is parsed
+there: `curve_snapshot` writes the parsed inputs to
+`output/curve_data.json` (the story stages and trainers, exp yields, level
+evolutions, the scaling table, both regimes' wild slots and the config
+defines the curve reads), and `load_snapshot` rebuilds them for
+`share_run`. A test checks that the committed snapshot gives the curve the
+repo's own data gives. `explore_run` maps the knobs to `share_run`;
+`curve` runs it from the command line on the settings JSON the page shows
+(the knobs changed from the defaults, also kept in the page's URL).
+
+The knobs:
+- **Play style:** `ko_takers`, how many members rotate the KOs (1: one
+  lead and five on the Exp. Share bench, the report's share6; 6: the whole
+  team in turn), the share of route trainers fought, catches, wild KOs and
+  steps per stage, and the affection bracket.
+- **Exp formula:** the 1.5x trainer exp, level-scaled exp
+  (`B_SCALED_EXP`), and three options the game doesn't have yet:
+  `scaling_power` (the scaling table is `floor(i^p / 4)`, the game's at
+  2.5), `overlevel_cutoff` (1 exp past that many levels above the foe) and
+  `share_fraction` (the Exp. Share bench's share, the game's half).
+- **Targets:** the party level everything measures against (`REFERENCES`:
+  the bench, the KO-takers' mean, the party's mean, its highest member),
+  the boss margin (off: today's levels) with the Elite Four spacing
+  (`LEAGUE_STEPS`), #150's route-trainer gap (`TRAINER_GAP`: each stage's
+  ordinary trainers raised until their aces average that far below the
+  reference when fought) and wild gap (the stage's land average that far
+  below the reference at its start, over the vanilla tables), and whether
+  raised Pokemon evolve (`restock.SpeciesInfo.evolve`, `EVOLVE_GRACE`
+  levels past a level evolution; `EVOLVE_EXEMPT`'s teams never do).
+
+The page's files are `explorer/index.html`, `app.js` (the controls and the
+Chart.js chart), `worker.js` and `model.js` (the module list and the Python
+bootstrap). The repo's `.gitignore` ignores `*.js`, so add new ones with
+`git add -f`.
 
 ## What it measures
 

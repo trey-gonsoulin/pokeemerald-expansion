@@ -31,6 +31,13 @@ def fake_regime(**overrides):
     return types.SimpleNamespace(flag=lambda expr: G.R.c_eval(expr, defines))
 
 
+def species_info(alias, evos):
+    """A restock.SpeciesInfo with only these aliases and evolutions."""
+    info = G.R.SpeciesInfo.__new__(G.R.SpeciesInfo)
+    info.alias, info.evos = alias, evos
+    return info
+
+
 class Expressions(unittest.TestCase):
     def setUp(self):
         self.d = G.regime_defines(FIXTURE)
@@ -250,6 +257,73 @@ class Exp(unittest.TestCase):
         off = fake_regime(B_SCALED_EXP='GEN_3', B_SPLIT_EXP='GEN_6', B_UNEVOLVED_EXP_MULTIPLIER='GEN_5')
         self.assertEqual(RB.exp_award(off, self.scaling, 39, 10, 20, False, 1, unevolved=True), gain)
 
+    def test_share_fraction(self):
+        # #151's bench share: the game's half takes the integer path, others
+        # round down (at least 1), 0 gives the bench nothing; the KO-taker's
+        # exp doesn't change.
+        d = fake_regime(B_SCALED_EXP='GEN_3', B_SPLIT_EXP='GEN_6')
+        calc = 98 * 20 // 7
+
+        def bench(**kw):
+            return RB.exp_award(d, self.scaling, 98, 20, 25, False, 1, sent_out=False, holders=6, **kw)
+        self.assertEqual(bench(share_fraction=0.5), bench())
+        self.assertEqual(bench(), calc // 2)
+        self.assertEqual(bench(share_fraction=0.25), int(calc * 0.25))
+        self.assertEqual(bench(share_fraction=0), 0)
+        self.assertEqual(RB.exp_award(d, self.scaling, 1, 2, 25, False, 1, sent_out=False, holders=6,
+                                      share_fraction=0.1), 1)
+        self.assertEqual(RB.exp_award(d, self.scaling, 98, 20, 25, False, 1, holders=6, share_fraction=0), calc)
+
+    def test_overlevel_cutoff(self):
+        d = fake_regime()
+        full = RB.exp_award(d, self.scaling, 98, 20, 25, False, 1)
+        self.assertEqual(RB.exp_award(d, self.scaling, 98, 20, 25, False, 1, overlevel_cutoff=5), full)
+        self.assertEqual(RB.exp_award(d, self.scaling, 98, 20, 26, False, 1, overlevel_cutoff=5), 1)
+        # A getter that gets nothing still gets nothing.
+        self.assertEqual(RB.exp_award(d, self.scaling, 98, 20, 30, False, 1, sent_out=False,
+                                      overlevel_cutoff=5), 0)
+
+    def test_scaling_factors(self):
+        # The fixture copies the game's table, which is (i^2.5)/4.
+        self.assertEqual(RB.scaling_factors(2.5, len(self.scaling)), self.scaling)
+        d = fake_regime()
+        steep = RB.scaling_factors(3.5)
+        # The factors cancel at an equal level, at any power.
+        self.assertEqual(RB.exp_award(d, steep, 98, 20, 20, False, 1),
+                         RB.exp_award(d, self.scaling, 98, 20, 20, False, 1))
+        # A steeper curve pays an over-levelled getter less and an under-levelled one more.
+        self.assertLess(RB.exp_award(d, steep, 98, 20, 30, False, 1), RB.exp_award(d, self.scaling, 98, 20, 30, False, 1))
+        self.assertGreater(RB.exp_award(d, steep, 98, 20, 10, False, 1),
+                           RB.exp_award(d, self.scaling, 98, 20, 10, False, 1))
+
+    def test_ko_rotation(self):
+        # Unscaled exp, so who takes the KO doesn't change what a KO gives:
+        # rotating over all six spreads the same total evenly.
+        d = fake_regime(B_SCALED_EXP='GEN_3')
+        one, six = RB.Party(6), RB.Party(6, ko_takers=6)
+        for p in (one, six):
+            for _ in range(12):
+                p.defeat(d, self.scaling, [(98, 20, 1.0)], True, True)
+        self.assertEqual(sum(one.exp), sum(six.exp))
+        self.assertEqual(len(set(six.exp)), 1)
+        self.assertGreater(one.exp[0], one.exp[1])
+        self.assertEqual(len(set(one.exp[1:])), 1)
+        four = RB.Party(6, ko_takers=4)
+        for _ in range(4):
+            four.defeat(d, self.scaling, [(98, 20, 1.0)], True, True)
+        self.assertEqual(len(set(four.exp[:4])), 1)
+        self.assertGreater(four.exp[0], four.exp[4])
+        for bad in (0, 7):
+            with self.assertRaises(ValueError):
+                RB.Party(6, ko_takers=bad)
+
+    def test_references(self):
+        levels = [30, 28, 26, 25, 25, 24]
+        ref = {name: f(levels, 2) for name, f in RB.REFERENCES.items()}
+        self.assertEqual(ref, {'bench': 24, 'ko_mean': 29, 'party_mean': 26.333333333333332, 'ace': 30})
+        self.assertEqual(RB.REFERENCES['bench'](levels, 6), 24)
+        self.assertEqual(RB.REFERENCES['bench']([30, 25, 25, 25, 25, 25], 1), 25)
+
     def test_trainer_bonus_up_to_gen7(self):
         # Cmd_getexp checks B_TRAINER_EXP_MULTIPLIER <= GEN_7.
         calc = 98 * 20 // 7
@@ -387,6 +461,95 @@ class Analysis(unittest.TestCase):
         self.assertEqual(sorted(share), sorted(RB.TRAINER_EXP))
         self.assertEqual(len(share['1.5x off']['now']), 2 * len(RB.AFFECTION))
 
+    def fixture_inputs(self):
+        gd = G.load(FIXTURE)['modern']
+        trainers = G.parse_trainers(os.path.join(FIXTURE, 'src', 'data', 'trainers.party'))
+        stages = RB.load_stages(FIXTURE_STAGES, trainers, FIXTURE)
+        return gd, trainers, stages, G.parse_scaling_factors(FIXTURE), RB.load_wilds(FIXTURE, stages)
+
+    def test_trainer_and_wild_gaps(self):
+        gd, trainers, stages, scaling, wilds = self.fixture_inputs()
+
+        def run(**kw):
+            return RB.share_run(stages, trainers, gd, scaling, wilds['modern'], vanilla_wilds=wilds['vanilla'], **kw)
+        # The smallest stage raise that leaves the hiker's ace at least 20 above
+        # the bench when fought (the fixture party starts 15 below it).
+        _, st = run(trainer_gap=-20)
+        one = st[0]
+        self.assertEqual((one['stage'], one['trainers']), ('One', 1))
+        self.assertGreater(one['raise'], 0)
+        self.assertLessEqual(one['gap'], -20)
+        _, lower = run(stage_raises={'One': one['raise'] - 1})
+        self.assertGreater(lower[0]['gap'], -20)
+        self.assertEqual(lower[0]['trainer_ace_mean'], 20 + one['raise'] - 1)
+        self.assertEqual(run(trainer_gap=100)[1][0]['raise'], 0)  # already met
+        self.assertEqual(st[1]['raise'], 0)  # stage Two has no regular trainers
+        # The wild offset is over the vanilla tables: the restocked Ralts slot's levels are vanilla's, so 0 applied.
+        _, st = run(wild_gap=0)
+        self.assertEqual(st[0]['wild_applied'], 0)
+        self.assertEqual(st[0]['wild_offset'], max(0, round(st[0]['start_bench'] - RB.land_mean(wilds['vanilla'][0]))))
+        self.assertEqual(run(wild_gap=100)[1][0]['wild_offset'], 0)
+        # Every reference: the margin puts each boss's ace that far above it.
+        for name, f in RB.REFERENCES.items():
+            rows, _ = run(margin=1, boss_ref=name, ko_takers=3, detail=True)
+            for r in rows:
+                self.assertEqual(r['boss_ace'], max(r['base_ace'], int(f(r['levels'], 3) + 1.5)), name)
+        rows, _ = run(detail=True)
+        self.assertEqual([len(r['levels']) for r in rows], [6, 6])
+        self.assertNotIn('levels', run()[0][0])
+        # More wild KOs only add exp.
+        self.assertGreaterEqual(run(wild_battles=20)[0][-1]['bench'], run()[0][-1]['bench'])
+
+    def test_shifted_slots_and_evolver(self):
+        slots = [('land_mons', {'species': 'SPECIES_RALTS', 'min_level': 3, 'max_level': 98}, 60)]
+        evolve = {('SPECIES_RALTS', 13): 'SPECIES_KIRLIA'}
+        out = RB.shifted_slots(slots, 10, lambda sp, lvl: evolve.get((sp, lvl), sp))
+        self.assertEqual(out[0][1], {'species': 'SPECIES_KIRLIA', 'min_level': 13, 'max_level': 100})
+        self.assertIs(RB.shifted_slots(slots, 0), slots)
+        down = RB.shifted_slots(slots, -5, lambda sp, lvl: 'SPECIES_KIRLIA')
+        self.assertEqual(down[0][1], {'species': 'SPECIES_RALTS', 'min_level': 1, 'max_level': 93})
+        # evolver keeps a species the regime doesn't have from replacing one it has.
+        info = types.SimpleNamespace(evolve=lambda sp, lvl, gender=None: 'SPECIES_NOT_THERE' if lvl > 50 else sp)
+        gd = G.load(FIXTURE)['modern']
+        self.assertEqual(RB.evolver(info, gd)('SPECIES_RALTS', 60), 'SPECIES_RALTS')
+
+    def test_snapshot_round_trip(self):
+        # The explorer's data: share_run on load_snapshot equals share_run on the parsed repo.
+        gd, trainers, stages, scaling, wilds = self.fixture_inputs()
+        info = species_info({'SPECIES_ALIAS': 'SPECIES_RALTS'}, {
+            'SPECIES_RALTS': [('EVO_LEVEL', '9', 'SPECIES_SABLEYE', []), ('EVO_ITEM', 'ITEM_X', 'SPECIES_MR_MIME', [])],
+            'SPECIES_MAGIKARP': [('EVO_ITEM', 'ITEM_X', 'SPECIES_MR_MIME', [])]})
+        data = json.loads(json.dumps(RB.curve_snapshot(stages, trainers, gd, scaling, wilds, info)))
+        self.assertEqual(data['evolutions'], {'SPECIES_RALTS': [['EVO_LEVEL', '9', 'SPECIES_SABLEYE', []]]})
+        self.assertEqual(sorted(data['trainers']), ['TRAINER_HIKER_A', 'TRAINER_LEADER_X', 'TRAINER_RIVAL_A'])
+        self.assertIn('B_SCALED_EXP', data['defines'])
+        self.assertIn('GEN_LATEST', data['defines'])
+        snap = RB.load_snapshot(data)
+        self.assertEqual(snap['evolve']('SPECIES_ALIAS', 20), 'SPECIES_SABLEYE')
+        self.assertEqual(snap['evolve']('SPECIES_RALTS', 11), 'SPECIES_RALTS')
+        evolve = RB.evolver(info, gd)
+        for knobs in ({}, {'margin': 1, 'trainer_gap': 0, 'wild_gap': 0, 'ko_takers': 6, 'boss_ref': 'party_mean'},
+                      {'scaled_exp': False, 'trainer_exp': '1.5x on', 'share_fraction': 0.25, 'evolve': False},
+                      {'scaling_power': 3.0, 'overlevel_cutoff': 2, 'clear': 0.5, 'wild_battles': 4}):
+            k = {**RB.EXPLORER_KNOBS, **knobs}
+            d = RB.with_configs(gd, B_TRAINER_EXP_MULTIPLIER=RB.TRAINER_EXP[k['trainer_exp']],
+                                B_SCALED_EXP='GEN_LATEST' if k['scaled_exp'] else 'GEN_6')
+            sc = scaling if k['scaling_power'] == 2.5 else RB.scaling_factors(k['scaling_power'])
+            want = RB.share_run(stages, trainers, d, sc, wilds['modern'], clear=k['clear'], affection=k['affection'],
+                                catches=k['catches'], walk_steps=k['walk_steps'], margin=k['margin'],
+                                trainer_gap=k['trainer_gap'], wild_gap=k['wild_gap'], vanilla_wilds=wilds['vanilla'],
+                                evolve=evolve if k['evolve'] else None, ko_takers=k['ko_takers'],
+                                boss_ref=k['boss_ref'], share_fraction=k['share_fraction'],
+                                overlevel_cutoff=k['overlevel_cutoff'], league_steps=k['league_steps'],
+                                wild_battles=k['wild_battles'], detail=True)
+            got = RB.explore_run(snap, knobs)
+            self.assertEqual([{x: v for x, v in r.items() if x not in ('name', 'ref')} for r in got['bosses']],
+                             want[0], knobs)
+            self.assertEqual(got['stages'], want[1], knobs)
+        self.assertEqual(got['bosses'][0]['name'], 'Rival A')
+        with self.assertRaises(ValueError):
+            RB.explore_run(snap, {'no_such_knob': 1})
+
     def test_rival_variants_share_the_raise(self):
         trainers = G.parse_trainers(os.path.join(FIXTURE, 'src', 'data', 'trainers.party'))
         with open(FIXTURE_STAGES, encoding='utf-8') as f:
@@ -437,9 +600,22 @@ class Analysis(unittest.TestCase):
     def test_main_writes_outputs(self):
         with tempfile.TemporaryDirectory() as out, contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(RB.main(['--repo', FIXTURE, '--stages', FIXTURE_STAGES, '--out-dir', out]), 0)
-            self.assertEqual(sorted(os.listdir(out)), ['report.md', 'summary.json', 'trainer_mons.csv'])
+            self.assertEqual(sorted(os.listdir(out)), ['curve_data.json', 'report.md', 'summary.json',
+                                                       'trainer_mons.csv'])
             with open(os.path.join(out, 'report.md'), encoding='utf-8') as f:
                 self.assertIn('### Leader X', f.read())
+            data = os.path.join(out, 'curve_data.json')
+            text = io.StringIO()
+            with contextlib.redirect_stdout(text):
+                self.assertEqual(RB.main(['curve', '{"ko_takers": 6}', '--data', data]), 0)
+            self.assertIn('Leader X', text.getvalue())
+            knobs = os.path.join(out, 'knobs.json')
+            with open(knobs, 'w', encoding='utf-8') as f:
+                f.write('{"margin": 1}')
+            text = io.StringIO()
+            with contextlib.redirect_stdout(text):
+                self.assertEqual(RB.main(['curve', knobs, '--data', data]), 0)
+            self.assertIn('Lv 100 by: -', text.getvalue())
 
 
 @unittest.skipUnless(os.path.exists(os.path.join(G.REPO, 'src', 'data', 'trainers.party')), 'needs the repo')
@@ -479,6 +655,36 @@ class RealRepo(unittest.TestCase):
         self.assertIn(('ITEM_TM_TAUNT', 'reward'), tms['Route110_TrickHousePuzzle5'])
         self.assertFalse(any(item == 'ITEM_TM_TAUNT' for f in ('Route110_TrickHouseEnd', 'Route110_TrickHouseEntrance')
                              for item, _ in tms.get(f, ())))
+
+    def test_scaling_factors_are_the_games(self):
+        self.assertEqual(RB.scaling_factors(2.5), G.parse_scaling_factors(G.REPO))
+
+    def test_rematch_ladders(self):
+        rematches = G.parse_rematches(G.REPO)
+        self.assertEqual(rematches['TRAINER_ROSE_1'], [[f'TRAINER_ROSE_{n}' for n in range(1, 6)]])
+        trainers = G.parse_trainers(os.path.join(G.REPO, 'src', 'data', 'trainers.party'))
+        self.assertTrue(all(t in trainers for rows in rematches.values() for ids in rows for t in ids))
+
+    def test_committed_curve_data_runs_the_repo_model(self):
+        """output/curve_data.json (the explorer's data) gives the curve the
+        repo's own data gives: rerun rebalance.py after a data change."""
+        gd = G.load(G.REPO)['modern']
+        trainers = G.parse_trainers(os.path.join(G.REPO, 'src', 'data', 'trainers.party'))
+        stages = RB.load_stages(RB.DEFAULT_STAGES, trainers, G.REPO)
+        scaling = G.parse_scaling_factors(G.REPO)
+        wilds = RB.load_wilds(G.REPO, stages)
+        evolve = RB.evolver(G.R.SpeciesInfo(G.REPO), gd)
+        with open(os.path.join(RB.DEFAULT_OUT_DIR, RB.CURVE_DATA), encoding='utf-8') as f:
+            snap = RB.load_snapshot(json.load(f))
+        for knobs in ({}, {'ko_takers': 6, 'boss_ref': 'party_mean', 'margin': 1, 'trainer_gap': 5, 'wild_gap': 10}):
+            k = {**RB.EXPLORER_KNOBS, **knobs}
+            want = RB.share_run(stages, trainers, gd, scaling, wilds['modern'], margin=k['margin'],
+                                trainer_gap=k['trainer_gap'], wild_gap=k['wild_gap'], vanilla_wilds=wilds['vanilla'],
+                                evolve=evolve, ko_takers=k['ko_takers'], boss_ref=k['boss_ref'], detail=True)
+            got = RB.explore_run(snap, knobs)
+            self.assertEqual([{x: v for x, v in r.items() if x not in ('name', 'ref')} for r in got['bosses']],
+                             want[0], knobs)
+            self.assertEqual(got['stages'], want[1], knobs)
 
     def test_stage_bosses_exist(self):
         trainers = G.parse_trainers(os.path.join(G.REPO, 'src', 'data', 'trainers.party'))
