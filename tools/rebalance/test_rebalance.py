@@ -305,7 +305,13 @@ class Exp(unittest.TestCase):
         # In percent: 10% of the foe's level per halving, past 25% above it.
         soft_rel = RB.Overlevel(25, relative=True, halflife=10)
         self.assertEqual(award(27, overlevel=soft_rel), award(27) * 2048 // 4096)
-        self.assertEqual(soft_rel.factor(40, 54), 2048)
+        self.assertEqual(soft_rel.apply(1000, 40, 54), 500)
+        # The same cases as test/battle/exp.c's: deep halvings keep their 16ths, no exp stays none.
+        game = RB.Overlevel(10, True, 5)
+        self.assertEqual(game.apply(1000, 40, 55), 1000 * 2896 >> 17)  # 5.5 halvings
+        self.assertEqual(game.apply(1000, 20, 60), 1)
+        self.assertEqual(game.apply(0, 20, 60), 0)
+        self.assertEqual(RB.Overlevel(10, True).apply(1000, 20, 23), 1)
 
     def test_scaling_factors(self):
         # The fixture copies the game's table, which is (i^2.5)/4.
@@ -685,6 +691,15 @@ class RealRepo(unittest.TestCase):
 
     def test_scaling_factors_are_the_games(self):
         self.assertEqual(RB.scaling_factors(2.5), G.parse_scaling_factors(G.REPO))
+        # #154's tables: the model computes the game's steep scaling and over-level penalty.
+        self.assertEqual(RB.scaling_factors(3.5),
+                         G.parse_scaling_factors(G.REPO, 'gExperienceScalingFactorsSteep', 'exp_formula.c'))
+        self.assertEqual(list(RB.HALVING_FRACTIONS), G.parse_scaling_factors(G.REPO, 'sExpHalvingFractions',
+                                                                              'exp_formula.c'))
+        gd = G.load(G.REPO)
+        self.assertEqual(RB.Overlevel.from_configs(gd['modern']), RB.Overlevel(10, True, 5))
+        self.assertIsNone(RB.Overlevel.from_configs(gd['vanilla']))
+        self.assertEqual(RB.game_scaling(gd['modern'], RB.scaling_factors(2.5)), RB.scaling_factors(3.5))
 
     def test_rematch_ladders(self):
         rematches = G.parse_rematches(G.REPO)

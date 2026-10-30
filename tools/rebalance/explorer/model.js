@@ -26,7 +26,7 @@ with open('/tools/rebalance/output/curve_data.json', encoding='utf-8') as f:
 
 // Writes FILES into Pyodide's file system (``fetchText(relative path)``
 // reads one) and loads the snapshot. Returns {defaults, run(knobs)}:
-// EXPLORER_KNOBS, and explore_run's result for a knob object.
+// explorer_defaults (the game's), and explore_run's result for a knob object.
 export async function bootModel(pyodide, fetchText) {
     for (const [path, rel] of Object.entries(FILES)) {
         pyodide.FS.mkdirTree(path.slice(0, path.lastIndexOf('/')));
@@ -34,7 +34,7 @@ export async function bootModel(pyodide, fetchText) {
     }
     pyodide.runPython(BOOT);
     return {
-        defaults: JSON.parse(pyodide.runPython('json.dumps(R.EXPLORER_KNOBS)')),
+        defaults: JSON.parse(pyodide.runPython('json.dumps(R.explorer_defaults(SNAP['gd']))')),
         run(knobs) {
             pyodide.globals.set('knobs_json', JSON.stringify(knobs));
             return JSON.parse(pyodide.runPython('json.dumps(R.explore_run(SNAP, json.loads(knobs_json)))'));

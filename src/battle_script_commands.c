@@ -54,6 +54,7 @@
 #include "menu_specialized.h"
 #include "data.h"
 #include "config_changes.h"
+#include "exp_formula.h"
 #include "move.h"
 #include "constants/abilities.h"
 #include "constants/battle_anim.h"
@@ -312,6 +313,7 @@ static const s32 sExperienceScalingFactors[] =
     157872,
     159767,
 };
+
 
 static const u16 sWhiteOutBadgeMoney[9] = { 8, 16, 24, 36, 48, 64, 80, 100, 120 };
 
@@ -9221,12 +9223,16 @@ void ApplyExperienceMultipliers(s32 *expAmount, u8 expGetterMonId, u8 faintedBat
         u64 value = *expAmount;
         u8 faintedLevel = gBattleMons[faintedBattler].level;
         u8 expGetterLevel = GetMonData(&gParties[B_TRAINER_PLAYER][expGetterMonId], MON_DATA_LEVEL);
+        const s32 *factors = GetConfig(B_SCALED_EXP_STEEP) ? gExperienceScalingFactorsSteep : sExperienceScalingFactors;
 
-        value *= sExperienceScalingFactors[(faintedLevel * 2) + 10];
-        value /= sExperienceScalingFactors[faintedLevel + expGetterLevel + 10];
+        value *= factors[(faintedLevel * 2) + 10];
+        value /= factors[faintedLevel + expGetterLevel + 10];
 
         *expAmount = value + 1;
     }
+    if (GetConfig(B_EXP_OVERLEVEL_PENALTY))
+        *expAmount = ApplyOverlevelPenalty(*expAmount, gBattleMons[faintedBattler].level,
+                                           GetMonData(&gParties[B_TRAINER_PLAYER][expGetterMonId], MON_DATA_LEVEL));
 }
 
 // Whether the party mon an item is used on is the user's partner's active battler.
