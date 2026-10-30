@@ -106,16 +106,19 @@ python3 tools/rebalance/rebalance.py          # then refresh report.md and curve
 `curve_settings.json` holds the explorer settings the data is built for
 (the owner's choice, `findings.md` section 8). `apply` runs `explore_run` on
 the repo's own data with them, through `apply_plan`, and writes:
-- the raises (`raise_party`, every Pokemon of a team by the same amount,
-  capped at 100, a raised Pokemon evolving unless its team is
-  `EVOLVE_EXEMPT`) into `src/data/trainers.party`: the staged bosses, their
+- the raises into `src/data/trainers.party`, for the staged bosses, their
   rival variants (to the boss's ace, `variant_raises`) and every regular
-  trainer of each stage;
-- `PARTNER_FIGHTS`' partners (Steven at Mossdeep, to his foes' highest ace)
-  into `src/data/battle_partners.party`;
+  trainer of each stage. `raise_party` raises every Pokemon of a team by
+  the same amount, capped at 100. A raised Pokemon evolves through
+  `evolve_team`, as the model's fights do: never on an `EVOLVE_EXEMPT` team,
+  and on a boss's team (bosses and variants) not into a species the team
+  already has;
+- `PARTNER_FIGHTS`' partners (Steven at Mossdeep, to his foes' highest ace;
+  partners don't evolve) into `src/data/battle_partners.party`;
 - each stage's wild offset over the vanilla levels, for every table of its
-  maps, into `tools/area_archetypes/level_offsets.json`. Then it reruns
-  `restock --write`.
+  maps (a water table counts from `SURF_STAGE`), into
+  `tools/area_archetypes/level_offsets.json`, through `restock --write`.
+  Restock runs first, so a refused restock leaves nothing half written.
 
 It only raises. On data it already wrote it asks for nothing, which
 `RealRepo.test_data_meets_the_curve_settings` checks. After a change to

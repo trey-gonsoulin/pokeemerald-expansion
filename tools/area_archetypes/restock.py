@@ -953,11 +953,9 @@ def load_json(path):
 
 
 def skeleton(wild):
-    """wild without its stamp, species and slot levels: equal for two files
-    that differ only by restocking (the levels move with --levels)."""
+    """wild without its stamp and species: equal for two files that differ only by restocking."""
     wild = {k: v for k, v in wild.items() if k != AA.RESTOCK_STAMP}
-    blank = {'species': None, 'min_level': None, 'max_level': None}
-    return json.loads(json.dumps(wild), object_hook=lambda d: {**d, **blank} if 'species' in d else d)
+    return json.loads(json.dumps(wild), object_hook=lambda d: {**d, 'species': None} if 'species' in d else d)
 
 
 def shift_levels(wild, offsets, info):
@@ -1021,14 +1019,21 @@ def main(argv=None):
     if settings.gens and not settings.gens & pool_gens:
         p.error(f'gens: {fmt_gens(settings.gens)} matches no pool species, so nothing would be '
                 f'restocked (generations in {args.pools}: {fmt_gens(pool_gens)})')
+    if args.levels and not os.path.exists(args.levels):
+        p.error(f'--levels {args.levels}: no such file')
+    levels = args.levels or os.path.join(args.repo, os.path.relpath(AA.LEVEL_OFFSETS, AA.REPO))
+    offsets = load_json(levels) if os.path.exists(levels) else {}
+    # The file --write replaces should be the base raised by the offsets it was written with (its stamp).
+    if args.write and not args.force and os.path.exists(args.wild):
+        current = load_json(args.wild)
+        written_with = copy.deepcopy(base)
+        shift_levels(written_with, current.get(AA.RESTOCK_STAMP, {}).get('level_offsets', {}), info)
     if (args.write and not args.force and os.path.exists(args.wild)
-            and skeleton(load_json(args.wild)) != skeleton(base)):
+            and skeleton(current) != skeleton(written_with)):
         sys.exit(f'{args.wild} differs from {args.base} in more than species (an upstream merge or '
                  f'a hand edit?), and --write would lose that; refresh the baseline (README), '
                  f'or --force to overwrite anyway')
     new, changes = restock(base, emerald_maps, pools, info, settings)
-    levels = args.levels or os.path.join(args.repo, os.path.relpath(AA.LEVEL_OFFSETS, AA.REPO))
-    offsets = load_json(levels) if os.path.exists(levels) else {}
     shifted = shift_levels(new, offsets, info)
     # A ratio of 0 changes nothing on purpose; above 0, nothing could be drawn.
     if not changes and any(not (ms := settings.for_map(enc['base_label'])).skip and ms.ratio > 0
@@ -1041,7 +1046,7 @@ def main(argv=None):
         print(f'warning: {nothing}', file=sys.stderr)
     stamp = {'base_sha256': base_sha256, 'seed': settings.seed, 'ratio': settings.ratio}
     if shifted:
-        stamp['level_offsets'] = os.path.relpath(levels, args.repo)
+        stamp['level_offsets'] = offsets
     if AA.RESTOCK_STAMP in base:  # --force on a restocked base: keep its history
         stamp['base_restocked_by'] = base[AA.RESTOCK_STAMP]
     new[AA.RESTOCK_STAMP] = stamp
