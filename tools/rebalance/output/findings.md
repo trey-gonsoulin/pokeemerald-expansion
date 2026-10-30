@@ -405,12 +405,13 @@ Owner's decisions (2026-10-30):
 | Rematch 5 | 88 | 92 | +26 to +40 |
 | Steven | 92 | 97 (94-97) | +19 |
 
-- Steven goes to the margin and at least 3 over round 5's highest ace (`POSTGAME_FINAL_STEP`), capped at 100.
+- The ace is set at the round's start, and the party keeps levelling through the round's nine fights, so a round's later teams sit closer to the bench (Juan 2 at 82 against 81; Juan 5 at 92 against 92).
+- Steven goes to the margin (5% over the bench of 92, so 97) and at least 3 over round 5's highest ace (`POSTGAME_FINAL_STEP`), capped at 100.
 - The bench reaches 92 by Steven. The lead reaches 100 during round 5 (at Norman 5), which only happens in the post-game; the story curve is unchanged, and nothing in it reaches 100.
 
 **Ordinary ladders** (`rematch_raises`): a ladder is levelled for the earliest stage it can be fought, the later of its first fight's stage and Winona's (the one after Norman's).
 - **Base:** the higher of the first fight's ace and the route-trainer gap (10%) below that stage's starting bench.
-- **Each rematch:** 5% over the one before, compounding, and at least 1 over it. Only ever raised.
+- **Each rematch:** the base 5% higher per rematch, compounding (base × 1.05ⁿ), and at least 1 over the rematch before it. Only ever raised, so a tier that already sits higher keeps its level, and the next one then only has to clear it by 1.
 
 | earliest stage | ladders | example |
 |---|---|---|
@@ -425,11 +426,11 @@ Owner's decisions (2026-10-30):
 **Data:** 293 teams raised (32 gym leader rematches, Wally's 4, Steven and 256 ordinary rematches) and 183 Pokémon evolved, all level evolutions (stone and trade lines stop short: Poliwhirl, Lombre, Machoke, Gloom). No story team changed. Ordinary teams may evolve into a duplicate, as #150's route trainers do: Nob 3 now has two Machoke, Fernando 3 two Manectric.
 
 **Moves:**
-- **Hyper Beams:** the three rematch Hyper Beams now use the stronger physical stat, as #130's swaps did.
+- **Hyper Beams:** the rematch Hyper Beams on three species (six slots) now use the stronger physical stat, as #130's swaps did.
   - Norman 2-5's Slaking get Double-Edge, as #130's Gyarados did. Giga Impact would keep the Truant timing, but Slaking can't learn it here; Mega Kick (level 52, no recoil) was the other choice, at 75% accuracy.
-  - Roxanne 5's Aerodactyl gets Giga Impact, which it learns at 60.
+  - Roxanne 5's Aerodactyl gets Giga Impact, which it learns at 60. It keeps Hyper Beam's recharge turn, now off the stronger stat.
   - Winona 5's Dragonite gets Double-Edge.
-- **Flagged default sets:** the raised rematch teams had 46 default slots on 40 teams flagged `one_attack` or `lost_stab`. Each is now hand-written by #131's rule: the Gen 9 default with one move (the first status move, or the weakest attack) swapped for the strongest attack the species learns by that level or on evolving, a same-type one for `lost_stab`. For example:
+- **Flagged default sets:** the raised rematch teams had 46 default slots on 40 teams flagged `one_attack` or `lost_stab`. Each is now hand-written by #131's rule: the Gen 9 default with one move (the first status move, or the weakest attack) swapped for the strongest attack the species learns by that level or on evolving (power × STAB × the attacking stat, so Fernando 2's Exploud takes Stomp over Crunch), a same-type one for `lost_stab`. For example:
   - Roselia: Toxic Spikes -> Magical Leaf;
   - Hariyama: Bulk Up -> Force Palm;
   - Meditite and Medicham: Psych Up -> Zen Headbutt;
@@ -441,7 +442,7 @@ Owner's decisions (2026-10-30):
   - Thalia's Wailord: Rest -> Brine (over the proposed Dive's charge turn).
 - **Flags now** (all / story): one_attack 46 / 38, lost_stab 27 / 24. The 8 and 3 left outside the story are on non-rematch teams.
   - The story counts are #150's: its raises moved the story teams' default sets after #131 had cleared them. That is a follow-up.
-- **Hand-written movesets stay** on raised and evolved Pokémon. Every move was legal at the old level, and an evolved Pokémon keeps its pre-evolution's moves. Default-move Pokémon take the Gen 9 defaults at their new level.
+- **Hand-written movesets stay** on raised and evolved Pokémon: a raise or an evolution doesn't change them, and an evolved Pokémon keeps its pre-evolution's moves. Many are vanilla Gen 3 sets that the Gen 9 learnsets no longer teach (#139's review found 88 such slots on the rematch teams alone, such as Flannery 2-5's Rapidash Bounce); checking set moves against the learnsets is #145. Default-move Pokémon take the Gen 9 defaults at their new level.
 
 ## Proposed balance changes (owner to accept or reject; each can be its own issue)
 1. **Soft level cap at each gym ace** (config). Set `B_LEVEL_CAP_TYPE LEVEL_CAP_FLAG_LIST` and `B_EXP_CAP_TYPE EXP_CAP_SOFT`. `sLevelCapFlagMap` in `src/caps.c` already holds exactly the measured aces (15/19/24/29/31/33/42/46/58). Consider `B_RARE_CANDY_CAP` too.

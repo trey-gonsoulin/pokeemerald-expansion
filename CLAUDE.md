@@ -72,9 +72,9 @@ What the fork adds over upstream (`git diff origin/master...origin/emerald-plus 
   - The wild tables of each stage's maps rise by the stage's offset (`level_offsets.json`, through restock), up to +19. Water tables count from Winona's stage (`SURF_STAGE`).
   - Stage membership matters: Surf-only trainers on early maps go in a later stage's `trainers` override in `tools/rebalance/story_stages.json` (Route 103's and Route 109's), and post-game ones in `exclude` or `unstaged`.
   - The rematch ladders and Steven at Meteor Falls (#139), from the same settings plus `rematch_step`:
-    - The gym leaders' and Wally's post-game ladders are fought as rounds after Wallace. Each round's aces sit 5% over the bench at its start (82/85/89/92), then Steven goes 3 over the last (97).
+    - The gym leaders' and Wally's post-game ladders are fought as rounds after Wallace. Each round's aces sit 5% over the bench at its start (82/85/89/92), then Steven goes to the margin and at least 3 over the last round (97).
     - Ordinary trainers' ladders (rematches unlock after Norman's badge, at any tier: `OW_REMATCH_BADGE_COUNT`, no gating) are levelled for the earliest stage they can be fought, 5% a rematch.
-    - The 46 default sets this flagged and the three rematch Hyper Beams are hand-written (`findings.md` section 10).
+    - The 46 default sets this flagged and the rematch Hyper Beams (Norman 2-5's Slaking, Roxanne 5's Aerodactyl, Winona 5's Dragonite) are hand-written (`findings.md` section 10).
   - Off-stage trainers outside the rematch table aren't touched.
   - `findings.md` section 9 has the numbers. `RealRepo.test_data_meets_the_curve_settings` fails when the data no longer meets the settings: after a `trainers.party`, wild or exp-formula change, rerun `apply`, then `rebalance.py`, and commit the data with the regenerated outputs.
 - Story evolutions and movesets, also fork data changes in `src/data/trainers.party` (`tools/rebalance/output/findings.md`, sections 2 and 7):
