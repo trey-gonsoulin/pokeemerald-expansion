@@ -10,7 +10,7 @@ STATIC_ASSERT(B_EXP_OVERLEVEL_CUTOFF <= 255 && B_EXP_OVERLEVEL_HALVING <= 255, E
 
 // (i^3.5)/4: the level scaling with B_SCALED_EXP_STEEP, in place of
 // sExperienceScalingFactors' (i^2.5)/4.
-const s32 gExperienceScalingFactorsSteep[] =
+const s32 gExperienceScalingFactorsSteep[MAX_LEVEL * 2 + 11] =
 {
     0, 0, 2, 11, 32, 69, 132, 226,
     362, 546, 790, 1103, 1496, 1980, 2566, 3267,

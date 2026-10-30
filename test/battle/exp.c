@@ -599,6 +599,8 @@ WILD_BATTLE_TEST("Exp formula: the over-level penalty also applies to the Gen 6 
 
     GIVEN {
         ASSUME(I_EXP_SHARE_FLAG > TEMP_FLAGS_END);
+        ASSUME(B_SPLIT_EXP >= GEN_6);
+        WITH_CONFIG(B_SPLIT_EXP, GEN_6);
         WITH_CONFIG(B_EXP_OVERLEVEL_PENALTY, penalty);
         WITH_CONFIG(B_EXP_OVERLEVEL_CUTOFF, 10);
         WITH_CONFIG(B_EXP_OVERLEVEL_HALVING, 5);
