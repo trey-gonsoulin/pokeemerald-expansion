@@ -334,7 +334,7 @@ Each rival row goes on all six teams of that fight: May or Brendan, with each st
     - bosses up to +20;
     - each stage's route trainers up to +27 (Juan's 71);
     - wild land tables up to +21.
-- **The same settings with all six rotating** put the bosses higher: Flannery 45, Winona 62, Juan 82, Wallace 92, with the team at 84-85 by Wallace. The applied levels have to pick one rotation.
+- **The same settings with all six rotating** put the bosses higher: Flannery 45, Winona 62, Juan 82, Wallace 92, with the team at 84-85 by Wallace. The applied levels have to pick one rotation. **Owner's decision (2026-10-30): build them for 1 lead and 5 benched.**
 - **The scaling table:** `ApplyExperienceMultipliers` already scales in u64. The level^3.5 table tops out at about 3.4e7 (index 210), so it fits the s32 `sExperienceScalingFactors` and can be swapped in.
 
 ## Proposed balance changes (owner to accept or reject; each can be its own issue)
