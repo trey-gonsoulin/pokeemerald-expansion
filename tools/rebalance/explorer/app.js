@@ -308,9 +308,12 @@ function drawTables(res) {
         <td>${s.gap ?? ''}${s.gap !== null && res.knobs.gap_unit === 'percent' ? '%' : ''}</td><td>${s.wild_offset ? '+' + s.wild_offset : ''}</td>
         <td>${s.wild_land_mean ?? ''}</td></tr>`).join('');
     const ladders = new Map();
-    for (const r of res.rematches)
-        ladders.set(r.ladder, [...(ladders.get(r.ladder) ?? []), r]);
-    $('#rematches tbody').innerHTML = [...ladders.values()].map(rs => `<tr><td>${rs[0].ladder.slice(8)}</td>
+    for (const r of res.rematches) {
+        if (!ladders.has(r.ladder))
+            ladders.set(r.ladder, []);
+        ladders.get(r.ladder).push(r);
+    }
+    $('#rematches tbody').innerHTML = [...ladders.values()].map(rs => `<tr><td>${rs[0].name}</td>
         <td>${rs[0].stage}</td><td>${rs[0].base}</td><td>${rs.map(r => r.ace).join(' ')}</td></tr>`).join('');
 }
 
