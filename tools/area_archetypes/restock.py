@@ -288,6 +288,15 @@ class SpeciesInfo:
                 self.gen[sp] = REGIONAL_FORM_GEN[flag]
         self._min_level = {}
 
+    @classmethod
+    def from_evolutions(cls, alias, evos):
+        """A SpeciesInfo with only aliases and evolutions, enough for canon,
+        level_evolution and evolve (the rebalance curve explorer's
+        snapshot)."""
+        info = cls.__new__(cls)
+        info.alias, info.evos = alias, evos
+        return info
+
     def canon(self, species):
         seen = set()
         while species in self.alias and species not in seen:

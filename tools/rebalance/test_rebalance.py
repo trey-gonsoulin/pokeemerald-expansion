@@ -31,11 +31,14 @@ def fake_regime(**overrides):
     return types.SimpleNamespace(flag=lambda expr: G.R.c_eval(expr, defines))
 
 
-def species_info(alias, evos):
-    """A restock.SpeciesInfo with only these aliases and evolutions."""
-    info = G.R.SpeciesInfo.__new__(G.R.SpeciesInfo)
-    info.alias, info.evos = alias, evos
-    return info
+def curve_inputs(repo, stages_path, info=None):
+    """share_run's inputs parsed from ``repo``, as explore_run takes them
+    (``info``, a restock.SpeciesInfo, for the evolutions)."""
+    gd = G.load(repo)['modern']
+    trainers = G.parse_trainers(os.path.join(repo, 'src', 'data', 'trainers.party'))
+    stages = RB.load_stages(stages_path, trainers, repo)
+    return {'stages': stages, 'trainers': trainers, 'gd': gd, 'scaling': G.parse_scaling_factors(repo),
+            'wilds': RB.load_wilds(repo, stages), 'evolve': RB.evolver(info, gd) if info else None}
 
 
 class Expressions(unittest.TestCase):
@@ -461,14 +464,9 @@ class Analysis(unittest.TestCase):
         self.assertEqual(sorted(share), sorted(RB.TRAINER_EXP))
         self.assertEqual(len(share['1.5x off']['now']), 2 * len(RB.AFFECTION))
 
-    def fixture_inputs(self):
-        gd = G.load(FIXTURE)['modern']
-        trainers = G.parse_trainers(os.path.join(FIXTURE, 'src', 'data', 'trainers.party'))
-        stages = RB.load_stages(FIXTURE_STAGES, trainers, FIXTURE)
-        return gd, trainers, stages, G.parse_scaling_factors(FIXTURE), RB.load_wilds(FIXTURE, stages)
-
     def test_trainer_and_wild_gaps(self):
-        gd, trainers, stages, scaling, wilds = self.fixture_inputs()
+        inputs = curve_inputs(FIXTURE, FIXTURE_STAGES)
+        stages, trainers, gd, scaling, wilds = (inputs[k] for k in ('stages', 'trainers', 'gd', 'scaling', 'wilds'))
 
         def run(**kw):
             return RB.share_run(stages, trainers, gd, scaling, wilds['modern'], vanilla_wilds=wilds['vanilla'], **kw)
@@ -491,12 +489,11 @@ class Analysis(unittest.TestCase):
         self.assertEqual(run(wild_gap=100)[1][0]['wild_offset'], 0)
         # Every reference: the margin puts each boss's ace that far above it.
         for name, f in RB.REFERENCES.items():
-            rows, _ = run(margin=1, boss_ref=name, ko_takers=3, detail=True)
+            rows, _ = run(margin=1, boss_ref=name, ko_takers=3)
             for r in rows:
+                self.assertEqual(len(r['levels']), 6)
+                self.assertEqual(r['ref'], round(f(r['levels'], 3), 1))
                 self.assertEqual(r['boss_ace'], max(r['base_ace'], int(f(r['levels'], 3) + 1.5)), name)
-        rows, _ = run(detail=True)
-        self.assertEqual([len(r['levels']) for r in rows], [6, 6])
-        self.assertNotIn('levels', run()[0][0])
         # More wild KOs only add exp.
         self.assertGreaterEqual(run(wild_battles=20)[0][-1]['bench'], run()[0][-1]['bench'])
 
@@ -514,39 +511,27 @@ class Analysis(unittest.TestCase):
         self.assertEqual(RB.evolver(info, gd)('SPECIES_RALTS', 60), 'SPECIES_RALTS')
 
     def test_snapshot_round_trip(self):
-        # The explorer's data: share_run on load_snapshot equals share_run on the parsed repo.
-        gd, trainers, stages, scaling, wilds = self.fixture_inputs()
-        info = species_info({'SPECIES_ALIAS': 'SPECIES_RALTS'}, {
+        # The explorer's data gives what the parsed repo gives.
+        info = G.R.SpeciesInfo.from_evolutions({'SPECIES_ALIAS': 'SPECIES_RALTS'}, {
             'SPECIES_RALTS': [('EVO_LEVEL', '9', 'SPECIES_SABLEYE', []), ('EVO_ITEM', 'ITEM_X', 'SPECIES_MR_MIME', [])],
             'SPECIES_MAGIKARP': [('EVO_ITEM', 'ITEM_X', 'SPECIES_MR_MIME', [])]})
-        data = json.loads(json.dumps(RB.curve_snapshot(stages, trainers, gd, scaling, wilds, info)))
+        live = curve_inputs(FIXTURE, FIXTURE_STAGES, info)
+        data = json.loads(json.dumps(RB.curve_snapshot(*(live[k] for k in ('stages', 'trainers', 'gd', 'scaling',
+                                                                              'wilds')), info)))
         self.assertEqual(data['evolutions'], {'SPECIES_RALTS': [['EVO_LEVEL', '9', 'SPECIES_SABLEYE', []]]})
         self.assertEqual(sorted(data['trainers']), ['TRAINER_HIKER_A', 'TRAINER_LEADER_X', 'TRAINER_RIVAL_A'])
-        self.assertIn('B_SCALED_EXP', data['defines'])
+        self.assertEqual(data['defines']['B_SCALED_EXP'], live['gd'].defines['B_SCALED_EXP'])
         self.assertIn('GEN_LATEST', data['defines'])
         snap = RB.load_snapshot(data)
         self.assertEqual(snap['evolve']('SPECIES_ALIAS', 20), 'SPECIES_SABLEYE')
         self.assertEqual(snap['evolve']('SPECIES_RALTS', 11), 'SPECIES_RALTS')
-        evolve = RB.evolver(info, gd)
         for knobs in ({}, {'margin': 1, 'trainer_gap': 0, 'wild_gap': 0, 'ko_takers': 6, 'boss_ref': 'party_mean'},
                       {'scaled_exp': False, 'trainer_exp': '1.5x on', 'share_fraction': 0.25, 'evolve': False},
                       {'scaling_power': 3.0, 'overlevel_cutoff': 2, 'clear': 0.5, 'wild_battles': 4}):
-            k = {**RB.EXPLORER_KNOBS, **knobs}
-            d = RB.with_configs(gd, B_TRAINER_EXP_MULTIPLIER=RB.TRAINER_EXP[k['trainer_exp']],
-                                B_SCALED_EXP='GEN_LATEST' if k['scaled_exp'] else 'GEN_6')
-            sc = scaling if k['scaling_power'] == 2.5 else RB.scaling_factors(k['scaling_power'])
-            want = RB.share_run(stages, trainers, d, sc, wilds['modern'], clear=k['clear'], affection=k['affection'],
-                                catches=k['catches'], walk_steps=k['walk_steps'], margin=k['margin'],
-                                trainer_gap=k['trainer_gap'], wild_gap=k['wild_gap'], vanilla_wilds=wilds['vanilla'],
-                                evolve=evolve if k['evolve'] else None, ko_takers=k['ko_takers'],
-                                boss_ref=k['boss_ref'], share_fraction=k['share_fraction'],
-                                overlevel_cutoff=k['overlevel_cutoff'], league_steps=k['league_steps'],
-                                wild_battles=k['wild_battles'], detail=True)
-            got = RB.explore_run(snap, knobs)
-            self.assertEqual([{x: v for x, v in r.items() if x not in ('name', 'ref')} for r in got['bosses']],
-                             want[0], knobs)
-            self.assertEqual(got['stages'], want[1], knobs)
+            self.assertEqual(RB.explore_run(snap, knobs), RB.explore_run(live, knobs), knobs)
+        got = RB.explore_run(snap, {'ko_takers': 6})
         self.assertEqual(got['bosses'][0]['name'], 'Rival A')
+        self.assertEqual(got['bosses'][0]['refs']['bench'], min(got['bosses'][0]['levels']))
         with self.assertRaises(ValueError):
             RB.explore_run(snap, {'no_such_knob': 1})
 
@@ -668,23 +653,12 @@ class RealRepo(unittest.TestCase):
     def test_committed_curve_data_runs_the_repo_model(self):
         """output/curve_data.json (the explorer's data) gives the curve the
         repo's own data gives: rerun rebalance.py after a data change."""
-        gd = G.load(G.REPO)['modern']
-        trainers = G.parse_trainers(os.path.join(G.REPO, 'src', 'data', 'trainers.party'))
-        stages = RB.load_stages(RB.DEFAULT_STAGES, trainers, G.REPO)
-        scaling = G.parse_scaling_factors(G.REPO)
-        wilds = RB.load_wilds(G.REPO, stages)
-        evolve = RB.evolver(G.R.SpeciesInfo(G.REPO), gd)
+        live = curve_inputs(G.REPO, RB.DEFAULT_STAGES, G.R.SpeciesInfo(G.REPO))
         with open(os.path.join(RB.DEFAULT_OUT_DIR, RB.CURVE_DATA), encoding='utf-8') as f:
             snap = RB.load_snapshot(json.load(f))
-        for knobs in ({}, {'ko_takers': 6, 'boss_ref': 'party_mean', 'margin': 1, 'trainer_gap': 5, 'wild_gap': 10}):
-            k = {**RB.EXPLORER_KNOBS, **knobs}
-            want = RB.share_run(stages, trainers, gd, scaling, wilds['modern'], margin=k['margin'],
-                                trainer_gap=k['trainer_gap'], wild_gap=k['wild_gap'], vanilla_wilds=wilds['vanilla'],
-                                evolve=evolve, ko_takers=k['ko_takers'], boss_ref=k['boss_ref'], detail=True)
-            got = RB.explore_run(snap, knobs)
-            self.assertEqual([{x: v for x, v in r.items() if x not in ('name', 'ref')} for r in got['bosses']],
-                             want[0], knobs)
-            self.assertEqual(got['stages'], want[1], knobs)
+        for knobs in ({}, {'ko_takers': 6, 'boss_ref': 'party_mean', 'margin': 1, 'trainer_gap': 5, 'wild_gap': 10},
+                      {'scaled_exp': False, 'trainer_exp': '1.5x on', 'affection': 'always', 'wild_battles': 5}):
+            self.assertEqual(RB.explore_run(snap, knobs), RB.explore_run(live, knobs), knobs)
 
     def test_stage_bosses_exist(self):
         trainers = G.parse_trainers(os.path.join(G.REPO, 'src', 'data', 'trainers.party'))

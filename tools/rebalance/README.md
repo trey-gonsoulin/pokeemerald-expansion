@@ -59,8 +59,8 @@ It runs this tool's own Python in the browser through Pyodide (loaded from
 the jsDelivr CDN, so it needs internet), in a Web Worker. Nothing is parsed
 there: `curve_snapshot` writes the parsed inputs to
 `output/curve_data.json` (the story stages and trainers, exp yields, level
-evolutions, the scaling table, both regimes' wild slots and the config
-defines the curve reads), and `load_snapshot` rebuilds them for
+evolutions, the scaling table, both regimes' land slots and the config
+defines), and `load_snapshot` rebuilds them for
 `share_run`. A test checks that the committed snapshot gives the curve the
 repo's own data gives. `explore_run` maps the knobs to `share_run`;
 `curve` runs it from the command line on the settings JSON the page shows
