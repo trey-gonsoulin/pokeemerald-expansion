@@ -69,6 +69,15 @@ REGIONAL_FORM_GEN = {'isAlolanForm': AA.REGIONAL_FORM_GENS['ALOLA'],
                      'isHisuianForm': AA.REGIONAL_FORM_GENS['HISUI'],
                      'isPaldeanForm': AA.REGIONAL_FORM_GENS['PALDEA']}
 REGIONAL_FLAGS = frozenset(REGIONAL_FORM_GEN)
+# Levels past an EVO_LEVEL evolution's level at which a raised trainer or
+# wild Pokemon is evolved (SpeciesInfo.evolve, #150).
+EVOLVE_GRACE = 3
+# Evolution conditions a raised Pokemon can meet in Hoenn: the rest need a
+# move, an item, a map, the weather, the party or friendship, so those
+# evolutions are never applied. IF_NOT_REGION counts unless it names Hoenn.
+EVOLVE_CONDITIONS = frozenset(('IF_GENDER', 'IF_TIME', 'IF_NOT_TIME', 'IF_NOT_REGION',
+                               'IF_PID_UPPER_MODULO_10_GT', 'IF_PID_UPPER_MODULO_10_LT',
+                               'IF_PID_MODULO_100_GT', 'IF_PID_MODULO_100_EQ'))
 # Config headers that aren't part of a normal build.
 SKIPPED_CONFIGS = ('test.h',)
 
@@ -256,6 +265,7 @@ class SpeciesInfo:
         self.enabled |= {a for a in self.alias if self.canon(a) in self.enabled}
         self.flags = {}
         self.pre_evos = collections.defaultdict(list)  # species -> [(from, method, param)]
+        self.evos = collections.defaultdict(list)  # species -> [(method, param, to, [(condition, value)])]
         # Generation of each species' family file; restock() refines it from the pools.
         self.gen = {sp: int(re.search(r'\d+', name)[0]) for sp, name in entry_files.items()}
         for sp, text in entries.items():
@@ -263,15 +273,29 @@ class SpeciesInfo:
             m = re.search(r'\.evolutions\s*=\s*EVOLUTION\(', text)
             if not m:
                 continue
-            for method, param, target in re.findall(
-                    r'\{\s*(EVO_\w+)\s*,\s*([^,{}]+?)\s*,\s*(SPECIES_\w+)', balanced(text, m.end())):
+            body = balanced(text, m.end())
+            found = list(re.finditer(r'\{\s*(EVO_\w+)\s*,\s*([^,{}]+?)\s*,\s*(SPECIES_\w+)', body))
+            for k, e in enumerate(found):
+                method, param, target = e.groups()
                 if target in self.enabled:
                     self.pre_evos[self.canon(target)].append((sp, method, param))
+                    rest = body[e.end():found[k + 1].start() if k + 1 < len(found) else len(body)]
+                    self.evos[sp].append((method, param, target,
+                                          re.findall(r'\{\s*(IF_\w+)\s*,\s*([^,{}]+?)\s*[,}]', rest)))
         # A regional form counts as its form's generation, not its family file's.
         for sp, flags in self.flags.items():
             for flag in flags & REGIONAL_FLAGS:
                 self.gen[sp] = REGIONAL_FORM_GEN[flag]
         self._min_level = {}
+
+    @classmethod
+    def from_evolutions(cls, alias, evos):
+        """A SpeciesInfo with only aliases and evolutions, enough for canon,
+        level_evolution and evolve (the rebalance curve explorer's
+        snapshot)."""
+        info = cls.__new__(cls)
+        info.alias, info.evos = alias, evos
+        return info
 
     def canon(self, species):
         seen = set()
@@ -328,6 +352,30 @@ class SpeciesInfo:
                 break
             species = min(pres, key=lambda s: (self.min_level(s), s))
             seen.add(species)
+        return species
+
+    def level_evolution(self, species, level, grace=EVOLVE_GRACE, gender=None):
+        """The EVO_LEVEL evolution a Pokemon of ``species`` takes at ``level``
+        (``grace`` levels past the evolution's), or None. An unconditioned
+        one wins, then the first whose conditions are all EVOLVE_CONDITIONS
+        (``gender``, MON_MALE or MON_FEMALE, rules out the other's)."""
+        options = []
+        for method, param, target, conds in self.evos.get(self.canon(species), ()):
+            if method != 'EVO_LEVEL' or not param.isdigit() or not 0 < int(param) <= level - grace:
+                continue
+            if any(c not in EVOLVE_CONDITIONS or (c == 'IF_NOT_REGION' and v == 'REGION_HOENN')
+                   or (c == 'IF_GENDER' and gender and v != gender) for c, v in conds):
+                continue
+            options.append((bool(conds), target))
+        return min(options, key=lambda o: o[0])[1] if options else None
+
+    def evolve(self, species, level, grace=EVOLVE_GRACE, gender=None):
+        """Walk up the evolution line through level_evolution (Aron at 45 ->
+        Aggron)."""
+        seen = {self.canon(species)}
+        while (nxt := self.level_evolution(species, level, grace, gender)) and self.canon(nxt) not in seen:
+            species = nxt
+            seen.add(self.canon(nxt))
         return species
 
 

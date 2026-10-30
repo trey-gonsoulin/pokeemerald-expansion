@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Emerald Plus level curve explorer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.6.1/dist/chart.umd.min.js"></script>
+<style>
+    body { font: 14px/1.4 system-ui, sans-serif; margin: 0; color: #222; }
+    header { padding: 8px 16px; background: #1e8449; color: #fff; display: flex; gap: 16px; align-items: baseline; }
+    header h1 { font-size: 18px; margin: 0; }
+    header #status { margin-left: auto; opacity: 0.85; }
+    main { display: grid; grid-template-columns: 340px 1fr; height: calc(100vh - 40px); }
+    #knobs { overflow-y: auto; padding: 0 14px 14px; border-right: 1px solid #ddd; background: #fafafa; }
+    #knobs.loading { opacity: 0.4; pointer-events: none; }
+    #knobs h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: #1e8449; margin: 16px 0 4px; }
+    .knob { margin: 8px 0; }
+    .knob label { display: flex; justify-content: space-between; font-weight: 600; }
+    .knob output { font-weight: normal; color: #2471a3; }
+    .knob .control { display: flex; gap: 6px; align-items: center; }
+    .knob input[type=range] { flex: 1; }
+    .knob select { width: 100%; }
+    .help { margin: 2px 0 0; font-size: 12px; color: #666; }
+    .buttons { display: flex; gap: 6px; margin-top: 12px; }
+    #settings { width: 100%; height: 90px; font: 12px ui-monospace, monospace; box-sizing: border-box; }
+    #cli { font: 11px ui-monospace, monospace; word-break: break-all; color: #555; }
+    #right { overflow-y: auto; padding: 10px 16px; }
+    #chartbox { height: 58vh; min-height: 360px; }
+    #headline { margin: 8px 0; }
+    .warn { color: #c0392b; }
+    .tables { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    table { border-collapse: collapse; font-size: 12px; width: 100%; }
+    th, td { border-bottom: 1px solid #eee; padding: 2px 6px; text-align: right; }
+    th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
+    th { position: sticky; top: 0; background: #fff; }
+</style>
+</head>
+<body>
+<header>
+    <h1>Level curve explorer</h1>
+    <span>The rebalance model (tools/rebalance) in the browser, on output/curve_data.json</span>
+    <span id="status">loading Python…</span>
+</header>
+<main>
+    <section id="knobs" class="loading">
+        <div class="buttons"><button id="reset" disabled>Reset to today's game</button></div>
+    </section>
+    <section id="right">
+        <div id="chartbox"><canvas id="chart"></canvas></div>
+        <div id="headline"></div>
+        <details open>
+            <summary>Settings (the knobs changed from the defaults)</summary>
+            <textarea id="settings" spellcheck="false"></textarea>
+            <div class="buttons"><button id="copy" disabled>Copy</button><button id="load" disabled>Load from the box</button></div>
+            <p id="cli"></p>
+        </details>
+        <div class="tables">
+            <div>
+                <h3>Bosses</h3>
+                <table id="bosses"><thead><tr><th>boss</th><th>stage</th><th>today</th><th>raise</th><th>ace</th>
+                    <th>party</th><th>reference</th></tr></thead><tbody></tbody></table>
+            </div>
+            <div>
+                <h3>Stages</h3>
+                <table id="stages"><thead><tr><th>stage</th><th>reference at start</th><th>trainers</th>
+                    <th>trainer raise</th><th>trainer ace mean</th><th>gap when fought</th><th>wild offset</th>
+                    <th>wild land mean</th></tr></thead><tbody></tbody></table>
+                <p class="help">Wild offset: levels over the vanilla tables. Gap: reference minus the trainer's
+                    ace when fought, averaged.</p>
+            </div>
+        </div>
+    </section>
+</main>
+<script type="module" src="app.js"></script>
+</body>
+</html>

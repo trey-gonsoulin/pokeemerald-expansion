@@ -251,6 +251,46 @@ Each rival row goes on all six teams of that fight: May or Brendan, with each st
 - **Steven in the Mossdeep Space Center multi battle** (`PARTNER_STEVEN`, `src/data/battle_partners.party`): Maxie and Tabitha went from aces 44/40 to 56/56. The owner wants helper NPCs to rise with the challenge, so Steven goes +12, from 42-44 to 54-56 (ace 56, level with the foes). The model doesn't cover partners.
 - **Post-game rematches now sit below some first fights (not changed here):** Tate and Liza's rematch 2 has ace 50 against 51 for the first fight, Juan's rematches 2 and 3 have 51 and 56 against 57, and Wally's Victory Road rematches 2-5 have 48-57 against 60. The rematches are outside the story model. Lifting each rematch ladder above its raised first fight is a follow-up.
 
+## 8. Exp formula options (#151)
+
+#150's targets (route trainers averaging 5 below the bench when fought, wild land averages 10 below it, bosses 1 above it with the Elite Four spacing, raised Pokémon evolving) run away, because a raise feeds the exp that sets the next raise. #151 measures what the exp formula could do about it. No decision yet: the owner explores the knobs in the curve explorer (`python3 tools/rebalance/rebalance.py explore`, README) and picks a curve there.
+
+**The rotation baseline.** The report's share6 party is 1/5: one member takes every KO and five sit on the Gen 6 Exp. Share bench. With the KOs rotated over all six (the owner's play style), the scaling's level weighting keeps the team within a level, about 2 above the 1/5 bench: 35 / 44 / 58 / 65 before Flannery, Winona, Juan and Wallace, against a 1/5 bench of 33 / 42 / 56 / 63 and a lead of 40 / 50 / 66 / 73. A 4/2 split puts the four 0-1 above the six-way level and the two at the 1/5 bench. The explorer's `ko_takers` and `boss_ref` knobs choose the party and the level the targets measure against. The tables below measure against the lowest member off the rotation (the bench for 1/5, the lowest member for 6/0).
+
+**The options** (full clear, modelled friendship, 1.5x off, 3 catches per stage). For each option: where the party stands at today's levels, then the boss aces once #150's targets are met.
+
+1/5 (one lead, five benched):
+
+| option | party at Juan / Wallace (today's levels) | bosses with #150's targets: Flannery / Winona / Juan / Wallace | highest member's peak | Lv 100 by |
+|---|---|---|---|---|
+| today's formula | 56 / 63 | 45 / 63 / 86 / 96 | 100 | Wally (Victory Road) |
+| bench share 25% | 48 / 53 | 34 / 43 / 57 / 67 | 83 | - |
+| bench share 35% | 52 / 58 | 35 / 50 / 69 / 79 | 94 | - |
+| scaling exponent 3.0 | 55 / 62 | 45 / 62 / 85 / 95 | 100 | Wally (Victory Road) |
+| scaling exponent 3.5 | 55 / 61 | 44 / 61 / 84 / 94 | 100 | Wally (Victory Road) |
+| over-level cutoff 10 | 50 / 57 | 44 / 61 / 83 / 93 | 94 | - |
+| over-level cutoff 5 | 47 / 54 | 35 / 49 / 65 / 75 | 73 | - |
+| unscaled (Gen 6) | 57 / 62 | 39 / 54 / 75 / 85 | 99 | - |
+
+6/0 (all six take KOs in turn):
+
+| option | party at Juan / Wallace (today's levels) | bosses with #150's targets: Flannery / Winona / Juan / Wallace | highest member's peak | Lv 100 by |
+|---|---|---|---|---|
+| today's formula | 58 / 65 | 51 / 69 / 94 / 100 | 99 | - |
+| bench share 25% | 52 / 58 | 35 / 51 / 71 / 81 | 76 | - |
+| bench share 35% | 55 / 61 | 42 / 59 / 81 / 91 | 86 | - |
+| scaling exponent 3.0 | 57 / 64 | 50 / 68 / 93 / 100 | 98 | - |
+| scaling exponent 3.5 | 56 / 63 | 50 / 68 / 92 / 100 | 97 | - |
+| over-level cutoff 10 | 51 / 58 | 48 / 66 / 89 / 100 | 95 | - |
+| over-level cutoff 5 | 48 / 55 | 38 / 52 / 69 / 79 | 75 | - |
+| unscaled (Gen 6) | 59 / 65 | 43 / 60 / 81 / 91 | 86 | - |
+
+- **A steeper level-gap penalty barely helps.** #150's trainers sit about 5 below the party, where the scaling factors are close to 1 at any exponent. It only bites on foes far below the party, which the targets remove.
+- **A smaller bench share and a tight over-level cutoff do.** A 25% bench share, or 1 exp past 5 levels over the foe, keeps Wallace near 80 with #150's targets under 6/0. The cutoff also cuts the exp from the weak wild Pokémon and early trainers that a full clear fights.
+- **Unscaled exp is lower here, not higher.** Gen 6's flat formula divides by 7 where the scaled one divides by 5, and with #150's targets the foes are rarely far enough below the party for the scaling to shrink their exp by more than that.
+- **6/0 runs away harder than 1/5** under the targets: measured against the lowest member, a rotating team's lowest member is higher, so every target raises more.
+- Each game option (a bench share, a cutoff or an exponent) would need a config in `include/config/`, code in `Cmd_getexp` / `ApplyExperienceMultipliers` and tests in `test/battle/exp.c`. That's a follow-up once the owner picks a curve.
+
 ## Proposed balance changes (owner to accept or reject; each can be its own issue)
 1. **Soft level cap at each gym ace** (config). Set `B_LEVEL_CAP_TYPE LEVEL_CAP_FLAG_LIST` and `B_EXP_CAP_TYPE EXP_CAP_SOFT`. `sLevelCapFlagMap` in `src/caps.c` already holds exactly the measured aces (15/19/24/29/31/33/42/46/58). Consider `B_RARE_CANDY_CAP` too.
 2. **Boss AI to `Smart Trainer`** (data) for the gym leaders, the Elite Four, Wallace, and optionally the rivals and team leaders. Done in #129 for all of them, without Omniscient and Smart Tera (see "Corrections").
