@@ -506,7 +506,7 @@ def level_for_exp(growth, exp):
 def scaling_factors(power=2.5, size=211):
     """sExperienceScalingFactors as (i^power)/4: the game's table at 2.5,
     a steeper level-gap penalty above it (#151); at 3.5,
-    sExperienceScalingFactorsSteep (#154)."""
+    gExperienceScalingFactorsSteep in src/exp_formula.c (#154)."""
     return [int(i ** power / 4) for i in range(size)]
 
 
@@ -629,7 +629,6 @@ class Party:
         self.ko_takers = ko_takers
         self.share_fraction = share_fraction
         self.overlevel = overlevel
-        self._game_overlevel = (None, None)
         self.exp = [float(exp_for_level(growth, level))] * size
         self.friendship = [float(friendship)] * size
         self.affection = affection
@@ -658,11 +657,8 @@ class Party:
         [(exp yield, level, weight)]: one foe, or a wild battle's
         rate-weighted average over its slots. Each level gained adds the
         level-up friendship."""
-        overlevel = self.overlevel
-        if overlevel == GAME:  # resolved once per gd: exp_award would read the configs for every KO
-            if self._game_overlevel[0] is not gd:
-                self._game_overlevel = (gd, Overlevel.from_configs(gd))
-            overlevel = self._game_overlevel[1]
+        # Once per KO rather than in exp_award for every getter.
+        overlevel = Overlevel.from_configs(gd) if self.overlevel == GAME else self.overlevel
         lv = self.levels()
         ko = self.turn % (self.ko_takers if share else len(self.exp))
         self.turn += 1

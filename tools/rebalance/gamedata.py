@@ -339,7 +339,7 @@ def parse_scaling_factors(repo, name='sExperienceScalingFactors', source='battle
     """sExperienceScalingFactors (or another number table) from a file in src/."""
     with open(os.path.join(repo, 'src', source), encoding='utf-8') as f:
         text = f.read()
-    m = re.search(name + r'\[\d*\]\s*=\s*\{(.*?)\};', text, re.S)
+    m = re.search(name + r'\[[^]]*\]\s*=\s*\{(.*?)\};', text, re.S)
     return [int(x) for x in re.findall(r'\d+', re.sub(r'//.*', '', m[1]))]
 
 
