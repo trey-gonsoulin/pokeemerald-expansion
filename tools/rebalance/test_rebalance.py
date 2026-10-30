@@ -685,6 +685,13 @@ class RealRepo(unittest.TestCase):
 
     def test_scaling_factors_are_the_games(self):
         self.assertEqual(RB.scaling_factors(2.5), G.parse_scaling_factors(G.REPO))
+        # #154's tables: the model computes the game's steep scaling and over-level penalty.
+        self.assertEqual(RB.scaling_factors(3.5), G.parse_scaling_factors(G.REPO, 'sExperienceScalingFactorsSteep'))
+        self.assertEqual(list(RB.HALVING_FRACTIONS), G.parse_scaling_factors(G.REPO, 'sExpHalvingFractions'))
+        gd = G.load(G.REPO)
+        self.assertEqual(RB.Overlevel.from_configs(gd['modern']), RB.Overlevel(10, True, 5))
+        self.assertIsNone(RB.Overlevel.from_configs(gd['vanilla']))
+        self.assertEqual(RB.game_scaling(gd['modern'], RB.scaling_factors(2.5)), RB.scaling_factors(3.5))
 
     def test_rematch_ladders(self):
         rematches = G.parse_rematches(G.REPO)

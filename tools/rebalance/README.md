@@ -72,13 +72,18 @@ The knobs:
   team in turn), the share of route trainers fought, catches, wild KOs and
   steps per stage, and the affection bracket.
 - **Exp formula:** the 1.5x trainer exp, level-scaled exp
-  (`B_SCALED_EXP`), and three options the game doesn't have yet:
-  `scaling_power` (the scaling table is `floor(i^p / 4)`, the game's at
-  2.5), `overlevel_cutoff` (1 exp past that many levels above the foe, or
-  percent of its level with `overlevel_unit`; with `overlevel_halflife`
-  the exp instead halves every that many levels or percent past the
-  cutoff, as `Overlevel`) and `share_fraction` (the Exp. Share bench's
-  share, the game's half).
+  (`B_SCALED_EXP`), and three options:
+  - `scaling_power`: the scaling table is `floor(i^p / 4)`. It's 2.5 in
+    upstream and 3.5 under the fork's `B_SCALED_EXP_STEEP` (#154).
+  - `overlevel_cutoff`: 1 exp past that many levels above the foe, or
+    percent of its level with `overlevel_unit`. With `overlevel_halflife`
+    the exp instead halves every that many levels or percent past the
+    cutoff (`Overlevel`). The fork's `B_EXP_OVERLEVEL_PENALTY` (#154) is
+    10% and 5%.
+  - `share_fraction`: the Exp. Share bench's share, the game's half; not a
+    game option.
+
+  The defaults (`explorer_defaults`) are the game's configs.
 - **Targets:** the party level everything measures against (`REFERENCES`:
   the bench, the KO-takers' mean, the party's mean, its highest member),
   the boss margin (off: today's levels) with the Elite Four spacing
