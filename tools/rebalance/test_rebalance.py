@@ -273,6 +273,9 @@ class Exp(unittest.TestCase):
         self.assertEqual(bench(), calc // 2)
         self.assertEqual(bench(share_fraction=0.25), int(calc * 0.25))
         self.assertEqual(bench(share_fraction=0), 0)
+        # 180 * 0.35 is 62.99999... in floats: the share is exact, 63.
+        self.assertEqual(RB.exp_award(d, self.scaling, 90, 14, 25, False, 1, sent_out=False, holders=6,
+                                      share_fraction=0.35), 63)
         self.assertEqual(RB.exp_award(d, self.scaling, 1, 2, 25, False, 1, sent_out=False, holders=6,
                                       share_fraction=0.1), 1)
         self.assertEqual(RB.exp_award(d, self.scaling, 98, 20, 25, False, 1, holders=6, share_fraction=0), calc)
@@ -485,8 +488,13 @@ class Analysis(unittest.TestCase):
         # The wild offset is over the vanilla tables: the restocked Ralts slot's levels are vanilla's, so 0 applied.
         _, st = run(wild_gap=0)
         self.assertEqual(st[0]['wild_applied'], 0)
-        self.assertEqual(st[0]['wild_offset'], max(0, round(st[0]['start_bench'] - RB.land_mean(wilds['vanilla'][0]))))
+        self.assertEqual(st[0]['wild_offset'], max(0, round(st[0]['start_ref'] - RB.land_mean(wilds['vanilla'][0]))))
         self.assertEqual(run(wild_gap=100)[1][0]['wild_offset'], 0)
+        # Tables a restock already raised (6 over vanilla here) are never lowered toward the gap.
+        raised = {i: RB.shifted_slots(s, 6) for i, s in wilds['modern'].items()}
+        _, st = RB.share_run(stages, trainers, gd, scaling, raised, vanilla_wilds=wilds['vanilla'], wild_gap=100)
+        self.assertEqual((st[0]['wild_applied'], st[0]['wild_offset']), (6, 6))
+        self.assertEqual(st[0]['wild_land_mean'], round(RB.land_mean(raised[0]), 1))
         # Every reference: the margin puts each boss's ace that far above it.
         for name, f in RB.REFERENCES.items():
             rows, _ = run(margin=1, boss_ref=name, ko_takers=3)
