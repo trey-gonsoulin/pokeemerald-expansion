@@ -115,6 +115,19 @@ LEAGUE_STEPS = {'TRAINER_PHOEBE': ('TRAINER_SIDNEY', 1), 'TRAINER_GLACIA': ('TRA
 TRAINER_GAP = 5
 WILD_GAP = 10
 EVOLVE_EXEMPT = frozenset({'TRAINER_WALLY_MAUVILLE'})
+# The post-game (#139). A boss ladder is a gRematchTable row whose first
+# fight is a staged boss (the gym leaders), or one of POSTGAME_LADDERS, whose
+# first fight is itself post-game (Wally after the Hall of Fame). They are
+# fought in rounds after the last stage, round n being every ladder's n-th
+# rematch, and then POSTGAME_FINAL (Steven at Meteor Falls), at least
+# POSTGAME_FINAL_STEP above the last round's highest ace.
+POSTGAME_LADDERS = frozenset({'TRAINER_WALLY_VR_2'})
+POSTGAME_FINAL = ('TRAINER_STEVEN',)
+POSTGAME_FINAL_STEP = 3
+# Regular trainers' rematches unlock with the badge of REMATCH_UNLOCK's stage
+# (OW_REMATCH_BADGE_COUNT, 5: Norman's), at any tier, so each tier is levelled
+# for the earliest it can be fought (rematch_raises).
+REMATCH_UNLOCK = 'TRAINER_NORMAN_1'
 # The party level the boss margin and the trainer and wild gaps measure
 # against (#151), from the six members' levels and the KO-takers' count:
 # the lowest member off the KO rotation (with five benched, the bench; with
@@ -876,7 +889,8 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
               catches=CATCHES_PER_STAGE, walk_steps=WALK_STEPS_PER_STAGE, trainer_raise=0, raises=None,
               margin=None, unevolved=False, stage_raises=None, wild_offsets=None, trainer_gap=None,
               wild_gap=None, vanilla_wilds=None, evolve=None, ko_takers=1, boss_ref='bench',
-              share_fraction=0.5, overlevel=GAME, league_steps=True, wild_battles=0, relative_gaps=False):
+              share_fraction=0.5, overlevel=GAME, league_steps=True, wild_battles=0, relative_gaps=False,
+              postgame=None):
     """The share6 party (KO-taker plus five on the Gen 6 Exp. Share bench)
     just before each story boss, on ``gd``'s data and configs: (boss rows,
     stage rows).
@@ -911,11 +925,21 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
     (exp_award). ``boss_ref`` picks the reference level from REFERENCES;
     each row's ``bench`` is the lowest member off the KO rotation (the
     lowest member when all six take KOs), ``ref`` the reference level and
-    ``levels`` every member's."""
+    ``levels`` every member's.
+
+    ``postgame`` (rematch_ladders' {boss, final}, #139) adds rows after the
+    last stage: each round of the boss ladders (stage ``Rematch <tier>``),
+    then the final bosses (``Post-game``). With ``margin``, a round's teams
+    go up to one ace, the margin rule at the round's start, and at least 1
+    above their ladder's previous fight; a final boss to the margin rule and
+    at least POSTGAME_FINAL_STEP above the last round's highest ace. Capped
+    at 100."""
     raises = dict(raises or {})
     stage_raises, wild_offsets = stage_raises or {}, wild_offsets or {}
     reference = REFERENCES[boss_ref]
-    boss_ids = {b for st in stages for b in st['bosses']}
+    ladders = (postgame or {}).get('boss', [])
+    finals = (postgame or {}).get('final', [])
+    boss_ids = {b for st in stages for b in st['bosses']} | {t for lad in ladders for t in lad if t} | set(finals)
     friendship = STANDARD_FRIENDSHIP if gd.flag('P_UPDATED_FRIENDSHIP >= GEN_8') else 70
     party = Party(6, affection=affection, friendship=friendship, unevolved=unevolved, ko_takers=ko_takers,
                   share_fraction=share_fraction, overlevel=overlevel)
@@ -953,6 +977,29 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
         gaps, _ = fight_trainers(copy.deepcopy(party), st, d)
         return not gaps or sum(gaps) / len(gaps) <= trainer_gap
 
+    def target(level):
+        """The margin rule's ace for a boss fought at reference ``level``."""
+        return int(above(level, margin) + 0.5)
+
+    def raised_ace(bid):
+        return min(team_ace(trainers[bid]) + raises.get(bid, 0), 100)
+
+    def meet(stage, bid, ace=None):
+        """Fight boss ``bid`` (a row), first raised to ``ace`` when its own is lower."""
+        levels = party.levels()
+        base_ace = team_ace(trainers[bid])
+        if ace is not None:
+            raises[bid] = max(0, ace - base_ace)
+        delta = raises.get(bid, 0)
+        rows.append({'stage': stage, 'boss': bid, 'class': trainers[bid].trainer_class,
+                     'base_ace': base_ace, 'raise': delta, 'boss_ace': min(base_ace + delta, 100),
+                     'ace': max(levels), 'bench': REFERENCES['bench'](levels, ko_takers),
+                     'ref': round(reference(levels, ko_takers), 1), 'levels': levels,
+                     'friendship': int(party.friendship[-1])})
+        if trainers[bid].trainer_class in CURVE_CLASSES:
+            party.befriend('league')
+        fight(party, bid, delta)
+
     for i, st in enumerate(stages):
         party.befriend('walk', walk_steps // 128, chance=0.5)
         start = ref(party)
@@ -979,22 +1026,23 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
                            'wild_land_mean': round(mean, 1) if mean is not None else None,
                            'wild_offset': offset, 'wild_applied': applied})
         for bid in st['bosses']:
-            levels = party.levels()
-            level = reference(levels, ko_takers)
-            base_ace = team_ace(trainers[bid])
+            ace = None
             if margin is not None:
-                raises[bid] = max(0, int(above(level, margin) - base_ace + 0.5))
+                ace = target(ref(party))
                 if league_steps and bid in LEAGUE_STEPS:
                     prev, step = LEAGUE_STEPS[bid]
-                    raises[bid] = max(raises[bid], team_ace(trainers[prev]) + raises.get(prev, 0) + step - base_ace)
-            delta = raises.get(bid, 0)
-            rows.append({'stage': st['name'], 'boss': bid, 'class': trainers[bid].trainer_class,
-                         'base_ace': base_ace, 'raise': delta, 'boss_ace': min(base_ace + delta, 100),
-                         'ace': max(levels), 'bench': REFERENCES['bench'](levels, ko_takers),
-                         'ref': round(level, 1), 'levels': levels, 'friendship': int(party.friendship[-1])})
-            if trainers[bid].trainer_class in CURVE_CLASSES:
-                party.befriend('league')
-            fight(party, bid, delta)
+                    ace = max(ace, team_ace(trainers[prev]) + raises.get(prev, 0) + step)
+            meet(st['name'], bid, ace)
+    for n in range(1, max(map(len, ladders), default=0)):
+        ace = None if margin is None else min(target(ref(party)), 100)  # one ace per round, set at its start
+        for lad in ladders:
+            if n < len(lad):
+                floor = raised_ace(lad[n - 1]) + 1 if lad[n - 1] else 0
+                meet(f'Rematch {n + 1}', lad[n], None if ace is None else min(max(ace, floor), 100))
+    last = [r['boss_ace'] for r in rows if r['stage'] == rows[-1]['stage']] if ladders and rows else []
+    for bid in finals:
+        ace = None if margin is None else min(max([target(ref(party))] + [a + POSTGAME_FINAL_STEP for a in last]), 100)
+        meet('Post-game', bid, ace)
     return rows, stage_rows
 
 
@@ -1027,6 +1075,65 @@ def variant_raises(variants, trainers, raises):
     return out
 
 
+def rematch_ladders(rematches, stages, trainers):
+    """gRematchTable's ladders (parse_rematches' rows, in table order) by
+    kind (#139): {boss: [[previous fight or None, rematches...]] (share_run's
+    postgame rounds), final: POSTGAME_FINAL's teams in ``trainers``, regular: [[first fight,
+    rematches...]] for a staged regular trainer, unstaged: the other
+    ladders' first fights}. A row's repeated last id (the ladder's top
+    rematch again) counts once; a row of one trainer (the Elite Four's) is
+    no ladder."""
+    bosses = {b for st in stages for b in st['bosses']}
+    regular = {t for st in stages for t in st['regular']}
+    out = {'boss': [], 'final': [t for t in POSTGAME_FINAL if t in trainers], 'regular': [], 'unstaged': []}
+    for first, rows in rematches.items():
+        ids = list(dict.fromkeys(rows[0]))
+        if first in POSTGAME_LADDERS:
+            out['boss'].append([None] + ids)
+        elif len(ids) < 2:
+            continue
+        elif first in bosses:
+            out['boss'].append(ids)
+        elif first in regular:
+            out['regular'].append(ids)
+        else:
+            out['unstaged'].append(first)
+    return out
+
+
+def rematch_raises(ladders, stages, stage_rows, trainers, step, gap=None, relative=False):
+    """The regular rematch ladders' raises (#139): [{ladder, trainer, tier,
+    stage, base, ace, raise}]. A ladder's rematches can first be fought at
+    the later of its first fight's stage and the one after REMATCH_UNLOCK's.
+    Its base is the higher of the first fight's raised ace (the stage's
+    raise in ``stage_rows``) and, with ``gap``, the level ``gap`` below that
+    stage's reference at its start; rematch n's ace is the base ``step``
+    higher n times (percent compounding with ``relative``), and at least 1
+    above the rematch before it. Only ever raised, capped at 100."""
+    names = [st['name'] for st in stages]
+    stage_of = {t: i for i, st in enumerate(stages) for t in st['regular']}
+    unlock = next((i for i, st in enumerate(stages) if REMATCH_UNLOCK in st['bosses']), -1) + 1
+    raise_at = {r['stage']: r['raise'] for r in stage_rows}
+    start_ref = {r['stage']: r['start_ref'] for r in stage_rows}
+    out = []
+    for first, *rematches in ladders:
+        i = stage_of[first]
+        at = names[min(max(i, unlock), len(stages) - 1)]
+        base = min(team_ace(trainers[first]) + raise_at.get(names[i], 0), 100)
+        if gap is not None:
+            level = start_ref[at]
+            base = max(base, int((level * (100 - gap) / 100 if relative else level - gap) + 0.5))
+        prev = base
+        for n, tid in enumerate(rematches, 1):
+            want = base * (1 + step / 100) ** n if relative else base + step * n
+            ace = min(max(int(want + 0.5), prev + 1), 100)
+            have = team_ace(trainers[tid])
+            out.append({'ladder': first, 'trainer': tid, 'tier': n + 1, 'stage': at, 'base': base,
+                        'ace': max(ace, have), 'raise': max(0, ace - have)})
+            prev = max(ace, have)
+    return out
+
+
 def share_curves(stages, trainers, gd, scaling, wilds):
     """Per TRAINER_EXP setting: the share6 curve now (full and half clear,
     every AFFECTION bracket), the boss raises that meet TARGET_MARGIN on a
@@ -1056,15 +1163,18 @@ def share_curves(stages, trainers, gd, scaling, wilds):
 # Curve explorer (#151)
 # ---------------------------------------------------------------------------
 
-def curve_snapshot(stages, trainers, gd, scaling, wilds, info):
+def curve_snapshot(stages, trainers, gd, scaling, wilds, info, postgame):
     """share_run's inputs as JSON data (output/curve_data.json), so the
     explorer runs the same model without the repo: the story stages and
-    their trainers, the exp yields, the level evolutions, the scaling
-    table, both regimes' land slots (the only ones share_run reads) and the
-    config defines."""
-    story = sorted({t for st in stages for t in st['regular'] + st['bosses']})
+    their trainers, the rematch ladders (rematch_ladders) and theirs, the
+    exp yields, the level evolutions, the scaling table, both regimes' land
+    slots (the only ones share_run reads) and the config defines."""
+    story = sorted({t for st in stages for t in st['regular'] + st['bosses']}
+                   | {t for kind in ('boss', 'regular') for lad in postgame[kind] for t in lad if t}
+                   | set(postgame['final']))
     return {
         'stages': [{k: st[k] for k in ('name', 'regular', 'bosses')} for st in stages],
+        'postgame': postgame,
         'trainers': {t: {'class': trainers[t].trainer_class,
                          'mons': [[m.species, m.level, m.gender] for m in trainers[t].mons]} for t in story},
         'exp_yield': {sp: s.exp_yield for sp, s in gd.species.items()},
@@ -1090,7 +1200,7 @@ def load_snapshot(data):
     info = G.R.SpeciesInfo.from_evolutions(data['alias'], data['evolutions'])
     wilds = {regime: {int(i): slots for i, slots in by_stage.items()} for regime, by_stage in data['wilds'].items()}
     return {'stages': data['stages'], 'trainers': trainers, 'gd': gd, 'scaling': data['scaling'],
-            'wilds': wilds, 'evolve': evolver(info, gd)}
+            'wilds': wilds, 'evolve': evolver(info, gd), 'postgame': data['postgame']}
 
 
 # The explorer's knobs and their defaults before the game's formula configs
@@ -1101,7 +1211,7 @@ EXPLORER_KNOBS = {
     'walk_steps': WALK_STEPS_PER_STAGE, 'affection': 'friendship', 'trainer_exp': '1.5x off',
     'scaled_exp': True, 'scaling_power': 2.5, 'overlevel_cutoff': None, 'overlevel_unit': 'levels',
     'overlevel_halflife': None, 'share_fraction': 0.5, 'gap_unit': 'levels', 'margin': None,
-    'league_steps': True, 'trainer_gap': None, 'wild_gap': None, 'evolve': True,
+    'league_steps': True, 'trainer_gap': None, 'wild_gap': None, 'evolve': True, 'rematch_step': None,
 }
 UNITS = ('levels', 'percent')
 
@@ -1118,9 +1228,10 @@ def explorer_defaults(gd):
 def explore_run(snap, knobs=None):
     """share_run for EXPLORER_KNOBS settings on ``snap`` (load_snapshot's
     inputs, or the same dict from the parsed repo): {knobs, bosses
-    (share_run's rows plus a short name and every REFERENCES level), stages,
-    lv100 (the first boss the party's highest member meets at 100, or
-    None)}."""
+    (share_run's rows, the post-game rounds included, plus a short name and
+    every REFERENCES level), stages, rematches (rematch_raises' rows, with
+    ``rematch_step``; else none), lv100 (the first boss the party's highest
+    member meets at 100, or None)}."""
     unknown = set(knobs or {}) - set(EXPLORER_KNOBS)
     if unknown:
         raise ValueError(f'unknown knobs {sorted(unknown)}')
@@ -1141,11 +1252,14 @@ def explore_run(snap, knobs=None):
         trainer_gap=k['trainer_gap'], wild_gap=k['wild_gap'], vanilla_wilds=snap['wilds']['vanilla'],
         evolve=snap['evolve'] if k['evolve'] else None, ko_takers=k['ko_takers'], boss_ref=k['boss_ref'],
         share_fraction=k['share_fraction'], overlevel=overlevel, league_steps=k['league_steps'],
-        wild_battles=k['wild_battles'], relative_gaps=k['gap_unit'] == 'percent')
+        wild_battles=k['wild_battles'], relative_gaps=k['gap_unit'] == 'percent', postgame=snap['postgame'])
     for r in bosses:
         r['name'] = short(r['boss'])
         r['refs'] = {name: round(f(r['levels'], k['ko_takers']), 1) for name, f in REFERENCES.items()}
-    return {'knobs': k, 'bosses': bosses, 'stages': stage_rows,
+    rematches = [] if k['rematch_step'] is None else rematch_raises(
+        snap['postgame']['regular'], snap['stages'], stage_rows, snap['trainers'], k['rematch_step'],
+        k['trainer_gap'], k['gap_unit'] == 'percent')
+    return {'knobs': k, 'bosses': bosses, 'stages': stage_rows, 'rematches': rematches,
             'lv100': next((r['name'] for r in bosses if max(r['levels']) >= 100), None)}
 
 
@@ -1159,6 +1273,12 @@ def print_curve(res):
                  'wild offset', 'wild land mean'],
                 [[s['stage'], round(s['start_ref'], 1), s['trainers'], f"+{s['raise']}", s['trainer_ace_mean'],
                   s['gap'], s['wild_offset'], s['wild_land_mean']] for s in res['stages']]))
+    if res['rematches']:
+        print()
+        print(table(['rematch ladder', 'earliest stage', 'base', 'aces'],
+                    [[short(first), rows[0]['stage'], rows[0]['base'], ' '.join(str(r['ace']) for r in rows)]
+                     for first, rows in itertools.groupby(res['rematches'], key=lambda r: r['ladder'])
+                     for rows in [list(rows)]]))
     print(f"\nLv 100 by: {res['lv100'] or '-'}")
 
 
@@ -1557,7 +1677,8 @@ def analyze(repo, stages_path):
         'tms': tm_availability(repo, stages, gd),
         'wild': wild_availability(wilds, stages, gd),
         'economy': economy(stages, trainers, gd, G.parse_class_money(repo)),
-        'curve_data': curve_snapshot(stages, trainers, gd['modern'], base_scaling, wilds, G.R.SpeciesInfo(repo)),
+        'curve_data': curve_snapshot(stages, trainers, gd['modern'], base_scaling, wilds, G.R.SpeciesInfo(repo),
+                                     rematch_ladders(G.parse_rematches(repo), stages, trainers)),
     }
 
 
@@ -1586,18 +1707,22 @@ def repo_inputs(repo, stages_path=DEFAULT_STAGES, info=None):
     trainers = G.parse_trainers(os.path.join(repo, 'src', 'data', 'trainers.party'))
     stages = load_stages(stages_path, trainers, repo)
     return {'stages': stages, 'trainers': trainers, 'gd': gd, 'scaling': G.parse_scaling_factors(repo),
-            'wilds': load_wilds(repo, stages), 'evolve': evolver(info, gd) if info else None}
+            'wilds': load_wilds(repo, stages), 'evolve': evolver(info, gd) if info else None,
+            'postgame': rematch_ladders(G.parse_rematches(repo), stages, trainers)}
 
 
 def apply_plan(inputs, knobs, partners, wild, folders):
     """What the curve for explorer ``knobs`` asks of the data (#150):
     {raises: team id -> levels (staged bosses, their rival variants, every
-    regular trainer of a stage, PARTNER_FIGHTS' partners), wild: map ->
-    table field -> its stage's offset over the vanilla levels, for every
-    table of the stage's maps}. Only non-zero entries."""
+    regular trainer of a stage, PARTNER_FIGHTS' partners, and #139's
+    post-game bosses and rematch ladders), wild: map -> table field -> its
+    stage's offset over the vanilla levels, for every table of the stage's
+    maps, unique: the teams that keep their species distinct}. Only
+    non-zero entries."""
     res = explore_run(inputs, knobs)
     stages, trainers = inputs['stages'], inputs['trainers']
     raises = {r['boss']: r['raise'] for r in res['bosses']}
+    raises.update({r['trainer']: r['raise'] for r in res['rematches']})
     raises.update(variant_raises(stage_variants(stages, trainers), trainers, raises))
     for st, row in zip(stages, res['stages']):
         raises.update(dict.fromkeys(st['regular'], row['raise']))
@@ -1608,7 +1733,7 @@ def apply_plan(inputs, knobs, partners, wild, folders):
     for _, enc, field, i in stage_tables(wild, stages, folders):
         if res['stages'][i]['wild_offset']:
             offsets[enc['map']][field] = res['stages'][i]['wild_offset']
-    bosses = {b for st in stages for b in st['bosses']}
+    bosses = {r['boss'] for r in res['bosses']}
     return {'raises': {t: d for t, d in sorted(raises.items()) if d},
             'wild': {m: dict(sorted(f.items())) for m, f in sorted(offsets.items())},
             'unique': sorted(bosses | {v for st in stages for ids in st['variants'].values() for v in ids})}

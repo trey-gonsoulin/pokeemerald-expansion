@@ -3,5 +3,6 @@
  "gap_unit": "percent",
  "margin": 5,
  "trainer_gap": 10,
- "wild_gap": 20
+ "wild_gap": 20,
+ "rematch_step": 5
 }

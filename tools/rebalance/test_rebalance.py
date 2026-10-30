@@ -554,7 +554,7 @@ class Analysis(unittest.TestCase):
             'SPECIES_MAGIKARP': [('EVO_ITEM', 'ITEM_X', 'SPECIES_MR_MIME', [])]})
         live = curve_inputs(FIXTURE, FIXTURE_STAGES, info)
         data = json.loads(json.dumps(RB.curve_snapshot(*(live[k] for k in ('stages', 'trainers', 'gd', 'scaling',
-                                                                              'wilds')), info)))
+                                                                              'wilds')), info, live['postgame'])))
         self.assertEqual(data['evolutions'], {'SPECIES_RALTS': [['EVO_LEVEL', '9', 'SPECIES_SABLEYE', []]]})
         self.assertEqual(sorted(data['trainers']), ['TRAINER_HIKER_A', 'TRAINER_LEADER_X', 'TRAINER_RIVAL_A'])
         self.assertEqual(data['defines']['B_SCALED_EXP'], live['gd'].defines['B_SCALED_EXP'])
@@ -642,6 +642,84 @@ class Analysis(unittest.TestCase):
             with contextlib.redirect_stdout(text):
                 self.assertEqual(RB.main(['curve', knobs, '--data', data]), 0)
             self.assertIn('Lv 100 by: -', text.getvalue())
+
+
+def team(tid, cls, *levels, species='SPECIES_SABLEYE'):
+    return G.Trainer(tid, '', cls, [], False, [G.TrainerMon(species, lv, []) for lv in levels])
+
+
+class Postgame(unittest.TestCase):
+    """#139: the post-game rounds and the regular rematch ladders."""
+
+    def test_rematch_ladders(self):
+        stages = [{'name': 'A', 'regular': ['TRAINER_HIKER_1'], 'bosses': ['TRAINER_LEADER_1']}]
+        rematches = {
+            'TRAINER_HIKER_1': [['TRAINER_HIKER_1', 'TRAINER_HIKER_2', 'TRAINER_HIKER_3', 'TRAINER_HIKER_3']],
+            'TRAINER_SIDNEY': [['TRAINER_SIDNEY'] * 5],
+            'TRAINER_WALLY_VR_2': [['TRAINER_WALLY_VR_2', 'TRAINER_WALLY_VR_3']],
+            'TRAINER_LEADER_1': [['TRAINER_LEADER_1', 'TRAINER_LEADER_2']],
+            'TRAINER_OFF_1': [['TRAINER_OFF_1', 'TRAINER_OFF_2']],
+        }
+        self.assertEqual(RB.rematch_ladders(rematches, stages, {'TRAINER_STEVEN': None}), {
+            'boss': [[None, 'TRAINER_WALLY_VR_2', 'TRAINER_WALLY_VR_3'], ['TRAINER_LEADER_1', 'TRAINER_LEADER_2']],
+            'final': ['TRAINER_STEVEN'],
+            'regular': [['TRAINER_HIKER_1', 'TRAINER_HIKER_2', 'TRAINER_HIKER_3']],
+            'unstaged': ['TRAINER_OFF_1']})
+
+    def test_rounds(self):
+        inputs = curve_inputs(FIXTURE, FIXTURE_STAGES)
+        stages, gd, scaling, wilds = (inputs[k] for k in ('stages', 'gd', 'scaling', 'wilds'))
+        trainers = dict(inputs['trainers'])
+        for t in (team('TRAINER_LEADER_X_2', 'Leader', 10, 12), team('TRAINER_LEADER_X_3', 'Leader', 99),
+                  team('TRAINER_W_2', 'Rival', 5), team('TRAINER_S', 'Champion', 30, 31)):
+            trainers[t.id] = t
+        postgame = {'boss': [['TRAINER_LEADER_X', 'TRAINER_LEADER_X_2', 'TRAINER_LEADER_X_3'],
+                             [None, 'TRAINER_W_2']], 'final': ['TRAINER_S']}
+
+        def run(**kw):
+            return RB.share_run(stages, trainers, gd, scaling, wilds['modern'], **kw)[0]
+        story = run(margin=1)
+        rows = run(margin=1, postgame=postgame)
+        self.assertEqual(rows[:len(story)], story)
+        post = rows[len(story):]
+        self.assertEqual([(r['stage'], r['boss']) for r in post],
+                         [('Rematch 2', 'TRAINER_LEADER_X_2'), ('Rematch 2', 'TRAINER_W_2'),
+                          ('Rematch 3', 'TRAINER_LEADER_X_3'), ('Post-game', 'TRAINER_S')])
+        leader = story[-1]['boss_ace']
+        # One ace per round, set at its start (the margin rule), at least 1 over the ladder's last fight.
+        ace = max(int(post[0]['ref'] + 1.5), leader + 1)
+        self.assertEqual([post[0]['boss_ace'], post[1]['boss_ace']], [ace, int(post[0]['ref'] + 1.5)])
+        self.assertEqual(post[0]['raise'], ace - 12)
+        self.assertEqual(post[2]['boss_ace'], 99)  # already above its target: never lowered
+        self.assertEqual(post[2]['raise'], 0)
+        self.assertEqual(post[3]['boss_ace'], 100)  # 3 over the last round's 99, capped at 100
+        self.assertTrue(all(r['raise'] >= 0 for r in post))
+        # Without margin the rounds are fought at their own levels (or ``raises``).
+        plain = run(postgame=postgame, raises={'TRAINER_S': 2})[len(story):]
+        self.assertEqual([r['raise'] for r in plain], [0, 0, 0, 2])
+
+    def test_regular_rematch_raises(self):
+        stages = [{'name': 'A', 'regular': ['T_EARLY'], 'bosses': [RB.REMATCH_UNLOCK]},
+                  {'name': 'B', 'regular': ['T_LATE'], 'bosses': []}]
+        stage_rows = [{'stage': 'A', 'raise': 2, 'start_ref': 20}, {'stage': 'B', 'raise': 3, 'start_ref': 40}]
+        trainers = {t.id: t for t in (team('T_EARLY', 'Hiker', 10), team('E2', 'Hiker', 12), team('E3', 'Hiker', 50),
+                                      team('E4', 'Hiker', 8, 10), team('T_LATE', 'Hiker', 60),
+                                      team('L2', 'Hiker', 99), team('L3', 'Hiker', 50))}
+        ladders = [['T_EARLY', 'E2', 'E3', 'E4'], ['T_LATE', 'L2', 'L3']]
+        rows = RB.rematch_raises(ladders, stages, stage_rows, trainers, 10, gap=10, relative=True)
+        got = {r['trainer']: (r['stage'], r['base'], r['tier'], r['ace'], r['raise']) for r in rows}
+        # The early ladder can first be fought after REMATCH_UNLOCK's stage: its base is B's start
+        # reference 10% lower (36, over its first fight's raised 12), then 10% a tier (40, 44 -> 50:
+        # never lowered, 48 -> 51: 1 over the tier before).
+        self.assertEqual(got['E2'], ('B', 36, 2, 40, 28))
+        self.assertEqual(got['E3'], ('B', 36, 3, 50, 0))
+        self.assertEqual(got['E4'], ('B', 36, 4, 51, 41))
+        # The late one from its first fight's raised ace (63); 100 at most.
+        self.assertEqual(got['L2'], ('B', 63, 2, 99, 0))
+        self.assertEqual(got['L3'], ('B', 63, 3, 100, 50))
+        # In levels: the first fight's raised ace plus the step per tier.
+        rows = RB.rematch_raises(ladders[:1], stages, stage_rows, trainers, 3)
+        self.assertEqual([(r['ace'], r['raise']) for r in rows], [(15, 3), (50, 0), (51, 41)])
 
 
 @unittest.skipUnless(os.path.exists(os.path.join(G.REPO, 'src', 'data', 'trainers.party')), 'needs the repo')
@@ -778,6 +856,13 @@ class RealRepo(unittest.TestCase):
         self.assertEqual(rematches['TRAINER_ROSE_1'], [[f'TRAINER_ROSE_{n}' for n in range(1, 6)]])
         trainers = G.parse_trainers(os.path.join(G.REPO, 'src', 'data', 'trainers.party'))
         self.assertTrue(all(t in trainers for rows in rematches.values() for ids in rows for t in ids))
+        # #139: the eight gym leaders' and Wally's post-game ladders, and every regular ladder staged.
+        ladders = RB.rematch_ladders(rematches, RB.load_stages(RB.DEFAULT_STAGES, trainers, G.REPO), trainers)
+        self.assertEqual([lad[1] for lad in ladders['boss']],
+                         ['TRAINER_WALLY_VR_2'] + [f'TRAINER_{n}_2' for n in (
+                             'ROXANNE', 'BRAWLY', 'WATTSON', 'FLANNERY', 'NORMAN', 'WINONA', 'TATE_AND_LIZA', 'JUAN')])
+        self.assertEqual((len(ladders['regular']), ladders['unstaged']), (64, []))
+        self.assertEqual(ladders['final'], ['TRAINER_STEVEN'])
 
     def test_committed_curve_data_runs_the_repo_model(self):
         """output/curve_data.json (the explorer's data) gives the curve the
@@ -786,7 +871,8 @@ class RealRepo(unittest.TestCase):
         with open(os.path.join(RB.DEFAULT_OUT_DIR, RB.CURVE_DATA), encoding='utf-8') as f:
             snap = RB.load_snapshot(json.load(f))
         for knobs in ({}, {'ko_takers': 6, 'boss_ref': 'party_mean', 'margin': 1, 'trainer_gap': 5, 'wild_gap': 10},
-                      {'scaled_exp': False, 'trainer_exp': '1.5x on', 'affection': 'always', 'wild_battles': 5}):
+                      {'scaled_exp': False, 'trainer_exp': '1.5x on', 'affection': 'always', 'wild_battles': 5},
+                      {'margin': 5, 'gap_unit': 'percent', 'trainer_gap': 10, 'rematch_step': 5}):
             self.assertEqual(RB.explore_run(snap, knobs), RB.explore_run(live, knobs), knobs)
 
     def test_stage_bosses_exist(self):
