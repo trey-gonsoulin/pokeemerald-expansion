@@ -644,6 +644,10 @@ OPTIONS = (
                         help='vanilla wild_encounters.json the natives come from (default: the committed '
                              'snapshot)')),
     Option('wild', dict(default=AA.SRC_WILD, help='file --write overwrites (not a source of natives)')),
+    Option('levels', dict(default=None,
+                          help='JSON of wild level offsets, map -> table field -> levels, applied after the '
+                               'species (default: level_offsets.json, from tools/rebalance apply; '
+                               'none if missing)')),
     Option('pools', dict(default=os.path.join(AA.DEFAULT_OUT, 'archetype_pools.json'))),
     Option('maps', dict(default=os.path.join(AA.DEFAULT_OUT, 'emerald_maps.json'))),
     Option('out_dir', dict(default=DEFAULT_OUT_DIR, help='where the preview JSON and report go')),
@@ -954,6 +958,27 @@ def skeleton(wild):
     return json.loads(json.dumps(wild), object_hook=lambda d: {**d, 'species': None} if 'species' in d else d)
 
 
+def shift_levels(wild, offsets, info):
+    """Raise ``wild``'s tables in place by ``offsets`` (map -> table field ->
+    levels), each slot's levels capped at 100. A raised slot's species
+    evolves for its new min level (SpeciesInfo.evolve, kept to enabled
+    species), as tools/rebalance's shifted_slots models it. Returns the
+    number of tables shifted."""
+    shifted = 0
+    for enc in wild_headers(wild)['encounters']:
+        for field, shift in offsets.get(enc.get('map'), {}).items():
+            if not shift or field not in enc:
+                continue
+            for slot in enc[field]['mons']:
+                slot['min_level'], slot['max_level'] = (max(1, min(slot[k] + shift, 100))
+                                                        for k in ('min_level', 'max_level'))
+                if shift > 0:
+                    out = info.evolve(slot['species'], slot['min_level'])
+                    slot['species'] = out if out in info.enabled else slot['species']
+            shifted += 1
+    return shifted
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(prog='area_archetypes.py restock', description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -994,12 +1019,22 @@ def main(argv=None):
     if settings.gens and not settings.gens & pool_gens:
         p.error(f'gens: {fmt_gens(settings.gens)} matches no pool species, so nothing would be '
                 f'restocked (generations in {args.pools}: {fmt_gens(pool_gens)})')
-    if (args.write and not args.force and os.path.exists(args.wild)
-            and skeleton(load_json(args.wild)) != skeleton(base)):
-        sys.exit(f'{args.wild} differs from {args.base} in more than species (an upstream merge or '
-                 f'a hand edit?), and --write would lose that; refresh the baseline (README), '
-                 f'or --force to overwrite anyway')
+    if args.levels and not os.path.exists(args.levels):
+        p.error(f'--levels {args.levels}: no such file')
+    levels = args.levels or os.path.join(args.repo, os.path.relpath(AA.LEVEL_OFFSETS, AA.REPO))
+    offsets = load_json(levels) if os.path.exists(levels) else {}
+    # The file --write replaces should be the base raised by the offsets it was written with (its stamp).
+    if args.write and not args.force and os.path.exists(args.wild):
+        current = load_json(args.wild)
+        written_with = copy.deepcopy(base)
+        stamped = current.get(AA.RESTOCK_STAMP, {}).get('level_offsets', {})
+        shift_levels(written_with, stamped if isinstance(stamped, dict) else {}, info)
+        if skeleton(current) != skeleton(written_with):
+            sys.exit(f'{args.wild} differs from {args.base} in more than species and the level offsets '
+                     f'it was written with (an upstream merge or a hand edit?), and --write would lose '
+                     f'that; refresh the baseline (README), or --force to overwrite anyway')
     new, changes = restock(base, emerald_maps, pools, info, settings)
+    shifted = shift_levels(new, offsets, info)
     # A ratio of 0 changes nothing on purpose; above 0, nothing could be drawn.
     if not changes and any(not (ms := settings.for_map(enc['base_label'])).skip and ms.ratio > 0
                            for enc, *_ in pooled_tables(base, emerald_maps, pools, settings)):
@@ -1010,6 +1045,8 @@ def main(argv=None):
                     f'{args.wild}; --force to write anyway')
         print(f'warning: {nothing}', file=sys.stderr)
     stamp = {'base_sha256': base_sha256, 'seed': settings.seed, 'ratio': settings.ratio}
+    if shifted:
+        stamp['level_offsets'] = offsets
     if AA.RESTOCK_STAMP in base:  # --force on a restocked base: keep its history
         stamp['base_restocked_by'] = base[AA.RESTOCK_STAMP]
     new[AA.RESTOCK_STAMP] = stamp
@@ -1019,7 +1056,8 @@ def main(argv=None):
     dump_wild(new, preview)
     s = write_report(report, changes, settings)
     print(f'{s["maps_changed"]} maps / {s["tables_changed"]} tables / {s["slots_changed"]} slots changed; '
-          f'{s["distinct_species_added"]} species added, {s["distinct_species_removed"]} removed')
+          f'{s["distinct_species_added"]} species added, {s["distinct_species_removed"]} removed; '
+          f'{shifted} tables raised by level offsets')
     print(f'  report: {report}\n  preview: {preview}')
     if args.write:
         dump_wild(new, args.wild)

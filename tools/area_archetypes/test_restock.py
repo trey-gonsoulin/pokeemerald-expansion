@@ -93,6 +93,26 @@ class SpeciesInfoTests(unittest.TestCase):
         self.assertEqual(i.devolve('SPECIES_CROBAT', 25), 'SPECIES_GOLBAT')
         self.assertEqual(i.devolve('SPECIES_PIKACHU', 3), 'SPECIES_PIKACHU')
 
+    def test_shift_levels(self):
+        # Offsets raise every slot of the named tables (capped at 100), and a raised slot evolves
+        # for its new min level; a lowered one keeps its species.
+        wild = {'wild_encounter_groups': [{'label': 'gWildMonHeaders', 'encounters': [
+            {'map': 'MAP_A', 'base_label': 'a',
+             'land_mons': {'mons': [{'min_level': 30, 'max_level': 33, 'species': 'SPECIES_ARON'},
+                                    {'min_level': 95, 'max_level': 99, 'species': 'SPECIES_ZUBAT'}]},
+             'water_mons': {'mons': [{'min_level': 20, 'max_level': 30, 'species': 'SPECIES_ARON'}]}},
+            {'map': 'MAP_B', 'base_label': 'b',
+             'land_mons': {'mons': [{'min_level': 10, 'max_level': 12, 'species': 'SPECIES_ARON'}]}}]}]}
+        n = R.shift_levels(wild, {'MAP_A': {'land_mons': 5, 'fishing_mons': 3}, 'MAP_B': {'land_mons': -20}},
+                           self.info)
+        self.assertEqual(n, 2)  # MAP_A has no fishing table
+        a, b = wild['wild_encounter_groups'][0]['encounters']
+        self.assertEqual(a['land_mons']['mons'], [
+            {'min_level': 35, 'max_level': 38, 'species': 'SPECIES_LAIRON'},
+            {'min_level': 100, 'max_level': 100, 'species': 'SPECIES_GOLBAT'}])
+        self.assertEqual(a['water_mons']['mons'][0], {'min_level': 20, 'max_level': 30, 'species': 'SPECIES_ARON'})
+        self.assertEqual(b['land_mons']['mons'][0], {'min_level': 1, 'max_level': 1, 'species': 'SPECIES_ARON'})
+
     def test_evolve(self):
         i = self.info
         # EVOLVE_GRACE levels past each EVO_LEVEL, up the whole line.
@@ -390,6 +410,14 @@ def read(path):
         return f.read()
 
 
+def no_levels(tmp):
+    """An empty --levels file: for tests about the species, not the level offsets."""
+    path = os.path.join(tmp, 'no_levels.json')
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write('{}')
+    return path
+
+
 def run_quietly(argv):
     with contextlib.redirect_stdout(io.StringIO()):
         return R.main(argv)
@@ -447,8 +475,29 @@ class CliTests(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 run_quietly(['--wild', wild, '--out-dir', out, '--write'])
             self.assertEqual(R.load_json(wild), edited)
-            run_quietly(['--wild', wild, '--out-dir', out, '--write', '--force'])
+            run_quietly(['--wild', wild, '--out-dir', out, '--write', '--force', '--levels', no_levels(tmp)])
             self.assertEqual(R.skeleton(R.load_json(wild)), R.skeleton(R.load_json(WILD)))
+
+    def test_write_checks_levels_against_its_stamp(self):
+        # A file restock wrote with level offsets is rewritten without --force, even with other
+        # offsets; a hand-edited level on top of it is refused.
+        with tempfile.TemporaryDirectory() as tmp:
+            wild = os.path.join(tmp, 'wild_encounters.json')
+            out = os.path.join(tmp, 'out')
+            levels = os.path.join(tmp, 'levels.json')
+            for shift in (5, 7):
+                with open(levels, 'w', encoding='utf-8') as f:
+                    json.dump({'MAP_ROUTE101': {'land_mons': shift}}, f)
+                written, _ = run_quietly(['--wild', wild, '--out-dir', out, '--write', '--levels', levels])
+                self.assertEqual(written[AA.RESTOCK_STAMP]['level_offsets'], {'MAP_ROUTE101': {'land_mons': shift}})
+            edited = R.load_json(wild)
+            enc = next(e for e in R.wild_headers(edited)['encounters'] if e.get('map') == 'MAP_ROUTE101')
+            enc['land_mons']['mons'][0]['max_level'] += 1
+            R.dump_wild(edited, wild)
+            with self.assertRaises(SystemExit):
+                run_quietly(['--wild', wild, '--out-dir', out, '--write', '--levels', levels])
+            with self.assertRaises(SystemExit):
+                run_quietly(['--out-dir', out, '--levels', os.path.join(tmp, 'typo.json')])
 
     def test_baseline_copies_a_vanilla_file(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -533,7 +582,8 @@ class CliTests(unittest.TestCase):
             out = os.path.join(tmp, 'out')
             R.dump_wild(R.load_json(AA.SRC_WILD), wild)
             written = read(wild)
-            argv = ['--wild', wild, '--out-dir', out, '--allow', 'MEWTWO']
+            # No level offsets: this is about the species draw.
+            argv = ['--wild', wild, '--out-dir', out, '--allow', 'MEWTWO', '--levels', no_levels(tmp)]
             err = io.StringIO()
             with contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as cm:
                 run_quietly(argv + ['--write'])

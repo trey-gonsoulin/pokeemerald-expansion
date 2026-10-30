@@ -45,6 +45,9 @@ DEFAULT_CACHE = os.path.join(HERE, '.cache', 'pokeapi')
 DEFAULT_OUT = os.path.join(HERE, 'output')
 SRC_WILD = os.path.join(REPO, 'src', 'data', 'wild_encounters.json')
 VANILLA_WILD = os.path.join(DEFAULT_OUT, 'wild_encounters.vanilla.json')
+# Wild level offsets (map -> table field -> levels), which restock applies
+# after the species; tools/rebalance's apply writes them (#150).
+LEVEL_OFFSETS = os.path.join(HERE, 'level_offsets.json')
 # Top-level key restock adds to the JSON it writes, so a restocked file is
 # never mistaken for the vanilla baseline.
 RESTOCK_STAMP = 'restocked_by'
