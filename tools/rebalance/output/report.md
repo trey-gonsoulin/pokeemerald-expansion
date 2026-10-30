@@ -343,12 +343,12 @@ Full clear: 15 of 30 bosses have the bench (friendship) within 1 of their ace; t
 |---|---|
 | trainer Pokemon on default moves | 1288 |
 |   of them on story trainers | 667 |
-| identical moveset (same order) | 19 |
-| same four moves in any order | 26 |
-| moves shared with vanilla (0-4): count | {0: 264, 1: 570, 2: 353, 3: 91, 4: 10} |
-| mean attacking moves vanilla -> modern | 2.18 -> 2.37 |
-| mean best attack power vanilla -> modern | 73.6 -> 81.7 |
-| best attack power up / down | 608 / 298 |
+| identical moveset (same order) | 21 |
+| same four moves in any order | 31 |
+| moves shared with vanilla (0-4): count | {0: 246, 1: 559, 2: 382, 3: 86, 4: 15} |
+| mean attacking moves vanilla -> modern | 2.2 -> 2.38 |
+| mean best attack power vanilla -> modern | 80.4 -> 88.0 |
+| best attack power up / down | 597 / 362 |
 
 Flags (all default Pokemon / story trainers only):
 
@@ -356,10 +356,10 @@ Flags (all default Pokemon / story trainers only):
 |---|---|---|
 | no_attack | 6 | 6 |
 | lost_all_attacks | 0 | 0 |
-| one_attack | 111 | 38 |
-| lost_stab | 57 | 24 |
-| above_band | 26 | 8 |
-| new_strong | 620 | 338 |
+| one_attack | 83 | 38 |
+| lost_stab | 44 | 24 |
+| above_band | 23 | 8 |
+| new_strong | 723 | 338 |
 
 ### no_attack (story examples)
 
@@ -435,11 +435,11 @@ Flags (all default Pokemon / story trainers only):
 
 | flag | species (count) |
 |---|---|
-| above_band | Azumarill (8), Shroomish (6), Marill (2), Slugma (2), Natu (2), Magcargo (1), Banette (1), Trapinch (1), Shelgon (1), Xatu (1), Girafarig (1) |
-| lost_stab | Altaria (15), Mightyena (6), Makuhita (6), Hariyama (5), Wailmer (4), Zangoose (2), Spoink (2), Swablu (2), Sceptile (2), Volbeat (2), Machoke (1), Gloom (1) |
-| new_strong | Gyarados (25), Azumarill (25), Machoke (24), Staryu (24), Tentacruel (23), Sharpedo (22), Numel (20), Linoone (19), Manectric (19), Mightyena (14), Gloom (14), Marill (14) |
+| above_band | Azumarill (14), Xatu (3), Salamence (2), Magcargo (1), Trapinch (1), Girafarig (1), Wailord (1) |
+| lost_stab | Altaria (10), Mightyena (7), Gloom (3), Wailmer (3), Wailord (3), Zangoose (2), Machoke (2), Hariyama (2), Salamence (2), Sceptile (2), Kecleon (2), Makuhita (1) |
+| new_strong | Azumarill (34), Tentacruel (32), Sharpedo (27), Manectric (27), Linoone (25), Gyarados (25), Machoke (25), Staryu (25), Breloom (23), Swellow (22), Lombre (19), Mightyena (17) |
 | no_attack | Magikarp (5), Silcoon (1) |
-| one_attack | Loudred (14), Roselia (12), Hariyama (9), Mightyena (7), Makuhita (7), Dodrio (6), Altaria (6), Claydol (6), Swellow (5), Whismur (4), Zigzagoon (4), Exploud (4) |
+| one_attack | Roselia (10), Mightyena (8), Hariyama (6), Claydol (6), Sharpedo (5), Loudred (4), Zigzagoon (4), Exploud (4), Gardevoir (4), Dodrio (4), Gloom (3), Swellow (3) |
 
 ## Hand-written movesets
 
