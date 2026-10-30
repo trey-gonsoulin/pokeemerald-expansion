@@ -769,6 +769,10 @@ IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
 Roselia
 Level: 37
 IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
+- Magical Leaf
+- Sweet Scent
+- Giga Drain
+- Synthesis
 
 === TRAINER_ROSE_3 ===
 Name: ROSE
@@ -790,6 +794,10 @@ IVs: 2 HP / 2 Atk / 2 Def / 2 SpA / 2 SpD / 2 Spe
 Roselia
 Level: 39
 IVs: 2 HP / 2 Atk / 2 Def / 2 SpA / 2 SpD / 2 Spe
+- Magical Leaf
+- Sweet Scent
+- Giga Drain
+- Synthesis
 
 === TRAINER_ROSE_4 ===
 Name: ROSE
@@ -1622,6 +1630,10 @@ IVs: 13 HP / 13 Atk / 13 Def / 13 SpA / 13 SpD / 13 Spe
 Hariyama
 Level: 37
 IVs: 13 HP / 13 Atk / 13 Def / 13 SpA / 13 SpD / 13 Spe
+- Force Palm
+- Belly Drum
+- Detect
+- Seismic Toss
 
 === TRAINER_WILTON_3 ===
 Name: WILTON
@@ -1959,6 +1971,10 @@ IVs: 13 HP / 13 Atk / 13 Def / 13 SpA / 13 SpD / 13 Spe
 Roselia
 Level: 37
 IVs: 13 HP / 13 Atk / 13 Def / 13 SpA / 13 SpD / 13 Spe
+- Magical Leaf
+- Sweet Scent
+- Giga Drain
+- Synthesis
 
 === TRAINER_BROOKE_3 ===
 Name: BROOKE
@@ -1981,6 +1997,10 @@ IVs: 14 HP / 14 Atk / 14 Def / 14 SpA / 14 SpD / 14 Spe
 Roselia
 Level: 39
 IVs: 14 HP / 14 Atk / 14 Def / 14 SpA / 14 SpD / 14 Spe
+- Magical Leaf
+- Sweet Scent
+- Giga Drain
+- Synthesis
 
 === TRAINER_BROOKE_4 ===
 Name: BROOKE
@@ -3632,6 +3652,10 @@ IVs: 4 HP / 4 Atk / 4 Def / 4 SpA / 4 SpD / 4 Spe
 Exploud
 Level: 43
 IVs: 4 HP / 4 Atk / 4 Def / 4 SpA / 4 SpD / 4 Spe
+- Crunch
+- Stomp
+- Roar
+- Supersonic
 
 Magneton
 Level: 43
@@ -3959,6 +3983,10 @@ IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
 Swellow
 Level: 37
 IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
+- Brave Bird
+- Aerial Ace
+- Quick Guard
+- Agility
 
 === TRAINER_ETHAN_3 ===
 Name: ETHAN
@@ -5345,6 +5373,10 @@ IVs: 2 HP / 2 Atk / 2 Def / 2 SpA / 2 SpD / 2 Spe
 Meditite
 Level: 37
 IVs: 2 HP / 2 Atk / 2 Def / 2 SpA / 2 SpD / 2 Spe
+- High Jump Kick
+- Zen Headbutt
+- Acupressure
+- Power Trick
 
 === TRAINER_JERRY_3 ===
 Name: JERRY
@@ -5392,6 +5424,10 @@ AI: Check Bad Move
 Gardevoir
 Level: 43
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
+- Psybeam
+- Wish
+- Calm Mind
+- Psychic
 
 Banette
 Level: 43
@@ -5498,6 +5534,10 @@ IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 Exploud
 Level: 43
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
+- Crunch
+- Stomp
+- Roar
+- Supersonic
 
 === TRAINER_KATE_AND_JOY ===
 Name: KATE & JOY
@@ -6046,10 +6086,18 @@ AI: Basic Trainer
 Meditite
 Level: 37
 IVs: 25 HP / 25 Atk / 25 Def / 25 SpA / 25 SpD / 25 Spe
+- High Jump Kick
+- Zen Headbutt
+- Acupressure
+- Power Trick
 
 Hariyama
 Level: 37
 IVs: 25 HP / 25 Atk / 25 Def / 25 SpA / 25 SpD / 25 Spe
+- Force Palm
+- Belly Drum
+- Detect
+- Seismic Toss
 
 === TRAINER_SHELBY_3 ===
 Name: SHELBY
@@ -6063,6 +6111,10 @@ AI: Basic Trainer
 Medicham
 Level: 39
 IVs: 26 HP / 26 Atk / 26 Def / 26 SpA / 26 SpD / 26 Spe
+- High Jump Kick
+- Zen Headbutt
+- Acupressure
+- Power Trick
 
 Hariyama
 Level: 39
@@ -6304,6 +6356,10 @@ AI: Check Bad Move
 Swellow
 Level: 37
 IVs: 2 HP / 2 Atk / 2 Def / 2 SpA / 2 SpD / 2 Spe
+- Brave Bird
+- Aerial Ace
+- Quick Guard
+- Agility
 
 Mightyena
 Level: 39
@@ -6705,6 +6761,10 @@ IVs: 3 HP / 3 Atk / 3 Def / 3 SpA / 3 SpD / 3 Spe
 Sharpedo
 Level: 40
 IVs: 3 HP / 3 Atk / 3 Def / 3 SpA / 3 SpD / 3 Spe
+- Night Slash
+- Swagger
+- Crunch
+- Agility
 
 Tentacruel
 Level: 40
@@ -6730,6 +6790,10 @@ IVs: 4 HP / 4 Atk / 4 Def / 4 SpA / 4 SpD / 4 Spe
 Sharpedo
 Level: 41
 IVs: 4 HP / 4 Atk / 4 Def / 4 SpA / 4 SpD / 4 Spe
+- Night Slash
+- Swagger
+- Crunch
+- Agility
 
 Gyarados
 Level: 41
@@ -6986,6 +7050,10 @@ AI: Check Bad Move
 Dodrio
 Level: 37
 IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
+- Pluck
+- Uproar
+- Acupressure
+- Swords Dance
 
 === TRAINER_DYLAN_3 ===
 Name: DYLAN
@@ -7051,6 +7119,10 @@ AI: Check Bad Move
 Dodrio
 Level: 37
 IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
+- Pluck
+- Uproar
+- Acupressure
+- Swords Dance
 
 === TRAINER_MARIA_3 ===
 Name: MARIA
@@ -7420,6 +7492,10 @@ AI: Check Bad Move
 Salamence
 Level: 74
 IVs: 15 HP / 15 Atk / 15 Def / 15 SpA / 15 SpD / 15 Spe
+- Zen Headbutt
+- Dragon Claw
+- Flamethrower
+- Double-Edge
 
 Altaria
 Level: 74
@@ -7449,6 +7525,10 @@ IVs: 17 HP / 17 Atk / 17 Def / 17 SpA / 17 SpD / 17 Spe
 Salamence @ Dragon Fang
 Level: 78
 IVs: 17 HP / 17 Atk / 17 Def / 17 SpA / 17 SpD / 17 Spe
+- Zen Headbutt
+- Dragon Claw
+- Flamethrower
+- Double-Edge
 
 === TRAINER_AARON ===
 Name: AARON
@@ -7674,10 +7754,18 @@ AI: Check Bad Move
 Xatu
 Level: 48
 IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
+- Air Slash
+- Guard Swap
+- Psychic
+- Wish
 
 Altaria
 Level: 48
 IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
+- Dragon Breath
+- Cotton Guard
+- Take Down
+- Moonblast
 
 === TRAINER_ROBERT_3 ===
 Name: ROBERT
@@ -7695,6 +7783,10 @@ IVs: 2 HP / 2 Atk / 2 Def / 2 SpA / 2 SpD / 2 Spe
 Altaria
 Level: 51
 IVs: 2 HP / 2 Atk / 2 Def / 2 SpA / 2 SpD / 2 Spe
+- Dragon Breath
+- Take Down
+- Moonblast
+- Perish Song
 
 === TRAINER_ROBERT_4 ===
 Name: ROBERT
@@ -7712,6 +7804,10 @@ IVs: 3 HP / 3 Atk / 3 Def / 3 SpA / 3 SpD / 3 Spe
 Altaria
 Level: 53
 IVs: 3 HP / 3 Atk / 3 Def / 3 SpA / 3 SpD / 3 Spe
+- Dragon Breath
+- Take Down
+- Moonblast
+- Perish Song
 
 === TRAINER_ROBERT_5 ===
 Name: ROBERT
@@ -8126,10 +8222,18 @@ AI: Check Bad Move
 Meditite
 Level: 37
 IVs: 13 HP / 13 Atk / 13 Def / 13 SpA / 13 SpD / 13 Spe
+- High Jump Kick
+- Zen Headbutt
+- Acupressure
+- Power Trick
 
 Hariyama
 Level: 37
 IVs: 13 HP / 13 Atk / 13 Def / 13 SpA / 13 SpD / 13 Spe
+- Force Palm
+- Belly Drum
+- Detect
+- Seismic Toss
 
 === TRAINER_CYNDY_3 ===
 Name: CYNDY
@@ -8941,6 +9045,10 @@ IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
 Swablu
 Level: 37
 IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
+- Round
+- Sing
+- Cotton Guard
+- Take Down
 
 === TRAINER_DIANA_3 ===
 Name: DIANA
@@ -8962,6 +9070,10 @@ IVs: 2 HP / 2 Atk / 2 Def / 2 SpA / 2 SpD / 2 Spe
 Altaria
 Level: 39
 IVs: 2 HP / 2 Atk / 2 Def / 2 SpA / 2 SpD / 2 Spe
+- Dragon Breath
+- Sing
+- Cotton Guard
+- Take Down
 
 === TRAINER_DIANA_4 ===
 Name: DIANA
@@ -8983,6 +9095,10 @@ IVs: 3 HP / 3 Atk / 3 Def / 3 SpA / 3 SpD / 3 Spe
 Altaria
 Level: 41
 IVs: 3 HP / 3 Atk / 3 Def / 3 SpA / 3 SpD / 3 Spe
+- Dragon Breath
+- Sing
+- Cotton Guard
+- Take Down
 
 === TRAINER_DIANA_5 ===
 Name: DIANA
@@ -9000,10 +9116,18 @@ IVs: 4 HP / 4 Atk / 4 Def / 4 SpA / 4 SpD / 4 Spe
 Vileplume
 Level: 43
 IVs: 4 HP / 4 Atk / 4 Def / 4 SpA / 4 SpD / 4 Spe
+- Petal Dance
+- Moonlight
+- Grassy Terrain
+- Moonblast
 
 Altaria
 Level: 43
 IVs: 4 HP / 4 Atk / 4 Def / 4 SpA / 4 SpD / 4 Spe
+- Dragon Breath
+- Sing
+- Cotton Guard
+- Take Down
 
 === TRAINER_AMY_AND_LIV_1 ===
 Name: AMY & LIV
@@ -10221,10 +10345,18 @@ IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
 Swellow
 Level: 37
 IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
+- Brave Bird
+- Aerial Ace
+- Quick Guard
+- Agility
 
 Hariyama
 Level: 37
 IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
+- Force Palm
+- Belly Drum
+- Detect
+- Seismic Toss
 
 === TRAINER_ISAAC_3 ===
 Name: ISAAC
@@ -10304,6 +10436,10 @@ AI: Check Bad Move
 Exploud
 Level: 43
 IVs: 4 HP / 4 Atk / 4 Def / 4 SpA / 4 SpD / 4 Spe
+- Crunch
+- Stomp
+- Roar
+- Supersonic
 
 Linoone
 Level: 43
@@ -10417,6 +10553,10 @@ IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
 Roselia
 Level: 37
 IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
+- Magical Leaf
+- Sweet Scent
+- Giga Drain
+- Synthesis
 
 Skitty
 Level: 37
@@ -10450,6 +10590,10 @@ IVs: 2 HP / 2 Atk / 2 Def / 2 SpA / 2 SpD / 2 Spe
 Roselia
 Level: 39
 IVs: 2 HP / 2 Atk / 2 Def / 2 SpA / 2 SpD / 2 Spe
+- Magical Leaf
+- Sweet Scent
+- Giga Drain
+- Synthesis
 
 Delcatty
 Level: 39
@@ -10630,6 +10774,10 @@ AI: Basic Trainer
 Kecleon
 Level: 53
 IVs: 10 HP / 10 Atk / 10 Def / 10 SpA / 10 SpD / 10 Spe
+- Slash
+- Substitute
+- Sucker Punch
+- Foul Play
 
 Breloom
 Level: 53
@@ -10714,6 +10862,10 @@ AI: Check Bad Move / Try To Faint / Force Setup First Turn
 Gloom
 Level: 45
 IVs: 7 HP / 7 Atk / 7 Def / 7 SpA / 7 SpD / 7 Spe
+- Giga Drain
+- Moonblast
+- Grassy Terrain
+- Moonlight
 
 Roselia
 Level: 45
@@ -10732,6 +10884,10 @@ AI: Basic Trainer
 Gloom
 Level: 47
 IVs: 8 HP / 8 Atk / 8 Def / 8 SpA / 8 SpD / 8 Spe
+- Giga Drain
+- Moonblast
+- Grassy Terrain
+- Moonlight
 
 Roselia
 Level: 47
@@ -10768,6 +10924,10 @@ AI: Basic Trainer
 Bellossom
 Level: 52
 IVs: 10 HP / 10 Atk / 10 Def / 10 SpA / 10 SpD / 10 Spe
+- Petal Dance
+- Quiver Dance
+- Grassy Terrain
+- Moonblast
 
 Roselia
 Level: 52
@@ -14714,7 +14874,7 @@ Aerodactyl
 Level: 87
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Rock Slide
-- Hyper Beam
+- Giga Impact
 - Supersonic
 - Protect
 
@@ -15395,7 +15555,7 @@ IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 Slaking @ Sitrus Berry
 Level: 82
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
-- Hyper Beam
+- Double-Edge
 - Flamethrower
 - Thunderbolt
 - Shadow Ball
@@ -15445,7 +15605,7 @@ IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 Slaking @ Sitrus Berry
 Level: 85
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
-- Hyper Beam
+- Double-Edge
 - Flamethrower
 - Thunderbolt
 - Shadow Ball
@@ -15495,7 +15655,7 @@ IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 Slaking @ Sitrus Berry
 Level: 89
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
-- Hyper Beam
+- Double-Edge
 - Flamethrower
 - Thunderbolt
 - Shadow Ball
@@ -15553,7 +15713,7 @@ IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 Slaking @ Sitrus Berry
 Level: 92
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
-- Hyper Beam
+- Double-Edge
 - Flamethrower
 - Thunderbolt
 - Shadow Ball
@@ -15761,7 +15921,7 @@ IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 Dragonite @ Sitrus Berry
 Level: 87
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
-- Hyper Beam
+- Double-Edge
 - Thunderbolt
 - Earthquake
 - Ice Beam
@@ -16566,6 +16726,10 @@ IVs: 4 HP / 4 Atk / 4 Def / 4 SpA / 4 SpD / 4 Spe
 Machoke
 Level: 50
 IVs: 4 HP / 4 Atk / 4 Def / 4 SpA / 4 SpD / 4 Spe
+- Strength
+- Dual Chop
+- Vital Throw
+- Seismic Toss
 
 Tentacruel
 Level: 50
@@ -16835,6 +16999,10 @@ IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
 Exploud
 Level: 54
 IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
+- Stomp
+- Supersonic
+- Uproar
+- Screech
 
 === TRAINER_FERNANDO_3 ===
 Name: FERNANDO
@@ -16995,6 +17163,10 @@ IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
 Mightyena
 Level: 50
 IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
+- Crunch
+- Taunt
+- Yawn
+- Take Down
 
 Linoone
 Level: 50
@@ -17123,6 +17295,10 @@ AI: Check Bad Move
 Wailord
 Level: 44
 IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
+- Bounce
+- Body Slam
+- Brine
+- Amnesia
 
 Seadra
 Level: 44
@@ -17140,10 +17316,18 @@ AI: Check Bad Move
 Luvdisc
 Level: 46
 IVs: 2 HP / 2 Atk / 2 Def / 2 SpA / 2 SpD / 2 Spe
+- Water Pulse
+- Aqua Ring
+- Soak
+- Hydro Pump
 
 Wailord
 Level: 46
 IVs: 2 HP / 2 Atk / 2 Def / 2 SpA / 2 SpD / 2 Spe
+- Bounce
+- Body Slam
+- Brine
+- Amnesia
 
 Seadra
 Level: 46
