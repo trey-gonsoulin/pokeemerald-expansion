@@ -74,8 +74,11 @@ The knobs:
 - **Exp formula:** the 1.5x trainer exp, level-scaled exp
   (`B_SCALED_EXP`), and three options the game doesn't have yet:
   `scaling_power` (the scaling table is `floor(i^p / 4)`, the game's at
-  2.5), `overlevel_cutoff` (1 exp past that many levels above the foe) and
-  `share_fraction` (the Exp. Share bench's share, the game's half).
+  2.5), `overlevel_cutoff` (1 exp past that many levels above the foe, or
+  percent of its level with `overlevel_unit`; with `overlevel_halflife`
+  the exp instead halves every that many levels or percent past the
+  cutoff, as `Overlevel`) and `share_fraction` (the Exp. Share bench's
+  share, the game's half).
 - **Targets:** the party level everything measures against (`REFERENCES`:
   the bench, the KO-takers' mean, the party's mean, its highest member),
   the boss margin (off: today's levels) with the Elite Four spacing
@@ -85,6 +88,8 @@ The knobs:
   below the reference at its start, over the vanilla tables), and whether
   raised Pokemon evolve (`restock.SpeciesInfo.evolve`, `EVOLVE_GRACE`
   levels past a level evolution; `EVOLVE_EXEMPT`'s teams never do).
+  `gap_unit` puts the margin and both gaps in percent of the reference
+  instead of levels.
 
 The page's files are `explorer/index.html`, `app.js` (the controls and the
 Chart.js chart), `worker.js` and `model.js` (the module list and the Python
