@@ -60,11 +60,11 @@ const $ = sel => document.querySelector(sel);
 const worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
 let defaults = null;
 let today = null;  // the defaults' result, for the dashed lines
-let latest = null;
 let busy = false;
 let pending = false;
 let timer = 0;
 let chart = null;
+let bossStages = [];  // the drawn bosses' stages, for the tooltip titles
 
 function buildControls() {
     const panel = $('#knobs');
@@ -77,8 +77,10 @@ function buildControls() {
         row.className = 'knob';
         row.dataset.key = k.key;
         let control = '';
+        // An optional knob starts its slider at the middle (the margin at +1), where it stays while off.
         if (k.type === 'range' || k.type === 'optional')
-            control = `<input type="range" min="${k.min}" max="${k.max}" step="${k.step}">`;
+            control = `<input type="range" min="${k.min}" max="${k.max}" step="${k.step}"
+                value="${k.key === 'margin' ? 1 : Math.round((k.min + k.max) / 2)}">`;
         if (k.type === 'optional')
             control = `<input type="checkbox" class="on">` + control;
         if (k.type === 'check')
@@ -119,12 +121,8 @@ function setKnobs(knobs) {
         else {
             if (k.type === 'optional')
                 row.querySelector('.on').checked = v !== null;
-            const range = row.querySelector('input[type=range]');
-            // An optional knob that is off keeps its slider where it was, or its middle.
             if (v !== null)
-                range.value = v;
-            else if (!range.dataset.touched)
-                range.value = k.key === 'margin' ? 1 : Math.round((k.min + k.max) / 2);
+                row.querySelector('input[type=range]').value = v;
         }
         showValue(k, row);
     }
@@ -137,7 +135,6 @@ function showValue(k, row) {
         return;
     }
     const range = row.querySelector('input[type=range]');
-    range.dataset.touched = '1';
     const off = k.type === 'optional' && !row.querySelector('.on').checked;
     range.disabled = off;
     const v = Number(range.value);
@@ -198,9 +195,8 @@ worker.onmessage = ({ data }) => {
         return;
     }
     busy = false;
-    latest = data.result;
     $('#status').textContent = `${data.ms.toFixed(0)} ms`;
-    draw(latest);
+    draw(data.result);
     if (pending)
         request();
 };
@@ -218,7 +214,7 @@ function draw(res) {
         { label: 'Boss ace today', data: res.bosses.map(b => b.base_ace), borderColor: '#c0392b', borderDash: [6, 4],
           borderWidth: 1.5 },
         { label: `Party: ${refName}`, data: res.bosses.map(b => b.ref), borderColor: '#2471a3', borderWidth: 2.5 },
-        { label: `Party: ${refName}, default knobs`, data: today.bosses.map(b => todayReference(b, res.knobs)),
+        { label: `Party: ${refName}, default knobs`, data: today.bosses.map(b => b.refs[res.knobs.boss_ref]),
           borderColor: '#2471a3', borderDash: [6, 4], borderWidth: 1.5 },
         { label: 'Party: highest', data: res.bosses.map(b => Math.max(...b.levels)), borderColor: '#85c1e9',
           borderWidth: 1, pointRadius: 0 },
@@ -229,6 +225,7 @@ function draw(res) {
         { label: 'Wild: land mean', data: stageValue(res, 'wild_land_mean'), borderColor: '#27ae60',
           stepped: 'middle', borderWidth: 2 },
     ];
+    bossStages = res.bosses.map(b => b.stage);
     for (const s of sets) {
         s.pointRadius ??= 2;
         s.fill ??= false;
@@ -245,7 +242,7 @@ function draw(res) {
                 scales: { y: { suggestedMin: 0, suggestedMax: 100, title: { display: true, text: 'level' } },
                           x: { ticks: { autoSkip: false, maxRotation: 70, minRotation: 50 } } },
                 plugins: {
-                    tooltip: { callbacks: { title: items => `${items[0].label} (${res.bosses[items[0].dataIndex].stage})` } },
+                    tooltip: { callbacks: { title: items => `${items[0].label} (${bossStages[items[0].dataIndex]})` } },
                     legend: { position: 'bottom' },
                 },
             },
@@ -253,23 +250,9 @@ function draw(res) {
     } else {
         chart.data.labels = labels;
         sets.forEach((s, i) => Object.assign(chart.data.datasets[i], s));
-        chart.options.plugins.tooltip.callbacks.title =
-            items => `${items[0].label} (${res.bosses[items[0].dataIndex].stage})`;
         chart.update();
     }
     drawTables(res);
-}
-
-// The default knobs' party at the current reference, so the dashed party
-// line compares like with like (that party has one lead and five benched).
-function todayReference(b, knobs) {
-    const lv = b.levels;
-    switch (knobs.boss_ref) {
-    case 'ko_mean': return lv[0];
-    case 'party_mean': return lv.reduce((a, x) => a + x, 0) / lv.length;
-    case 'ace': return Math.max(...lv);
-    default: return Math.min(...lv.slice(1));
-    }
 }
 
 function drawTables(res) {

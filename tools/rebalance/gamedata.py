@@ -369,6 +369,14 @@ class GameData:
                                    if str(f.get('isHiddenPowerType')) in ('TRUE', '1')]
         self.items = parse_items(repo, defines)
 
+    @classmethod
+    def from_parts(cls, defines, species):
+        """A GameData with only these defines and species (the exp model's
+        part, as the curve explorer's snapshot holds it)."""
+        gd = cls.__new__(cls)
+        gd.defines, gd._flags, gd.species = defines, {}, species
+        return gd
+
     def flag(self, expr):
         """A config condition, cached: the exp model asks the same few for every KO."""
         if expr not in self._flags:
@@ -475,8 +483,8 @@ def parse_trainers(path):
         for para in paras[1:]:
             lines = [ln.strip() for ln in para.splitlines() if ln.strip()]
             species, _, item = lines[0].partition(' @ ')
-            gender = re.search(r'\((M|F)\)\s*$', species.strip())
-            species = re.sub(r'\s*\((M|F)\)\s*$', '', species.strip())
+            gender = re.search(r'\s*\((M|F)\)\s*$', species)
+            species = species[:gender.start()] if gender else species.strip()
             m = re.fullmatch(r'(.*?)\s*\(([^()]+)\)', species)
             species = m[2] if m else species
             level = 100
