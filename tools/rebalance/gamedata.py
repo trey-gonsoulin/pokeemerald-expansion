@@ -251,7 +251,7 @@ with open('src/data/pokemon/special_movesets.json') as f:
 with open('src/data/pokemon/all_learnables.json') as f:
     learnables = json.load(f)
 tutors = sorted(set(U.extract_repo_tutors()) | set(special['extraTutors']))
-types = json.loads(json.dumps(K.add_whitesspaces(K.extract_repo_species_data())))
+types = K.add_whitesspaces(K.extract_repo_species_data())
 print(T.prepare_output(learnables, list(T.extract_repo_tms()), tutors, special, types, ''))
 '''
 
