@@ -58,7 +58,7 @@ member), the stage's route trainers' mean ace and its wild land average.
 It runs this tool's own Python in the browser through Pyodide (loaded from
 the jsDelivr CDN, so it needs internet), in a Web Worker. Nothing is parsed
 there: `curve_snapshot` writes the parsed inputs to
-`output/curve_data.json` (the story stages and trainers, exp yields, level
+`output/curve_data.json` (the story stages and trainers, the rematch ladders and theirs, exp yields, level
 evolutions, the scaling table, both regimes' land slots and the config
 defines), and `load_snapshot` rebuilds them for
 `share_run`. A test checks that the committed snapshot gives the curve the
@@ -95,6 +95,27 @@ The knobs:
   levels past a level evolution; `EVOLVE_EXEMPT`'s teams never do).
   `gap_unit` puts the margin and both gaps in percent of the reference
   instead of levels.
+- **The post-game (#139):** after Wallace the chart goes on through the
+  rematch rounds and Steven (`rematch_ladders` reads `gRematchTable` through
+  `G.parse_rematches`):
+  - **Rounds:** the gym leaders' ladders and Wally's (`POSTGAME_LADDERS`)
+    are fought in rounds, `Rematch 2` being every ladder's first rematch.
+    With the margin, each round's teams go up to one ace, the margin over
+    the reference at the round's start, and at least 1 over their ladder's
+    previous fight.
+  - **Steven:** `POSTGAME_FINAL` follows, at the margin and at least
+    `POSTGAME_FINAL_STEP` (3) over the last round's highest ace. All of it
+    is capped at 100.
+  - **Ordinary trainers:** `rematch_step` raises their ladders
+    (`rematch_raises`). Rematches unlock after Norman (`REMATCH_UNLOCK`, the
+    game's `OW_REMATCH_BADGE_COUNT`) at any tier, so a ladder is levelled
+    for the earliest stage it can be fought: the later of the first fight's
+    stage and the one after Norman's. Its base is the higher of the first
+    fight's ace and the route trainer gap below that stage's starting
+    reference. Each rematch then goes `rematch_step` (levels or percent,
+    `gap_unit`) over the one before, compounding, and at least 1 over it.
+  - Neither kind gives the story stages any exp: the story curve doesn't
+    count rematches.
 
 ### Applying a curve (#150)
 
@@ -118,13 +139,18 @@ the repo's own data with them, through `apply_plan`, and writes:
 - each stage's wild offset over the vanilla levels, for every table of its
   maps (a water table counts from `SURF_STAGE`), into
   `tools/area_archetypes/level_offsets.json`, through `restock --write`.
-  Restock runs first, so a refused restock leaves nothing half written.
+  Restock runs first, so a refused restock leaves nothing half written;
+- the post-game rounds' teams and Steven (as bosses: no duplicate
+  evolutions), and the ordinary trainers' rematch ladders (#139), into
+  `src/data/trainers.party`.
 
 It only raises. On data it already wrote it asks for nothing, which
 `RealRepo.test_data_meets_the_curve_settings` checks. After a change to
 `trainers.party`, the wild tables or the exp formula, rerun `apply` and
 `rebalance.py` (or change the settings and do the same).
-Rematches (#139) and trainers outside the stages aren't touched.
+Trainers outside the stages and the rematch table aren't touched. Hand-written
+movesets don't move with the levels: after a raise, check the report's
+default-moveset flags (#139 hand-wrote the flagged rematch sets).
 
 The page's files are `explorer/index.html`, `app.js` (the controls and the
 Chart.js chart), `worker.js` and `model.js` (the module list and the Python
