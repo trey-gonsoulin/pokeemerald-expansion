@@ -55,7 +55,36 @@ SINGLE_BATTLE_TEST("Fury Cutter's power stays at 160 after the chain reaches it"
         }
     } THEN {
         // Every generation's Fury Cutter reaches 160 power by the sixth use in a row.
+        EXPECT_GT(damage[5], damage[0]);
         EXPECT_EQ(damage[5], damage[6]);
+    }
+}
+
+SINGLE_BATTLE_TEST("Fury Cutter's power resets if the chain breaks after reaching 160")
+{
+    s16 firstDamage, lastDamage;
+    int turn;
+
+    GIVEN {
+        PLAYER(SPECIES_CROBAT);
+        OPPONENT(SPECIES_LINOONE) { MaxHP(2000); HP(2000); }
+    } WHEN {
+        for (turn = 0; turn < 7; turn++)
+            TURN { MOVE(player, MOVE_FURY_CUTTER); }
+        TURN { MOVE(player, MOVE_CELEBRATE); }
+        TURN { MOVE(player, MOVE_FURY_CUTTER); }
+    } SCENE {
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_FURY_CUTTER, player);
+        HP_BAR(opponent, captureDamage: &firstDamage);
+        for (turn = 1; turn < 7; turn++) {
+            ANIMATION(ANIM_TYPE_MOVE, MOVE_FURY_CUTTER, player);
+            HP_BAR(opponent);
+        }
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_CELEBRATE, player);
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_FURY_CUTTER, player);
+        HP_BAR(opponent, captureDamage: &lastDamage);
+    } THEN {
+        EXPECT_EQ(firstDamage, lastDamage);
     }
 }
 
