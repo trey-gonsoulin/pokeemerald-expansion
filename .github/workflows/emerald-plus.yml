@@ -87,12 +87,13 @@ jobs:
       - name: Rebalance unit tests
         run: python3 -m unittest discover -s tools/rebalance
 
-      # report.md is a committed snapshot: fail if a data or tool change left it stale.
-      # findings.md is written by hand from it, so update both together.
+      # report.md and the explorer's curve_data.json are committed snapshots: fail if a
+      # data or tool change left them stale. findings.md is written by hand from the
+      # report, so update both together.
       - name: Rebalance report is current
         run: |
           python3 tools/rebalance/rebalance.py
-          git diff --exit-code tools/rebalance/output/report.md
+          git diff --exit-code tools/rebalance/output/report.md tools/rebalance/output/curve_data.json
 
       # The generator of the debug menu's flag and var names (src/data/debug_flag_var_names.h)
       - name: Debug name generator unit tests
