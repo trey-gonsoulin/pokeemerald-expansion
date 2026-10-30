@@ -308,6 +308,35 @@ Each rival row goes on all six teams of that fight: May or Brendan, with each st
 - **A falloff holds the curve down far less than a hard cutoff.** The targets keep the route trainers about 5 levels (10%) below the party, right at a +5 or +10% cutoff. A hard cutoff stops the party there, because each trainer it outgrows gives 1 exp. A falloff lets it keep pulling ahead slowly, and the targets follow it up. To hold Wallace near 80 with a falloff, it has to start at the party's own level (+0) and halve every 10 levels or 20%.
 - **Percent targets change little at these settings**: 10% is about 5 levels at level 50. They put the early game closer (a level-10 party's trainers 1 below rather than 5) and the endgame further apart.
 
+**Owner's choice (2026-10-30, for now):** the explorer settings
+
+```json
+{"wild_battles": 6, "scaling_power": 3.5, "overlevel_unit": "percent", "overlevel_cutoff": 10,
+ "overlevel_halflife": 5, "gap_unit": "percent", "margin": 5, "trainer_gap": 10, "wild_gap": 20}
+```
+
+- **Exp formula** (a game change, needing configs): the scaling table at level^3.5, plus an over-level penalty. Past 10% above the foe's level, the exp halves every further 5% of the foe's level, down to 1 exp. The 1.5x trainer bonus stays off, and the Gen 6+ Exp. Share keeps its half.
+- **Targets** (data, #150's apply step), all measured against the bench:
+  - bosses 5% above the bench, with the Elite Four spacing;
+  - route trainers' aces 10% below it when fought;
+  - wild land averages 20% below it at each stage's start;
+  - raised Pokémon evolve.
+- **Play-style assumptions:** a full clear, 3 catches and 6 wild KOs per stage, modelled friendship.
+- **The curve** (1 lead, 5 benched, the settings' rotation):
+
+  | boss | Roxanne | Brawly | Wattson | Flannery | Norman | Winona | Tate and Liza | Juan | Wallace |
+  |---|---|---|---|---|---|---|---|---|---|
+  | ace | 15 | 19 | 28 | 41 | 43 | 57 | 68 | 76 | 86 |
+
+  - The Elite Four come out at 80 / 81 / 82 / 83.
+  - The bench reaches 78 and the lead 84 by Wallace, and nothing reaches level 100.
+  - The raises are large:
+    - bosses up to +20;
+    - each stage's route trainers up to +27 (Juan's 71);
+    - wild land tables up to +21.
+- **The same settings with all six rotating** put the bosses higher: Flannery 45, Winona 62, Juan 82, Wallace 92, with the team at 84-85 by Wallace. The applied levels have to pick one rotation.
+- **The scaling table:** `ApplyExperienceMultipliers` already scales in u64. The level^3.5 table tops out at about 3.4e7 (index 210), so it fits the s32 `sExperienceScalingFactors` and can be swapped in.
+
 ## Proposed balance changes (owner to accept or reject; each can be its own issue)
 1. **Soft level cap at each gym ace** (config). Set `B_LEVEL_CAP_TYPE LEVEL_CAP_FLAG_LIST` and `B_EXP_CAP_TYPE EXP_CAP_SOFT`. `sLevelCapFlagMap` in `src/caps.c` already holds exactly the measured aces (15/19/24/29/31/33/42/46/58). Consider `B_RARE_CANDY_CAP` too.
 2. **Boss AI to `Smart Trainer`** (data) for the gym leaders, the Elite Four, Wallace, and optionally the rivals and team leaders. Done in #129 for all of them, without Omniscient and Smart Tera (see "Corrections").
