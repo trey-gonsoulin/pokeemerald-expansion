@@ -192,6 +192,7 @@ class Species:
     growth: str
     learnset: str
     teachables: str = 'sNoneTeachableLearnset'
+    egg_moves: str = 'sNoneEggMoveLearnset'
 
 
 def parse_species(repo, defines):
@@ -211,7 +212,8 @@ def parse_species(repo, defines):
         out[sp] = Species(types=types, stats={s: field(s) for s in STAT_FIELDS},
                           exp_yield=field('expYield'), growth=field('growthRate', 'GROWTH_MEDIUM_FAST'),
                           learnset=field('levelUpLearnset', 'sNoneLevelUpLearnset'),
-                          teachables=field('teachableLearnset', 'sNoneTeachableLearnset'))
+                          teachables=field('teachableLearnset', 'sNoneTeachableLearnset'),
+                          egg_moves=field('eggMoveLearnset', 'sNoneEggMoveLearnset'))
     return out
 
 
@@ -229,23 +231,39 @@ def parse_learnsets(path, defines):
     return sets
 
 
-TEACHABLES_HEADER = os.path.join('src', 'data', 'pokemon', 'teachable_learnsets.h')
-
-
-def parse_teachables(text):
-    """teachable_learnsets.h's arrays: name -> its moves (TMs, tutors and near-universal moves)."""
+def parse_move_lists(text):
+    """A header's ``static const u16 sName[] = { MOVE_... }`` arrays (teachable_learnsets.h,
+    egg_moves.h): name -> its moves."""
     return {name: frozenset(re.findall(r'MOVE_\w+', body))
             for name, body in re.findall(r'static const u16 (s\w+)\[\]\s*=\s*\{(.*?)\};', text, re.S)}
 
 
-def teachable_learnsets(repo):
-    """parse_teachables of ``repo``'s teachable_learnsets.h. The build generates the
-    gitignored header with pure Python (Makefile, learnset_helpers), so this runs that
-    make rule first: it writes the header when it's missing or older than its inputs."""
-    subprocess.run(['make', '-s', 'SETUP_PREREQS=0', 'NODEP=1', TEACHABLES_HEADER.replace(os.sep, '/')],
-                   cwd=repo, check=True)
-    with open(os.path.join(repo, TEACHABLES_HEADER), encoding='utf-8') as f:
-        return parse_teachables(f.read())
+# The text of teachable_learnsets.h as the Makefile's rule would write it (make_tutors.py,
+# make_teaching_types.py and make_teachables.py, run from the repo root), printed instead.
+_TEACHABLES_SCRIPT = '''
+import json, sys
+sys.path.insert(0, 'tools/learnset_helpers')
+import make_teachables as T, make_teaching_types as K, make_tutors as U
+if not T.enabled():
+    sys.exit('P_LEARNSET_HELPER_TEACHABLE is off: the build has no generated teachables')
+with open('src/data/pokemon/special_movesets.json') as f:
+    special = json.load(f)
+with open('src/data/pokemon/all_learnables.json') as f:
+    learnables = json.load(f)
+tutors = sorted(set(U.extract_repo_tutors()) | set(special['extraTutors']))
+types = json.loads(json.dumps(K.add_whitesspaces(K.extract_repo_species_data())))
+print(T.prepare_output(learnables, list(T.extract_repo_tms()), tutors, special, types, ''))
+'''
+
+
+def move_lists(repo):
+    """parse_move_lists of the teachable and egg move headers. The build generates the
+    gitignored teachable_learnsets.h with pure Python, so this runs the same helpers on
+    ``repo`` and reads their output, never a header left from an older build."""
+    teach = subprocess.run([sys.executable, '-B', '-c', _TEACHABLES_SCRIPT], cwd=repo, check=True,
+                           capture_output=True, text=True).stdout
+    with open(os.path.join(repo, 'src', 'data', 'pokemon', 'egg_moves.h'), encoding='utf-8') as f:
+        return {**parse_move_lists(teach), **parse_move_lists(f.read())}
 
 
 def learnset_file(repo, defines):

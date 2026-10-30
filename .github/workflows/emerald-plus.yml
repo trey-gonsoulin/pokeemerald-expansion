@@ -84,8 +84,8 @@ jobs:
         run: python3 -m unittest discover -s tools/area_archetypes
 
       # tools/rebalance imports the area_archetypes parsers, so it runs here too. Its
-      # set-move check (#145) runs the Makefile's pure-Python rule for the gitignored
-      # src/data/pokemon/teachable_learnsets.h, so this job needs make but no toolchain.
+      # set-move check (#145) computes the teachables with tools/learnset_helpers, as
+      # the build does, so it needs no build.
       - name: Rebalance unit tests
         run: python3 -m unittest discover -s tools/rebalance
 

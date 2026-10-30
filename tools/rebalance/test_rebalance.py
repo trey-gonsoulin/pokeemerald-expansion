@@ -113,7 +113,7 @@ class MoveLegality(unittest.TestCase):
     """#145's learnable set moves, on a made-up Pichu line."""
 
     def setUp(self):
-        sp = {name: G.Species((), {}, 0, '', f's{name}Learnset', f's{name}Teachables')
+        sp = {name: G.Species((), {}, 0, '', f's{name}Learnset', f's{name}Teachables', f's{name}EggMoves')
               for name in ('Pichu', 'Pikachu', 'Raichu')}
         self.gd = G.GameData.from_parts({}, {f'SPECIES_{n.upper()}': s for n, s in sp.items()})
         self.gd.learnsets = {'sPichuLearnset': [(1, 'MOVE_CHARM'), (20, 'MOVE_NASTY_PLOT')],
@@ -122,28 +122,30 @@ class MoveLegality(unittest.TestCase):
         self.info = G.R.SpeciesInfo.from_evolutions({}, {})
         self.info.pre_evos = {'SPECIES_PIKACHU': [('SPECIES_PICHU', 'EVO_FRIENDSHIP', '0')],
                               'SPECIES_RAICHU': [('SPECIES_PIKACHU', 'EVO_ITEM', 'ITEM_THUNDER_STONE')]}
-        self.teach = G.parse_teachables('static const u16 sPichuTeachables[] = {\n    MOVE_SURF,\n'
+        self.lists = G.parse_move_lists('static const u16 sPichuTeachables[] = {\n    MOVE_SURF,\n'
                                         '    MOVE_UNAVAILABLE,\n};\nstatic const u16 sRaichuTeachables[] = '
-                                        '{\n    MOVE_THUNDERBOLT,\n    MOVE_UNAVAILABLE,\n};\n')
+                                        '{\n    MOVE_THUNDERBOLT,\n    MOVE_UNAVAILABLE,\n};\n'
+                                        'static const u16 sPichuEggMoves[] = {\n    MOVE_VOLT_TACKLE,\n};\n')
 
-    def test_parse_teachables(self):
-        self.assertEqual(self.teach['sPichuTeachables'], {'MOVE_SURF', 'MOVE_UNAVAILABLE'})
+    def test_parse_move_lists(self):
+        self.assertEqual(self.lists['sPichuTeachables'], {'MOVE_SURF', 'MOVE_UNAVAILABLE'})
 
     def test_learnable_through_the_line_up_to_the_level(self):
         self.assertEqual(RB.evolution_line(self.info, 'SPECIES_RAICHU'),
                          ['SPECIES_RAICHU', 'SPECIES_PIKACHU', 'SPECIES_PICHU'])
-        moves = RB.learnable_moves(self.gd, self.info, self.teach, 'SPECIES_RAICHU', 25)
-        # Evolution and pre-evolution moves, and the line's teachables; not Slam (level 30).
+        moves = RB.learnable_moves(self.gd, self.info, self.lists, 'SPECIES_RAICHU', 25)
+        # Evolution and pre-evolution moves, and the line's teachables and egg moves; not Slam (level 30).
         self.assertLessEqual({'MOVE_THUNDER_PUNCH', 'MOVE_CHARM', 'MOVE_NASTY_PLOT', 'MOVE_SURF',
-                              'MOVE_THUNDERBOLT'}, moves)
+                              'MOVE_THUNDERBOLT', 'MOVE_VOLT_TACKLE'}, moves)
         self.assertNotIn('MOVE_SLAM', moves)
         # A pre-evolution can't learn its evolution's moves.
-        self.assertNotIn('MOVE_THUNDERBOLT', RB.learnable_moves(self.gd, self.info, self.teach, 'SPECIES_PICHU', 50))
+        self.assertNotIn('MOVE_THUNDERBOLT', RB.learnable_moves(self.gd, self.info, self.lists, 'SPECIES_PICHU', 50))
 
-    def test_unlearnable_set_moves(self):
-        teams = G.parse_trainers_text('=== TRAINER_A ===\nName: A\n\nRaichu\nLevel: 25\n- Slam\n- Thunder Punch\n')
-        self.assertEqual(RB.unlearnable_set_moves(teams, self.gd, self.info, self.teach),
-                         [['TRAINER_A', 0, 'SPECIES_RAICHU', 'MOVE_SLAM']])
+    def test_unlearnable_set_moves_once_per_team(self):
+        teams = G.parse_trainers_text('=== TRAINER_A ===\nName: A\n\nRaichu\nLevel: 25\n- Slam\n- Thunder Punch\n'
+                                      '\nRaichu\nLevel: 25\n- Slam\n')
+        self.assertEqual(RB.unlearnable_set_moves(teams, self.gd, self.info, self.lists),
+                         [('TRAINER_A', 'SPECIES_RAICHU', 'MOVE_SLAM')])
 
 
 class GameDataFixture(unittest.TestCase):
@@ -858,16 +860,15 @@ class RealRepo(unittest.TestCase):
 
     def test_set_moves_are_learnable(self):
         """Every set move in trainers.party and battle_partners.party is one its Pokemon can learn
-        (#145): a level-up move at or below its level, an evolution move or a teachable, of the
-        species or a pre-evolution. move_allowlist.json lists the upstream Gen 3 moves that break
-        the rule; an entry that no longer breaks it has to go."""
-        gd = G.load(G.REPO)['modern']
+        (#145): a level-up move at or below its level, an evolution move, a teachable or an egg
+        move, of the species or a pre-evolution. move_allowlist.json lists the upstream Gen 3
+        moves that break the rule; an entry that no longer breaks it has to go."""
+        gd = G.GameData(G.REPO, G.regime_defines(G.REPO)['modern'])
         teams = G.parse_trainers(os.path.join(G.REPO, 'src', 'data', 'trainers.party'))
         teams.update(G.parse_trainers(os.path.join(G.REPO, 'src', 'data', 'battle_partners.party')))
-        bad = {tuple(s) for s in RB.unlearnable_set_moves(teams, gd, G.R.SpeciesInfo(G.REPO),
-                                                          G.teachable_learnsets(G.REPO))}
+        bad = set(RB.unlearnable_set_moves(teams, gd, G.R.SpeciesInfo(G.REPO), G.move_lists(G.REPO)))
         with open(RB.MOVE_ALLOWLIST, encoding='utf-8') as f:
-            allowed = {tuple(s) for group in json.load(f).values() for s in group['slots']}
+            allowed = {tuple(s) for group in json.load(f).values() for s in group['moves']}
         self.assertEqual(sorted(bad - allowed), [], 'set moves the Pokemon cannot learn')
         self.assertEqual(sorted(allowed - bad), [], 'allowlisted moves that are now learnable or gone')
 

@@ -416,7 +416,7 @@ def summarize_handwritten(changes, trainers):
 
 
 # Set moves no species or pre-evolution can learn that the data had before #145's
-# check: cause -> {note, slots [trainer, slot, species, move]}.
+# check: cause -> {note, moves [trainer, species, move]}.
 MOVE_ALLOWLIST = os.path.join(G.HERE, 'move_allowlist.json')
 
 
@@ -431,23 +431,29 @@ def evolution_line(info, species):
     return line
 
 
-def learnable_moves(gd, info, teachables, species, level):
+def learnable_moves(gd, info, move_lists, species, level):
     """The moves a ``species`` at ``level`` can know (#145): the level-up moves
     of it and its pre-evolutions at or below ``level``, their evolution moves
-    (level 0) and their teachables (TMs, tutors, near-universal moves)."""
+    (level 0), their teachables (TMs, tutors, near-universal moves) and their
+    egg moves (``move_lists``: gamedata.move_lists)."""
     moves = set()
     for sp in evolution_line(info, species):
         moves.update(mv for lvl, mv in gd.learnset(sp) if lvl <= level)
         if sp in gd.species:
-            moves |= teachables.get(gd.species[sp].teachables, frozenset())
+            for name in (gd.species[sp].teachables, gd.species[sp].egg_moves):
+                moves |= move_lists.get(name, frozenset())
     return moves
 
 
-def unlearnable_set_moves(teams, gd, info, teachables):
-    """[trainer, slot, species, move] of every set move its Pokemon can't learn."""
-    return [[t.id, i, mon.species, mv]
-            for t in teams.values() for i, mon in enumerate(t.mons) for mv in mon.moves
-            if mv not in learnable_moves(gd, info, teachables, mon.species, mon.level)]
+def unlearnable_set_moves(teams, gd, info, move_lists):
+    """(trainer, species, move) of every set move its Pokemon can't learn, once
+    per team (move_allowlist.json's key, which survives a reordered team)."""
+    out = {}
+    for t in teams.values():
+        for mon in t.mons:
+            learnable = learnable_moves(gd, info, move_lists, mon.species, mon.level)
+            out.update(((t.id, mon.species, mv), None) for mv in mon.moves if mv not in learnable)
+    return list(out)
 
 
 def better_stat(stats):
