@@ -27,7 +27,9 @@ import itertools
 import json
 import os
 import re
+import shutil
 import sys
+import tempfile
 
 import gamedata as G
 
@@ -674,11 +676,17 @@ class Party:
             self.befriend('level', level_for_exp(self.growth, int(self.exp[i])) - level, members=(i,))
 
 
-def stage_slots(wild, stages, folders):
-    """Stage index -> [(table field, slot, encounter rate)] over every table
-    of the stage's maps (land, water, fishing, Rock Smash)."""
+def stage_tables(wild, stages, folders):
+    """(encounter rates by table field, encounter, table field, stage index)
+    for every table of the stages' maps (land, water, fishing, Rock Smash).
+    A water table is in SURF_STAGE at the earliest: Surf-only water on an
+    early map (Route 103's, Dewford's) is met no sooner than its swimmers."""
     by_id = {mid: f for f, mid in folders.items()}
-    out = collections.defaultdict(list)
+    names = [st['name'] for st in stages]
+    # The fixture's stages have no Surf stage; the real ones must (a rename would drop the rule).
+    surf = names.index(SURF_STAGE) if SURF_STAGE in names else None
+    if surf is None and len(stages) > 3:
+        raise ValueError(f'no {SURF_STAGE!r} stage for SURF_STAGE')
     for group in wild['wild_encounter_groups']:
         rates = {f['type']: f.get('encounter_rates') or () for f in group.get('fields', ())}
         for enc in group['encounters']:
@@ -686,13 +694,20 @@ def stage_slots(wild, stages, folders):
             if not folder:
                 continue
             for field, table in enc.items():
-                if not (isinstance(table, dict) and 'mons' in table):
-                    continue
-                i = G.stage_of(folder, stages, land=field == 'land_mons')
-                if i is not None:
-                    rate = rates.get(field, ())
-                    for k, slot in enumerate(table['mons']):
-                        out[i].append((field, slot, rate[k] if k < len(rate) else 0))
+                if isinstance(table, dict) and 'mons' in table:
+                    i = G.stage_of(folder, stages, land=field == 'land_mons')
+                    if i is not None:
+                        yield rates, enc, field, max(i, surf) if field == 'water_mons' and surf is not None else i
+
+
+def stage_slots(wild, stages, folders):
+    """Stage index -> [(table field, slot, encounter rate)] over every table
+    of the stage's maps."""
+    out = collections.defaultdict(list)
+    for rates, enc, field, i in stage_tables(wild, stages, folders):
+        rate = rates.get(field, ())
+        for k, slot in enumerate(enc[field]['mons']):
+            out[i].append((field, slot, rate[k] if k < len(rate) else 0))
     return out
 
 
@@ -823,6 +838,21 @@ def land_mean(slots):
     return sum(lvl * w for _, lvl, w in foes) / total if total else None
 
 
+def evolve_team(mons, delta, evolve, unique=False):
+    """The species of a team's Pokemon ([(species, level, gender)]) after a
+    raise of ``delta``: each evolves for its raised level (``evolve``, None
+    for none), except, with ``unique`` (a boss's team, #150), into a species
+    the team already has (Drake's Shelgon beside his Salamence)."""
+    species = [s for s, _, _ in mons]
+    if delta <= 0 or not evolve:
+        return species
+    for i, (s, level, gender) in enumerate(mons):
+        out = evolve(s, min(level + delta, 100), gender)
+        if not (unique and out != s and out in species):
+            species[i] = out
+    return species
+
+
 def shifted_slots(slots, shift, evolve=None):
     """``slots`` ([(field, slot, rate)]) with every level ``shift`` higher,
     capped at 100. A raised slot's species evolves for its new min level
@@ -885,6 +915,7 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
     raises = dict(raises or {})
     stage_raises, wild_offsets = stage_raises or {}, wild_offsets or {}
     reference = REFERENCES[boss_ref]
+    boss_ids = {b for st in stages for b in st['bosses']}
     friendship = STANDARD_FRIENDSHIP if gd.flag('P_UPDATED_FRIENDSHIP >= GEN_8') else 70
     party = Party(6, affection=affection, friendship=friendship, unevolved=unevolved, ko_takers=ko_takers,
                   share_fraction=share_fraction, overlevel=overlevel)
@@ -902,12 +933,11 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
         return (level - ace) * 100 / level if relative_gaps else level - ace
 
     def fight(p, tid, delta=0):
-        for mon in trainers[tid].mons:
-            level = min(mon.level + delta, 100)
-            species = mon.species
-            if delta > 0 and evolve and tid not in EVOLVE_EXEMPT:
-                species = evolve(species, level, mon.gender)
-            p.defeat(gd, scaling, [(gd.species[species].exp_yield, level, 1.0)], True, True)
+        mons = trainers[tid].mons
+        species = evolve_team([(m.species, m.level, m.gender) for m in mons], delta,
+                              None if tid in EVOLVE_EXEMPT else evolve, tid in boss_ids)
+        for mon, sp in zip(mons, species):
+            p.defeat(gd, scaling, [(gd.species[sp].exp_yield, min(mon.level + delta, 100), 1.0)], True, True)
 
     def fight_trainers(p, st, d):
         """The stage's cleared trainers: each one's gap below the reference
@@ -1531,6 +1561,165 @@ def analyze(repo, stages_path):
     }
 
 
+# ---------------------------------------------------------------------------
+# Applying a curve (#150)
+# ---------------------------------------------------------------------------
+
+# The owner's explorer settings (#151) that the data is built for: apply
+# writes them, and a test checks the data still asks nothing more of them.
+CURVE_SETTINGS = os.path.join(G.HERE, 'curve_settings.json')
+# restock's wild level offsets (map -> table field -> levels over vanilla), which apply writes.
+LEVEL_OFFSETS = os.path.relpath(G.R.AA.LEVEL_OFFSETS, G.R.AA.REPO)
+# The stage that opens Surf (from Wally's father after Norman): water tables
+# count from it (stage_tables).
+SURF_STAGE = 'Winona'
+# Partner teams that rise with the fight they help in (#127's Steven rule):
+# partner -> the foes whose highest raised ace the partner's ace matches.
+PARTNER_FIGHTS = {'PARTNER_STEVEN': ('TRAINER_MAXIE_MOSSDEEP', 'TRAINER_TABITHA_MOSSDEEP')}
+
+
+def repo_inputs(repo, stages_path=DEFAULT_STAGES, info=None):
+    """explore_run's inputs parsed from ``repo`` (load_snapshot's, plus the
+    stages' rival variants); ``info``, a restock.SpeciesInfo, for the
+    evolutions."""
+    gd = G.load(repo)['modern']
+    trainers = G.parse_trainers(os.path.join(repo, 'src', 'data', 'trainers.party'))
+    stages = load_stages(stages_path, trainers, repo)
+    return {'stages': stages, 'trainers': trainers, 'gd': gd, 'scaling': G.parse_scaling_factors(repo),
+            'wilds': load_wilds(repo, stages), 'evolve': evolver(info, gd) if info else None}
+
+
+def apply_plan(inputs, knobs, partners, wild, folders):
+    """What the curve for explorer ``knobs`` asks of the data (#150):
+    {raises: team id -> levels (staged bosses, their rival variants, every
+    regular trainer of a stage, PARTNER_FIGHTS' partners), wild: map ->
+    table field -> its stage's offset over the vanilla levels, for every
+    table of the stage's maps}. Only non-zero entries."""
+    res = explore_run(inputs, knobs)
+    stages, trainers = inputs['stages'], inputs['trainers']
+    raises = {r['boss']: r['raise'] for r in res['bosses']}
+    raises.update(variant_raises(stage_variants(stages, trainers), trainers, raises))
+    for st, row in zip(stages, res['stages']):
+        raises.update(dict.fromkeys(st['regular'], row['raise']))
+    for pid, foes in PARTNER_FIGHTS.items():
+        target = max(min(team_ace(trainers[f]) + raises.get(f, 0), 100) for f in foes)
+        raises[pid] = max(0, target - team_ace(partners[pid]))
+    offsets = collections.defaultdict(dict)
+    for _, enc, field, i in stage_tables(wild, stages, folders):
+        if res['stages'][i]['wild_offset']:
+            offsets[enc['map']][field] = res['stages'][i]['wild_offset']
+    bosses = {b for st in stages for b in st['bosses']}
+    return {'raises': {t: d for t, d in sorted(raises.items()) if d},
+            'wild': {m: dict(sorted(f.items())) for m, f in sorted(offsets.items())},
+            'unique': sorted(bosses | {v for st in stages for ids in st['variants'].values() for v in ids})}
+
+
+def party_species_name(species):
+    """How a .party file names ``species`` (SPECIES_KIRLIA -> Kirlia), or the
+    constant where the name wouldn't map back to it (trainerproc takes both)."""
+    name = ' '.join(w.capitalize() for w in species[len('SPECIES_'):].split('_'))
+    return name if G.species_constant(name) == species else species
+
+
+def species_line(line):
+    """A .party Pokemon's first line (``Nickname (Species) (M) @ Item``)
+    as (species constant, gender or None, replace(new species) -> line)."""
+    before, sep, item = line.partition(' @ ')
+    gender = re.search(r'\s*\((M|F)\)\s*$', before)
+    core = before[:gender.start()] if gender else before
+    nick = re.fullmatch(r'(.*?)\s*\(([^()]+)\)\s*', core)
+    name = (nick[2] if nick else core).strip()
+
+    def replace(species):
+        new = party_species_name(species)
+        out = core[:nick.start(2)] + new + core[nick.end(2):] if nick else core.replace(name, new, 1)
+        return out + (before[gender.start():] if gender else '') + sep + item
+    return G.species_constant(name), gender and {'M': 'MON_MALE', 'F': 'MON_FEMALE'}[gender[1]], replace
+
+
+def raise_party(text, raises, evolve=None, unique=()):
+    """.party ``text`` with every Pokemon of each team in ``raises`` (id ->
+    levels) that many levels higher, capped at 100. Its species follow
+    evolve_team (``unique``: the teams that keep their species distinct);
+    EVOLVE_EXEMPT's and the partners' teams never evolve. Every other byte
+    is kept. Returns (text, [(team, species before, after, level)])."""
+    lines = text.split('\n')
+    teams = [(None, [])]  # (id, [(first line, end) of each Pokemon]); None: the text before the first team
+    para, start = -1, None
+    for n, line in enumerate(lines + ['']):
+        header = re.match(r'=== ((?:TRAINER|PARTNER)_\w+) ===', line)
+        if header or not line.strip():
+            if start is not None and para > 0:
+                teams[-1][1].append((start, n))
+            start = None
+            if header:
+                teams.append((header[1], []))
+                para = -1
+            continue
+        if start is None:
+            start, para = n, para + 1
+    evolved = []
+    for tid, paras in teams:
+        delta = raises.get(tid, 0)
+        if not delta:
+            continue
+        mons = []
+        for first, last in paras:
+            level_at = next((n for n in range(first, last) if lines[n].lstrip().startswith('Level:')), None)
+            level = int(lines[level_at].split(':', 1)[1]) if level_at is not None else 100  # trainerproc's default
+            if level_at is not None:
+                lines[level_at] = lines[level_at].replace(str(level), str(min(level + delta, 100)), 1)
+            mons.append((first, level, species_line(lines[first])))
+        allowed = None if tid in EVOLVE_EXEMPT or tid.startswith('PARTNER_') else evolve
+        after = evolve_team([(sp, level, gender) for _, level, (sp, gender, _) in mons], delta, allowed,
+                            tid in unique)
+        for (first, level, (sp, _, replace)), out in zip(mons, after):
+            if out != sp:
+                lines[first] = replace(out)
+                evolved.append((tid, sp, out, min(level + delta, 100)))
+    return '\n'.join(lines), evolved
+
+
+def apply_main(argv):
+    """``apply``: write the levels the curve settings (CURVE_SETTINGS) ask
+    for into trainers.party, battle_partners.party and restock's level
+    offsets, then rerun restock (#150)."""
+    p = argparse.ArgumentParser(prog='rebalance.py apply', description=apply_main.__doc__.split('\n')[0])
+    p.add_argument('--settings', default=CURVE_SETTINGS, help='explorer settings JSON (default: curve_settings.json)')
+    p.add_argument('--repo', default=G.REPO, help=argparse.SUPPRESS)
+    p.add_argument('--stages', default=DEFAULT_STAGES, help=argparse.SUPPRESS)
+    args = p.parse_args(argv)
+    with open(args.settings, encoding='utf-8') as f:
+        knobs = json.load(f)
+    info = G.R.SpeciesInfo(args.repo)
+    inputs = repo_inputs(args.repo, args.stages, info)
+    files = {name: os.path.join(args.repo, 'src', 'data', name) for name in ('trainers.party', 'battle_partners.party')}
+    partners = G.parse_trainers(files['battle_partners.party'])
+    with open(os.path.join(args.repo, VANILLA_WILD), encoding='utf-8') as f:
+        wild = json.load(f)
+    plan = apply_plan(inputs, knobs, partners, wild, G.map_folders(args.repo))
+    # Raise the teams in memory, then restock (which may refuse: a hand edit, nothing to
+    # draw), and only then write anything else, so a failure leaves the data as it was.
+    raised = {}
+    for name, file in files.items():
+        with open(file, encoding='utf-8') as f:
+            raised[name] = raise_party(f.read(), plan['raises'], inputs['evolve'], set(plan['unique']))
+    with tempfile.TemporaryDirectory() as tmp:
+        staged = os.path.join(tmp, 'level_offsets.json')
+        with open(staged, 'w', encoding='utf-8') as f:
+            json.dump(plan['wild'], f, indent=2)
+            f.write('\n')
+        G.R.main(['--write', '--repo', args.repo, '--levels', staged])
+        shutil.copy(staged, os.path.join(args.repo, LEVEL_OFFSETS))
+    print(f'{LEVEL_OFFSETS}: {sum(map(len, plan["wild"].values()))} tables on {len(plan["wild"])} maps')
+    for name, (text, evolved) in raised.items():
+        with open(files[name], 'w', encoding='utf-8') as f:
+            f.write(text)
+        teams = len(set(plan['raises']) & set(G.parse_trainers_text(text)))
+        print(f'{name}: {teams} teams raised, {len(evolved)} Pokemon evolved')
+    return 0
+
+
 def curve_main(argv):
     """``curve``: explore_run on curve_data.json for knob settings (JSON, as
     the explorer's settings box gives them), printed as tables."""
@@ -1555,7 +1744,7 @@ def explore_main(argv):
     return serve_explorer(p.parse_args(argv).port)
 
 
-SUBCOMMANDS = {'curve': curve_main, 'explore': explore_main}
+SUBCOMMANDS = {'curve': curve_main, 'explore': explore_main, 'apply': apply_main}
 
 
 def main(argv=None):

@@ -31,14 +31,7 @@ def fake_regime(**overrides):
     return types.SimpleNamespace(flag=lambda expr: G.R.c_eval(expr, defines))
 
 
-def curve_inputs(repo, stages_path, info=None):
-    """share_run's inputs parsed from ``repo``, as explore_run takes them
-    (``info``, a restock.SpeciesInfo, for the evolutions)."""
-    gd = G.load(repo)['modern']
-    trainers = G.parse_trainers(os.path.join(repo, 'src', 'data', 'trainers.party'))
-    stages = RB.load_stages(stages_path, trainers, repo)
-    return {'stages': stages, 'trainers': trainers, 'gd': gd, 'scaling': G.parse_scaling_factors(repo),
-            'wilds': RB.load_wilds(repo, stages), 'evolve': RB.evolver(info, gd) if info else None}
+curve_inputs = RB.repo_inputs
 
 
 class Expressions(unittest.TestCase):
@@ -652,6 +645,70 @@ class Analysis(unittest.TestCase):
 
 
 @unittest.skipUnless(os.path.exists(os.path.join(G.REPO, 'src', 'data', 'trainers.party')), 'needs the repo')
+class RaiseParty(unittest.TestCase):
+    PARTY = """/* a comment */
+=== TRAINER_A ===
+Name: A
+Class: Hiker
+
+Nick (Aron) (F) @ Oran Berry
+Level: 33
+- Tackle
+
+Zubat
+Level: 98
+
+=== TRAINER_WALLY_MAUVILLE ===
+Name: WALLY
+
+Ralts (M)
+Level: 16
+
+=== PARTNER_B ===
+Name: B
+
+Mr. Mime
+Level: 40
+
+Aron
+"""
+
+    def test_raise_party(self):
+        evolve = {('SPECIES_ARON', 38): 'SPECIES_LAIRON', ('SPECIES_RALTS', 21): 'SPECIES_KIRLIA',
+                  ('SPECIES_MR_MIME', 45): 'SPECIES_MR_RIME'}
+        seen = []
+
+        def evolver(species, level, gender=None):
+            seen.append((species, level, gender))
+            return evolve.get((species, level), species)
+        text, evolved = RB.raise_party(self.PARTY, {'TRAINER_A': 5, 'TRAINER_WALLY_MAUVILLE': 5, 'PARTNER_B': 5},
+                                       evolver)
+        # The nickname, gender and item stay; levels cap at 100; EVOLVE_EXEMPT's Ralts and the
+        # partner only rise; a Pokemon without a Level line (100) keeps it.
+        self.assertEqual(text, self.PARTY.replace('Nick (Aron) (F)', 'Nick (Lairon) (F)')
+                         .replace('Level: 33', 'Level: 38').replace('Level: 98', 'Level: 100')
+                         .replace('Level: 16', 'Level: 21').replace('Level: 40', 'Level: 45'))
+        self.assertEqual(evolved, [('TRAINER_A', 'SPECIES_ARON', 'SPECIES_LAIRON', 38)])
+        self.assertIn(('SPECIES_ARON', 38, 'MON_FEMALE'), seen)
+        # A species name with punctuation is replaced whole, and parses back.
+        mime = self.PARTY.replace('=== PARTNER_B ===', '=== TRAINER_B ===')
+        text, _ = RB.raise_party(mime, {'TRAINER_B': 5}, evolver)
+        self.assertIn('Mr Rime\nLevel: 45', text)
+        self.assertEqual(G.parse_trainers_text(text)['TRAINER_B'].mons[0].species, 'SPECIES_MR_RIME')
+        # A boss's team (unique) doesn't evolve into a species it already has.
+        boss = '=== TRAINER_C ===\nName: C\n\nAron\nLevel: 33\n\nLairon\nLevel: 40\n'
+        self.assertEqual(RB.raise_party(boss, {'TRAINER_C': 5}, evolver, {'TRAINER_C'})[1], [])
+        self.assertEqual(len(RB.raise_party(boss, {'TRAINER_C': 5}, evolver)[1]), 1)
+        # Teams not in raises, and a raise of 0, change nothing.
+        self.assertEqual(RB.raise_party(self.PARTY, {'TRAINER_B': 3}, evolver)[0], self.PARTY)
+        self.assertEqual(RB.raise_party(self.PARTY, {'TRAINER_A': 0}, evolver), (self.PARTY, []))
+
+    def test_party_species_name(self):
+        self.assertEqual(RB.party_species_name('SPECIES_KIRLIA'), 'Kirlia')
+        self.assertEqual(RB.party_species_name('SPECIES_MR_MIME'), 'Mr Mime')
+        self.assertEqual(G.species_constant(RB.party_species_name('SPECIES_FARFETCHD')), 'SPECIES_FARFETCHD')
+
+
 class RealRepo(unittest.TestCase):
     """The parsers resolve every trainer Pokemon and move in the real data."""
 
@@ -688,6 +745,21 @@ class RealRepo(unittest.TestCase):
         self.assertIn(('ITEM_TM_TAUNT', 'reward'), tms['Route110_TrickHousePuzzle5'])
         self.assertFalse(any(item == 'ITEM_TM_TAUNT' for f in ('Route110_TrickHouseEnd', 'Route110_TrickHouseEntrance')
                              for item, _ in tms.get(f, ())))
+
+    def test_data_meets_the_curve_settings(self):
+        """The committed levels are what `rebalance.py apply` writes for curve_settings.json (#150):
+        the model with those settings asks for no raise and the committed wild offsets. After a
+        trainers.party, wild or exp-formula change, rerun apply (or change the settings)."""
+        with open(RB.CURVE_SETTINGS, encoding='utf-8') as f:
+            knobs = json.load(f)
+        inputs = RB.repo_inputs(G.REPO, info=G.R.SpeciesInfo(G.REPO))
+        partners = G.parse_trainers(os.path.join(G.REPO, 'src', 'data', 'battle_partners.party'))
+        with open(os.path.join(G.REPO, RB.VANILLA_WILD), encoding='utf-8') as f:
+            wild = json.load(f)
+        plan = RB.apply_plan(inputs, knobs, partners, wild, G.map_folders(G.REPO))
+        self.assertEqual(plan['raises'], {})
+        with open(os.path.join(G.REPO, RB.LEVEL_OFFSETS), encoding='utf-8') as f:
+            self.assertEqual(plan['wild'], json.load(f))
 
     def test_scaling_factors_are_the_games(self):
         self.assertEqual(RB.scaling_factors(2.5), G.parse_scaling_factors(G.REPO))

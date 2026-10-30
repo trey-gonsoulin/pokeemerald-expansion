@@ -96,6 +96,36 @@ The knobs:
   `gap_unit` puts the margin and both gaps in percent of the reference
   instead of levels.
 
+### Applying a curve (#150)
+
+```sh
+python3 tools/rebalance/rebalance.py apply    # writes the data for curve_settings.json
+python3 tools/rebalance/rebalance.py          # then refresh report.md and curve_data.json
+```
+
+`curve_settings.json` holds the explorer settings the data is built for
+(the owner's choice, `findings.md` section 8). `apply` runs `explore_run` on
+the repo's own data with them, through `apply_plan`, and writes:
+- the raises into `src/data/trainers.party`, for the staged bosses, their
+  rival variants (to the boss's ace, `variant_raises`) and every regular
+  trainer of each stage. `raise_party` raises every Pokemon of a team by
+  the same amount, capped at 100. A raised Pokemon evolves through
+  `evolve_team`, as the model's fights do: never on an `EVOLVE_EXEMPT` team,
+  and on a boss's team (bosses and variants) not into a species the team
+  already has;
+- `PARTNER_FIGHTS`' partners (Steven at Mossdeep, to his foes' highest ace;
+  partners don't evolve) into `src/data/battle_partners.party`;
+- each stage's wild offset over the vanilla levels, for every table of its
+  maps (a water table counts from `SURF_STAGE`), into
+  `tools/area_archetypes/level_offsets.json`, through `restock --write`.
+  Restock runs first, so a refused restock leaves nothing half written.
+
+It only raises. On data it already wrote it asks for nothing, which
+`RealRepo.test_data_meets_the_curve_settings` checks. After a change to
+`trainers.party`, the wild tables or the exp formula, rerun `apply` and
+`rebalance.py` (or change the settings and do the same).
+Rematches (#139) and trainers outside the stages aren't touched.
+
 The page's files are `explorer/index.html`, `app.js` (the controls and the
 Chart.js chart), `worker.js` and `model.js` (the module list and the Python
 bootstrap). The repo's `.gitignore` ignores `*.js`, so add new ones with
@@ -171,9 +201,9 @@ bootstrap). The repo's `.gitignore` ignores `*.js`, so add new ones with
   the boss matchups' best multipliers or the split fit's STAB moves.
 - **Wild Pokemon by stage**: species added by the restock, the strongest by
   base stat total, and the first Fairy types, over every table of the stage's
-  maps (land, water, fishing, Rock Smash). When Surf and each rod become
-  usable isn't modelled, so water species show up before the player can
-  reach them. The level curve's wild battles use the land tables only, with
+  maps (land, water, fishing, Rock Smash). Water tables count from
+  `SURF_STAGE` (Winona's) at the earliest; when each rod becomes usable
+  isn't modelled. The level curve's wild battles use the land tables only, with
   each slot's rate spread evenly over its level range.
 - FRLG maps (`*_Frlg` folders) never belong to a stage.
 - **Economy**: prices, sell values and healing of a basket of items, and the
@@ -194,8 +224,10 @@ map's land (grass) table in that stage ahead of its `maps` match, and
 uses both: its grass is at the west end, by the first rival fight, so its
 land table is in the Rival stage; the rest of the map (the east side,
 reached from Route 110) is with Wattson, except the swimmers Isabelle and
-Pete, who need Surf and sit with Winona. Its water and fishing tables stay
-with Wattson. The stage split is approximate: water routes sit after
+Pete, who need Surf and sit with Winona. Its fishing table stays with
+Wattson, and its water table counts from Winona's stage (`SURF_STAGE`), as
+every water table does. Route 109's southern trainers need Surf too and sit
+with Winona, and the Abandoned Ship's Dive-only hidden floor is with Juan. The stage split is approximate: water routes sit after
 Norman (Surf), Dive and Sky Pillar with Juan, Meteor Falls 1F_2R and B1F
 (Waterfall) with the Elite Four, and optional areas (Safari Zone, New
 Mauville, Scorched Slab, routes 129-134) in the stage where they open. A

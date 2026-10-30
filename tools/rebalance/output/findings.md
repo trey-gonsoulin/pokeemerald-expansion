@@ -128,7 +128,7 @@ The early outlier is a team-wide 90-power Sludge Bomb before Brawly.
 - Druddigon (485) on Sky Pillar by Juan, and Cloyster (525) in Meteor Falls B1F at the end;
 - mostly water species otherwise: Basculin, Clawitzer, Lanturn, Gyarados.
 
-Rod and Surf gating isn't modelled.
+Rod gating isn't modelled; Surf gating is only for water tables and trainers (#150: `SURF_STAGE`, the Surf trainers in Winona's stage).
 
 ## 6. Economy
 Prize money is unchanged: 11,524 by Roxanne, 44,560 by Wattson, 120,964 by Norman, 403,044 by Juan.
@@ -338,6 +338,45 @@ Each rival row goes on all six teams of that fight: May or Brendan, with each st
 - **The formula is now in the game** (#154: `B_SCALED_EXP_STEEP`, `B_EXP_OVERLEVEL_PENALTY` 10 / 5). The game and the model compute the falloff the same way, in integers: whole halvings as a shift, the rest in 16ths of a halving. The table above was measured with the explorer's float falloff. The integer one puts Juan and Wallace 1 higher (77 / 87), and the bench at 73 / 79.
 - **The game's formula with today's levels is too hard:** the bench reaches Roxanne at 11 (her ace is 15), Juan at 48 (57) and Wallace at 55 (66). #154 needs #150's raises before a playthrough.
 - **The scaling table:** `ApplyExperienceMultipliers` already scales in u64. The level^3.5 table tops out at about 3.4e7 (index 210), so it fits the s32 `sExperienceScalingFactors` and can be swapped in.
+
+## 9. The chosen curve applied (#150)
+
+`rebalance.py apply` wrote the owner's curve (`curve_settings.json`, section 8, with #154's exp formula) into the data. Measured with those settings, 1 lead and 5 benched:
+
+| stage | regular trainers | trainer raise | their aces when fought | wild offset (land mean) |
+|---|---|---|---|---|
+| Rival (Route 103) | 0 | - | - | +1 (3.6) |
+| Roxanne | 27 | +3 | 10.2, 5.9% below | 0 (4.9) |
+| Brawly | 8 | +1 | 14.1, 5.8% below | +3 (11.5) |
+| Wattson | 39 | +5 | 19.5, 7.7% below | +1 (13.4) |
+| Flannery | 92 | +9 | 28.4, 9.0% below | +2 (19.3) |
+| Norman | 10 | +9 | 34.1, 9.8% below | +9 (29.9) |
+| Winona | 90 | +17 | 42.2, 9.8% below | +6 (30.9) |
+| Tate and Liza | 108 | +21 | 52.4, 9.7% below | +15 (42.6) |
+| Juan | 71 | +26 | 60.6, 9.4% below | +19 (51.0) |
+| Elite Four (Victory Road) | 24 | +24 | 66.0, 9.3% below | +19 (56.3) |
+
+- **Bosses** (each ace 5% above the bench, the Elite Four stepped):
+  - Flannery 39, Norman 40, Winona 56, Tate and Liza 66, Juan 75;
+  - the Elite Four 79 / 80 / 81 / 82, Wallace 85.
+  - The raises run from +4 (Maxie at Mt. Chimney, Norman) to +19 (Wallace). Roxanne, Brawly, Wattson and the first three rival fights already met the target.
+  - The bench reaches Wallace at 77 and the lead at 82. Nothing reaches level 100.
+- **Rival variants:** the other five teams of each rival fight go up to the staged team's ace.
+- **Steven at Mossdeep** goes up to his foes' ace (Metang, Skarmory and Aggron at 72-74). Partners don't evolve.
+- **Evolutions:** 299 raised trainer Pokémon evolved, 3 levels past their level evolution (Geodude -> Graveler, Zubat -> Golbat, Carvanha -> Sharpedo and so on), through `evolve_team`, which the model's fights use too.
+  - Owner's decision (2026-10-30): a boss's Pokémon (staged bosses and their rival variants) doesn't evolve into a species its team already has. Drake keeps his Shelgon beside his Salamence, Glacia her two Sealeo, Norman his Vigoroth, Flannery and Tabitha (Mt. Chimney) their Numel.
+  - Wally's Mauville Ralts (`EVOLVE_EXEMPT`) stays a Ralts.
+- **Wild levels:** 181 tables on 104 maps moved by their stage's offset over the vanilla levels, through restock's new `--levels` (`tools/area_archetypes/level_offsets.json`), up to +19. Raised slots evolve the same way.
+  - Every table of a stage's maps moves, not only land.
+  - Owner's decision (2026-10-30): a water table counts from Winona's stage at the earliest (`SURF_STAGE`), since Surf comes from Wally's father after Norman. Route 103's and Dewford's water is met no sooner than their swimmers.
+- **Staging fixes found in review:**
+  - Route 109's southern trainers (David, Alice, Gwen, Austina, Carter, Mel & Paul, Elijah, vanilla aces 24-27) need Surf, like Route 103's Isabelle and Pete, so they moved to Winona's stage.
+  - The post-game Safari Zone extension (Northeast, Southeast) is now unstaged.
+  - The post-Hall of Fame Wally at the Victory Road exit (`TRAINER_WALLY_VR_2`, the first fight of his rematch ladder) is excluded, so the curve no longer counts him and apply leaves him to #139.
+  - These moved the curve down 1-2 levels from section 8's numbers (Juan 77 -> 75, Wallace 87 -> 85).
+- **Not changed:** the post-game rematches (#139), and trainers outside the stages (off-route, the Battle Frontier, Trainer Hill).
+  - Several rematch 2 teams now sit far below the raised first fight, for example Juan 2 at 51 against Juan's 75.
+- **Hand-written movesets stay** on raised and evolved Pokémon. Every move was legal at the old level, and an evolved Pokémon keeps its pre-evolution's moves. Default-move Pokémon take the Gen 9 defaults at their new level.
 
 ## Proposed balance changes (owner to accept or reject; each can be its own issue)
 1. **Soft level cap at each gym ace** (config). Set `B_LEVEL_CAP_TYPE LEVEL_CAP_FLAG_LIST` and `B_EXP_CAP_TYPE EXP_CAP_SOFT`. `sLevelCapFlagMap` in `src/caps.c` already holds exactly the measured aces (15/19/24/29/31/33/42/46/58). Consider `B_RARE_CANDY_CAP` too.
