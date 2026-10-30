@@ -201,9 +201,9 @@ bootstrap). The repo's `.gitignore` ignores `*.js`, so add new ones with
   the boss matchups' best multipliers or the split fit's STAB moves.
 - **Wild Pokemon by stage**: species added by the restock, the strongest by
   base stat total, and the first Fairy types, over every table of the stage's
-  maps (land, water, fishing, Rock Smash). When Surf and each rod become
-  usable isn't modelled, so water species show up before the player can
-  reach them. The level curve's wild battles use the land tables only, with
+  maps (land, water, fishing, Rock Smash). Water tables count from
+  `SURF_STAGE` (Winona's) at the earliest; when each rod becomes usable
+  isn't modelled. The level curve's wild battles use the land tables only, with
   each slot's rate spread evenly over its level range.
 - FRLG maps (`*_Frlg` folders) never belong to a stage.
 - **Economy**: prices, sell values and healing of a basket of items, and the
@@ -224,8 +224,10 @@ map's land (grass) table in that stage ahead of its `maps` match, and
 uses both: its grass is at the west end, by the first rival fight, so its
 land table is in the Rival stage; the rest of the map (the east side,
 reached from Route 110) is with Wattson, except the swimmers Isabelle and
-Pete, who need Surf and sit with Winona. Its water and fishing tables stay
-with Wattson. The stage split is approximate: water routes sit after
+Pete, who need Surf and sit with Winona. Its fishing table stays with
+Wattson, and its water table counts from Winona's stage (`SURF_STAGE`), as
+every water table does. Route 109's southern trainers need Surf too and sit
+with Winona, and the Abandoned Ship's Dive-only hidden floor is with Juan. The stage split is approximate: water routes sit after
 Norman (Surf), Dive and Sky Pillar with Juan, Meteor Falls 1F_2R and B1F
 (Waterfall) with the Elite Four, and optional areas (Safari Zone, New
 Mauville, Scorched Slab, routes 129-134) in the stage where they open. A

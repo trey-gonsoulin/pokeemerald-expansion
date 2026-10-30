@@ -1027,12 +1027,12 @@ def main(argv=None):
     if args.write and not args.force and os.path.exists(args.wild):
         current = load_json(args.wild)
         written_with = copy.deepcopy(base)
-        shift_levels(written_with, current.get(AA.RESTOCK_STAMP, {}).get('level_offsets', {}), info)
-    if (args.write and not args.force and os.path.exists(args.wild)
-            and skeleton(current) != skeleton(written_with)):
-        sys.exit(f'{args.wild} differs from {args.base} in more than species (an upstream merge or '
-                 f'a hand edit?), and --write would lose that; refresh the baseline (README), '
-                 f'or --force to overwrite anyway')
+        stamped = current.get(AA.RESTOCK_STAMP, {}).get('level_offsets', {})
+        shift_levels(written_with, stamped if isinstance(stamped, dict) else {}, info)
+        if skeleton(current) != skeleton(written_with):
+            sys.exit(f'{args.wild} differs from {args.base} in more than species and the level offsets '
+                     f'it was written with (an upstream merge or a hand edit?), and --write would lose '
+                     f'that; refresh the baseline (README), or --force to overwrite anyway')
     new, changes = restock(base, emerald_maps, pools, info, settings)
     shifted = shift_levels(new, offsets, info)
     # A ratio of 0 changes nothing on purpose; above 0, nothing could be drawn.

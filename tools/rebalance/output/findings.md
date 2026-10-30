@@ -128,7 +128,7 @@ The early outlier is a team-wide 90-power Sludge Bomb before Brawly.
 - Druddigon (485) on Sky Pillar by Juan, and Cloyster (525) in Meteor Falls B1F at the end;
 - mostly water species otherwise: Basculin, Clawitzer, Lanturn, Gyarados.
 
-Rod and Surf gating isn't modelled.
+Rod gating isn't modelled; Surf gating is only for water tables and trainers (#150: `SURF_STAGE`, the Surf trainers in Winona's stage).
 
 ## 6. Economy
 Prize money is unchanged: 11,524 by Roxanne, 44,560 by Wattson, 120,964 by Norman, 403,044 by Juan.
