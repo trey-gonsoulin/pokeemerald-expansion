@@ -1731,12 +1731,16 @@ def apply_plan(inputs, knobs, partners, wild, folders):
     res = explore_run(inputs, knobs)
     stages, trainers = inputs['stages'], inputs['trainers']
     raises = {r['boss']: r['raise'] for r in res['bosses']}
-    raises.update({r['trainer']: r['raise'] for r in res['rematches']})
+    rematches = {r['trainer']: r['raise'] for r in res['rematches']}
+    staged = {t for st in stages for t in st['regular']} & set(rematches)
+    if staged:
+        raise ValueError(f'rematch teams staged as regular trainers: {sorted(staged)}')
+    raises.update(rematches)
     raises.update(variant_raises(stage_variants(stages, trainers), trainers, raises))
     for st, row in zip(stages, res['stages']):
         raises.update(dict.fromkeys(st['regular'], row['raise']))
     for pid, foes in PARTNER_FIGHTS.items():
-        target = max(min(team_ace(trainers[f]) + raises.get(f, 0), 100) for f in foes)
+        target = max(raised_ace(trainers, raises, f) for f in foes)
         raises[pid] = max(0, target - team_ace(partners[pid]))
     offsets = collections.defaultdict(dict)
     for _, enc, field, i in stage_tables(wild, stages, folders):

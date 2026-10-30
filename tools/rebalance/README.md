@@ -112,8 +112,9 @@ The knobs:
     for the earliest stage it can be fought: the later of the first fight's
     stage and the one after Norman's. Its base is the higher of the first
     fight's ace and the route trainer gap below that stage's starting
-    reference. Each rematch then goes `rematch_step` (levels or percent,
-    `gap_unit`) over the one before, compounding, and at least 1 over it.
+    reference. Rematch n then sits `rematch_step` n times over the base
+    (levels, or percent compounding, `gap_unit`), and at least 1 over the
+    rematch before it.
   - Neither kind gives the story stages any exp: the story curve doesn't
     count rematches.
 
