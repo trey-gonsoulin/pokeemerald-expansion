@@ -864,6 +864,11 @@ class RealRepo(unittest.TestCase):
                              'ROXANNE', 'BRAWLY', 'WATTSON', 'FLANNERY', 'NORMAN', 'WINONA', 'TATE_AND_LIZA', 'JUAN')])
         self.assertEqual((len(ladders['regular']), ladders['unstaged']), (64, []))
         self.assertEqual(ladders['final'], ['TRAINER_STEVEN'])
+        # REMATCH_UNLOCK is the leader whose badge reaches OW_REMATCH_BADGE_COUNT (in gym order).
+        with open(os.path.join(G.REPO, 'include', 'config', 'overworld.h'), encoding='utf-8') as f:
+            count = int(re.search(r'#define OW_REMATCH_BADGE_COUNT\s+(\d+)', f.read())[1])
+        leaders = ['ROXANNE', 'BRAWLY', 'WATTSON', 'FLANNERY', 'NORMAN', 'WINONA', 'TATE_AND_LIZA', 'JUAN']
+        self.assertEqual(RB.REMATCH_UNLOCK, f'TRAINER_{leaders[count - 1]}_1')
 
     def test_committed_curve_data_runs_the_repo_model(self):
         """output/curve_data.json (the explorer's data) gives the curve the

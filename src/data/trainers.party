@@ -5424,7 +5424,7 @@ AI: Check Bad Move
 Gardevoir
 Level: 43
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
-- Psybeam
+- Dazzling Gleam
 - Wish
 - Calm Mind
 - Psychic
@@ -7050,7 +7050,7 @@ AI: Check Bad Move
 Dodrio
 Level: 37
 IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
-- Pluck
+- Tri Attack
 - Uproar
 - Acupressure
 - Swords Dance
@@ -7119,7 +7119,7 @@ AI: Check Bad Move
 Dodrio
 Level: 37
 IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
-- Pluck
+- Tri Attack
 - Uproar
 - Acupressure
 - Swords Dance
@@ -7762,7 +7762,7 @@ IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
 Altaria
 Level: 48
 IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
-- Dragon Breath
+- Dragon Pulse
 - Cotton Guard
 - Take Down
 - Moonblast
@@ -7783,7 +7783,7 @@ IVs: 2 HP / 2 Atk / 2 Def / 2 SpA / 2 SpD / 2 Spe
 Altaria
 Level: 51
 IVs: 2 HP / 2 Atk / 2 Def / 2 SpA / 2 SpD / 2 Spe
-- Dragon Breath
+- Dragon Pulse
 - Take Down
 - Moonblast
 - Perish Song
@@ -7804,7 +7804,7 @@ IVs: 3 HP / 3 Atk / 3 Def / 3 SpA / 3 SpD / 3 Spe
 Altaria
 Level: 53
 IVs: 3 HP / 3 Atk / 3 Def / 3 SpA / 3 SpD / 3 Spe
-- Dragon Breath
+- Dragon Pulse
 - Take Down
 - Moonblast
 - Perish Song
@@ -9070,7 +9070,7 @@ IVs: 2 HP / 2 Atk / 2 Def / 2 SpA / 2 SpD / 2 Spe
 Altaria
 Level: 39
 IVs: 2 HP / 2 Atk / 2 Def / 2 SpA / 2 SpD / 2 Spe
-- Dragon Breath
+- Dragon Pulse
 - Sing
 - Cotton Guard
 - Take Down
@@ -9095,7 +9095,7 @@ IVs: 3 HP / 3 Atk / 3 Def / 3 SpA / 3 SpD / 3 Spe
 Altaria
 Level: 41
 IVs: 3 HP / 3 Atk / 3 Def / 3 SpA / 3 SpD / 3 Spe
-- Dragon Breath
+- Dragon Pulse
 - Sing
 - Cotton Guard
 - Take Down
@@ -9124,7 +9124,7 @@ IVs: 4 HP / 4 Atk / 4 Def / 4 SpA / 4 SpD / 4 Spe
 Altaria
 Level: 43
 IVs: 4 HP / 4 Atk / 4 Def / 4 SpA / 4 SpD / 4 Spe
-- Dragon Breath
+- Dragon Pulse
 - Sing
 - Cotton Guard
 - Take Down

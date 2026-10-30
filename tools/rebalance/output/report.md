@@ -446,13 +446,13 @@ Flags (all default Pokemon / story trainers only):
 | measure | value |
 |---|---|
 | trainer Pokemon with set moves | 583 |
-| attacking set moves whose data changed | 549 |
-|   category flips (physical <-> special) | 232 |
-|   of them now on a weaker / similar / stronger stat | 26 / 83 / 123 |
+| attacking set moves whose data changed | 557 |
+|   category flips (physical <-> special) | 234 |
+|   of them now on a weaker / similar / stronger stat | 28 / 83 / 123 |
 |   Pokemon with at least one flip | 207 |
 |   Pokemon with a flip onto a weaker stat | 26 |
 |   type changes | 0 |
-|   power changes | 323 |
+|   power changes | 329 |
 |   accuracy changes | 72 |
 
 Changed attacking moves (set-move slots; weaker/similar/stronger: the category flipped onto that stat; data: only power, accuracy or type changed):
@@ -483,13 +483,14 @@ Changed attacking moves (set-move slots; weaker/similar/stronger: the category f
 | Fire Punch | similar 6, stronger 2 |
 | Air Slash | stronger 7 |
 | Zen Headbutt | similar 5, stronger 2 |
+| Tri Attack | weaker 2, stronger 5 |
 | Bind | data 6 |
 | Spark | weaker 6 |
 | Blizzard | data 6 |
 | High Jump Kick | data 6 |
+| Dragon Pulse | data 6 |
 | Lick | data 5 |
 | Dragon Claw | stronger 5 |
-| Tri Attack | stronger 5 |
 | Future Sight | data 5 |
 | Fire Blast | data 5 |
 | Pin Missile | data 4 |
