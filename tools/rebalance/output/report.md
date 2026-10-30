@@ -804,7 +804,6 @@ First stage where each TM is on a stage map (ball, hidden item, mart list, scrip
 | Flannery | Toxic | Poison | - | Status | FieryPath | ball |
 | Norman | Facade | Normal | 70 | Physical | PetalburgCity_Gym | script |
 | Winona | Aerial Ace | Flying | 60 | Physical | FortreeCity_Gym | script |
-| Winona | Rain Dance | Water | - | Status | AbandonedShip_HiddenFloorRooms | ball |
 | Winona | Sunny Day | Fire | - | Status | ScorchedSlab | ball |
 | Tate and Liza | Hyper Beam | Normal | 150 | Special | LilycoveCity_DepartmentStore_4F | mart |
 | Tate and Liza | Solar Beam | Grass | 120 | Special | SafariZone_Northwest | ball |
@@ -826,6 +825,7 @@ First stage where each TM is on a stage map (ball, hidden item, mart list, scrip
 | Juan | Brick Break | Fighting | 75 | Physical | SootopolisCity_House1 | script |
 | Juan | Water Pulse | Water | 60 | Special | SootopolisCity_Gym_1F | script |
 | Juan | Frustration | Normal | varies | Physical | PacifidlogTown_House2 | script |
+| Juan | Rain Dance | Water | - | Status | AbandonedShip_HiddenFloorRooms | ball |
 | Elite Four | Dragon Claw | Dragon | 80 | Physical | MeteorFalls_B1F_2R | ball |
 
 ## Wild Pokemon by story stage
@@ -840,10 +840,10 @@ Species on the stage maps so far (every table), vanilla tables vs the restocked 
 | Wattson | 34 / 69 | 10 | Gyarados (540, 26), Clawitzer (500, 41), Lanturn (460, 31), Chinchou (330, 21), Clauncher (330, 36), Voltorb (330, 13) | - |
 | Flannery | 57 / 109 | 25 | Shuckle (505, 7), Slowbro (490, 42), Kingler (475, 32), Maractus (461, 21), Seaking (450, 37), Pelipper (440, 28) | Jigglypuff |
 | Norman | 57 / 118 | 9 | Sigilyph (490, 29), Sandslash (450, 29), Gabite (410, 29), Machoke (405, 32), Onix (385, 31), Krokorok (351, 32) | - |
-| Winona | 70 / 160 | 44 | Gyarados (540, 26), Golduck (500, 36), Wailord (500, 46), Barraskewda (490, 31), Octillery (480, 31), Xatu (470, 31) | Azumarill |
-| Tate and Liza | 94 / 217 | 63 | Gyarados (540, 25), Walrein (530, 47), Donphan (500, 44), Wailord (500, 45), Talonflame (499, 44), Magmar (495, 46) | - |
-| Juan | 106 / 235 | 32 | Krookodile (519, 52), Excadrill (508, 48), Bronzong (500, 54), Toxapex (495, 54), Slowbro (490, 48), Unfezant (488, 57) | Mawile |
-| Elite Four | 112 / 244 | 18 | Salamence (600, 54), Aggron (530, 55), Cloyster (525, 54), Bronzong (500, 55), Floatzel (495, 34), Exploud (490, 57) | - |
+| Winona | 70 / 157 | 41 | Gyarados (540, 31), Golduck (500, 36), Wailord (500, 46), Barraskewda (490, 31), Xatu (470, 31), Basculin Blue Striped (460, 21) | Azumarill |
+| Tate and Liza | 94 / 215 | 63 | Gyarados (540, 25), Walrein (530, 47), Donphan (500, 44), Wailord (500, 45), Talonflame (499, 44), Magmar (495, 46) | - |
+| Juan | 106 / 234 | 33 | Krookodile (519, 52), Excadrill (508, 48), Bronzong (500, 54), Toxapex (495, 54), Slowbro (490, 48), Unfezant (488, 57) | Mawile |
+| Elite Four | 112 / 243 | 18 | Salamence (600, 54), Aggron (530, 55), Cloyster (525, 54), Bronzong (500, 55), Floatzel (495, 34), Exploud (490, 57) | - |
 
 ## Economy
 

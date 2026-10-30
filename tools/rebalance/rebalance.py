@@ -682,7 +682,11 @@ def stage_tables(wild, stages, folders):
     A water table is in SURF_STAGE at the earliest: Surf-only water on an
     early map (Route 103's, Dewford's) is met no sooner than its swimmers."""
     by_id = {mid: f for f, mid in folders.items()}
-    surf = next((i for i, st in enumerate(stages) if st['name'] == SURF_STAGE), None)
+    names = [st['name'] for st in stages]
+    # The fixture's stages have no Surf stage; the real ones must (a rename would drop the rule).
+    surf = names.index(SURF_STAGE) if SURF_STAGE in names else None
+    if surf is None and len(stages) > 3:
+        raise ValueError(f'no {SURF_STAGE!r} stage for SURF_STAGE')
     for group in wild['wild_encounter_groups']:
         rates = {f['type']: f.get('encounter_rates') or () for f in group.get('fields', ())}
         for enc in group['encounters']:
@@ -1694,21 +1698,22 @@ def apply_main(argv):
     with open(os.path.join(args.repo, VANILLA_WILD), encoding='utf-8') as f:
         wild = json.load(f)
     plan = apply_plan(inputs, knobs, partners, wild, G.map_folders(args.repo))
-    offsets = os.path.join(args.repo, LEVEL_OFFSETS)
+    # Raise the teams in memory, then restock (which may refuse: a hand edit, nothing to
+    # draw), and only then write anything else, so a failure leaves the data as it was.
+    raised = {}
+    for name, file in files.items():
+        with open(file, encoding='utf-8') as f:
+            raised[name] = raise_party(f.read(), plan['raises'], inputs['evolve'], set(plan['unique']))
     with tempfile.TemporaryDirectory() as tmp:
-        # restock first: if it refuses (a hand edit, nothing to draw), nothing is half written.
         staged = os.path.join(tmp, 'level_offsets.json')
         with open(staged, 'w', encoding='utf-8') as f:
             json.dump(plan['wild'], f, indent=2)
             f.write('\n')
         G.R.main(['--write', '--repo', args.repo, '--levels', staged])
-        shutil.copy(staged, offsets)
+        shutil.copy(staged, os.path.join(args.repo, LEVEL_OFFSETS))
     print(f'{LEVEL_OFFSETS}: {sum(map(len, plan["wild"].values()))} tables on {len(plan["wild"])} maps')
-    for name, file in files.items():
-        with open(file, encoding='utf-8') as f:
-            text = f.read()
-        text, evolved = raise_party(text, plan['raises'], inputs['evolve'], set(plan['unique']))
-        with open(file, 'w', encoding='utf-8') as f:
+    for name, (text, evolved) in raised.items():
+        with open(files[name], 'w', encoding='utf-8') as f:
             f.write(text)
         teams = len(set(plan['raises']) & set(G.parse_trainers_text(text)))
         print(f'{name}: {teams} teams raised, {len(evolved)} Pokemon evolved')

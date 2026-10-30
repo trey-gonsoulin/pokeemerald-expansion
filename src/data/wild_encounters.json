@@ -5617,28 +5617,28 @@
             "encounter_rate": 4,
             "mons": [
               {
-                "min_level": 11,
-                "max_level": 41,
+                "min_level": 24,
+                "max_level": 54,
                 "species": "SPECIES_TENTACOOL"
               },
               {
-                "min_level": 11,
-                "max_level": 41,
+                "min_level": 24,
+                "max_level": 54,
                 "species": "SPECIES_FRILLISH"
               },
               {
-                "min_level": 11,
-                "max_level": 41,
-                "species": "SPECIES_WOOPER"
+                "min_level": 24,
+                "max_level": 54,
+                "species": "SPECIES_QUAGSIRE"
               },
               {
-                "min_level": 11,
-                "max_level": 41,
+                "min_level": 24,
+                "max_level": 54,
                 "species": "SPECIES_FRILLISH"
               },
               {
-                "min_level": 36,
-                "max_level": 41,
+                "min_level": 49,
+                "max_level": 54,
                 "species": "SPECIES_TENTACRUEL"
               }
             ]
@@ -5647,53 +5647,53 @@
             "encounter_rate": 20,
             "mons": [
               {
-                "min_level": 11,
-                "max_level": 16,
-                "species": "SPECIES_MAGIKARP"
-              },
-              {
-                "min_level": 11,
-                "max_level": 16,
-                "species": "SPECIES_TENTACOOL"
-              },
-              {
-                "min_level": 16,
-                "max_level": 36,
-                "species": "SPECIES_SKRELP"
-              },
-              {
-                "min_level": 16,
-                "max_level": 36,
-                "species": "SPECIES_MAGIKARP"
-              },
-              {
-                "min_level": 16,
-                "max_level": 36,
-                "species": "SPECIES_TENTACOOL"
-              },
-              {
-                "min_level": 31,
-                "max_level": 36,
+                "min_level": 24,
+                "max_level": 29,
                 "species": "SPECIES_GYARADOS"
               },
               {
-                "min_level": 36,
-                "max_level": 41,
+                "min_level": 24,
+                "max_level": 29,
+                "species": "SPECIES_TENTACOOL"
+              },
+              {
+                "min_level": 29,
+                "max_level": 49,
+                "species": "SPECIES_SKRELP"
+              },
+              {
+                "min_level": 29,
+                "max_level": 49,
+                "species": "SPECIES_GYARADOS"
+              },
+              {
+                "min_level": 29,
+                "max_level": 49,
+                "species": "SPECIES_TENTACOOL"
+              },
+              {
+                "min_level": 44,
+                "max_level": 49,
+                "species": "SPECIES_GYARADOS"
+              },
+              {
+                "min_level": 49,
+                "max_level": 54,
                 "species": "SPECIES_TENTACRUEL"
               },
               {
-                "min_level": 36,
-                "max_level": 41,
+                "min_level": 49,
+                "max_level": 54,
                 "species": "SPECIES_TENTACRUEL"
               },
               {
-                "min_level": 31,
-                "max_level": 36,
+                "min_level": 44,
+                "max_level": 49,
                 "species": "SPECIES_OCTILLERY"
               },
               {
-                "min_level": 26,
-                "max_level": 31,
+                "min_level": 39,
+                "max_level": 44,
                 "species": "SPECIES_GYARADOS"
               }
             ]
@@ -37347,8 +37347,8 @@
     "ratio": 0.5,
     "level_offsets": {
       "MAP_ABANDONED_SHIP_HIDDEN_FLOOR_CORRIDORS": {
-        "fishing_mons": 6,
-        "water_mons": 6
+        "fishing_mons": 19,
+        "water_mons": 19
       },
       "MAP_ABANDONED_SHIP_ROOMS_B1F": {
         "fishing_mons": 6,
