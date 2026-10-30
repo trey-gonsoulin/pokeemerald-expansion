@@ -19,6 +19,10 @@
     F(B_SCALED_EXP,                scaledExp,               (u32, GEN_COUNT - 1)) /* TODO: use in tests */ \
     F(B_UNEVOLVED_EXP_MULTIPLIER,  unevolvedExpMultiplier,  (u32, GEN_COUNT - 1)) /* TODO: use in tests */ \
     F(B_LEVEL_UP_NOTIFICATION,     levelUpNotification,     (u32, GEN_COUNT - 1)) /* TODO: use in tests */ \
+    F(B_SCALED_EXP_STEEP,          scaledExpSteep,          (u32, TRUE))          \
+    F(B_EXP_OVERLEVEL_PENALTY,     expOverlevelPenalty,     (u32, TRUE))          \
+    F(B_EXP_OVERLEVEL_CUTOFF,      expOverlevelCutoff,      (u32, 255))           \
+    F(B_EXP_OVERLEVEL_HALVING,     expOverlevelHalving,     (u32, 255))           \
     /* Stat settings */ \
     F(B_BADGE_BOOST,               badgeBoost,              (u32, GEN_COUNT - 1)) \
     F(B_FRIENDSHIP_BOOST,          friendshipBoost,         (u32, GEN_COUNT - 1)) /* TODO: use in tests */ \

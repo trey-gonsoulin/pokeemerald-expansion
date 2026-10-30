@@ -4,12 +4,13 @@
 // With I_EXP_SHARE_ITEM >= GEN_6 the Exp. Share is a key item that can't be given to a Pokemon,
 // but a Pokemon that already holds one still gets the hold effect.
 // In these wild battles under WITH_EXP_SHARE_CONFIGS, every participant gains expYield * level / 7 (Cmd_getexp,
-// no level scaling, unevolved or affection boost) and every Exp. Share mon gains half that. Cmd_getexp reads the
-// raw B_SPLIT_EXP macro when it decides whether a sent-in holder also gets the share, hence the ASSUME.
+// no level scaling, over-level penalty, unevolved or affection boost) and every Exp. Share mon gains half that.
+// Cmd_getexp reads the raw B_SPLIT_EXP macro when it decides whether a sent-in holder also gets the share, hence the ASSUME.
 #define WITH_EXP_SHARE_CONFIGS()                        \
     ASSUME(B_SPLIT_EXP >= GEN_6);                       \
     WITH_CONFIG(B_SPLIT_EXP, GEN_6);                    \
     WITH_CONFIG(B_SCALED_EXP, GEN_3);                   \
+    WITH_CONFIG(B_EXP_OVERLEVEL_PENALTY, FALSE);        \
     WITH_CONFIG(B_UNEVOLVED_EXP_MULTIPLIER, GEN_3);     \
     WITH_CONFIG(B_AFFECTION_MECHANICS, FALSE)
 #define EXP_YIELD(species, level) (gSpeciesInfo[species].expYield * (level) / 7)

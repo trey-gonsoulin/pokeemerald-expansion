@@ -505,33 +505,55 @@ def level_for_exp(growth, exp):
 
 def scaling_factors(power=2.5, size=211):
     """sExperienceScalingFactors as (i^power)/4: the game's table at 2.5,
-    a steeper level-gap penalty above it (#151)."""
+    a steeper level-gap penalty above it (#151); at 3.5,
+    sExperienceScalingFactorsSteep (#154)."""
     return [int(i ** power / 4) for i in range(size)]
+
+
+def game_scaling(gd, table):
+    """The scaling table ``gd``'s configs use, from the level^2.5 ``table``:
+    the level^3.5 one under B_SCALED_EXP_STEEP (#154)."""
+    return scaling_factors(3.5, len(table)) if gd.flag('B_SCALED_EXP_STEEP') else table
+
+
+# sExpHalvingFractions: 4096 * 2^(-k/16), the over-level penalty's fraction of a halving (#154).
+HALVING_FRACTIONS = tuple(round(4096 * 2 ** (-k / 16)) for k in range(16))
+# exp_award's overlevel default: the penalty gd's configs set.
+GAME = 'game'
 
 
 class Overlevel(collections.namedtuple('Overlevel', 'cutoff relative halflife', defaults=(False, None))):
     """An over-level penalty (#151): past ``cutoff`` levels above the foe
-    (``relative``: percent above the foe's level), exp drops to 1, or with
-    ``halflife`` halves every that many levels (percent) past the cutoff."""
+    (``relative``: percent of the foe's level above it), exp drops to 1, or
+    with ``halflife`` halves every that many levels (percent) past the
+    cutoff. The game's (#154) is relative: ApplyOverlevelPenalty."""
 
-    def limit(self, foe_level):
-        return foe_level * (100 + self.cutoff) / 100 if self.relative else foe_level + self.cutoff
+    @classmethod
+    def from_configs(cls, gd):
+        """B_EXP_OVERLEVEL_PENALTY's penalty, or None."""
+        if not gd.flag('B_EXP_OVERLEVEL_PENALTY'):
+            return None
+        return cls(gd.flag('B_EXP_OVERLEVEL_CUTOFF'), True, gd.flag('B_EXP_OVERLEVEL_HALVING') or None)
 
     def factor(self, foe_level, getter_level):
-        """The multiplier in 4096ths (as the game's UQ4_12 multipliers):
-        4096 up to the cutoff, 0 for the hard drop to 1 exp."""
-        over = getter_level - self.limit(foe_level)
+        """The multiplier in 4096ths, as ApplyOverlevelPenalty computes it:
+        4096 up to the cutoff, then the whole halvings as a shift and the
+        rest in 16ths (HALVING_FRACTIONS); 0 for the drop to 1 exp."""
+        halflife = self.halflife or 0
+        if self.relative:
+            over, span = getter_level * 100 - foe_level * (100 + self.cutoff), foe_level * halflife
+        else:
+            over, span = getter_level - foe_level - self.cutoff, halflife
         if over <= 0:
             return 4096
-        if not self.halflife:
+        if not span:
             return 0
-        if self.relative:
-            over = over * 100 / foe_level
-        return round(4096 * 0.5 ** (over / self.halflife))
+        halvings = int(over // span)
+        return HALVING_FRACTIONS[int(over % span * 16 // span)] >> halvings if halvings < 13 else 0
 
 
 def exp_award(gd, scaling, yield_, foe_level, getter_level, trainer, sent_in, sent_out=True, holders=0,
-              affection=False, unevolved=False, share_fraction=0.5, overlevel=None):
+              affection=False, unevolved=False, share_fraction=0.5, overlevel=GAME):
     """Cmd_getexp + ApplyExperienceMultipliers for one getter (no Lucky Egg
     or traded bonuses).
 
@@ -547,7 +569,8 @@ def exp_award(gd, scaling, yield_, foe_level, getter_level, trainer, sent_in, se
     Formula options the game doesn't have (#151): ``share_fraction``, the
     Gen 6+ Exp. Share bench share (the game's half; B_SPLIT_EXP < GEN_6
     ignores it), and ``overlevel``, an Overlevel penalty applied last (at
-    least 1 exp). ``scaling`` can be any scaling_factors table."""
+    least 1 exp; GAME: the configs', None: none). ``scaling`` can be any
+    scaling_factors table (game_scaling: the configs')."""
     scaled = gd.flag('B_SCALED_EXP >= GEN_5 && B_SCALED_EXP != GEN_6')
     calc = yield_ * foe_level // (5 if scaled else 7)
     if trainer and gd.flag('B_TRAINER_EXP_MULTIPLIER <= GEN_7'):
@@ -564,6 +587,8 @@ def exp_award(gd, scaling, yield_, foe_level, getter_level, trainer, sent_in, se
         reward = max(calc * round(share_fraction * 1000) // 1000, 1) if holders and share_fraction else 0
     if not reward:
         return 0  # the game skips a getter that neither faced the foe nor holds a share
+    if overlevel == GAME:
+        overlevel = Overlevel.from_configs(gd)
     penalty = overlevel.factor(foe_level, getter_level) if overlevel else 4096
     if not penalty:
         return 1
@@ -594,7 +619,7 @@ class Party:
 
     def __init__(self, size, growth='GROWTH_MEDIUM_SLOW', level=START_LEVEL, affection='none',
                  friendship=STANDARD_FRIENDSHIP, unevolved=False, ko_takers=1, share_fraction=0.5,
-                 overlevel=None):
+                 overlevel=GAME):
         if affection not in AFFECTION:
             raise ValueError(affection)
         if not 1 <= ko_takers <= size:
@@ -632,6 +657,8 @@ class Party:
         [(exp yield, level, weight)]: one foe, or a wild battle's
         rate-weighted average over its slots. Each level gained adds the
         level-up friendship."""
+        if self.overlevel == GAME:
+            self.overlevel = Overlevel.from_configs(gd)  # once: exp_award would ask for every KO
         lv = self.levels()
         ko = self.turn % (self.ko_takers if share else len(self.exp))
         self.turn += 1
@@ -819,7 +846,7 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
               catches=CATCHES_PER_STAGE, walk_steps=WALK_STEPS_PER_STAGE, trainer_raise=0, raises=None,
               margin=None, unevolved=False, stage_raises=None, wild_offsets=None, trainer_gap=None,
               wild_gap=None, vanilla_wilds=None, evolve=None, ko_takers=1, boss_ref='bench',
-              share_fraction=0.5, overlevel=None, league_steps=True, wild_battles=0, relative_gaps=False):
+              share_fraction=0.5, overlevel=GAME, league_steps=True, wild_battles=0, relative_gaps=False):
     """The share6 party (KO-taker plus five on the Gen 6 Exp. Share bench)
     just before each story boss, on ``gd``'s data and configs: (boss rows,
     stage rows).
@@ -1036,8 +1063,9 @@ def load_snapshot(data):
             'wilds': wilds, 'evolve': evolver(info, gd)}
 
 
-# The explorer's knobs and their defaults: the game as report.md models it
-# (share6, full clear, modelled friendship, 1.5x off, today's levels).
+# The explorer's knobs and their defaults before the game's formula configs
+# (explorer_defaults): share6, full clear, modelled friendship, 1.5x off,
+# today's levels.
 EXPLORER_KNOBS = {
     'ko_takers': 1, 'boss_ref': 'bench', 'clear': 1.0, 'catches': CATCHES_PER_STAGE, 'wild_battles': 0,
     'walk_steps': WALK_STEPS_PER_STAGE, 'affection': 'friendship', 'trainer_exp': '1.5x off',
@@ -1046,6 +1074,15 @@ EXPLORER_KNOBS = {
     'league_steps': True, 'trainer_gap': None, 'wild_gap': None, 'evolve': True,
 }
 UNITS = ('levels', 'percent')
+
+
+def explorer_defaults(gd):
+    """EXPLORER_KNOBS with ``gd``'s exp formula configs (#154): the game as
+    report.md models it."""
+    o = Overlevel.from_configs(gd)
+    return {**EXPLORER_KNOBS, 'scaling_power': 3.5 if gd.flag('B_SCALED_EXP_STEEP') else 2.5,
+            'overlevel_cutoff': o and o.cutoff, 'overlevel_unit': 'percent' if o and o.relative else 'levels',
+            'overlevel_halflife': o and o.halflife}
 
 
 def explore_run(snap, knobs=None):
@@ -1057,7 +1094,7 @@ def explore_run(snap, knobs=None):
     unknown = set(knobs or {}) - set(EXPLORER_KNOBS)
     if unknown:
         raise ValueError(f'unknown knobs {sorted(unknown)}')
-    k = {**EXPLORER_KNOBS, **(knobs or {})}
+    k = {**explorer_defaults(snap['gd']), **(knobs or {})}
     for key in ('overlevel_unit', 'gap_unit'):
         if k[key] not in UNITS:
             raise ValueError(f'{key} must be one of {UNITS}')
@@ -1466,7 +1503,8 @@ def analyze(repo, stages_path):
     stages = load_stages(stages_path, trainers, repo)
     story = {tid: st['name'] for st in stages for tid in st['regular'] + st['bosses']}
     boss_ids = [b for st in stages for b in st['bosses']]
-    scaling = G.parse_scaling_factors(repo)
+    base_scaling = G.parse_scaling_factors(repo)
+    scaling = game_scaling(gd['modern'], base_scaling)
     wilds = load_wilds(repo, stages)
     rows = default_movesets(trainers, gd, story)
     changes = handwritten_changes(trainers, gd, set(boss_ids))
@@ -1489,7 +1527,7 @@ def analyze(repo, stages_path):
         'tms': tm_availability(repo, stages, gd),
         'wild': wild_availability(wilds, stages, gd),
         'economy': economy(stages, trainers, gd, G.parse_class_money(repo)),
-        'curve_data': curve_snapshot(stages, trainers, gd['modern'], scaling, wilds, G.R.SpeciesInfo(repo)),
+        'curve_data': curve_snapshot(stages, trainers, gd['modern'], base_scaling, wilds, G.R.SpeciesInfo(repo)),
     }
 
 

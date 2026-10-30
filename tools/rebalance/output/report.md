@@ -45,71 +45,71 @@ Party level just before each boss. Every party member is Medium Slow (the starte
 | stage | boss | boss ace | boss mean | vanilla solo | vanilla rotate4 | modern solo | modern rotate4 | modern share6 ace | share6 bench |
 |---|---|---|---|---|---|---|---|---|---|
 | Rival (Route 103) | May Route 103 Mudkip | 6 | 6.0 | 5 | 5.0 | 5 | 5.0 | 5 | 5.0 |
-| Roxanne | Roxanne 1 | 15 | 13.0 | 18 | 12.2 | 15 | 11.0 | 15 | 13.0 |
-| Brawly | May Rustboro Mudkip | 17 | 16.0 | 22 | 14.8 | 18 | 13.0 | 18 | 15.0 |
-| Brawly | Brawly 1 | 19 | 17.0 | 22 | 15.0 | 19 | 13.5 | 19 | 16.0 |
-| Wattson | May Route 110 Mudkip | 26 | 24.7 | 35 | 23.0 | 29 | 21.0 | 29 | 25.0 |
-| Wattson | Wally Mauville | 26 | 26.0 | 35 | 23.0 | 30 | 21.5 | 30 | 25.0 |
-| Wattson | Wattson 1 | 26 | 23.5 | 35 | 23.0 | 30 | 21.8 | 30 | 25.0 |
-| Flannery | Tabitha Mt Chimney | 33 | 31.5 | 47 | 31.0 | 38 | 27.5 | 38 | 32.0 |
-| Flannery | Maxie Mt Chimney | 34 | 33.3 | 48 | 31.2 | 38 | 27.8 | 38 | 33.0 |
-| Flannery | Flannery 1 | 34 | 30.8 | 48 | 31.8 | 39 | 28.0 | 39 | 33.0 |
-| Norman | Norman 1 | 36 | 33.5 | 50 | 32.8 | 40 | 29.2 | 40 | 34.0 |
-| Winona | May Route 119 Mudkip | 42 | 40.7 | 59 | 38.8 | 47 | 34.5 | 47 | 40.0 |
-| Winona | Shelly Weather Institute | 43 | 43.0 | 60 | 38.8 | 47 | 34.5 | 47 | 41.0 |
-| Winona | Winona 1 | 43 | 40.4 | 60 | 38.8 | 48 | 34.8 | 48 | 41.0 |
-| Tate and Liza | May Lilycove Mudkip | 50 | 48.2 | 70 | 45.2 | 55 | 40.5 | 55 | 47.0 |
-| Tate and Liza | Tabitha Magma Hideout | 51 | 47.2 | 70 | 45.8 | 56 | 40.8 | 56 | 48.0 |
-| Tate and Liza | Maxie Magma Hideout | 51 | 50.0 | 71 | 45.8 | 56 | 41.0 | 56 | 48.0 |
-| Tate and Liza | Matt | 51 | 51.0 | 71 | 45.8 | 57 | 41.5 | 57 | 49.0 |
-| Tate and Liza | Tate And Liza 1 | 52 | 51.5 | 71 | 46.0 | 57 | 41.8 | 57 | 49.0 |
-| Juan | Tabitha Mossdeep | 56 | 54.0 | 78 | 49.8 | 62 | 45.0 | 62 | 53.0 |
-| Juan | Maxie Mossdeep | 56 | 55.0 | 78 | 50.2 | 62 | 45.2 | 62 | 53.0 |
-| Juan | Shelly Seafloor Cavern | 57 | 57.0 | 78 | 50.5 | 62 | 45.8 | 62 | 53.0 |
-| Juan | Archie | 57 | 55.7 | 78 | 50.8 | 63 | 45.8 | 63 | 54.0 |
-| Juan | Juan 1 | 57 | 53.8 | 79 | 50.8 | 63 | 46.2 | 63 | 54.0 |
-| Elite Four | Wally Vr 1 | 61 | 59.4 | 83 | 53.2 | 67 | 49.0 | 67 | 57.0 |
-| Elite Four | Sidney | 61 | 59.4 | 83 | 53.8 | 68 | 49.5 | 68 | 58.0 |
-| Elite Four | Phoebe | 62 | 60.4 | 84 | 54.0 | 68 | 50.0 | 68 | 58.0 |
-| Elite Four | Glacia | 63 | 61.4 | 84 | 54.2 | 69 | 50.2 | 69 | 59.0 |
-| Elite Four | Drake | 64 | 62.4 | 85 | 54.8 | 69 | 50.8 | 69 | 59.0 |
-| Elite Four | Wallace | 66 | 64.3 | 85 | 55.0 | 70 | 51.5 | 70 | 60.0 |
+| Roxanne | Roxanne 1 | 15 | 13.0 | 18 | 12.2 | 12 | 10.0 | 12 | 11.0 |
+| Brawly | May Rustboro Mudkip | 17 | 16.0 | 22 | 14.8 | 16 | 12.8 | 16 | 14.0 |
+| Brawly | Brawly 1 | 19 | 17.0 | 22 | 15.0 | 17 | 13.5 | 17 | 15.0 |
+| Wattson | May Route 110 Mudkip | 26 | 24.7 | 35 | 23.0 | 26 | 20.2 | 26 | 23.0 |
+| Wattson | Wally Mauville | 26 | 26.0 | 35 | 23.0 | 27 | 20.5 | 27 | 23.0 |
+| Wattson | Wattson 1 | 26 | 23.5 | 35 | 23.0 | 27 | 20.5 | 27 | 23.0 |
+| Flannery | Tabitha Mt Chimney | 33 | 31.5 | 47 | 31.0 | 30 | 24.8 | 30 | 27.0 |
+| Flannery | Maxie Mt Chimney | 34 | 33.3 | 48 | 31.2 | 31 | 25.2 | 31 | 28.0 |
+| Flannery | Flannery 1 | 34 | 30.8 | 48 | 31.8 | 32 | 26.0 | 32 | 29.0 |
+| Norman | Norman 1 | 36 | 33.5 | 50 | 32.8 | 33 | 27.2 | 33 | 30.0 |
+| Winona | May Route 119 Mudkip | 42 | 40.7 | 59 | 38.8 | 35 | 31.5 | 35 | 33.0 |
+| Winona | Shelly Weather Institute | 43 | 43.0 | 60 | 38.8 | 37 | 32.0 | 37 | 34.0 |
+| Winona | Winona 1 | 43 | 40.4 | 60 | 38.8 | 38 | 32.5 | 38 | 35.0 |
+| Tate and Liza | May Lilycove Mudkip | 50 | 48.2 | 70 | 45.2 | 42 | 37.0 | 42 | 39.0 |
+| Tate and Liza | Tabitha Magma Hideout | 51 | 47.2 | 70 | 45.8 | 43 | 37.8 | 43 | 40.0 |
+| Tate and Liza | Maxie Magma Hideout | 51 | 50.0 | 71 | 45.8 | 44 | 38.2 | 44 | 41.0 |
+| Tate and Liza | Matt | 51 | 51.0 | 71 | 45.8 | 45 | 38.5 | 45 | 42.0 |
+| Tate and Liza | Tate And Liza 1 | 52 | 51.5 | 71 | 46.0 | 46 | 38.8 | 46 | 42.0 |
+| Juan | Tabitha Mossdeep | 56 | 54.0 | 78 | 49.8 | 48 | 41.2 | 48 | 44.0 |
+| Juan | Maxie Mossdeep | 56 | 55.0 | 78 | 50.2 | 48 | 41.8 | 48 | 45.0 |
+| Juan | Shelly Seafloor Cavern | 57 | 57.0 | 78 | 50.5 | 50 | 42.0 | 50 | 45.0 |
+| Juan | Archie | 57 | 55.7 | 78 | 50.8 | 50 | 42.2 | 50 | 46.0 |
+| Juan | Juan 1 | 57 | 53.8 | 79 | 50.8 | 51 | 43.0 | 51 | 47.0 |
+| Elite Four | Wally Vr 1 | 61 | 59.4 | 83 | 53.2 | 54 | 46.0 | 54 | 50.0 |
+| Elite Four | Sidney | 61 | 59.4 | 83 | 53.8 | 55 | 46.8 | 55 | 51.0 |
+| Elite Four | Phoebe | 62 | 60.4 | 84 | 54.0 | 56 | 47.2 | 56 | 51.0 |
+| Elite Four | Glacia | 63 | 61.4 | 84 | 54.2 | 57 | 48.0 | 57 | 52.0 |
+| Elite Four | Drake | 64 | 62.4 | 85 | 54.8 | 58 | 48.5 | 58 | 53.0 |
+| Elite Four | Wallace | 66 | 64.3 | 85 | 55.0 | 60 | 49.0 | 60 | 54.0 |
 
 ### half clear (gym leaders, Elite Four, Champion)
 
 | stage | boss | boss ace | boss mean | vanilla solo | vanilla rotate4 | modern solo | modern rotate4 | modern share6 ace | share6 bench |
 |---|---|---|---|---|---|---|---|---|---|
-| Roxanne | Roxanne 1 | 15 | 13.0 | 15 | 9.8 | 13 | 9.2 | 13 | 11.0 |
-| Brawly | Brawly 1 | 19 | 17.0 | 19 | 12.8 | 17 | 12.5 | 17 | 15.0 |
-| Wattson | Wattson 1 | 26 | 23.5 | 30 | 19.5 | 26 | 18.8 | 26 | 22.0 |
-| Flannery | Flannery 1 | 34 | 30.8 | 40 | 26.2 | 34 | 24.8 | 34 | 29.0 |
-| Norman | Norman 1 | 36 | 33.5 | 41 | 27.2 | 35 | 26.0 | 35 | 30.0 |
-| Winona | Winona 1 | 43 | 40.4 | 50 | 32.5 | 42 | 31.0 | 42 | 36.0 |
-| Tate and Liza | Tate And Liza 1 | 52 | 51.5 | 59 | 38.5 | 51 | 37.2 | 51 | 44.0 |
-| Juan | Juan 1 | 57 | 53.8 | 66 | 42.5 | 57 | 41.5 | 57 | 49.0 |
-| Elite Four | Sidney | 61 | 59.4 | 69 | 44.8 | 61 | 44.2 | 61 | 52.0 |
-| Elite Four | Phoebe | 62 | 60.4 | 70 | 45.2 | 62 | 44.8 | 62 | 53.0 |
-| Elite Four | Glacia | 63 | 61.4 | 71 | 45.5 | 62 | 45.2 | 62 | 53.0 |
-| Elite Four | Drake | 64 | 62.4 | 71 | 45.8 | 63 | 46.0 | 63 | 54.0 |
-| Elite Four | Wallace | 66 | 64.3 | 72 | 46.5 | 64 | 46.5 | 64 | 55.0 |
+| Roxanne | Roxanne 1 | 15 | 13.0 | 15 | 9.8 | 10 | 9.0 | 10 | 10.0 |
+| Brawly | Brawly 1 | 19 | 17.0 | 19 | 12.8 | 17 | 12.5 | 17 | 14.0 |
+| Wattson | Wattson 1 | 26 | 23.5 | 30 | 19.5 | 24 | 18.8 | 24 | 21.0 |
+| Flannery | Flannery 1 | 34 | 30.8 | 40 | 26.2 | 30 | 23.8 | 30 | 27.0 |
+| Norman | Norman 1 | 36 | 33.5 | 41 | 27.2 | 31 | 25.0 | 31 | 28.0 |
+| Winona | Winona 1 | 43 | 40.4 | 50 | 32.5 | 37 | 30.5 | 37 | 34.0 |
+| Tate and Liza | Tate And Liza 1 | 52 | 51.5 | 59 | 38.5 | 45 | 36.8 | 45 | 41.0 |
+| Juan | Juan 1 | 57 | 53.8 | 66 | 42.5 | 50 | 40.8 | 50 | 45.0 |
+| Elite Four | Sidney | 61 | 59.4 | 69 | 44.8 | 54 | 43.5 | 54 | 49.0 |
+| Elite Four | Phoebe | 62 | 60.4 | 70 | 45.2 | 55 | 44.5 | 55 | 50.0 |
+| Elite Four | Glacia | 63 | 61.4 | 71 | 45.5 | 56 | 45.0 | 56 | 51.0 |
+| Elite Four | Drake | 64 | 62.4 | 71 | 45.8 | 57 | 45.8 | 57 | 52.0 |
+| Elite Four | Wallace | 66 | 64.3 | 72 | 46.5 | 59 | 46.5 | 59 | 53.0 |
 
 ### full clear + 20 wild battles per stage (gym leaders, Elite Four, Champion)
 
 | stage | boss | boss ace | boss mean | vanilla solo | vanilla rotate4 | modern solo | modern rotate4 | modern share6 ace | share6 bench |
 |---|---|---|---|---|---|---|---|---|---|
-| Roxanne | Roxanne 1 | 15 | 13.0 | 20 | 13.0 | 16 | 12.0 | 16 | 14.0 |
-| Brawly | Brawly 1 | 19 | 17.0 | 24 | 16.2 | 20 | 14.8 | 20 | 17.0 |
-| Wattson | Wattson 1 | 26 | 23.5 | 37 | 24.0 | 30 | 22.2 | 30 | 26.0 |
-| Flannery | Flannery 1 | 34 | 30.8 | 50 | 32.2 | 39 | 29.0 | 39 | 34.0 |
-| Norman | Norman 1 | 36 | 33.5 | 52 | 33.8 | 41 | 30.0 | 41 | 35.0 |
-| Winona | Winona 1 | 43 | 40.4 | 62 | 39.8 | 49 | 35.8 | 49 | 42.0 |
-| Tate and Liza | Tate And Liza 1 | 52 | 51.5 | 73 | 47.0 | 58 | 42.8 | 58 | 50.0 |
-| Juan | Juan 1 | 57 | 53.8 | 80 | 51.8 | 64 | 47.0 | 64 | 55.0 |
-| Elite Four | Sidney | 61 | 59.4 | 86 | 55.0 | 69 | 50.5 | 69 | 59.0 |
-| Elite Four | Phoebe | 62 | 60.4 | 86 | 55.8 | 70 | 51.0 | 70 | 60.0 |
-| Elite Four | Glacia | 63 | 61.4 | 86 | 55.8 | 70 | 51.2 | 70 | 60.0 |
-| Elite Four | Drake | 64 | 62.4 | 87 | 56.0 | 71 | 51.8 | 71 | 61.0 |
-| Elite Four | Wallace | 66 | 64.3 | 87 | 56.2 | 71 | 52.2 | 71 | 61.0 |
+| Roxanne | Roxanne 1 | 15 | 13.0 | 20 | 13.0 | 11 | 10.0 | 11 | 11.0 |
+| Brawly | Brawly 1 | 19 | 17.0 | 24 | 16.2 | 17 | 13.5 | 17 | 15.0 |
+| Wattson | Wattson 1 | 26 | 23.5 | 37 | 24.0 | 27 | 20.5 | 27 | 24.0 |
+| Flannery | Flannery 1 | 34 | 30.8 | 50 | 32.2 | 32 | 26.0 | 32 | 29.0 |
+| Norman | Norman 1 | 36 | 33.5 | 52 | 33.8 | 33 | 27.2 | 33 | 30.0 |
+| Winona | Winona 1 | 43 | 40.4 | 62 | 39.8 | 38 | 32.5 | 38 | 35.0 |
+| Tate and Liza | Tate And Liza 1 | 52 | 51.5 | 73 | 47.0 | 46 | 39.0 | 46 | 42.0 |
+| Juan | Juan 1 | 57 | 53.8 | 80 | 51.8 | 51 | 43.0 | 51 | 47.0 |
+| Elite Four | Sidney | 61 | 59.4 | 86 | 55.0 | 55 | 47.2 | 55 | 51.0 |
+| Elite Four | Phoebe | 62 | 60.4 | 86 | 55.8 | 56 | 47.8 | 56 | 52.0 |
+| Elite Four | Glacia | 63 | 61.4 | 86 | 55.8 | 57 | 48.2 | 57 | 52.0 |
+| Elite Four | Drake | 64 | 62.4 | 87 | 56.0 | 58 | 48.8 | 58 | 53.0 |
+| Elite Four | Wallace | 66 | 64.3 | 87 | 56.2 | 60 | 49.5 | 60 | 54.0 |
 
 ## Exp. Share curve (#127)
 
@@ -119,54 +119,54 @@ The share6 party on modern data: one Pokemon takes every KO (KO-taker) and five 
 
 | stage | boss | boss ace | 1.5x off KO-taker | 1.5x off bench (none / friendship / always) | 1.5x off bench friendship | 1.5x on KO-taker | 1.5x on bench (none / friendship / always) | 1.5x on bench friendship |
 |---|---|---|---|---|---|---|---|---|
-| Rival (Route 103) | May Route 103 Mudkip | 6 | 6 | 5 / 5 / 5 | 66 | 6 | 5 / 5 / 5 | 66 |
-| Roxanne | Roxanne 1 | 15 | 15 | 13 / 13 / 14 | 114 | 17 | 14 / 14 / 15 | 117 |
-| Brawly | May Rustboro Mudkip | 17 | 18 | 16 / 16 / 16 | 141 | 20 | 17 / 17 / 18 | 144 |
-| Brawly | Brawly 1 | 19 | 19 | 16 / 16 / 17 | 141 | 21 | 18 / 18 / 18 | 147 |
-| Wattson | May Route 110 Mudkip | 26 | 29 | 25 / 25 / 26 | 186 | 32 | 27 / 27 / 28 | 192 |
-| Wattson | Wally Mauville | 26 | 30 | 25 / 25 / 26 | 186 | 32 | 28 / 28 / 29 | 195 |
-| Wattson | Wattson 1 | 26 | 30 | 25 / 25 / 26 | 186 | 33 | 28 / 28 / 29 | 195 |
-| Flannery | Tabitha Mt Chimney | 33 | 39 | 32 / 32 / 34 | 219 | 42 | 35 / 36 / 37 | 229 |
-| Flannery | Maxie Mt Chimney | 34 | 39 | 33 / 33 / 34 | 221 | 43 | 36 / 36 / 37 | 229 |
-| Flannery | Flannery 1 | 34 | 40 | 33 / 33 / 34 | 221 | 43 | 36 / 37 / 38 | 231 |
-| Norman | Norman 1 | 36 | 41 | 34 / 35 / 36 | 242 | 45 | 38 / 39 / 39 | 252 |
-| Winona | May Route 119 Mudkip | 42 | 49 | 40 / 41 / 42 | 255 | 53 | 44 / 46 / 46 | 255 |
-| Winona | Shelly Weather Institute | 43 | 49 | 41 / 42 / 42 | 255 | 54 | 45 / 46 / 46 | 255 |
-| Winona | Winona 1 | 43 | 50 | 41 / 42 / 43 | 255 | 54 | 45 / 46 / 47 | 255 |
-| Tate and Liza | May Lilycove Mudkip | 50 | 58 | 48 / 49 / 49 | 255 | 63 | 52 / 54 / 54 | 255 |
-| Tate and Liza | Tabitha Magma Hideout | 51 | 58 | 48 / 50 / 50 | 255 | 64 | 53 / 55 / 55 | 255 |
-| Tate and Liza | Maxie Magma Hideout | 51 | 59 | 48 / 50 / 50 | 255 | 64 | 53 / 55 / 55 | 255 |
-| Tate and Liza | Matt | 51 | 59 | 49 / 50 / 51 | 255 | 65 | 53 / 55 / 56 | 255 |
-| Tate and Liza | Tate And Liza 1 | 52 | 59 | 49 / 51 / 51 | 255 | 65 | 54 / 56 / 56 | 255 |
-| Juan | Tabitha Mossdeep | 56 | 64 | 53 / 55 / 55 | 255 | 70 | 58 / 60 / 60 | 255 |
-| Juan | Maxie Mossdeep | 56 | 65 | 53 / 55 / 55 | 255 | 71 | 58 / 61 / 61 | 255 |
-| Juan | Shelly Seafloor Cavern | 57 | 65 | 54 / 56 / 56 | 255 | 71 | 59 / 61 / 61 | 255 |
-| Juan | Archie | 57 | 65 | 54 / 56 / 56 | 255 | 71 | 59 / 61 / 61 | 255 |
-| Juan | Juan 1 | 57 | 66 | 54 / 56 / 56 | 255 | 72 | 59 / 62 / 62 | 255 |
-| Elite Four | Wally Vr 1 | 61 | 70 | 58 / 60 / 60 | 255 | 77 | 63 / 66 / 66 | 255 |
-| Elite Four | Sidney | 61 | 71 | 58 / 60 / 61 | 255 | 77 | 64 / 66 / 66 | 255 |
-| Elite Four | Phoebe | 62 | 71 | 59 / 61 / 61 | 255 | 78 | 64 / 67 / 67 | 255 |
-| Elite Four | Glacia | 63 | 72 | 59 / 61 / 62 | 255 | 79 | 65 / 67 / 67 | 255 |
-| Elite Four | Drake | 64 | 72 | 60 / 62 / 62 | 255 | 79 | 65 / 68 / 68 | 255 |
-| Elite Four | Wallace | 66 | 73 | 60 / 63 / 63 | 255 | 80 | 66 / 69 / 69 | 255 |
+| Rival (Route 103) | May Route 103 Mudkip | 6 | 5 | 5 / 5 / 5 | 66 | 5 | 5 / 5 / 5 | 66 |
+| Roxanne | Roxanne 1 | 15 | 11 | 11 / 11 / 11 | 108 | 12 | 11 / 11 / 11 | 108 |
+| Brawly | May Rustboro Mudkip | 17 | 16 | 14 / 14 / 15 | 135 | 17 | 15 / 15 / 16 | 138 |
+| Brawly | Brawly 1 | 19 | 17 | 15 / 15 / 16 | 138 | 18 | 16 / 16 / 17 | 141 |
+| Wattson | May Route 110 Mudkip | 26 | 26 | 23 / 23 / 24 | 180 | 28 | 25 / 25 / 26 | 186 |
+| Wattson | Wally Mauville | 26 | 27 | 23 / 23 / 24 | 180 | 29 | 25 / 25 / 26 | 186 |
+| Wattson | Wattson 1 | 26 | 27 | 23 / 23 / 24 | 180 | 29 | 25 / 25 / 26 | 186 |
+| Flannery | Tabitha Mt Chimney | 33 | 30 | 27 / 27 / 28 | 207 | 31 | 29 / 29 / 30 | 213 |
+| Flannery | Maxie Mt Chimney | 34 | 31 | 28 / 28 / 29 | 209 | 32 | 30 / 30 / 30 | 215 |
+| Flannery | Flannery 1 | 34 | 32 | 29 / 29 / 30 | 211 | 34 | 31 / 31 / 31 | 217 |
+| Norman | Norman 1 | 36 | 33 | 30 / 30 / 31 | 230 | 35 | 32 / 32 / 32 | 236 |
+| Winona | May Route 119 Mudkip | 42 | 36 | 33 / 34 / 34 | 255 | 38 | 35 / 35 / 35 | 255 |
+| Winona | Shelly Weather Institute | 43 | 37 | 34 / 35 / 35 | 255 | 40 | 36 / 36 / 36 | 255 |
+| Winona | Winona 1 | 43 | 38 | 35 / 35 / 36 | 255 | 41 | 36 / 37 / 37 | 255 |
+| Tate and Liza | May Lilycove Mudkip | 50 | 42 | 39 / 40 / 40 | 255 | 44 | 41 / 41 / 41 | 255 |
+| Tate and Liza | Tabitha Magma Hideout | 51 | 44 | 40 / 41 / 41 | 255 | 46 | 42 / 43 / 43 | 255 |
+| Tate and Liza | Maxie Magma Hideout | 51 | 45 | 41 / 42 / 42 | 255 | 48 | 43 / 44 / 44 | 255 |
+| Tate and Liza | Matt | 51 | 46 | 42 / 43 / 43 | 255 | 49 | 44 / 45 / 45 | 255 |
+| Tate and Liza | Tate And Liza 1 | 52 | 47 | 42 / 43 / 43 | 255 | 50 | 44 / 45 / 45 | 255 |
+| Juan | Tabitha Mossdeep | 56 | 49 | 44 / 45 / 45 | 255 | 52 | 46 / 47 / 47 | 255 |
+| Juan | Maxie Mossdeep | 56 | 50 | 45 / 46 / 46 | 255 | 53 | 47 / 48 / 48 | 255 |
+| Juan | Shelly Seafloor Cavern | 57 | 51 | 46 / 46 / 46 | 255 | 54 | 48 / 49 / 49 | 255 |
+| Juan | Archie | 57 | 51 | 46 / 47 / 47 | 255 | 55 | 48 / 49 / 49 | 255 |
+| Juan | Juan 1 | 57 | 52 | 47 / 48 / 48 | 255 | 56 | 49 / 50 / 50 | 255 |
+| Elite Four | Wally Vr 1 | 61 | 55 | 50 / 51 / 51 | 255 | 58 | 52 / 53 / 53 | 255 |
+| Elite Four | Sidney | 61 | 56 | 51 / 52 / 52 | 255 | 60 | 53 / 54 / 54 | 255 |
+| Elite Four | Phoebe | 62 | 58 | 51 / 53 / 53 | 255 | 61 | 54 / 55 / 55 | 255 |
+| Elite Four | Glacia | 63 | 59 | 52 / 53 / 53 | 255 | 63 | 55 / 56 / 56 | 255 |
+| Elite Four | Drake | 64 | 60 | 53 / 54 / 54 | 255 | 64 | 56 / 57 / 57 | 255 |
+| Elite Four | Wallace | 66 | 61 | 54 / 55 / 55 | 255 | 66 | 57 / 59 / 59 | 255 |
 
 ### Now: half clear (gym leaders, Elite Four, Champion)
 
 | stage | boss | boss ace | 1.5x off KO-taker | 1.5x off bench (none / friendship / always) | 1.5x off bench friendship | 1.5x on KO-taker | 1.5x on bench (none / friendship / always) | 1.5x on bench friendship |
 |---|---|---|---|---|---|---|---|---|
-| Roxanne | Roxanne 1 | 15 | 13 | 11 / 11 / 12 | 108 | 14 | 12 / 12 / 13 | 111 |
-| Brawly | Brawly 1 | 19 | 17 | 15 / 15 / 16 | 138 | 19 | 16 / 16 / 17 | 141 |
-| Wattson | Wattson 1 | 26 | 26 | 22 / 22 / 23 | 177 | 29 | 24 / 24 / 25 | 183 |
-| Flannery | Flannery 1 | 34 | 35 | 29 / 29 / 30 | 211 | 38 | 32 / 32 / 33 | 218 |
-| Norman | Norman 1 | 36 | 36 | 31 / 31 / 32 | 232 | 40 | 33 / 34 / 35 | 239 |
-| Winona | Winona 1 | 43 | 44 | 37 / 37 / 38 | 255 | 48 | 40 / 41 / 42 | 255 |
-| Tate and Liza | Tate And Liza 1 | 52 | 53 | 44 / 45 / 46 | 255 | 58 | 48 / 50 / 50 | 255 |
-| Juan | Juan 1 | 57 | 59 | 49 / 51 / 51 | 255 | 65 | 54 / 56 / 56 | 255 |
-| Elite Four | Sidney | 61 | 64 | 52 / 54 / 54 | 255 | 70 | 57 / 59 / 60 | 255 |
-| Elite Four | Phoebe | 62 | 64 | 53 / 55 / 55 | 255 | 71 | 58 / 60 / 60 | 255 |
-| Elite Four | Glacia | 63 | 65 | 53 / 56 / 56 | 255 | 71 | 59 / 61 / 61 | 255 |
-| Elite Four | Drake | 64 | 66 | 54 / 56 / 56 | 255 | 72 | 59 / 62 / 62 | 255 |
-| Elite Four | Wallace | 66 | 67 | 55 / 57 / 57 | 255 | 74 | 60 / 63 / 63 | 255 |
+| Roxanne | Roxanne 1 | 15 | 10 | 10 / 10 / 10 | 105 | 11 | 10 / 10 / 10 | 105 |
+| Brawly | Brawly 1 | 19 | 17 | 15 / 15 / 15 | 138 | 18 | 16 / 16 / 16 | 141 |
+| Wattson | Wattson 1 | 26 | 24 | 21 / 21 / 22 | 174 | 26 | 23 / 23 / 24 | 180 |
+| Flannery | Flannery 1 | 34 | 30 | 27 / 27 / 28 | 207 | 32 | 29 / 29 / 29 | 211 |
+| Norman | Norman 1 | 36 | 31 | 28 / 28 / 29 | 226 | 34 | 30 / 30 / 31 | 230 |
+| Winona | Winona 1 | 43 | 37 | 34 / 34 / 34 | 255 | 40 | 35 / 36 / 36 | 255 |
+| Tate and Liza | Tate And Liza 1 | 52 | 46 | 41 / 42 / 42 | 255 | 49 | 43 / 44 / 44 | 255 |
+| Juan | Juan 1 | 57 | 52 | 45 / 47 / 47 | 255 | 56 | 48 / 49 / 49 | 255 |
+| Elite Four | Sidney | 61 | 55 | 49 / 50 / 50 | 255 | 59 | 52 / 53 / 53 | 255 |
+| Elite Four | Phoebe | 62 | 57 | 50 / 51 / 51 | 255 | 61 | 53 / 54 / 54 | 255 |
+| Elite Four | Glacia | 63 | 58 | 51 / 52 / 52 | 255 | 62 | 54 / 55 / 55 | 255 |
+| Elite Four | Drake | 64 | 59 | 52 / 53 / 53 | 255 | 64 | 55 / 56 / 56 | 255 |
+| Elite Four | Wallace | 66 | 61 | 53 / 54 / 54 | 255 | 66 | 56 / 58 / 58 | 255 |
 
 ### Stage trainers against the bench
 
@@ -174,15 +174,15 @@ Each stage's regular trainers by their highest-level Pokemon, against the full-c
 
 | stage | trainers | trainer ace mean | trainer ace max | 1.5x off bench | 1.5x on bench |
 |---|---|---|---|---|---|
-| Roxanne | 27 | 7.2 | 10 | 13 | 14 |
-| Brawly | 8 | 13.1 | 16 | 16 | 17 |
-| Wattson | 46 | 16.2 | 27 | 25 | 27 |
-| Flannery | 92 | 19.4 | 28 | 32 | 36 |
-| Norman | 10 | 25.1 | 26 | 35 | 39 |
-| Winona | 83 | 25.2 | 30 | 41 | 46 |
-| Tate and Liza | 108 | 31.4 | 36 | 49 | 54 |
-| Juan | 71 | 34.6 | 40 | 55 | 60 |
-| Elite Four | 25 | 42.3 | 48 | 60 | 66 |
+| Roxanne | 27 | 7.2 | 10 | 11 | 11 |
+| Brawly | 8 | 13.1 | 16 | 14 | 15 |
+| Wattson | 46 | 16.2 | 27 | 23 | 25 |
+| Flannery | 92 | 19.4 | 28 | 27 | 29 |
+| Norman | 10 | 25.1 | 26 | 30 | 32 |
+| Winona | 83 | 25.2 | 30 | 34 | 35 |
+| Tate and Liza | 108 | 31.4 | 36 | 40 | 41 |
+| Juan | 71 | 34.6 | 40 | 45 | 47 |
+| Elite Four | 25 | 42.3 | 48 | 51 | 53 |
 
 ### Proposed boss raises
 
@@ -192,137 +192,137 @@ Target: on a full clear with modelled friendship, each story boss's ace is 1 lev
 |---|---|---|---|---|
 | Rival (Route 103) | May Route 103 Mudkip | 6 | +0 -> 6 | +0 -> 6 |
 | Roxanne | Roxanne 1 | 15 | +0 -> 15 | +0 -> 15 |
-| Brawly | May Rustboro Mudkip | 17 | +0 -> 17 | +1 -> 18 |
+| Brawly | May Rustboro Mudkip | 17 | +0 -> 17 | +0 -> 17 |
 | Brawly | Brawly 1 | 19 | +0 -> 19 | +0 -> 19 |
-| Wattson | May Route 110 Mudkip | 26 | +0 -> 26 | +2 -> 28 |
-| Wattson | Wally Mauville | 26 | +0 -> 26 | +3 -> 29 |
-| Wattson | Wattson 1 | 26 | +0 -> 26 | +3 -> 29 |
-| Flannery | Tabitha Mt Chimney | 33 | +0 -> 33 | +4 -> 37 |
-| Flannery | Maxie Mt Chimney | 34 | +0 -> 34 | +4 -> 38 |
-| Flannery | Flannery 1 | 34 | +0 -> 34 | +4 -> 38 |
-| Norman | Norman 1 | 36 | +0 -> 36 | +4 -> 40 |
-| Winona | May Route 119 Mudkip | 42 | +0 -> 42 | +5 -> 47 |
-| Winona | Shelly Weather Institute | 43 | +0 -> 43 | +5 -> 48 |
-| Winona | Winona 1 | 43 | +0 -> 43 | +5 -> 48 |
-| Tate and Liza | May Lilycove Mudkip | 50 | +0 -> 50 | +5 -> 55 |
-| Tate and Liza | Tabitha Magma Hideout | 51 | +0 -> 51 | +5 -> 56 |
-| Tate and Liza | Maxie Magma Hideout | 51 | +0 -> 51 | +6 -> 57 |
-| Tate and Liza | Matt | 51 | +0 -> 51 | +6 -> 57 |
-| Tate and Liza | Tate And Liza 1 | 52 | +0 -> 52 | +6 -> 58 |
-| Juan | Tabitha Mossdeep | 56 | +0 -> 56 | +6 -> 62 |
-| Juan | Maxie Mossdeep | 56 | +0 -> 56 | +6 -> 62 |
-| Juan | Shelly Seafloor Cavern | 57 | +0 -> 57 | +6 -> 63 |
-| Juan | Archie | 57 | +0 -> 57 | +6 -> 63 |
-| Juan | Juan 1 | 57 | +0 -> 57 | +7 -> 64 |
-| Elite Four | Wally Vr 1 | 61 | +0 -> 61 | +7 -> 68 |
-| Elite Four | Sidney | 61 | +0 -> 61 | +7 -> 68 |
-| Elite Four | Phoebe | 62 | +0 -> 62 | +7 -> 69 |
-| Elite Four | Glacia | 63 | +0 -> 63 | +7 -> 70 |
-| Elite Four | Drake | 64 | +0 -> 64 | +6 -> 70 |
-| Elite Four | Wallace | 66 | +0 -> 66 | +5 -> 71 |
+| Wattson | May Route 110 Mudkip | 26 | +0 -> 26 | +0 -> 26 |
+| Wattson | Wally Mauville | 26 | +0 -> 26 | +0 -> 26 |
+| Wattson | Wattson 1 | 26 | +0 -> 26 | +0 -> 26 |
+| Flannery | Tabitha Mt Chimney | 33 | +0 -> 33 | +0 -> 33 |
+| Flannery | Maxie Mt Chimney | 34 | +0 -> 34 | +0 -> 34 |
+| Flannery | Flannery 1 | 34 | +0 -> 34 | +0 -> 34 |
+| Norman | Norman 1 | 36 | +0 -> 36 | +0 -> 36 |
+| Winona | May Route 119 Mudkip | 42 | +0 -> 42 | +0 -> 42 |
+| Winona | Shelly Weather Institute | 43 | +0 -> 43 | +0 -> 43 |
+| Winona | Winona 1 | 43 | +0 -> 43 | +0 -> 43 |
+| Tate and Liza | May Lilycove Mudkip | 50 | +0 -> 50 | +0 -> 50 |
+| Tate and Liza | Tabitha Magma Hideout | 51 | +0 -> 51 | +0 -> 51 |
+| Tate and Liza | Maxie Magma Hideout | 51 | +0 -> 51 | +0 -> 51 |
+| Tate and Liza | Matt | 51 | +0 -> 51 | +0 -> 51 |
+| Tate and Liza | Tate And Liza 1 | 52 | +0 -> 52 | +0 -> 52 |
+| Juan | Tabitha Mossdeep | 56 | +0 -> 56 | +0 -> 56 |
+| Juan | Maxie Mossdeep | 56 | +0 -> 56 | +0 -> 56 |
+| Juan | Shelly Seafloor Cavern | 57 | +0 -> 57 | +0 -> 57 |
+| Juan | Archie | 57 | +0 -> 57 | +0 -> 57 |
+| Juan | Juan 1 | 57 | +0 -> 57 | +0 -> 57 |
+| Elite Four | Wally Vr 1 | 61 | +0 -> 61 | +0 -> 61 |
+| Elite Four | Sidney | 61 | +0 -> 61 | +0 -> 61 |
+| Elite Four | Phoebe | 62 | +0 -> 62 | +0 -> 62 |
+| Elite Four | Glacia | 63 | +0 -> 63 | +0 -> 63 |
+| Elite Four | Drake | 64 | +0 -> 64 | +0 -> 64 |
+| Elite Four | Wallace | 66 | +0 -> 66 | +0 -> 66 |
 
 The model plays one rival team per fight. The same fight's other rival and starter teams get the raise that lifts their ace to the staged team's raised ace:
 
 | staged boss | other teams | ace now | 1.5x off: raise -> ace | 1.5x on: raise -> ace |
 |---|---|---|---|---|
 | May Route 103 Mudkip | 5 | 6 | +0 -> 6 | +0 -> 6 |
-| May Rustboro Mudkip | 5 | 17 | +0 -> 17 | +1 -> 18 |
-| May Route 110 Mudkip | 5 | 26 | +0 -> 26 | +2 -> 28 |
-| May Route 119 Mudkip | 5 | 42 | +0 -> 42 | +5 -> 47 |
-| May Lilycove Mudkip | 5 | 50 | +0 -> 50 | +5 -> 55 |
+| May Rustboro Mudkip | 5 | 17 | +0 -> 17 | +0 -> 17 |
+| May Route 110 Mudkip | 5 | 26 | +0 -> 26 | +0 -> 26 |
+| May Route 119 Mudkip | 5 | 42 | +0 -> 42 | +0 -> 42 |
+| May Lilycove Mudkip | 5 | 50 | +0 -> 50 | +0 -> 50 |
 
 ### After the 1.5x off raises
 
-Full clear: 25 of 30 bosses have the bench (friendship) within 1 of their ace; the others' aces are already higher and aren't lowered. Half clear: 12 of 13 gym leaders, Elite Four and Champion have the bench (friendship) within 8.
+Full clear: 1 of 30 bosses have the bench (friendship) within 1 of their ace; the others' aces are already higher and aren't lowered. Half clear: 5 of 13 gym leaders, Elite Four and Champion have the bench (friendship) within 8.
 
 | stage | boss | ace | KO-taker | full bench (none / friendship / always) | full bench - ace | half bench (none / friendship / always) | half bench - ace |
 |---|---|---|---|---|---|---|---|
-| Rival (Route 103) | May Route 103 Mudkip | 6 | 6 | 5 / 5 / 5 | -1 | 5 / 5 / 5 | -1 |
-| Roxanne | Roxanne 1 | 15 | 15 | 13 / 13 / 14 | -2 | 11 / 11 / 12 | -4 |
-| Brawly | May Rustboro Mudkip | 17 | 18 | 16 / 16 / 16 | -1 | 14 / 14 / 15 | -3 |
-| Brawly | Brawly 1 | 19 | 19 | 16 / 16 / 17 | -3 | 15 / 15 / 16 | -4 |
-| Wattson | May Route 110 Mudkip | 26 | 29 | 25 / 25 / 26 | -1 | 22 / 22 / 22 | -4 |
-| Wattson | Wally Mauville | 26 | 30 | 25 / 25 / 26 | -1 | 22 / 22 / 23 | -4 |
-| Wattson | Wattson 1 | 26 | 30 | 25 / 25 / 26 | -1 | 22 / 22 / 23 | -4 |
-| Flannery | Tabitha Mt Chimney | 33 | 39 | 32 / 32 / 34 | -1 | 28 / 28 / 29 | -5 |
-| Flannery | Maxie Mt Chimney | 34 | 39 | 33 / 33 / 34 | -1 | 29 / 29 / 30 | -5 |
-| Flannery | Flannery 1 | 34 | 40 | 33 / 33 / 34 | -1 | 29 / 29 / 30 | -5 |
-| Norman | Norman 1 | 36 | 41 | 34 / 35 / 36 | -1 | 31 / 31 / 32 | -5 |
-| Winona | May Route 119 Mudkip | 42 | 49 | 40 / 41 / 42 | -1 | 35 / 36 / 37 | -6 |
-| Winona | Shelly Weather Institute | 43 | 49 | 41 / 42 / 42 | -1 | 36 / 37 / 38 | -6 |
-| Winona | Winona 1 | 43 | 50 | 41 / 42 / 43 | -1 | 37 / 37 / 38 | -6 |
-| Tate and Liza | May Lilycove Mudkip | 50 | 58 | 48 / 49 / 49 | -1 | 42 / 43 / 43 | -7 |
-| Tate and Liza | Tabitha Magma Hideout | 51 | 58 | 48 / 50 / 50 | -1 | 42 / 44 / 44 | -7 |
-| Tate and Liza | Maxie Magma Hideout | 51 | 59 | 48 / 50 / 50 | -1 | 43 / 44 / 45 | -7 |
-| Tate and Liza | Matt | 51 | 59 | 49 / 50 / 51 | -1 | 44 / 45 / 45 | -6 |
-| Tate and Liza | Tate And Liza 1 | 52 | 59 | 49 / 51 / 51 | -1 | 44 / 45 / 46 | -7 |
-| Juan | Tabitha Mossdeep | 56 | 64 | 53 / 55 / 55 | -1 | 47 / 49 / 49 | -7 |
-| Juan | Maxie Mossdeep | 56 | 65 | 53 / 55 / 55 | -1 | 48 / 49 / 50 | -7 |
-| Juan | Shelly Seafloor Cavern | 57 | 65 | 54 / 56 / 56 | -1 | 48 / 50 / 50 | -7 |
-| Juan | Archie | 57 | 65 | 54 / 56 / 56 | -1 | 48 / 50 / 50 | -7 |
-| Juan | Juan 1 | 57 | 66 | 54 / 56 / 56 | -1 | 49 / 51 / 51 | -6 |
-| Elite Four | Wally Vr 1 | 61 | 70 | 58 / 60 / 60 | -1 | 51 / 53 / 54 | -8 |
-| Elite Four | Sidney | 61 | 71 | 58 / 60 / 61 | -1 | 52 / 54 / 54 | -7 |
-| Elite Four | Phoebe | 62 | 71 | 59 / 61 / 61 | -1 | 53 / 55 / 55 | -7 |
-| Elite Four | Glacia | 63 | 72 | 59 / 61 / 62 | -2 | 53 / 56 / 56 | -7 |
-| Elite Four | Drake | 64 | 72 | 60 / 62 / 62 | -2 | 54 / 56 / 56 | -8 |
-| Elite Four | Wallace | 66 | 73 | 60 / 63 / 63 | -3 | 55 / 57 / 57 | -9 |
+| Rival (Route 103) | May Route 103 Mudkip | 6 | 5 | 5 / 5 / 5 | -1 | 5 / 5 / 5 | -1 |
+| Roxanne | Roxanne 1 | 15 | 11 | 11 / 11 / 11 | -4 | 10 / 10 / 10 | -5 |
+| Brawly | May Rustboro Mudkip | 17 | 16 | 14 / 14 / 15 | -3 | 14 / 14 / 14 | -3 |
+| Brawly | Brawly 1 | 19 | 17 | 15 / 15 / 16 | -4 | 15 / 15 / 15 | -4 |
+| Wattson | May Route 110 Mudkip | 26 | 26 | 23 / 23 / 24 | -3 | 20 / 20 / 21 | -6 |
+| Wattson | Wally Mauville | 26 | 27 | 23 / 23 / 24 | -3 | 21 / 21 / 22 | -5 |
+| Wattson | Wattson 1 | 26 | 27 | 23 / 23 / 24 | -3 | 21 / 21 / 22 | -5 |
+| Flannery | Tabitha Mt Chimney | 33 | 30 | 27 / 27 / 28 | -6 | 25 / 25 / 26 | -8 |
+| Flannery | Maxie Mt Chimney | 34 | 31 | 28 / 28 / 29 | -6 | 26 / 26 / 27 | -8 |
+| Flannery | Flannery 1 | 34 | 32 | 29 / 29 / 30 | -5 | 27 / 27 / 28 | -7 |
+| Norman | Norman 1 | 36 | 33 | 30 / 30 / 31 | -6 | 28 / 28 / 29 | -8 |
+| Winona | May Route 119 Mudkip | 42 | 36 | 33 / 34 / 34 | -8 | 32 / 33 / 33 | -9 |
+| Winona | Shelly Weather Institute | 43 | 37 | 34 / 35 / 35 | -8 | 33 / 34 / 34 | -9 |
+| Winona | Winona 1 | 43 | 38 | 35 / 35 / 36 | -8 | 34 / 34 / 34 | -9 |
+| Tate and Liza | May Lilycove Mudkip | 50 | 42 | 39 / 40 / 40 | -10 | 38 / 38 / 38 | -12 |
+| Tate and Liza | Tabitha Magma Hideout | 51 | 44 | 40 / 41 / 41 | -10 | 39 / 40 / 40 | -11 |
+| Tate and Liza | Maxie Magma Hideout | 51 | 45 | 41 / 42 / 42 | -9 | 40 / 40 / 40 | -11 |
+| Tate and Liza | Matt | 51 | 46 | 42 / 43 / 43 | -8 | 40 / 41 / 41 | -10 |
+| Tate and Liza | Tate And Liza 1 | 52 | 47 | 42 / 43 / 43 | -9 | 41 / 42 / 42 | -10 |
+| Juan | Tabitha Mossdeep | 56 | 49 | 44 / 45 / 45 | -11 | 43 / 44 / 44 | -12 |
+| Juan | Maxie Mossdeep | 56 | 50 | 45 / 46 / 46 | -10 | 43 / 44 / 44 | -12 |
+| Juan | Shelly Seafloor Cavern | 57 | 51 | 46 / 46 / 46 | -11 | 44 / 45 / 45 | -12 |
+| Juan | Archie | 57 | 51 | 46 / 47 / 47 | -10 | 45 / 46 / 46 | -11 |
+| Juan | Juan 1 | 57 | 52 | 47 / 48 / 48 | -9 | 45 / 47 / 47 | -10 |
+| Elite Four | Wally Vr 1 | 61 | 55 | 50 / 51 / 51 | -10 | 48 / 49 / 49 | -12 |
+| Elite Four | Sidney | 61 | 56 | 51 / 52 / 52 | -9 | 49 / 50 / 50 | -11 |
+| Elite Four | Phoebe | 62 | 58 | 51 / 53 / 53 | -9 | 50 / 51 / 51 | -11 |
+| Elite Four | Glacia | 63 | 59 | 52 / 53 / 53 | -10 | 51 / 52 / 52 | -11 |
+| Elite Four | Drake | 64 | 60 | 53 / 54 / 54 | -10 | 52 / 53 / 53 | -11 |
+| Elite Four | Wallace | 66 | 61 | 54 / 55 / 55 | -11 | 53 / 54 / 54 | -12 |
 
 ### After the 1.5x on raises
 
-Full clear: 30 of 30 bosses have the bench (friendship) within 1 of their ace; the others' aces are already higher and aren't lowered. Half clear: 13 of 13 gym leaders, Elite Four and Champion have the bench (friendship) within 8.
+Full clear: 4 of 30 bosses have the bench (friendship) within 1 of their ace; the others' aces are already higher and aren't lowered. Half clear: 13 of 13 gym leaders, Elite Four and Champion have the bench (friendship) within 8.
 
 | stage | boss | ace | KO-taker | full bench (none / friendship / always) | full bench - ace | half bench (none / friendship / always) | half bench - ace |
 |---|---|---|---|---|---|---|---|
-| Rival (Route 103) | May Route 103 Mudkip | 6 | 6 | 5 / 5 / 5 | -1 | 5 / 5 / 5 | -1 |
-| Roxanne | Roxanne 1 | 15 | 17 | 14 / 14 / 15 | -1 | 12 / 12 / 13 | -3 |
-| Brawly | May Rustboro Mudkip | 18 | 20 | 17 / 17 / 18 | -1 | 15 / 15 / 16 | -3 |
-| Brawly | Brawly 1 | 19 | 21 | 18 / 18 / 18 | -1 | 16 / 16 / 17 | -3 |
-| Wattson | May Route 110 Mudkip | 28 | 32 | 27 / 27 / 29 | -1 | 24 / 24 / 25 | -4 |
-| Wattson | Wally Mauville | 29 | 33 | 28 / 28 / 29 | -1 | 24 / 24 / 25 | -5 |
-| Wattson | Wattson 1 | 29 | 33 | 28 / 28 / 29 | -1 | 25 / 25 / 26 | -4 |
-| Flannery | Tabitha Mt Chimney | 37 | 43 | 36 / 36 / 37 | -1 | 31 / 31 / 32 | -6 |
-| Flannery | Maxie Mt Chimney | 38 | 43 | 36 / 37 / 37 | -1 | 32 / 32 / 33 | -6 |
-| Flannery | Flannery 1 | 38 | 44 | 37 / 37 / 38 | -1 | 32 / 32 / 34 | -6 |
-| Norman | Norman 1 | 40 | 46 | 38 / 39 / 40 | -1 | 34 / 34 / 35 | -6 |
-| Winona | May Route 119 Mudkip | 47 | 54 | 44 / 46 / 46 | -1 | 39 / 40 / 41 | -7 |
-| Winona | Shelly Weather Institute | 48 | 54 | 45 / 47 / 47 | -1 | 40 / 41 / 42 | -7 |
-| Winona | Winona 1 | 48 | 55 | 45 / 47 / 47 | -1 | 41 / 42 / 42 | -6 |
-| Tate and Liza | May Lilycove Mudkip | 55 | 63 | 52 / 54 / 55 | -1 | 46 / 48 / 48 | -7 |
-| Tate and Liza | Tabitha Magma Hideout | 56 | 64 | 53 / 55 / 55 | -1 | 47 / 49 / 49 | -7 |
-| Tate and Liza | Maxie Magma Hideout | 57 | 65 | 54 / 56 / 56 | -1 | 48 / 50 / 50 | -7 |
-| Tate and Liza | Matt | 57 | 66 | 54 / 56 / 56 | -1 | 49 / 51 / 51 | -6 |
-| Tate and Liza | Tate And Liza 1 | 58 | 66 | 54 / 57 / 57 | -1 | 49 / 51 / 51 | -7 |
-| Juan | Tabitha Mossdeep | 62 | 71 | 59 / 61 / 61 | -1 | 53 / 55 / 55 | -7 |
-| Juan | Maxie Mossdeep | 62 | 72 | 59 / 61 / 61 | -1 | 53 / 55 / 55 | -7 |
-| Juan | Shelly Seafloor Cavern | 63 | 72 | 60 / 62 / 62 | -1 | 54 / 56 / 56 | -7 |
-| Juan | Archie | 63 | 73 | 60 / 62 / 62 | -1 | 54 / 56 / 56 | -7 |
-| Juan | Juan 1 | 64 | 73 | 60 / 63 / 63 | -1 | 55 / 57 / 57 | -7 |
-| Elite Four | Wally Vr 1 | 68 | 78 | 64 / 67 / 67 | -1 | 58 / 60 / 60 | -8 |
-| Elite Four | Sidney | 68 | 79 | 65 / 67 / 67 | -1 | 59 / 61 / 61 | -7 |
-| Elite Four | Phoebe | 69 | 79 | 65 / 68 / 68 | -1 | 59 / 62 / 62 | -7 |
-| Elite Four | Glacia | 70 | 80 | 66 / 69 / 69 | -1 | 60 / 63 / 63 | -7 |
-| Elite Four | Drake | 70 | 81 | 67 / 69 / 69 | -1 | 61 / 64 / 64 | -6 |
-| Elite Four | Wallace | 71 | 82 | 67 / 70 / 70 | -1 | 62 / 65 / 65 | -6 |
+| Rival (Route 103) | May Route 103 Mudkip | 6 | 5 | 5 / 5 / 5 | -1 | 5 / 5 / 5 | -1 |
+| Roxanne | Roxanne 1 | 15 | 12 | 11 / 11 / 11 | -4 | 10 / 10 / 10 | -5 |
+| Brawly | May Rustboro Mudkip | 17 | 17 | 15 / 15 / 16 | -2 | 15 / 15 / 15 | -2 |
+| Brawly | Brawly 1 | 19 | 18 | 16 / 16 / 17 | -3 | 16 / 16 / 16 | -3 |
+| Wattson | May Route 110 Mudkip | 26 | 28 | 25 / 25 / 26 | -1 | 22 / 22 / 23 | -4 |
+| Wattson | Wally Mauville | 26 | 29 | 25 / 25 / 26 | -1 | 23 / 23 / 24 | -3 |
+| Wattson | Wattson 1 | 26 | 29 | 25 / 25 / 26 | -1 | 23 / 23 / 24 | -3 |
+| Flannery | Tabitha Mt Chimney | 33 | 31 | 29 / 29 / 30 | -4 | 27 / 27 / 27 | -6 |
+| Flannery | Maxie Mt Chimney | 34 | 32 | 30 / 30 / 30 | -4 | 28 / 28 / 28 | -6 |
+| Flannery | Flannery 1 | 34 | 34 | 31 / 31 / 31 | -3 | 29 / 29 / 29 | -5 |
+| Norman | Norman 1 | 36 | 35 | 32 / 32 / 32 | -4 | 30 / 30 / 31 | -6 |
+| Winona | May Route 119 Mudkip | 42 | 38 | 35 / 35 / 35 | -7 | 33 / 34 / 34 | -8 |
+| Winona | Shelly Weather Institute | 43 | 40 | 36 / 36 / 36 | -7 | 35 / 35 / 35 | -8 |
+| Winona | Winona 1 | 43 | 41 | 36 / 37 / 37 | -6 | 35 / 36 / 36 | -7 |
+| Tate and Liza | May Lilycove Mudkip | 50 | 44 | 41 / 41 / 41 | -9 | 39 / 40 / 40 | -10 |
+| Tate and Liza | Tabitha Magma Hideout | 51 | 46 | 42 / 43 / 43 | -8 | 41 / 41 / 42 | -10 |
+| Tate and Liza | Maxie Magma Hideout | 51 | 48 | 43 / 44 / 44 | -7 | 42 / 42 / 43 | -9 |
+| Tate and Liza | Matt | 51 | 49 | 44 / 45 / 45 | -6 | 43 / 44 / 44 | -7 |
+| Tate and Liza | Tate And Liza 1 | 52 | 50 | 44 / 45 / 45 | -7 | 43 / 44 / 44 | -8 |
+| Juan | Tabitha Mossdeep | 56 | 52 | 46 / 47 / 47 | -9 | 45 / 46 / 46 | -10 |
+| Juan | Maxie Mossdeep | 56 | 53 | 47 / 48 / 48 | -8 | 46 / 47 / 47 | -9 |
+| Juan | Shelly Seafloor Cavern | 57 | 54 | 48 / 49 / 49 | -8 | 47 / 48 / 48 | -9 |
+| Juan | Archie | 57 | 55 | 48 / 49 / 49 | -8 | 47 / 48 / 48 | -9 |
+| Juan | Juan 1 | 57 | 56 | 49 / 50 / 50 | -7 | 48 / 49 / 49 | -8 |
+| Elite Four | Wally Vr 1 | 61 | 58 | 52 / 53 / 53 | -8 | 50 / 52 / 52 | -9 |
+| Elite Four | Sidney | 61 | 60 | 53 / 54 / 54 | -7 | 52 / 53 / 53 | -8 |
+| Elite Four | Phoebe | 62 | 61 | 54 / 55 / 55 | -7 | 53 / 54 / 54 | -8 |
+| Elite Four | Glacia | 63 | 63 | 55 / 56 / 56 | -7 | 54 / 55 / 55 | -8 |
+| Elite Four | Drake | 64 | 64 | 56 / 57 / 57 | -7 | 55 / 56 / 56 | -8 |
+| Elite Four | Wallace | 66 | 66 | 57 / 59 / 59 | -7 | 56 / 58 / 58 | -8 |
 
 ### Sensitivity (now, full clear, friendship bracket)
 
 | setting | variant | Roxanne 1 | Brawly 1 | Wattson 1 | Flannery 1 | Norman 1 | Winona 1 | Tate And Liza 1 | Juan 1 | Sidney | Phoebe | Glacia | Drake | Wallace |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 1.5x off | as modelled | 13 | 16 | 25 | 33 | 35 | 42 | 51 | 56 | 60 | 61 | 61 | 62 | 63 |
-| 1.5x off | no catches | 13 | 16 | 25 | 33 | 35 | 42 | 51 | 56 | 60 | 61 | 61 | 62 | 62 |
-| 1.5x off | 6 catches per stage | 13 | 16 | 26 | 33 | 35 | 42 | 51 | 56 | 61 | 61 | 62 | 62 | 63 |
-| 1.5x off | no walking | 13 | 16 | 25 | 33 | 34 | 41 | 49 | 54 | 59 | 59 | 60 | 61 | 61 |
-| 1.5x off | 8,192 steps per stage | 13 | 16 | 26 | 34 | 36 | 43 | 51 | 56 | 61 | 61 | 62 | 62 | 63 |
-| 1.5x off | every stage trainer +3 | 15 | 18 | 27 | 36 | 37 | 45 | 53 | 58 | 63 | 63 | 63 | 64 | 65 |
-| 1.5x off | whole party unevolved (1.2x) | 14 | 17 | 26 | 35 | 37 | 44 | 53 | 59 | 63 | 64 | 64 | 65 | 65 |
-| 1.5x on | as modelled | 14 | 18 | 28 | 37 | 39 | 46 | 56 | 62 | 66 | 67 | 67 | 68 | 69 |
-| 1.5x on | no catches | 14 | 17 | 28 | 37 | 38 | 46 | 56 | 62 | 66 | 67 | 67 | 68 | 69 |
-| 1.5x on | 6 catches per stage | 14 | 18 | 28 | 37 | 39 | 47 | 56 | 62 | 66 | 67 | 67 | 68 | 69 |
-| 1.5x on | no walking | 14 | 18 | 28 | 36 | 38 | 45 | 54 | 60 | 65 | 66 | 66 | 67 | 68 |
-| 1.5x on | 8,192 steps per stage | 14 | 18 | 29 | 38 | 39 | 47 | 56 | 62 | 66 | 67 | 67 | 68 | 69 |
-| 1.5x on | every stage trainer +3 | 17 | 19 | 30 | 40 | 41 | 49 | 58 | 64 | 68 | 69 | 69 | 70 | 71 |
-| 1.5x on | whole party unevolved (1.2x) | 15 | 18 | 29 | 39 | 40 | 48 | 58 | 64 | 69 | 70 | 70 | 71 | 72 |
+| 1.5x off | as modelled | 11 | 15 | 23 | 29 | 30 | 35 | 43 | 48 | 52 | 53 | 53 | 54 | 55 |
+| 1.5x off | no catches | 11 | 15 | 23 | 29 | 30 | 35 | 43 | 48 | 52 | 53 | 53 | 54 | 55 |
+| 1.5x off | 6 catches per stage | 11 | 15 | 23 | 29 | 30 | 35 | 43 | 48 | 52 | 53 | 53 | 54 | 55 |
+| 1.5x off | no walking | 11 | 15 | 23 | 29 | 30 | 35 | 42 | 47 | 51 | 51 | 52 | 53 | 54 |
+| 1.5x off | 8,192 steps per stage | 11 | 15 | 24 | 30 | 31 | 36 | 43 | 48 | 52 | 53 | 53 | 54 | 55 |
+| 1.5x off | every stage trainer +3 | 14 | 17 | 25 | 31 | 33 | 38 | 45 | 50 | 54 | 55 | 56 | 56 | 57 |
+| 1.5x off | whole party unevolved (1.2x) | 11 | 16 | 24 | 30 | 31 | 36 | 44 | 49 | 53 | 54 | 55 | 56 | 57 |
+| 1.5x on | as modelled | 11 | 16 | 25 | 31 | 32 | 37 | 45 | 50 | 54 | 55 | 56 | 57 | 59 |
+| 1.5x on | no catches | 11 | 16 | 25 | 31 | 32 | 37 | 45 | 50 | 54 | 55 | 56 | 57 | 59 |
+| 1.5x on | 6 catches per stage | 11 | 16 | 25 | 31 | 32 | 37 | 45 | 50 | 54 | 55 | 56 | 57 | 59 |
+| 1.5x on | no walking | 11 | 16 | 25 | 31 | 32 | 36 | 44 | 49 | 53 | 54 | 55 | 56 | 58 |
+| 1.5x on | 8,192 steps per stage | 11 | 16 | 26 | 31 | 32 | 37 | 45 | 50 | 54 | 55 | 56 | 57 | 59 |
+| 1.5x on | every stage trainer +3 | 14 | 18 | 27 | 33 | 34 | 39 | 47 | 52 | 56 | 57 | 58 | 59 | 60 |
+| 1.5x on | whole party unevolved (1.2x) | 11 | 17 | 26 | 31 | 32 | 38 | 46 | 52 | 55 | 57 | 58 | 59 | 60 |
 
 ### Default movesets of the raised boss Pokemon (1.5x off)
 
@@ -330,48 +330,7 @@ Full clear: 30 of 30 bosses have the bench (friendship) within 1 of their ace; t
 
 ### Default movesets of the raised boss Pokemon (1.5x on)
 
-87 raised boss Pokemon are on default moves; 38 get a different moveset or flags at the raised level (the flags as in "Default movesets" below).
-
-| boss | species | lv | modern default now | raised | flags now -> raised |
-|---|---|---|---|---|---|
-| May Route 110 Mudkip | Wingull | 24 -> 26 | Quick Attack, Supersonic, Wing Attack, Water Pulse | Supersonic, Wing Attack, Water Pulse, Agility | - -> - |
-| Wally Mauville | Ralts | 26 -> 29 | Teleport, Psybeam, Life Dew, Charm | Psybeam, Life Dew, Charm, Calm Mind | - -> - |
-| Tabitha Mt Chimney | Numel | 29 -> 33 | Amnesia, Lava Plume, Earth Power, Curse | Lava Plume, Earth Power, Curse, Take Down | new_strong -> new_strong |
-| Tabitha Mt Chimney | Poochyena | 31 -> 35 | Assurance, Scary Face, Taunt, Crunch | Scary Face, Taunt, Crunch, Yawn | above_band -> - |
-| Tabitha Mt Chimney | Zubat | 33 -> 37 | Poison Fang, Quick Guard, Air Cutter, Bite | Quick Guard, Air Cutter, Bite, Haze | - -> - |
-| Maxie Mt Chimney | Mightyena | 33 -> 37 | Roar, Swagger, Assurance, Scary Face | Swagger, Assurance, Scary Face, Taunt | - -> - |
-| Maxie Mt Chimney | Zubat | 33 -> 37 | Poison Fang, Quick Guard, Air Cutter, Bite | Quick Guard, Air Cutter, Bite, Haze | - -> - |
-| May Route 119 Mudkip | Magcargo | 40 -> 45 | Incinerate, Rock Slide, Lava Plume, Amnesia | Rock Slide, Lava Plume, Amnesia, Body Slam | new_strong -> above_band new_strong |
-| Shelly Weather Institute | Sharpedo | 43 -> 48 | Screech, Swagger, Crunch, Agility | Swagger, Crunch, Agility, Liquidation | - -> new_strong |
-| Shelly Weather Institute | Mightyena | 43 -> 48 | Swagger, Assurance, Scary Face, Taunt | Scary Face, Taunt, Yawn, Take Down | - -> one_attack lost_stab |
-| May Lilycove Mudkip | Tropius | 47 -> 52 | Wide Guard, Air Slash, Body Slam, Outrage | Air Slash, Body Slam, Outrage, Synthesis | new_strong -> new_strong |
-| May Lilycove Mudkip | Magcargo | 48 -> 53 | Lava Plume, Amnesia, Body Slam, Recover | Lava Plume, Amnesia, Body Slam, Recover | above_band new_strong -> new_strong |
-| Tabitha Magma Hideout | Camerupt | 44 -> 49 | Earth Power, Curse, Take Down, Yawn | Curse, Take Down, Yawn, Earthquake | new_strong -> - |
-| Tabitha Magma Hideout | Mightyena | 46 -> 51 | Assurance, Scary Face, Taunt, Yawn | Scary Face, Taunt, Yawn, Take Down | - -> one_attack lost_stab |
-| Tabitha Magma Hideout | Zubat | 48 -> 53 | Bite, Haze, Venoshock, Confuse Ray | Haze, Venoshock, Confuse Ray, Air Slash | - -> new_strong |
-| Maxie Magma Hideout | Crobat | 50 -> 56 | Air Cutter, Bite, Haze, Venoshock | Bite, Haze, Venoshock, Confuse Ray | - -> - |
-| Matt | Golbat | 51 -> 57 | Air Cutter, Bite, Haze, Venoshock | Bite, Haze, Venoshock, Confuse Ray | - -> - |
-| Tabitha Mossdeep | Mightyena | 54 -> 60 | Taunt, Yawn, Take Down, Sucker Punch | Yawn, Take Down, Sucker Punch, Play Rough | new_strong -> new_strong |
-| Tabitha Mossdeep | Golbat | 56 -> 62 | Bite, Haze, Venoshock, Confuse Ray | Haze, Venoshock, Confuse Ray, Air Slash | - -> new_strong |
-| Maxie Mossdeep | Mightyena | 54 -> 60 | Taunt, Yawn, Take Down, Sucker Punch | Yawn, Take Down, Sucker Punch, Play Rough | new_strong -> new_strong |
-| Archie | Mightyena | 55 -> 61 | Taunt, Yawn, Take Down, Sucker Punch | Yawn, Take Down, Sucker Punch, Play Rough | new_strong -> new_strong |
-| Brendan Route 110 Mudkip | Wingull | 24 -> 26 | Quick Attack, Supersonic, Wing Attack, Water Pulse | Supersonic, Wing Attack, Water Pulse, Agility | - -> - |
-| Brendan Route 110 Treecko | Wingull | 24 -> 26 | Quick Attack, Supersonic, Wing Attack, Water Pulse | Supersonic, Wing Attack, Water Pulse, Agility | - -> - |
-| May Route 110 Treecko | Wingull | 24 -> 26 | Quick Attack, Supersonic, Wing Attack, Water Pulse | Supersonic, Wing Attack, Water Pulse, Agility | - -> - |
-| Brendan Route 119 Mudkip | Magcargo | 40 -> 45 | Incinerate, Rock Slide, Lava Plume, Amnesia | Rock Slide, Lava Plume, Amnesia, Body Slam | new_strong -> above_band new_strong |
-| Brendan Route 119 Mudkip | Pelipper | 40 -> 45 | Stockpile, Spit Up, Swallow, Fling | Spit Up, Swallow, Fling, Mist | - -> - |
-| Brendan Route 119 Torchic | Magcargo | 40 -> 45 | Incinerate, Rock Slide, Lava Plume, Amnesia | Rock Slide, Lava Plume, Amnesia, Body Slam | new_strong -> above_band new_strong |
-| Brendan Route 119 Treecko | Pelipper | 40 -> 45 | Stockpile, Spit Up, Swallow, Fling | Spit Up, Swallow, Fling, Mist | - -> - |
-| May Route 119 Torchic | Magcargo | 40 -> 45 | Incinerate, Rock Slide, Lava Plume, Amnesia | Rock Slide, Lava Plume, Amnesia, Body Slam | new_strong -> above_band new_strong |
-| May Route 119 Treecko | Pelipper | 40 -> 45 | Stockpile, Spit Up, Swallow, Fling | Spit Up, Swallow, Fling, Mist | - -> - |
-| Brendan Lilycove Mudkip | Tropius | 47 -> 52 | Wide Guard, Air Slash, Body Slam, Outrage | Air Slash, Body Slam, Outrage, Synthesis | new_strong -> new_strong |
-| Brendan Lilycove Mudkip | Magcargo | 48 -> 53 | Lava Plume, Amnesia, Body Slam, Recover | Lava Plume, Amnesia, Body Slam, Recover | above_band new_strong -> new_strong |
-| Brendan Lilycove Torchic | Tropius | 47 -> 52 | Wide Guard, Air Slash, Body Slam, Outrage | Air Slash, Body Slam, Outrage, Synthesis | new_strong -> new_strong |
-| Brendan Lilycove Torchic | Magcargo | 48 -> 53 | Lava Plume, Amnesia, Body Slam, Recover | Lava Plume, Amnesia, Body Slam, Recover | above_band new_strong -> new_strong |
-| Brendan Lilycove Treecko | Tropius | 47 -> 52 | Wide Guard, Air Slash, Body Slam, Outrage | Air Slash, Body Slam, Outrage, Synthesis | new_strong -> new_strong |
-| May Lilycove Torchic | Tropius | 47 -> 52 | Wide Guard, Air Slash, Body Slam, Outrage | Air Slash, Body Slam, Outrage, Synthesis | new_strong -> new_strong |
-| May Lilycove Torchic | Magcargo | 48 -> 53 | Lava Plume, Amnesia, Body Slam, Recover | Lava Plume, Amnesia, Body Slam, Recover | above_band new_strong -> new_strong |
-| May Lilycove Treecko | Tropius | 47 -> 52 | Wide Guard, Air Slash, Body Slam, Outrage | Air Slash, Body Slam, Outrage, Synthesis | new_strong -> new_strong |
+0 raised boss Pokemon are on default moves; 0 get a different moveset or flags at the raised level (the flags as in "Default movesets" below).
 
 ## Default movesets (Gen 3 vs Gen 9 learnsets)
 

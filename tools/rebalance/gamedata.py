@@ -33,6 +33,9 @@ VANILLA_OVERRIDES = {name: 'GEN_3' for name in (
     'I_PRICE', 'I_HEALTH_RECOVERY', 'I_SELL_VALUE_FRACTION', 'I_SITRUS_BERRY_HEAL',
     'I_KEY_ESCAPE_ROPE', 'B_WHITEOUT_MONEY', 'B_HIDDEN_POWER_DMG')}
 
+# The fork's exp formula configs (#154), off in vanilla.
+VANILLA_OFF = {'B_SCALED_EXP_STEEP': 'FALSE', 'B_EXP_OVERLEVEL_PENALTY': 'FALSE'}
+
 REGIMES = ('vanilla', 'modern')
 # Types that exist in Gen 3. Fairy and Stellar columns are meaningless there.
 GEN3_TYPES = frozenset('TYPE_' + t for t in (
@@ -45,6 +48,7 @@ def regime_defines(repo):
     modern = R.parse_defines(repo)
     vanilla = dict(modern)
     vanilla.update(VANILLA_OVERRIDES)
+    vanilla.update(VANILLA_OFF)
     return {'vanilla': vanilla, 'modern': modern}
 
 
@@ -331,11 +335,11 @@ def parse_items(repo, defines):
     return {k: {'price': _int(f.get('price', 0)), 'heal': heals.get(f.get('effect'))} for k, f in items.items()}
 
 
-def parse_scaling_factors(repo):
-    """sExperienceScalingFactors from battle_script_commands.c."""
+def parse_scaling_factors(repo, name='sExperienceScalingFactors'):
+    """sExperienceScalingFactors (or another s32 table) from battle_script_commands.c."""
     with open(os.path.join(repo, 'src', 'battle_script_commands.c'), encoding='utf-8') as f:
         text = f.read()
-    m = re.search(r'sExperienceScalingFactors\[\]\s*=\s*\{(.*?)\};', text, re.S)
+    m = re.search(name + r'\[\d*\]\s*=\s*\{(.*?)\};', text, re.S)
     return [int(x) for x in re.findall(r'\d+', re.sub(r'//.*', '', m[1]))]
 
 
