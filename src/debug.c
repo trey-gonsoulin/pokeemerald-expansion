@@ -2268,12 +2268,12 @@ static u32 Debug_GenerateListRecentWarpsMenu(const struct DebugMenuOption *items
     u8 *end;
     u32 i;
 
+    sDebugMenuListData->listItems[0].id = 0;
+    sDebugMenuListData->listItems[0].name = sDebugMenuListData->itemNames[0];
     // The empty list's one entry is the warp back, which isn't set before the first warp
     if (sDebugRecentWarpsCount == 0)
     {
         StringCopy(sDebugMenuListData->itemNames[0], COMPOUND_STRING("No warps yet"));
-        sDebugMenuListData->listItems[0].id = 0;
-        sDebugMenuListData->listItems[0].name = sDebugMenuListData->itemNames[0];
         return 1;
     }
     // Debug_WarpTo sets the warp back with each recent warp. Its map name keeps its end, as below, after the whole prefix.
@@ -2281,8 +2281,6 @@ static u32 Debug_GenerateListRecentWarpsMenu(const struct DebugMenuOption *items
     Debug_CopyMapName(gStringVar4, sDebugWarpBack.mapGroup, sDebugWarpBack.mapNum);
     Debug_CopyStringEndToFit(end, ARRAY_COUNT(sDebugMenuListData->itemNames[0]) - StringLength(backPrefix),
         gStringVar4, FONT_NARROWER, labelWidth - GetStringWidth(FONT_NARROWER, backPrefix, 0));
-    sDebugMenuListData->listItems[0].id = 0;
-    sDebugMenuListData->listItems[0].name = sDebugMenuListData->itemNames[0];
     for (i = 1; i <= sDebugRecentWarpsCount; i++)
     {
         const struct DebugWarp *warp = &sDebugRecentWarps[i - 1];
