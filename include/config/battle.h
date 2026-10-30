@@ -20,7 +20,7 @@
 #define B_LEVEL_UP_NOTIFICATION     GEN_LATEST // In Gen9+, if a Pokémon gains enough experience to level up multiple times, a message is only displayed once.
 #define B_SCALED_EXP_STEEP          TRUE       // Emerald Plus (#154): with scaled experience (B_SCALED_EXP), the level weighting uses level^3.5 instead of level^2.5, so a Pokémon gains less from foes below its level and more from foes above it.
 #define B_EXP_OVERLEVEL_PENALTY     TRUE       // Emerald Plus (#154): a Pokémon more than B_EXP_OVERLEVEL_CUTOFF percent above the fainted Pokémon's level gains less experience,
-#define B_EXP_OVERLEVEL_CUTOFF      10         // halving for every further B_EXP_OVERLEVEL_HALVING percent of the fainted Pokémon's level (at least 1).
+#define B_EXP_OVERLEVEL_CUTOFF      10         // halving for every further B_EXP_OVERLEVEL_HALVING percent of the fainted Pokémon's level (at least 1). Both at most 255.
 #define B_EXP_OVERLEVEL_HALVING     5          // At 0, it gains 1 experience straight past the cutoff.
 
 // Stat settings

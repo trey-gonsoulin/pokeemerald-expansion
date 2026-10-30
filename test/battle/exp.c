@@ -563,6 +563,9 @@ WILD_BATTLE_TEST("Exp formula: the over-level penalty halves the exp every B_EXP
     PARAMETRIZE { foe = 40; getter = 45; penalty = FALSE; }
     PARAMETRIZE { foe = 40; getter = 45; penalty = TRUE; }
     PARAMETRIZE { foe = 20; getter = 23; penalty = TRUE; halving = 0; }
+    PARAMETRIZE { foe = 40; getter = 55; penalty = FALSE; }
+    PARAMETRIZE { foe = 40; getter = 55; penalty = TRUE; }
+    PARAMETRIZE { foe = 20; getter = 60; penalty = TRUE; }
 
     GIVEN {
         WITH_CONFIG(B_EXP_OVERLEVEL_PENALTY, penalty);
@@ -582,5 +585,35 @@ WILD_BATTLE_TEST("Exp formula: the over-level penalty halves the exp every B_EXP
         EXPECT_EQ(results[5].exp, results[4].exp / 4);           // 10% past it: two
         EXPECT_EQ(results[7].exp, results[6].exp * 2896 / 4096); // 2.5% past it: 2^(-8/16)
         EXPECT_EQ(results[8].exp, 1);                            // halving 0: 1 exp past the cutoff
+        EXPECT_EQ(results[10].exp, max(1, (results[9].exp * 2896) >> 17)); // 27.5% past it: 5.5 halvings
+        EXPECT_EQ(results[11].exp, 1);                           // 190% past it: the floor
+    }
+}
+
+WILD_BATTLE_TEST("Exp formula: the over-level penalty also applies to the Gen 6 Exp. Share bench (#154)", s32 benchExp)
+{
+    u32 penalty = FALSE;
+
+    PARAMETRIZE { penalty = FALSE; }
+    PARAMETRIZE { penalty = TRUE; }
+
+    GIVEN {
+        ASSUME(I_EXP_SHARE_FLAG > TEMP_FLAGS_END);
+        WITH_CONFIG(B_EXP_OVERLEVEL_PENALTY, penalty);
+        WITH_CONFIG(B_EXP_OVERLEVEL_CUTOFF, 10);
+        WITH_CONFIG(B_EXP_OVERLEVEL_HALVING, 5);
+        FLAG_SET(I_EXP_SHARE_FLAG);
+        PLAYER(SPECIES_WOBBUFFET) { Level(20); }
+        PLAYER(SPECIES_WYNAUT) { Level(23); }
+        OPPONENT(SPECIES_CATERPIE) { Level(20); HP(1); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_SCRATCH); }
+    } SCENE {
+        MESSAGE("The wild Caterpie fainted!");
+    } THEN {
+        results[i].benchExp = GetMonData(&gParties[B_TRAINER_PLAYER][1], MON_DATA_EXP) - EXP_AT_LEVEL(SPECIES_WYNAUT, 23);
+    } FINALLY {
+        EXPECT_GT(results[0].benchExp, 1);
+        EXPECT_EQ(results[1].benchExp, results[0].benchExp / 2); // the bench Wynaut is 5% past the cutoff
     }
 }

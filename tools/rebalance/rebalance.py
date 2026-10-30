@@ -535,21 +535,24 @@ class Overlevel(collections.namedtuple('Overlevel', 'cutoff relative halflife', 
             return None
         return cls(gd.flag('B_EXP_OVERLEVEL_CUTOFF'), True, gd.flag('B_EXP_OVERLEVEL_HALVING') or None)
 
-    def factor(self, foe_level, getter_level):
-        """The multiplier in 4096ths, as ApplyOverlevelPenalty computes it:
-        4096 up to the cutoff, then the whole halvings as a shift and the
-        rest in 16ths (HALVING_FRACTIONS); 0 for the drop to 1 exp."""
+    def apply(self, exp, foe_level, getter_level):
+        """``exp`` after the penalty, as ApplyOverlevelPenalty computes it:
+        unchanged up to the cutoff, then the whole halvings as a shift and
+        the rest in 16ths (HALVING_FRACTIONS), at least 1; 1 straight past
+        the cutoff without a halflife."""
         halflife = self.halflife or 0
         if self.relative:
             over, span = getter_level * 100 - foe_level * (100 + self.cutoff), foe_level * halflife
         else:
             over, span = getter_level - foe_level - self.cutoff, halflife
-        if over <= 0:
-            return 4096
+        if exp <= 0 or over <= 0:
+            return exp
         if not span:
-            return 0
+            return 1
         halvings = int(over // span)
-        return HALVING_FRACTIONS[int(over % span * 16 // span)] >> halvings if halvings < 13 else 0
+        if halvings >= 32:
+            return 1
+        return max(exp * HALVING_FRACTIONS[int(over % span * 16 // span)] >> (12 + halvings), 1)
 
 
 def exp_award(gd, scaling, yield_, foe_level, getter_level, trainer, sent_in, sent_out=True, holders=0,
@@ -589,17 +592,14 @@ def exp_award(gd, scaling, yield_, foe_level, getter_level, trainer, sent_in, se
         return 0  # the game skips a getter that neither faced the foe nor holds a share
     if overlevel == GAME:
         overlevel = Overlevel.from_configs(gd)
-    penalty = overlevel.factor(foe_level, getter_level) if overlevel else 4096
-    if not penalty:
-        return 1
     if unevolved and gd.flag('B_UNEVOLVED_EXP_MULTIPLIER >= GEN_6'):
         reward = reward * 4915 // 4096
     if affection and gd.flag('B_AFFECTION_MECHANICS == TRUE'):
         reward = reward * 4915 // 4096
     if scaled:
         reward = reward * scaling[foe_level * 2 + 10] // scaling[foe_level + getter_level + 10] + 1
-    if penalty < 4096:
-        reward = max(reward * penalty // 4096, 1)
+    if overlevel:
+        reward = overlevel.apply(reward, foe_level, getter_level)
     return reward
 
 
@@ -629,6 +629,7 @@ class Party:
         self.ko_takers = ko_takers
         self.share_fraction = share_fraction
         self.overlevel = overlevel
+        self._game_overlevel = (None, None)
         self.exp = [float(exp_for_level(growth, level))] * size
         self.friendship = [float(friendship)] * size
         self.affection = affection
@@ -657,8 +658,11 @@ class Party:
         [(exp yield, level, weight)]: one foe, or a wild battle's
         rate-weighted average over its slots. Each level gained adds the
         level-up friendship."""
-        if self.overlevel == GAME:
-            self.overlevel = Overlevel.from_configs(gd)  # once: exp_award would ask for every KO
+        overlevel = self.overlevel
+        if overlevel == GAME:  # resolved once per gd: exp_award would read the configs for every KO
+            if self._game_overlevel[0] is not gd:
+                self._game_overlevel = (gd, Overlevel.from_configs(gd))
+            overlevel = self._game_overlevel[1]
         lv = self.levels()
         ko = self.turn % (self.ko_takers if share else len(self.exp))
         self.turn += 1
@@ -669,7 +673,7 @@ class Party:
                                              sent_out=i == ko, holders=len(lv) if share else 0,
                                              affection=self.has_affection(i), unevolved=self.unevolved,
                                              share_fraction=self.share_fraction,
-                                             overlevel=self.overlevel)
+                                             overlevel=overlevel)
                                for y, foe_level, w in foes)
             self.befriend('level', level_for_exp(self.growth, int(self.exp[i])) - level, members=(i,))
 
