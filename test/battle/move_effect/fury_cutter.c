@@ -37,6 +37,28 @@ SINGLE_BATTLE_TEST("Fury Cutter's power doubles with each use, up to 160 power")
     }
 }
 
+SINGLE_BATTLE_TEST("Fury Cutter's power stays at 160 after the chain reaches it")
+{
+    s16 damage[7];
+    int turn;
+
+    GIVEN {
+        PLAYER(SPECIES_CROBAT);
+        OPPONENT(SPECIES_LINOONE) { MaxHP(2000); HP(2000); }
+    } WHEN {
+        for (turn = 0; turn < 7; turn++)
+            TURN { MOVE(player, MOVE_FURY_CUTTER); }
+    } SCENE {
+        for (turn = 0; turn < 7; turn++) {
+            ANIMATION(ANIM_TYPE_MOVE, MOVE_FURY_CUTTER, player);
+            HP_BAR(opponent, captureDamage: &damage[turn]);
+        }
+    } THEN {
+        // Every generation's Fury Cutter reaches 160 power by the sixth use in a row.
+        EXPECT_EQ(damage[5], damage[6]);
+    }
+}
+
 SINGLE_BATTLE_TEST("Fury Cutter's base power resets if the chain has been broken")
 {
     s16 damage[2];

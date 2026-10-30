@@ -52,6 +52,25 @@ SINGLE_BATTLE_TEST("Torment allows non-consecutive move uses")
     }
 }
 
+SINGLE_BATTLE_TEST("Torment hits a target behind a Substitute")
+{
+    GIVEN {
+        ASSUME(GetMoveEffect(MOVE_SUBSTITUTE) == EFFECT_SUBSTITUTE);
+        PLAYER(SPECIES_WOBBUFFET) { Speed(5); }
+        OPPONENT(SPECIES_WOBBUFFET) { Speed(10); Moves(MOVE_SUBSTITUTE, MOVE_SPLASH, MOVE_CELEBRATE); }
+    } WHEN {
+        TURN { MOVE(opponent, MOVE_SUBSTITUTE); MOVE(player, MOVE_TORMENT); }
+        TURN { MOVE(opponent, MOVE_SPLASH); }
+        TURN { MOVE(opponent, MOVE_SPLASH, allowed: FALSE); MOVE(opponent, MOVE_CELEBRATE); }
+    } SCENE {
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_SUBSTITUTE, opponent);
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_TORMENT, player);
+        MESSAGE("The opposing Wobbuffet was subjected to torment!");
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_SPLASH, opponent);
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_CELEBRATE, opponent);
+    }
+}
+
 DOUBLE_BATTLE_TEST("Torment works even if the target's last move failed")
 {
     GIVEN {
