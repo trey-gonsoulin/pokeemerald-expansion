@@ -13,6 +13,7 @@ import fnmatch
 import json
 import os
 import re
+import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -190,6 +191,7 @@ class Species:
     exp_yield: int
     growth: str
     learnset: str
+    teachables: str = 'sNoneTeachableLearnset'
 
 
 def parse_species(repo, defines):
@@ -208,7 +210,8 @@ def parse_species(repo, defines):
             return c_value(field_value(f[1]), defines) if f else default
         out[sp] = Species(types=types, stats={s: field(s) for s in STAT_FIELDS},
                           exp_yield=field('expYield'), growth=field('growthRate', 'GROWTH_MEDIUM_FAST'),
-                          learnset=field('levelUpLearnset', 'sNoneLevelUpLearnset'))
+                          learnset=field('levelUpLearnset', 'sNoneLevelUpLearnset'),
+                          teachables=field('teachableLearnset', 'sNoneTeachableLearnset'))
     return out
 
 
@@ -224,6 +227,25 @@ def parse_learnsets(path, defines):
         if m and current is not None:
             current.append((int(m[1]), m[2]))
     return sets
+
+
+TEACHABLES_HEADER = os.path.join('src', 'data', 'pokemon', 'teachable_learnsets.h')
+
+
+def parse_teachables(text):
+    """teachable_learnsets.h's arrays: name -> its moves (TMs, tutors and near-universal moves)."""
+    return {name: frozenset(re.findall(r'MOVE_\w+', body))
+            for name, body in re.findall(r'static const u16 (s\w+)\[\]\s*=\s*\{(.*?)\};', text, re.S)}
+
+
+def teachable_learnsets(repo):
+    """parse_teachables of ``repo``'s teachable_learnsets.h. The build generates the
+    gitignored header with pure Python (Makefile, learnset_helpers), so this runs that
+    make rule first: it writes the header when it's missing or older than its inputs."""
+    subprocess.run(['make', '-s', 'SETUP_PREREQS=0', 'NODEP=1', TEACHABLES_HEADER.replace(os.sep, '/')],
+                   cwd=repo, check=True)
+    with open(os.path.join(repo, TEACHABLES_HEADER), encoding='utf-8') as f:
+        return parse_teachables(f.read())
 
 
 def learnset_file(repo, defines):

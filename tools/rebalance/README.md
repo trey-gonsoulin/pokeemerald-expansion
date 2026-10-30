@@ -151,7 +151,9 @@ It only raises. On data it already wrote it asks for nothing, which
 `rebalance.py` (or change the settings and do the same).
 Trainers outside the stages and the rematch table aren't touched. Hand-written
 movesets don't move with the levels: after a raise, check the report's
-default-moveset flags (#139 hand-wrote the flagged rematch sets).
+default-moveset flags (#139 hand-wrote the flagged rematch sets, #159 the
+story ones), and after lowering a level run the tests, which check that every
+set move is still learnable (#145).
 
 The page's files are `explorer/index.html`, `app.js` (the controls and the
 Chart.js chart), `worker.js` and `model.js` (the module list and the Python
@@ -213,6 +215,16 @@ bootstrap). The repo's `.gitignore` ignores `*.js`, so add new ones with
   now with the one it used in Gen 3 (weaker / similar / stronger at 15%).
   Fixed-damage moves use no attacking stat, so they are left out of the
   flips. Hidden Power is resolved from each Pokemon's IVs, as above.
+- **Learnable set moves** (#145, a test, not a report section):
+  `RealRepo.test_set_moves_are_learnable` fails on a set move in
+  `trainers.party` or `battle_partners.party` that neither the species nor a
+  pre-evolution learns as a level-up move at or below the slot's level, an
+  evolution move (level 0) or a teachable (`learnable_moves`). Teachables
+  come from the gitignored `src/data/pokemon/teachable_learnsets.h`, which
+  the test regenerates through the Makefile's pure-Python rule
+  (`gamedata.teachable_learnsets`), so it needs `make`. `move_allowlist.json`
+  lists the upstream Gen 3 moves that break the rule, by cause; the test also
+  fails on an entry that no longer does, so the list only shrinks.
 - **Split fit**: for the species in `SPLIT_WATCH`, the better attacking stat
   against the Gen 3 category of each STAB type and the split of its modern
   level-up STAB moves.
