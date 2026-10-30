@@ -5869,10 +5869,10 @@ static void SetSameMoveTurnValues(enum BattleMoveEffects moveEffect)
     switch (moveEffect)
     {
     case EFFECT_FURY_CUTTER:
-        if (increment && gBattleMons[gBattlerAttacker].volatiles.furyCutterCounter < 5)
-            gBattleMons[gBattlerAttacker].volatiles.furyCutterCounter++;
-        else
+        if (!increment)
             gBattleMons[gBattlerAttacker].volatiles.furyCutterCounter = 0;
+        else if (gBattleMons[gBattlerAttacker].volatiles.furyCutterCounter < 5)
+            gBattleMons[gBattlerAttacker].volatiles.furyCutterCounter++;
         break;
     case EFFECT_ROLLOUT:
         if (increment && ++gBattleMons[gBattlerAttacker].volatiles.rolloutTimer < 5)
