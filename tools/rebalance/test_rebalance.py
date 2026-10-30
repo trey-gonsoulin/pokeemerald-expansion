@@ -661,7 +661,8 @@ class Postgame(unittest.TestCase):
             'TRAINER_OFF_1': [['TRAINER_OFF_1', 'TRAINER_OFF_2']],
         }
         self.assertEqual(RB.rematch_ladders(rematches, stages, {'TRAINER_STEVEN': None}), {
-            'boss': [[None, 'TRAINER_WALLY_VR_2', 'TRAINER_WALLY_VR_3'], ['TRAINER_LEADER_1', 'TRAINER_LEADER_2']],
+            'boss': [['TRAINER_WALLY_VR_1', 'TRAINER_WALLY_VR_2', 'TRAINER_WALLY_VR_3'],
+                     ['TRAINER_LEADER_1', 'TRAINER_LEADER_2']],
             'final': ['TRAINER_STEVEN'],
             'regular': [['TRAINER_HIKER_1', 'TRAINER_HIKER_2', 'TRAINER_HIKER_3']],
             'unstaged': ['TRAINER_OFF_1']})
@@ -674,7 +675,7 @@ class Postgame(unittest.TestCase):
                   team('TRAINER_W_2', 'Rival', 5), team('TRAINER_S', 'Champion', 30, 31)):
             trainers[t.id] = t
         postgame = {'boss': [['TRAINER_LEADER_X', 'TRAINER_LEADER_X_2', 'TRAINER_LEADER_X_3'],
-                             [None, 'TRAINER_W_2']], 'final': ['TRAINER_S']}
+                             ['TRAINER_RIVAL_A', 'TRAINER_W_2']], 'final': ['TRAINER_S']}
 
         def run(**kw):
             return RB.share_run(stages, trainers, gd, scaling, wilds['modern'], **kw)[0]
