@@ -280,14 +280,32 @@ class Exp(unittest.TestCase):
                                       share_fraction=0.1), 1)
         self.assertEqual(RB.exp_award(d, self.scaling, 98, 20, 25, False, 1, holders=6, share_fraction=0), calc)
 
-    def test_overlevel_cutoff(self):
+    def test_overlevel(self):
         d = fake_regime()
-        full = RB.exp_award(d, self.scaling, 98, 20, 25, False, 1)
-        self.assertEqual(RB.exp_award(d, self.scaling, 98, 20, 25, False, 1, overlevel_cutoff=5), full)
-        self.assertEqual(RB.exp_award(d, self.scaling, 98, 20, 26, False, 1, overlevel_cutoff=5), 1)
+
+        def award(getter, foe=20, **kw):
+            return RB.exp_award(d, self.scaling, 98, foe, getter, False, 1, **kw)
+        hard = RB.Overlevel(5)
+        self.assertEqual(award(25, overlevel=hard), award(25))
+        self.assertEqual(award(26, overlevel=hard), 1)
         # A getter that gets nothing still gets nothing.
-        self.assertEqual(RB.exp_award(d, self.scaling, 98, 20, 30, False, 1, sent_out=False,
-                                      overlevel_cutoff=5), 0)
+        self.assertEqual(award(30, sent_out=False, overlevel=hard), 0)
+        # Percent of the foe's level: 25% above a level-20 foe is level 25.
+        rel = RB.Overlevel(25, relative=True)
+        self.assertEqual(award(25, overlevel=rel), award(25))
+        self.assertEqual(award(26, overlevel=rel), 1)
+        self.assertEqual(award(50, foe=40, overlevel=rel), award(50, foe=40))
+        # The falloff halves the exp every halflife levels past the cutoff, down to 1.
+        soft = RB.Overlevel(5, halflife=2)
+        self.assertEqual(award(25, overlevel=soft), award(25))
+        self.assertEqual(award(27, overlevel=soft), award(27) * 2048 // 4096)
+        self.assertEqual(award(29, overlevel=soft), award(29) * 1024 // 4096)
+        self.assertEqual(award(26, overlevel=soft), award(26) * 2896 // 4096)  # 4096 / sqrt(2)
+        self.assertEqual(award(100, overlevel=soft), 1)
+        # In percent: 10% of the foe's level per halving, past 25% above it.
+        soft_rel = RB.Overlevel(25, relative=True, halflife=10)
+        self.assertEqual(award(27, overlevel=soft_rel), award(27) * 2048 // 4096)
+        self.assertEqual(soft_rel.factor(40, 54), 2048)
 
     def test_scaling_factors(self):
         # The fixture copies the game's table, which is (i^2.5)/4.
@@ -502,6 +520,18 @@ class Analysis(unittest.TestCase):
                 self.assertEqual(len(r['levels']), 6)
                 self.assertEqual(r['ref'], round(f(r['levels'], 3), 1))
                 self.assertEqual(r['boss_ace'], max(r['base_ace'], int(f(r['levels'], 3) + 1.5)), name)
+        # Relative gaps: percent of the reference instead of levels.
+        rows, _ = run(margin=10, relative_gaps=True)
+        for r in rows:
+            self.assertEqual(r['boss_ace'], max(r['base_ace'], int(r['bench'] * 1.1 + 0.5)))
+        _, st = run(trainer_gap=-400, relative_gaps=True)
+        self.assertGreater(st[0]['raise'], 0)
+        self.assertLessEqual(st[0]['gap'], -400)
+        _, lower = run(stage_raises={'One': st[0]['raise'] - 1}, relative_gaps=True)
+        self.assertGreater(lower[0]['gap'], -400)
+        _, st = run(wild_gap=20, relative_gaps=True)
+        self.assertEqual(st[0]['wild_offset'],
+                         max(0, round(st[0]['start_ref'] * 0.8 - RB.land_mean(wilds['vanilla'][0]))))
         # More wild KOs only add exp.
         self.assertGreaterEqual(run(wild_battles=20)[0][-1]['bench'], run()[0][-1]['bench'])
 
@@ -535,13 +565,17 @@ class Analysis(unittest.TestCase):
         self.assertEqual(snap['evolve']('SPECIES_RALTS', 11), 'SPECIES_RALTS')
         for knobs in ({}, {'margin': 1, 'trainer_gap': 0, 'wild_gap': 0, 'ko_takers': 6, 'boss_ref': 'party_mean'},
                       {'scaled_exp': False, 'trainer_exp': '1.5x on', 'share_fraction': 0.25, 'evolve': False},
-                      {'scaling_power': 3.0, 'overlevel_cutoff': 2, 'clear': 0.5, 'wild_battles': 4}):
+                      {'scaling_power': 3.0, 'overlevel_cutoff': 2, 'clear': 0.5, 'wild_battles': 4},
+                      {'overlevel_cutoff': 10, 'overlevel_unit': 'percent', 'overlevel_halflife': 15,
+                       'gap_unit': 'percent', 'margin': 5, 'trainer_gap': 10, 'wild_gap': 20}):
             self.assertEqual(RB.explore_run(snap, knobs), RB.explore_run(live, knobs), knobs)
         got = RB.explore_run(snap, {'ko_takers': 6})
         self.assertEqual(got['bosses'][0]['name'], 'Rival A')
         self.assertEqual(got['bosses'][0]['refs']['bench'], min(got['bosses'][0]['levels']))
         with self.assertRaises(ValueError):
             RB.explore_run(snap, {'no_such_knob': 1})
+        with self.assertRaises(ValueError):
+            RB.explore_run(snap, {'gap_unit': 'pct'})
 
     def test_rival_variants_share_the_raise(self):
         trainers = G.parse_trainers(os.path.join(FIXTURE, 'src', 'data', 'trainers.party'))
