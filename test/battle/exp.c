@@ -35,6 +35,7 @@ WILD_BATTLE_TEST("Higher leveled Pokemon give more exp", s32 exp)
     PARAMETRIZE { level = 10; }
 
     GIVEN {
+        WITH_CONFIG(B_EXP_OVERLEVEL_PENALTY, FALSE);
         PLAYER(SPECIES_WOBBUFFET) { Level(20); }
         OPPONENT(SPECIES_CATERPIE) { Level(level); HP(1); }
     } WHEN {
@@ -56,6 +57,7 @@ WILD_BATTLE_TEST("Lucky Egg boosts gained exp points by 50%", s32 exp)
     PARAMETRIZE { item = ITEM_NONE; }
 
     GIVEN {
+        WITH_CONFIG(B_EXP_OVERLEVEL_PENALTY, FALSE);
         PLAYER(SPECIES_WOBBUFFET) { Level(20); Item(item); }
         OPPONENT(SPECIES_CATERPIE) { Level(10); HP(1); }
     } WHEN {
@@ -79,6 +81,7 @@ WILD_BATTLE_TEST("Exp is scaled to player and opponent's levels", s32 exp)
     PARAMETRIZE { level = 10; }
 
     GIVEN {
+        WITH_CONFIG(B_EXP_OVERLEVEL_PENALTY, FALSE);
         PLAYER(SPECIES_WOBBUFFET) { Level(level); }
         OPPONENT(SPECIES_CATERPIE) { Level(5); HP(1); }
     } WHEN {
@@ -207,11 +210,12 @@ AI_ONE_VS_TWO_BATTLE_TEST("Both opponent's Pokemon give experience in battle aga
 
 // "Exp award:" tests cover the fork's exp fixes (end-of-turn faints, opponent B's party) and the Gen 6 Exp. Share flag.
 // Under WITH_EXP_AWARD_CONFIGS, every participant gains expYield * level / 7 (Cmd_getexp, no level scaling or bonus multipliers)
-// and every Gen 6 Exp. Share mon gains half that. Cmd_getexp also reads the raw B_SPLIT_EXP macro, hence the ASSUME.
+// and every Gen 6 Exp. Share mon gains half that (the over-level penalty off). Cmd_getexp also reads the raw B_SPLIT_EXP macro, hence the ASSUME.
 #define WITH_EXP_AWARD_CONFIGS()                        \
     ASSUME(B_SPLIT_EXP >= GEN_6);                       \
     WITH_CONFIG(B_SPLIT_EXP, GEN_6);                    \
     WITH_CONFIG(B_SCALED_EXP, GEN_3);                   \
+    WITH_CONFIG(B_EXP_OVERLEVEL_PENALTY, FALSE);        \
     WITH_CONFIG(B_UNEVOLVED_EXP_MULTIPLIER, GEN_3);     \
     WITH_CONFIG(B_TRAINER_EXP_MULTIPLIER, GEN_8)
 #define EXP_YIELD(species, level) (gSpeciesInfo[species].expYield * (level) / 7)
@@ -513,5 +517,105 @@ AI_TWO_VS_ONE_BATTLE_TEST("Exp award: The level-up animation plays on the player
     } THEN {
         EXPECT_EQ(gBattlerPartyIndexes[GetBattlerAtPosition(B_POSITION_PLAYER_RIGHT)], 0);
         EXPECT_GT(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_LEVEL), 5);
+    }
+}
+
+WILD_BATTLE_TEST("Exp formula: steep scaling gives less from lower-level foes, more from higher-level ones, the same at equal levels (#154)", s32 exp)
+{
+    u32 level = 0, steep = FALSE;
+
+    PARAMETRIZE { level = 10; steep = FALSE; }
+    PARAMETRIZE { level = 10; steep = TRUE; }
+    PARAMETRIZE { level = 30; steep = FALSE; }
+    PARAMETRIZE { level = 30; steep = TRUE; }
+    PARAMETRIZE { level = 5;  steep = FALSE; }
+    PARAMETRIZE { level = 5;  steep = TRUE; }
+
+    GIVEN {
+        WITH_CONFIG(B_SCALED_EXP, GEN_LATEST);
+        WITH_CONFIG(B_SCALED_EXP_STEEP, steep);
+        WITH_CONFIG(B_EXP_OVERLEVEL_PENALTY, FALSE);
+        PLAYER(SPECIES_WOBBUFFET) { Level(level); }
+        OPPONENT(SPECIES_CATERPIE) { Level(10); HP(1); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_SCRATCH); }
+    } SCENE {
+        MESSAGE("Wobbuffet used Scratch!");
+        MESSAGE("The wild Caterpie fainted!");
+        EXPERIENCE_BAR(player, captureGainedExp: &results[i].exp);
+    } FINALLY {
+        EXPECT_EQ(results[1].exp, results[0].exp);
+        EXPECT_LT(results[3].exp, results[2].exp);
+        EXPECT_GT(results[5].exp, results[4].exp);
+    }
+}
+
+WILD_BATTLE_TEST("Exp formula: the over-level penalty halves the exp every B_EXP_OVERLEVEL_HALVING percent past the cutoff (#154)", s32 exp)
+{
+    u32 foe = 0, getter = 0, penalty = FALSE, halving = 5;
+
+    PARAMETRIZE { foe = 20; getter = 22; penalty = FALSE; }
+    PARAMETRIZE { foe = 20; getter = 22; penalty = TRUE; }
+    PARAMETRIZE { foe = 20; getter = 23; penalty = FALSE; }
+    PARAMETRIZE { foe = 20; getter = 23; penalty = TRUE; }
+    PARAMETRIZE { foe = 20; getter = 24; penalty = FALSE; }
+    PARAMETRIZE { foe = 20; getter = 24; penalty = TRUE; }
+    PARAMETRIZE { foe = 40; getter = 45; penalty = FALSE; }
+    PARAMETRIZE { foe = 40; getter = 45; penalty = TRUE; }
+    PARAMETRIZE { foe = 20; getter = 23; penalty = TRUE; halving = 0; }
+    PARAMETRIZE { foe = 40; getter = 55; penalty = FALSE; }
+    PARAMETRIZE { foe = 40; getter = 55; penalty = TRUE; }
+    PARAMETRIZE { foe = 20; getter = 60; penalty = TRUE; }
+
+    GIVEN {
+        WITH_CONFIG(B_EXP_OVERLEVEL_PENALTY, penalty);
+        WITH_CONFIG(B_EXP_OVERLEVEL_CUTOFF, 10);
+        WITH_CONFIG(B_EXP_OVERLEVEL_HALVING, halving);
+        PLAYER(SPECIES_WOBBUFFET) { Level(getter); }
+        OPPONENT(SPECIES_CATERPIE) { Level(foe); HP(1); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_SCRATCH); }
+    } SCENE {
+        MESSAGE("Wobbuffet used Scratch!");
+        MESSAGE("The wild Caterpie fainted!");
+        EXPERIENCE_BAR(player, captureGainedExp: &results[i].exp);
+    } FINALLY {
+        EXPECT_EQ(results[1].exp, results[0].exp);               // at the cutoff, 10% above the foe
+        EXPECT_EQ(results[3].exp, results[2].exp / 2);           // 5% past it: one halving
+        EXPECT_EQ(results[5].exp, results[4].exp / 4);           // 10% past it: two
+        EXPECT_EQ(results[7].exp, results[6].exp * 2896 / 4096); // 2.5% past it: 2^(-8/16)
+        EXPECT_EQ(results[8].exp, 1);                            // halving 0: 1 exp past the cutoff
+        EXPECT_EQ(results[10].exp, max(1, (results[9].exp * 2896) >> 17)); // 27.5% past it: 5.5 halvings
+        EXPECT_EQ(results[11].exp, 1);                           // 190% past it: the floor
+    }
+}
+
+WILD_BATTLE_TEST("Exp formula: the over-level penalty also applies to the Gen 6 Exp. Share bench (#154)", s32 benchExp)
+{
+    u32 penalty = FALSE;
+
+    PARAMETRIZE { penalty = FALSE; }
+    PARAMETRIZE { penalty = TRUE; }
+
+    GIVEN {
+        ASSUME(I_EXP_SHARE_FLAG > TEMP_FLAGS_END);
+        ASSUME(B_SPLIT_EXP >= GEN_6);
+        WITH_CONFIG(B_SPLIT_EXP, GEN_6);
+        WITH_CONFIG(B_EXP_OVERLEVEL_PENALTY, penalty);
+        WITH_CONFIG(B_EXP_OVERLEVEL_CUTOFF, 10);
+        WITH_CONFIG(B_EXP_OVERLEVEL_HALVING, 5);
+        FLAG_SET(I_EXP_SHARE_FLAG);
+        PLAYER(SPECIES_WOBBUFFET) { Level(20); }
+        PLAYER(SPECIES_WYNAUT) { Level(23); }
+        OPPONENT(SPECIES_CATERPIE) { Level(20); HP(1); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_SCRATCH); }
+    } SCENE {
+        MESSAGE("The wild Caterpie fainted!");
+    } THEN {
+        results[i].benchExp = GetMonData(&gParties[B_TRAINER_PLAYER][1], MON_DATA_EXP) - EXP_AT_LEVEL(SPECIES_WYNAUT, 23);
+    } FINALLY {
+        EXPECT_GT(results[0].benchExp, 1);
+        EXPECT_EQ(results[1].benchExp, results[0].benchExp / 2); // the bench Wynaut is 5% past the cutoff
     }
 }

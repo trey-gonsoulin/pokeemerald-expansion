@@ -53,6 +53,7 @@ WILD_BATTLE_TEST("Embargo doesn't block held item effects that affect experience
     PARAMETRIZE { item = ITEM_NONE; }
 
     GIVEN {
+        WITH_CONFIG(B_EXP_OVERLEVEL_PENALTY, FALSE);
         PLAYER(SPECIES_WOBBUFFET) { Level(20); Item(item); }
         OPPONENT(SPECIES_CATERPIE) { Level(10); HP(1); }
         ASSUME(gItemsInfo[ITEM_LUCKY_EGG].holdEffect == HOLD_EFFECT_LUCKY_EGG);
