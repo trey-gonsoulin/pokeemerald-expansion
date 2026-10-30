@@ -61,6 +61,9 @@ const KNOBS = [
     { key: 'wild_gap', label: 'Wild gap', type: 'optional', min: 0, max: 25, step: 1,
       unit: 'gap_unit', pct: [0, 50, 1], fmt: (v, u) => `${v}${u} below`,
       help: 'Raise each stage\'s wild levels until the land average sits this far below the reference at its start.' },
+    { key: 'rematch_step', label: 'Rematch step', type: 'optional', min: 1, max: 10, step: 1,
+      unit: 'gap_unit', pct: [1, 20, 1], fmt: (v, u) => `+${v}${u} a rematch`,
+      help: 'Raise each ordinary trainer\'s rematches this far per rematch over a base: the route trainer gap at the earliest stage they can be fought, or the first fight. The gym leaders\' and Wally\'s rematch rounds and Steven follow the boss margin.' },
     { key: 'evolve', label: 'Evolve raised Pokémon', type: 'check',
       help: 'A raised trainer or wild Pokémon evolves 3 levels past a level evolution.' },
 ];
@@ -304,6 +307,14 @@ function drawTables(res) {
         <td>${s.trainers}</td><td>${s.raise ? '+' + s.raise : ''}</td><td>${s.trainer_ace_mean ?? ''}</td>
         <td>${s.gap ?? ''}${s.gap !== null && res.knobs.gap_unit === 'percent' ? '%' : ''}</td><td>${s.wild_offset ? '+' + s.wild_offset : ''}</td>
         <td>${s.wild_land_mean ?? ''}</td></tr>`).join('');
+    const ladders = new Map();
+    for (const r of res.rematches) {
+        if (!ladders.has(r.ladder))
+            ladders.set(r.ladder, []);
+        ladders.get(r.ladder).push(r);
+    }
+    $('#rematches tbody').innerHTML = [...ladders.values()].map(rs => `<tr><td>${rs[0].name}</td>
+        <td>${rs[0].stage}</td><td>${rs[0].base}</td><td>${rs.map(r => r.ace).join(' ')}</td></tr>`).join('');
 }
 
 buildControls();

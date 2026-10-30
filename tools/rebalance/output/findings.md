@@ -374,9 +374,75 @@ Each rival row goes on all six teams of that fight: May or Brendan, with each st
   - The post-game Safari Zone extension (Northeast, Southeast) is now unstaged.
   - The post-Hall of Fame Wally at the Victory Road exit (`TRAINER_WALLY_VR_2`, the first fight of his rematch ladder) is excluded, so the curve no longer counts him and apply leaves him to #139.
   - These moved the curve down 1-2 levels from section 8's numbers (Juan 77 -> 75, Wallace 87 -> 85).
-- **Not changed:** the post-game rematches (#139), and trainers outside the stages (off-route, the Battle Frontier, Trainer Hill).
-  - Several rematch 2 teams now sit far below the raised first fight, for example Juan 2 at 51 against Juan's 75.
-- **Hand-written movesets stay** on raised and evolved Pokémon. Every move was legal at the old level, and an evolved Pokémon keeps its pre-evolution's moves. Default-move Pokémon take the Gen 9 defaults at their new level.
+- **Not changed:** the post-game rematches (#139, section 10), and trainers outside the stages (off-route, the Battle Frontier, Trainer Hill).
+  - Several rematch 2 teams then sat far below the raised first fight, for example Juan 2 at 51 against Juan's 75.
+
+## 10. Rematch ladders and Steven (#139)
+
+`rebalance.py apply` now also writes the rematch ladders (`gRematchTable`) and Steven at Meteor Falls, from the same settings plus `rematch_step: 5` (`curve_settings.json`).
+
+How rematches work (`src/battle_setup.c`):
+- **Ordinary trainers** can ask for a rematch once the player has 5 badges (`OW_REMATCH_BADGE_COUNT`, Norman's is the fifth). Every 255 steps, entering a map rolls 31% for its registered trainers, stopping at the first that wants one (`UpdateRandomTrainerRematches`). Match Call can ask too.
+- **The tier** is the next one not yet beaten, with no progress check, so after Norman any tier can come next. Vanilla does the same; its ladders (about +3 a tier from about 27) fit because the whole game spans levels 5-58.
+- **Gym leaders** wait for the Hall of Fame (`src/gym_leader_rematch.c`):
+  - They advance in lockstep. Each battle has a 31% chance to ready one of the leaders at the lowest tier, so every leader's rematch n comes before any leader's rematch n+1, which is what the rounds model.
+  - Until Wattson's New Mauville flag is set, they stop at their first rematch, and Wattson has none.
+- **Wally and the Elite Four:** Wally's post-game ladder starts after the Hall of Fame too (Match Call only: the step roll skips him). The Elite Four have no rematch teams.
+
+Owner's decisions (2026-10-30):
+- The boss ladders are modelled as post-game rounds.
+- The ordinary ladders get levels only: no tier gating, which would have needed a C change.
+- The rematch moves are fixed below.
+- Steven tops the post-game.
+
+**Post-game rounds** (`share_run`'s `postgame`): round n is every gym leader's rematch n and Wally's `WALLY_VR_<n>`, fought after Wallace. Each round's teams go up to one ace, 5% over the bench at the round's start, and at least 1 over their ladder's previous fight. Each team keeps its spread and evolves as a boss team does, never into a species the team already has (Roxanne 2's Kabuto becomes Kabutops, Juan 2's Poliwag a Poliwhirl).
+
+| round | bench at its start | aces | raises |
+|---|---|---|---|
+| Rematch 2 | 78 | 82 | Juan +31 to Roxanne and Brawly +45, Wally +34 |
+| Rematch 3 | 81 | 85 | +29 to +43 |
+| Rematch 4 | 85 | 89 | +28 to +42 |
+| Rematch 5 | 88 | 92 | +26 to +40 |
+| Steven | 92 | 97 (94-97) | +19 |
+
+- The ace is set at the round's start, and the party keeps levelling through the round's nine fights, so a round's later teams sit closer to the bench (Juan 2 at 82 against 81; Juan 5 at 92 against 92).
+- Steven goes to the margin (5% over the bench of 92, so 97) and at least 3 over round 5's highest ace (`POSTGAME_FINAL_STEP`), capped at 100.
+- The bench reaches 92 by Steven. The lead reaches 100 during round 5 (at Norman 5), which only happens in the post-game; the story curve is unchanged, and nothing in it reaches 100.
+
+**Ordinary ladders** (`rematch_raises`): a ladder is levelled for the earliest stage it can be fought, the later of its first fight's stage and Winona's (the one after Norman's).
+- **Base:** the higher of the first fight's ace and the route-trainer gap (10%) below that stage's starting bench.
+- **Each rematch:** the base 5% higher per rematch, compounding (base × 1.05ⁿ), and at least 1 over the rematch before it. Only ever raised, so a tier that already sits higher keeps its level, and the next one then only has to clear it by 1.
+
+| earliest stage | ladders | example |
+|---|---|---|
+| Winona | 47 (37 of them at the base of 35) | Calvin 8: 27/30/33/36 -> 37/39/41/43 |
+| Tate and Liza | 13 | Valerie 53: 31/35/40/42 -> 56/58/61/64 |
+| Juan | 2 | Isaiah 61: 39/42/45/48 -> 64/67/71/74 |
+| Victory Road (Elite Four stage) | 2 | Nicolas 61: 41/44/46/49 -> 67/71/74/78 |
+
+- **Late tiers:** a tier fought later than its earliest stage is easy, and with the over-level penalty gives little exp. That's the cost of no gating, which the owner chose.
+- **Mid-game exp:** rematches fought mid-game give exp the story curve doesn't count, as extra wild battles would.
+
+**Data:** 293 teams raised (32 gym leader rematches, Wally's 4, Steven and 256 ordinary rematches) and 183 Pokémon evolved, all level evolutions (stone and trade lines stop short: Poliwhirl, Lombre, Machoke, Gloom). No story team changed. Ordinary teams may evolve into a duplicate, as #150's route trainers do: Nob 3 now has two Machoke, Fernando 3 two Manectric.
+
+**Moves:**
+- **Hyper Beams:** the rematch Hyper Beams on three species (six slots) now use the stronger physical stat, as #130's swaps did.
+  - Norman 2-5's Slaking get Double-Edge, as #130's Gyarados did. Giga Impact would keep the Truant timing, but Slaking can't learn it here; Mega Kick (level 52, no recoil) was the other choice, at 75% accuracy.
+  - Roxanne 5's Aerodactyl gets Giga Impact, which it learns at 60. It keeps Hyper Beam's recharge turn, now off the stronger stat.
+  - Winona 5's Dragonite gets Double-Edge.
+- **Flagged default sets:** the raised rematch teams had 46 default slots on 40 teams flagged `one_attack` or `lost_stab`. Each is now hand-written by #131's rule: the Gen 9 default with one move (the first status move, or the weakest attack) swapped for the strongest attack the species learns by that level or on evolving (power × STAB × the attacking stat, so Fernando 2's Exploud takes Stomp over Crunch), a same-type one for `lost_stab`. For example:
+  - Roselia: Toxic Spikes -> Magical Leaf;
+  - Hariyama: Bulk Up -> Force Palm;
+  - Meditite and Medicham: Psych Up -> Zen Headbutt;
+  - Swellow: Double Team -> Brave Bird;
+  - Altaria: Safeguard, Sing or Cotton Guard -> Dragon Pulse (its evolution move), and Diana 2's Swablu Safeguard -> Round;
+  - Dodrio: Agility -> Tri Attack (evolution move);
+  - Jerry 5's Gardevoir: Life Dew -> Dazzling Gleam (evolution move);
+  - Nicolas's Salamence: Focus Energy -> Dragon Claw;
+  - Thalia's Wailord: Rest -> Brine (over the proposed Dive's charge turn).
+- **Flags now** (all / story): one_attack 46 / 38, lost_stab 27 / 24. The 8 and 3 left outside the story are on non-rematch teams.
+  - The story counts are #150's: its raises moved the story teams' default sets after #131 had cleared them. That is a follow-up.
+- **Hand-written movesets stay** on raised and evolved Pokémon: a raise or an evolution doesn't change them, and an evolved Pokémon keeps its pre-evolution's moves. Many are vanilla Gen 3 sets that the Gen 9 learnsets no longer teach (#139's review found 88 such slots on the rematch teams alone, such as Flannery 2-5's Rapidash Bounce); checking set moves against the learnsets is #145. Default-move Pokémon take the Gen 9 defaults at their new level.
 
 ## Proposed balance changes (owner to accept or reject; each can be its own issue)
 1. **Soft level cap at each gym ace** (config). Set `B_LEVEL_CAP_TYPE LEVEL_CAP_FLAG_LIST` and `B_EXP_CAP_TYPE EXP_CAP_SOFT`. `sLevelCapFlagMap` in `src/caps.c` already holds exactly the measured aces (15/19/24/29/31/33/42/46/58). Consider `B_RARE_CANDY_CAP` too.
