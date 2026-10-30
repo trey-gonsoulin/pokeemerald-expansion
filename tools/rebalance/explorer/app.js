@@ -179,6 +179,7 @@ worker.onmessage = ({ data }) => {
         }
         setKnobs(start);
         $('#knobs').classList.remove('loading');
+        document.querySelectorAll('button').forEach(b => { b.disabled = false; });
         busy = true;
         worker.postMessage({ id: 'today', knobs: {} });
         return;
@@ -186,6 +187,10 @@ worker.onmessage = ({ data }) => {
     if (data.type === 'error') {
         busy = false;
         $('#status').textContent = 'error: ' + data.message;
+        if (data.id === 'today')
+            changed();  // the dashed lines need today's run; draw without them
+        else if (pending)
+            request();
         return;
     }
     if (data.id === 'today') {
@@ -214,7 +219,7 @@ function draw(res) {
         { label: 'Boss ace today', data: res.bosses.map(b => b.base_ace), borderColor: '#c0392b', borderDash: [6, 4],
           borderWidth: 1.5 },
         { label: `Party: ${refName}`, data: res.bosses.map(b => b.ref), borderColor: '#2471a3', borderWidth: 2.5 },
-        { label: `Party: ${refName}, default knobs`, data: today.bosses.map(b => b.refs[res.knobs.boss_ref]),
+        { label: `Party: ${refName}, default knobs`, data: today ? today.bosses.map(b => b.refs[res.knobs.boss_ref]) : [],
           borderColor: '#2471a3', borderDash: [6, 4], borderWidth: 1.5 },
         { label: 'Party: highest', data: res.bosses.map(b => Math.max(...b.levels)), borderColor: '#85c1e9',
           borderWidth: 1, pointRadius: 0 },
@@ -264,7 +269,7 @@ function drawTables(res) {
     $('#bosses tbody').innerHTML = res.bosses.map(b => `<tr><td>${b.name}</td><td>${b.stage}</td><td>${b.base_ace}</td>
         <td>${b.raise ? '+' + b.raise : ''}</td><td><b>${b.boss_ace}</b></td>
         <td>${Math.min(...b.levels)}–${Math.max(...b.levels)}</td><td>${b.ref}</td></tr>`).join('');
-    $('#stages tbody').innerHTML = res.stages.map(s => `<tr><td>${s.stage}</td><td>${+s.start_bench.toFixed(1)}</td>
+    $('#stages tbody').innerHTML = res.stages.map(s => `<tr><td>${s.stage}</td><td>${+s.start_ref.toFixed(1)}</td>
         <td>${s.trainers}</td><td>${s.raise ? '+' + s.raise : ''}</td><td>${s.trainer_ace_mean ?? ''}</td>
         <td>${s.gap ?? ''}</td><td>${s.wild_offset ? '+' + s.wild_offset : ''}</td>
         <td>${s.wild_land_mean ?? ''}</td></tr>`).join('');

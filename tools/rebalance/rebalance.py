@@ -540,7 +540,8 @@ def exp_award(gd, scaling, yield_, foe_level, getter_level, trainer, sent_in, se
     elif sent_out:
         reward = calc
     else:
-        reward = max(int(calc * share_fraction), 1) if holders and share_fraction else 0
+        # In thousandths, so a fraction like 0.35 doesn't lose 1 exp to float truncation.
+        reward = max(calc * round(share_fraction * 1000) // 1000, 1) if holders and share_fraction else 0
     if not reward:
         return 0  # the game skips a getter that neither faced the foe nor holds a share
     if overlevel_cutoff is not None and getter_level > foe_level + overlevel_cutoff:
@@ -869,7 +870,7 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
         base, now = land_mean((vanilla_wilds or {}).get(i, ())), land_mean(slots)
         applied = round(now - base) if base is not None and now is not None else 0
         if wild_gap is not None and base is not None:
-            offset = max(0, round(start - wild_gap - base))
+            offset = max(0, applied, round(start - wild_gap - base))  # only ever raised
         else:
             offset = wild_offsets.get(st['name'], applied)
         here = shifted_slots(slots, offset - applied, evolve)
@@ -882,7 +883,7 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
             d = stage_raises.get(st['name'], 0)
         gaps, aces = fight_trainers(party, st, d)
         mean = land_mean(here)
-        stage_rows.append({'stage': st['name'], 'start_bench': start, 'trainers': len(gaps),
+        stage_rows.append({'stage': st['name'], 'start_ref': start, 'trainers': len(gaps),
                            'gap': round(sum(gaps) / len(gaps), 1) if gaps else None, 'raise': d,
                            'trainer_ace_mean': round(sum(aces) / len(aces), 1) if aces else None,
                            'wild_land_mean': round(mean, 1) if mean is not None else None,
@@ -899,7 +900,7 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
             delta = raises.get(bid, 0)
             rows.append({'stage': st['name'], 'boss': bid, 'class': trainers[bid].trainer_class,
                          'base_ace': base_ace, 'raise': delta, 'boss_ace': min(base_ace + delta, 100),
-                         'ace': levels[0], 'bench': REFERENCES['bench'](levels, ko_takers),
+                         'ace': max(levels), 'bench': REFERENCES['bench'](levels, ko_takers),
                          'ref': round(level, 1), 'levels': levels, 'friendship': int(party.friendship[-1])})
             if trainers[bid].trainer_class in CURVE_CLASSES:
                 party.befriend('league')
@@ -1049,7 +1050,7 @@ def print_curve(res):
     print()
     print(table(['stage', 'reference at start', 'trainers', 'trainer raise', 'trainer ace mean', 'gap when fought',
                  'wild offset', 'wild land mean'],
-                [[s['stage'], round(s['start_bench'], 1), s['trainers'], f"+{s['raise']}", s['trainer_ace_mean'],
+                [[s['stage'], round(s['start_ref'], 1), s['trainers'], f"+{s['raise']}", s['trainer_ace_mean'],
                   s['gap'], s['wild_offset'], s['wild_land_mean']] for s in res['stages']]))
     print(f"\nLv 100 by: {res['lv100'] or '-'}")
 
