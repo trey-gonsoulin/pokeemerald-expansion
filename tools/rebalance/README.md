@@ -149,10 +149,10 @@ It only raises. On data it already wrote it asks for nothing, which
 `RealRepo.test_data_meets_the_curve_settings` checks. After a change to
 `trainers.party`, the wild tables or the exp formula, rerun `apply` and
 `rebalance.py` (or change the settings and do the same).
-Trainers outside the stages and the rematch table aren't touched. Hand-written
+`apply` doesn't touch trainers outside the stages and the rematch table. Hand-written
 movesets don't move with the levels: after a raise, check the report's
 default-moveset flags (#139 hand-wrote the flagged rematch sets, #159 the
-story ones), and after lowering a level run the tests, which check that every
+story ones, #161 the off-stage ones), and after lowering a level run the tests, which check that every
 set move is still learnable (#145).
 
 The page's files are `explorer/index.html`, `app.js` (the controls and the
