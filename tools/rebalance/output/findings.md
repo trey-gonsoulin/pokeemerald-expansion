@@ -474,7 +474,7 @@ Iron Tail hits Gardevoir 2x and Azumarill and Mawile 1x. It is the only strong S
   - Pound, Echoed Voice and Bite tie on the rule's measure (40 × 1.5 on Atk or SpA 71 against 60 on Atk 71). Bite is the stronger move and adds Dark, which hits the Ghost types the Normal moves can't.
   - On 3 and 4 the first status move is Rest, whose loss would leave Sleep Talk with nothing to call (the AI has no other way to put Loudred to sleep), so Roar goes instead and Rest and Sleep Talk stay as on 2.
 - Thomas's Zangoose (45, both flags): Switcheroo -> Crush Claw, as #159's Zangoose.
-- Leonard's Machop (43, `lost_stab`): Bulk Up -> Vital Throw, as #159's Machoke.
+- Leonard's Machop (43, `lost_stab`): Bulk Up -> Vital Throw, as #159's Machoke. #172 then evolved it to Machoke and his Machoke to Machamp, the ace in the last slot (owner, 2026-10-31).
 - Lea and Jed's two Luvdisc (45): Baby-Doll Eyes -> Water Pulse.
 
 **Flags now** (all / story): no_attack 6 / 6 (Magikarp, Silcoon and Cascoon), one_attack 0 / 0, lost_stab 0 / 0.
