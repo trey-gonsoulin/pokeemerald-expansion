@@ -121,6 +121,44 @@ TEST("BuildOamBuffer faster with mix of sprites")
     BenchmarkBuildOamBuffer(FALSE);
 }
 
+#define TAG_TEST_SHEET 0x7000
+
+static const u8 ALIGNED(4) sTestTile[TILE_SIZE_4BPP] = {0};
+
+static u16 LoadTestSheet(u32 i)
+{
+    const struct SpriteSheet sheet = { .data = sTestTile, .size = TILE_SIZE_4BPP, .tag = TAG_TEST_SHEET + i };
+    return LoadSpriteSheet(&sheet);
+}
+
+TEST("LoadSpriteSheet fails once every tile range slot is taken")
+{
+    // EXPECT_EQ evaluates its arguments again for the failure message, so load outside it.
+    u32 i, tileStart;
+    ResetSpriteData();
+    for (i = 0; i < MAX_SPRITES; i++)
+    {
+        tileStart = LoadTestSheet(i);
+        EXPECT_EQ(tileStart, i);
+        EXPECT_EQ(GetSpriteTileStartByTag(TAG_TEST_SHEET + i), i);
+    }
+
+    // A 65th tag had no slot: it took tile 64 and wrote its range past sSpriteTileRangeTags.
+    gLoadFail = FALSE;
+    tileStart = LoadTestSheet(MAX_SPRITES);
+    EXPECT_EQ(gLoadFail, TRUE);
+    EXPECT_EQ(tileStart, 0);
+    EXPECT_EQ(GetSpriteTileStartByTag(TAG_TEST_SHEET + MAX_SPRITES), TAG_NONE);
+
+    // A freed slot takes the next sheet, at the first free tile.
+    gLoadFail = FALSE;
+    FreeSpriteTilesByTag(TAG_TEST_SHEET + 1);
+    tileStart = LoadTestSheet(MAX_SPRITES);
+    EXPECT_EQ(gLoadFail, FALSE);
+    EXPECT_EQ(tileStart, 1);
+    ResetSpriteData();
+}
+
 // Old implementation.
 
 #define UBFIX
