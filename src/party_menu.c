@@ -1491,6 +1491,11 @@ void Task_HandleChooseMonInput(u8 taskId)
                 MoveCursorToConfirm();
             }
             break;
+        case SELECT_BUTTON: // Open the boxes
+            PlaySE(SE_PC_LOGIN);
+            sPartyMenuInternal->exitCallback = CB2_OpenBoxFromPartyMenu;
+            Task_ClosePartyMenu(taskId);
+            break;
         case R_BUTTON: // Only used in full-team multis to cycle player/partner parties
             PlaySE(SE_M_HARDEN);
             UpdatePartyToFieldOrder();
@@ -1749,6 +1754,31 @@ static void Task_HandleCancelChooseMonYesNoInput(u8 taskId)
     }
 }
 
+static bool32 CanOpenBoxFromThisPartyMenu(void)
+{
+    return gPartyMenu.menuType == PARTY_MENU_TYPE_FIELD
+        && gPartyMenu.action == PARTY_ACTION_CHOOSE_MON
+        && gPartyMenu.exitCallback == CB2_ReturnToFieldWithOpenMenu
+        && CanOpenBoxFromPartyMenu();
+}
+
+// In the L/R button mode, L and R move the cursor
+static u16 GetBoxButton(void)
+{
+    if (gSaveBlock2Ptr->optionsButtonMode == OPTIONS_BUTTON_MODE_LR)
+        return SELECT_BUTTON;
+    return R_BUTTON;
+}
+
+static void PrintBoxButtonHint(u8 windowId, const u8 *message)
+{
+    const u8 *hint = (GetBoxButton() == SELECT_BUTTON) ? COMPOUND_STRING("{SELECT_BUTTON} BOX") : COMPOUND_STRING("{R_BUTTON} BOX");
+    s32 x = GetStringRightAlignXOffset(FONT_NORMAL, hint, WindowWidthPx(windowId));
+
+    if (x >= GetStringWidth(FONT_NORMAL, message, 0) + 8)
+        AddTextPrinterParameterized(windowId, FONT_NORMAL, hint, x, 1, 0, 0);
+}
+
 static u16 PartyMenuButtonHandler(s8 *slotPtr)
 {
     s8 movementDir;
@@ -1785,6 +1815,10 @@ static u16 PartyMenuButtonHandler(s8 *slotPtr)
 
     if (JOY_NEW(START_BUTTON))
         return START_BUTTON;
+
+    // SELECT_BUTTON means "open the boxes", whichever key GetBoxButton gives
+    if (JOY_NEW(GetBoxButton()) && CanOpenBoxFromThisPartyMenu())
+        return SELECT_BUTTON;
 
     // Cycling player and party teams for in-battle party menu in full-team multis
     if ((gPartyMenu.layout == PARTY_LAYOUT_MULTI_FULL || gPartyMenu.layout == PARTY_LAYOUT_MULTI_FULL_PARTNER)
@@ -2825,6 +2859,8 @@ void DisplayPartyMenuStdMessage(u32 stringId)
         DrawStdFrameWithCustomTileAndPalette(*windowPtr, FALSE, 0x4F, 13);
         StringExpandPlaceholders(gStringVar4, sActionStringTable[stringId]);
         AddTextPrinterParameterized(*windowPtr, FONT_NORMAL, gStringVar4, 0, 1, 0, 0);
+        if ((stringId == PARTY_MSG_CHOOSE_MON || stringId == PARTY_MSG_CHOOSE_MON_OR_CANCEL) && CanOpenBoxFromThisPartyMenu())
+            PrintBoxButtonHint(*windowPtr, gStringVar4);
         ScheduleBgCopyTilemapToVram(2);
     }
 }

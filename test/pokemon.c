@@ -174,6 +174,20 @@ TEST("Status1 round-trips through BoxPokemon")
     EXPECT_EQ(GetMonData(&mon2, MON_DATA_STATUS), status1);
 }
 
+TEST("Status1 keeps toxic and long sleep through BoxPokemon")
+{
+    u32 status1, expected;
+    struct Pokemon mon1, mon2;
+    PARAMETRIZE { status1 = STATUS1_TOXIC_POISON | STATUS1_TOXIC_TURN(1); expected = STATUS1_TOXIC_POISON; }
+    PARAMETRIZE { status1 = STATUS1_TOXIC_POISON | STATUS1_TOXIC_TURN(15); expected = STATUS1_TOXIC_POISON; }
+    PARAMETRIZE { status1 = STATUS1_SLEEP_TURN(6); expected = STATUS1_SLEEP_TURN(5); }
+    PARAMETRIZE { status1 = STATUS1_SLEEP_TURN(7); expected = STATUS1_SLEEP_TURN(5); }
+    CreateRandomMonWithIVs(&mon1, SPECIES_WOBBUFFET, 100, 0);
+    SetMonData(&mon1, MON_DATA_STATUS, &status1);
+    BoxMonToMon(&mon1.box, &mon2);
+    EXPECT_EQ(GetMonData(&mon2, MON_DATA_STATUS), expected);
+}
+
 TEST("canhypertrain/hypertrain affect MON_DATA_HYPER_TRAINED_* and recalculate stats")
 {
     u32 atk, friendship = 0;

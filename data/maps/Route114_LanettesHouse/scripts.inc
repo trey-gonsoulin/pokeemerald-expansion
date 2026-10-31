@@ -15,11 +15,19 @@ Route114_LanettesHouse_EventScript_Lanette::
 	givedecoration DECOR_LOTAD_DOLL
 	goto_if_eq VAR_RESULT, FALSE, Common_EventScript_ShowNoRoomForDecor
 	setflag FLAG_RECEIVED_DOLL_LANETTE
+.if OW_PC_ANYWHERE == TRUE
+	msgbox Route114_LanettesHouse_Text_TestingBoxesFromAnywhere, MSGBOX_DEFAULT
+	msgbox Route114_LanettesHouse_Text_StillBeingTested, MSGBOX_DEFAULT
+.endif
 	release
 	end
 
 Route114_LanettesHouse_EventScript_OfferAdvice::
 	msgbox Route114_LanettesHouse_Text_OrganizeYourBoxes, MSGBOX_DEFAULT
+.if OW_PC_ANYWHERE == TRUE
+	msgbox Route114_LanettesHouse_Text_BoxesFromAnywhereReminder, MSGBOX_DEFAULT
+	msgbox Route114_LanettesHouse_Text_StillBeingTested, MSGBOX_DEFAULT
+.endif
 	release
 	end
 
@@ -58,6 +66,23 @@ Route114_LanettesHouse_Text_OrganizeYourBoxes:
 	.string "Storage System?\p"
 	.string "You should organize your BOXES so you\n"
 	.string "can tell which POKéMON are in them.$"
+
+Route114_LanettesHouse_Text_TestingBoxesFromAnywhere:
+	.string "LANETTE: Oh, and one more thing!\p"
+	.string "I'm testing a way to reach my POKéMON\n"
+	.string "Storage System from anywhere.\p"
+	.string "Look at your POKéMON menu, and you'll\n"
+	.string "see how to open your BOXES.\p"
+	.string "The signal can't reach everywhere\n"
+	.string "yet, so it won't work in some places.$"
+
+Route114_LanettesHouse_Text_BoxesFromAnywhereReminder:
+	.string "And remember, you can open your BOXES\n"
+	.string "from your POKéMON menu.$"
+
+Route114_LanettesHouse_Text_StillBeingTested:
+	.string "It's still being tested, so please\n"
+	.string "tell me if anything goes wrong!$"
 
 Route114_LanettesHouse_Text_ResearchNotesPage1:
 	.string "It's LANETTE's research notes.\n"
