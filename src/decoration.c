@@ -2215,7 +2215,7 @@ static void ClearDecorationContextIndex(u8 idx)
 //
 // Output
 // gSpecialVar_Result: TRUE if all iterations complete.
-// gSpecialVar_0x8005: flagId of decoration (if any).
+// gSpecialVar_0x8005: flagId of decoration (if any), which is set.
 // gSpecialVar_0x8006: localId of decoration object event (if any).
 void PutAwayDecorationIteration(void)
 {
@@ -2230,6 +2230,9 @@ void PutAwayDecorationIteration(void)
     else if (gDecorations[sDecorationContext.items[sDecorRearrangementDataBuffer[gSpecialVar_0x8004].idx]].permission == DECORPERM_SPRITE)
     {
         gSpecialVar_0x8005 = sDecorRearrangementDataBuffer[gSpecialVar_0x8004].flagId;
+        // Hide the decoration's object here: the script used to do it with setflag VAR_0x8005,
+        // which sets flag 0x8005 itself (setflag doesn't read vars), past the end of sSpecialFlags.
+        FlagSet(gSpecialVar_0x8005);
         ClearDecorationContextIndex(sDecorRearrangementDataBuffer[gSpecialVar_0x8004].idx);
         for (i = 0; i < gMapHeader.events->objectEventCount; i++)
         {
@@ -2241,6 +2244,19 @@ void PutAwayDecorationIteration(void)
         }
     }
 }
+
+#if TESTING
+// Selects the first decoration of items/pos for SecretBase_EventScript_PutAwayDecoration.
+void Test_SetUpDecorationPutAway(u8 *items, u8 *pos, u16 flagId)
+{
+    sDecorationContext.items = items;
+    sDecorationContext.pos = pos;
+    sDecorationContext.size = 1;
+    sDecorRearrangementDataBuffer[0].idx = 0;
+    sDecorRearrangementDataBuffer[0].flagId = flagId;
+    sCurDecorSelectedInRearrangement = 1;
+}
+#endif
 
 // Unused
 void GetObjectEventLocalIdByFlag(void)
