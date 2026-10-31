@@ -123,3 +123,20 @@ TEST("HGSS evolution page frees every icon it draws")
     EXPECT(GetSpritesInUse() == spritesInUse);
     DestroyTask(taskId);
 }
+
+// The info page starts the cry when it opens, as in vanilla Emerald, unless
+// tSkipCry (back from another page of the same mon), and waits for it (#180).
+// Headless tests play no cry, so this checks the loader's states.
+TEST("HGSS info page starts the cry unless tSkipCry")
+{
+    bool32 skipCry = FALSE;
+    u32 expectedState = 0;
+    u8 taskId;
+
+    PARAMETRIZE { skipCry = FALSE; expectedState = 9; }
+    PARAMETRIZE { skipCry = TRUE; expectedState = 10; }
+
+    taskId = CreateTask(TaskDummy, 0);
+    EXPECT_EQ(Test_StartInfoScreenCry(taskId, NATIONAL_DEX_PIKACHU, skipCry), expectedState);
+    DestroyTask(taskId);
+}

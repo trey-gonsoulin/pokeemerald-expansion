@@ -1384,10 +1384,20 @@ bool32 Task_TryLoadInfoScreen_HGSS(u8 taskId)
         if (!gPaletteFade.active)
         {
             gMain.state++;
+            if (!gTasks[taskId].tSkipCry)
+            {
+                StopCryAndClearCrySongs();
+                PlayCry_NormalNoDucking(NationalPokedexNumToSpeciesForm(sPokedexListItem->dexNum), 0, CRY_VOLUME_RS, CRY_PRIORITY_NORMAL);
+            }
+            else
+            {
+                gMain.state++;
+            }
         }
         break;
     case 9:
-        gMain.state++;
+        if (!IsCryPlayingOrClearCrySongs())
+            gMain.state++;
         break;
     case 10:
         gTasks[taskId].tScrolling = FALSE;
@@ -1401,6 +1411,31 @@ bool32 Task_TryLoadInfoScreen_HGSS(u8 taskId)
 
     return TRUE;
 }
+
+#if TESTING
+// Runs state 8 of dexNum's info page loader with tSkipCry set to skipCry, and
+// returns the next state: 9 when it starts the cry and waits for it, 10 when it
+// skips it. Headless tests play no cry (GetCryIdBySpecies returns CRY_NONE).
+u32 Test_StartInfoScreenCry(u8 taskId, enum NationalDexOrder dexNum, bool32 skipCry)
+{
+    struct PokedexListItem *savedItem = sPokedexListItem;
+    struct PokedexListItem item = {.dexNum = dexNum, .seen = TRUE, .owned = TRUE};
+    u8 savedState = gMain.state;
+    bool32 savedFadeActive = gPaletteFade.active;
+    u32 nextState;
+
+    sPokedexListItem = &item;
+    gTasks[taskId].tSkipCry = skipCry;
+    gMain.state = 8;
+    gPaletteFade.active = FALSE; // Another test can leave a fade running
+    Task_TryLoadInfoScreen_HGSS(taskId);
+    nextState = gMain.state;
+    gPaletteFade.active = savedFadeActive;
+    gMain.state = savedState;
+    sPokedexListItem = savedItem;
+    return nextState;
+}
+#endif
 
 bool32 TryHandleInfoScreenInput_HGSS(u8 taskId)
 {
@@ -1471,6 +1506,7 @@ bool32 TrySwitchScreensFromAreaScreen_HGSS(u8 taskId)
     {
     case 1:
     default:
+        gTasks[taskId].tSkipCry = TRUE;
         gTasks[taskId].func = Task_LoadInfoScreen;
         break;
     case 2:
@@ -2984,6 +3020,7 @@ static void Task_SwitchScreensFromStatsScreen(u8 taskId)
             gTasks[taskId].func = Task_LoadEvolutionScreen;
             break;
         default:
+            gTasks[taskId].tSkipCry = TRUE; // The item icon used data[3]
             gTasks[taskId].func = Task_LoadInfoScreen;
             break;
         }
@@ -4003,6 +4040,8 @@ static void Task_SwitchScreensFromEvolutionScreen(u8 taskId)
             gTasks[taskId].func = Task_LoadFormsScreen;
             break;
         default:
+            // A opened another species' info page
+            gTasks[taskId].tSkipCry = FALSE;
             gTasks[taskId].func = Task_LoadInfoScreen;
             break;
         }
@@ -4362,6 +4401,8 @@ static void Task_SwitchScreensFromFormsScreen(u8 taskId)
             gTasks[taskId].func = Task_LoadEvolutionScreen;
             break;
         default:
+            // A opened another form's info page
+            gTasks[taskId].tSkipCry = FALSE;
             gTasks[taskId].func = Task_LoadInfoScreen;
             break;
         }
@@ -4553,6 +4594,7 @@ bool32 TrySwitchScreensFromCryScreen_HGSS(u8 taskId)
     {
     default:
     case 1:
+        gTasks[taskId].tSkipCry = TRUE;
         gTasks[taskId].func = Task_LoadInfoScreen;
         break;
     case 2:
@@ -4590,6 +4632,9 @@ bool32 TryLoadSizeScreen_HGSS(u8 taskId)
             SetVBlankCallback(NULL);
             ResetOtherVideoRegisters(DISPCNT_BG1_ON);
             sPokedexView->selectedScreen = SIZE_SCREEN;
+            // B goes back to the info page (Task_SwitchScreensFromSizeScreen),
+            // after the stats or evolution page may have reused data[3]
+            gTasks[taskId].tSkipCry = TRUE;
             gMain.state = 1;
         }
         break;
