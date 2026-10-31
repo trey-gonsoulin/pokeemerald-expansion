@@ -103,6 +103,15 @@ EWRAM_DATA struct SpriteTemplate gMultiuseSpriteTemplate = {0};
 EWRAM_DATA static struct MonSpritesGfxManager *sMonSpritesGfxManagers[MON_SPR_GFX_MANAGERS_COUNT] = {NULL};
 EWRAM_DATA u8 gTriedEvolving = 0;
 EWRAM_DATA u16 gFollowerSteps = 0;
+// The items the evolution found by the last DO_EVO pass uses up, taken by ConsumeEvolutionItems
+// once the evolution scene evolves the mon, so cancelling the evolution keeps them.
+EWRAM_DATA static struct
+{
+    struct Pokemon *mon;
+    enum Item bagItem;
+    u16 bagItemCount;
+    bool8 removeHeldItem;
+} sEvolutionItems = {0};
 
 struct Pokemon (*const gPlayerPartyPtr)[6] = &gParties[B_TRAINER_PLAYER];
 u8 (*const gPlayerPartyCountPtr) = &gPartiesCount[B_TRAINER_PLAYER];
@@ -4367,8 +4376,6 @@ bool32 DoesMonMeetAdditionalConditions(struct Pokemon *mon, const struct Evoluti
                 currentCondition = TRUE;
                 removeBagItem = params[i].arg1;
                 removeBagItemCount = params[i].arg2;
-                if (canStopEvo != NULL)
-                    *canStopEvo = FALSE;
             }
             break;
         case IF_REGION:
@@ -4383,24 +4390,40 @@ bool32 DoesMonMeetAdditionalConditions(struct Pokemon *mon, const struct Evoluti
             break;
         }
 
-        // check if an evolution is about to happen and items should be removed
-        if (evoState == DO_EVO)
-        {
-            if (removeHoldItem)
-            {
-                enum Item heldItem = ITEM_NONE;
-                SetMonData(mon, MON_DATA_HELD_ITEM, &heldItem);
-            }
-
-            if (removeBagItem != ITEM_NONE)
-                RemoveBagItem(removeBagItem, removeBagItemCount);
-        }
-
         if (currentCondition == FALSE)
             return FALSE;
     }
 
+    if (removeBagItem != ITEM_NONE && canStopEvo != NULL)
+        *canStopEvo = FALSE;
+
+    // The evolution is about to start: ConsumeEvolutionItems takes the items once it's done.
+    if (evoState == DO_EVO)
+    {
+        sEvolutionItems.mon = mon;
+        sEvolutionItems.removeHeldItem = removeHoldItem;
+        sEvolutionItems.bagItem = removeBagItem;
+        sEvolutionItems.bagItemCount = removeBagItemCount;
+    }
+
     return TRUE;
+}
+
+void ConsumeEvolutionItems(struct Pokemon *mon)
+{
+    if (sEvolutionItems.mon != mon)
+        return;
+
+    if (sEvolutionItems.removeHeldItem)
+    {
+        enum Item heldItem = ITEM_NONE;
+        SetMonData(mon, MON_DATA_HELD_ITEM, &heldItem);
+    }
+
+    if (sEvolutionItems.bagItem != ITEM_NONE)
+        RemoveBagItem(sEvolutionItems.bagItem, sEvolutionItems.bagItemCount);
+
+    sEvolutionItems.mon = NULL;
 }
 
 enum Species GetEvolutionTargetSpecies(struct Pokemon *mon, enum EvolutionMode mode, enum Item evolutionItem, struct Pokemon *tradePartner, bool32 *canStopEvo, enum EvoState evoState)
@@ -4412,6 +4435,9 @@ enum Species GetEvolutionTargetSpecies(struct Pokemon *mon, enum EvolutionMode m
     u32 level = GetMonData(mon, MON_DATA_LEVEL, 0);
     enum HoldEffect holdEffect;
     const struct Evolution *evolutions = GetSpeciesEvolutions(species);
+
+    if (evoState == DO_EVO)
+        sEvolutionItems.mon = NULL;
 
     if (evolutions == NULL)
         return SPECIES_NONE;
@@ -4602,6 +4628,7 @@ enum Species GetEvolutionTargetSpecies(struct Pokemon *mon, enum EvolutionMode m
      && GetGMaxTargetSpecies(species) != species
      && GetGMaxTargetSpecies(targetSpecies) == targetSpecies)
     {
+        sEvolutionItems.mon = NULL;
         return SPECIES_NONE;
     }
 
