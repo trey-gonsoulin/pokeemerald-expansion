@@ -1,8 +1,10 @@
 #include "global.h"
 #include "daycare.h"
+#include "decoration.h"
 #include "event_data.h"
 #include "pokemon.h"
 #include "pokemon_storage_system.h"
+#include "constants/decorations.h"
 #include "constants/party_menu.h"
 #include "test/overworld_script.h"
 #include "test/test.h"
@@ -71,4 +73,26 @@ TEST("Script specials: SetDaycareCompatibilityString returns the compatibility s
     );
     // Same species, same Trainer ID.
     EXPECT_EQ(VarGet(VAR_RESULT), PARENTS_MED_COMPATIBILITY);
+}
+
+// The put-away script hid the doll with setflag VAR_0x8005, which set flag 0x8005 (out of
+// bounds of the special flags) instead of the doll's. Its removeobject sets the doll's flag
+// only when the doll's object is on screen; here it isn't spawned at all.
+TEST("Script specials: putting away a doll sets its flag")
+{
+    u8 items[1] = {DECOR_PICHU_DOLL};
+    u8 pos[1] = {0x11};
+    const struct ObjectEventTemplate doll = {.localId = 1, .flagId = FLAG_DECORATION_1};
+    const struct MapEvents events = {.objectEventCount = 1, .objectEvents = &doll};
+    const struct MapEvents *mapEvents = gMapHeader.events;
+
+    FlagClear(FLAG_DECORATION_1);
+    gMapHeader.events = &events;
+    Test_SetUpDecorationPutAway(items, pos, FLAG_DECORATION_1);
+    RUN_OVERWORLD_SCRIPT( goto SecretBase_EventScript_PutAwayDecoration; );
+    gMapHeader.events = mapEvents;
+
+    EXPECT(FlagGet(FLAG_DECORATION_1));
+    EXPECT_EQ(items[0], DECOR_NONE);
+    FlagClear(FLAG_DECORATION_1);
 }
