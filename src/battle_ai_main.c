@@ -1773,7 +1773,9 @@ static s32 AI_CheckBadMove(enum BattlerId battlerAtk, enum BattlerId battlerDef,
             }
             for (enum Stat statId = STAT_ATK; statId < NUM_BATTLE_STATS; statId++)
             {
-                if (gBattleMons[battlerDef].statStages[statId] < DEFAULT_STAT_STAGE || gBattleMons[GetPartnerBattler(battlerDef)].statStages[statId] < DEFAULT_STAT_STAGE)
+                // The empty partner slot of a single battle has stat stages of 0.
+                if (gBattleMons[battlerDef].statStages[statId] < DEFAULT_STAT_STAGE
+                 || (IsBattlerAlive(GetPartnerBattler(battlerDef)) && gBattleMons[GetPartnerBattler(battlerDef)].statStages[statId] < DEFAULT_STAT_STAGE))
                     ADJUST_SCORE(-10); //Don't want to reset enemy lowered stats
             }
         }
@@ -2501,7 +2503,9 @@ static s32 AI_CheckBadMove(enum BattlerId battlerAtk, enum BattlerId battlerDef,
             }
             for (enum Stat statId = STAT_ATK; statId < NUM_BATTLE_STATS; statId++)
             {
-                if (gBattleMons[battlerDef].statStages[statId] < DEFAULT_STAT_STAGE || gBattleMons[GetPartnerBattler(battlerDef)].statStages[statId] < DEFAULT_STAT_STAGE)
+                // The empty partner slot of a single battle has stat stages of 0.
+                if (gBattleMons[battlerDef].statStages[statId] < DEFAULT_STAT_STAGE
+                 || (IsBattlerAlive(GetPartnerBattler(battlerDef)) && gBattleMons[GetPartnerBattler(battlerDef)].statStages[statId] < DEFAULT_STAT_STAGE))
                     ADJUST_SCORE(-10); //Don't want to copy enemy lowered stats
             }
         }

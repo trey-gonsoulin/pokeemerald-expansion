@@ -63,6 +63,26 @@ static bool32 HasBattlerTerrainBoostMove(enum BattlerId battler, enum BattleTerr
     return FALSE;
 }
 
+// The foe that the checks on one foe read: the left foe, or the right foe once the left has fainted,
+// so a fainted foe's moves and ability don't decide the opinion. A single battle has no right foe.
+static enum BattlerId GetLiveFoe(enum BattlerId battler)
+{
+    enum BattlerId leftFoe = GetBattlerLeftFoe(battler);
+    enum BattlerId rightFoe = GetBattlerRightFoe(battler);
+
+    return (!IsBattlerAlive(leftFoe) && IsBattlerAlive(rightFoe)) ? rightFoe : leftFoe;
+}
+
+// Electric and Misty Terrain keep a grounded foe from using Rest.
+static bool32 HasGroundedFoeWithRest(enum BattlerId battler)
+{
+    enum BattlerId leftFoe = GetBattlerLeftFoe(battler);
+    enum BattlerId rightFoe = GetBattlerRightFoe(battler);
+
+    return (IsBattlerAlive(leftFoe) && HasMoveWithEffect(leftFoe, EFFECT_REST) && AI_IsBattlerGrounded(leftFoe))
+        || (IsBattlerAlive(rightFoe) && HasMoveWithEffect(rightFoe, EFFECT_REST) && AI_IsBattlerGrounded(rightFoe));
+}
+
 static enum FieldEffectOutcome BenefitsFromWeather(enum BattlerId battler, u32 weather)
 {
     if (weather & B_WEATHER_RAIN)
@@ -277,9 +297,11 @@ static enum FieldEffectOutcome BenefitsFromSandstorm(enum BattlerId battler)
 
     if (gAiLogicData->holdEffects[battler] == HOLD_EFFECT_SAFETY_GOGGLES || IS_BATTLER_ANY_TYPE(battler, TYPE_ROCK, TYPE_GROUND, TYPE_STEEL))
     {
-        if (!IS_BATTLER_ANY_TYPE(GetBattlerLeftFoe(battler), TYPE_ROCK, TYPE_GROUND, TYPE_STEEL)
-         && gAiLogicData->holdEffects[GetBattlerLeftFoe(battler)] != HOLD_EFFECT_SAFETY_GOGGLES
-         && !DoesAbilityBenefitFromWeather(gAiLogicData->abilities[GetBattlerLeftFoe(battler)], B_WEATHER_SANDSTORM))
+        enum BattlerId foe = GetLiveFoe(battler);
+
+        if (!IS_BATTLER_ANY_TYPE(foe, TYPE_ROCK, TYPE_GROUND, TYPE_STEEL)
+         && gAiLogicData->holdEffects[foe] != HOLD_EFFECT_SAFETY_GOGGLES
+         && !DoesAbilityBenefitFromWeather(gAiLogicData->abilities[foe], B_WEATHER_SANDSTORM))
             return FIELD_EFFECT_POSITIVE;
         else
             return FIELD_EFFECT_NEUTRAL;
@@ -304,7 +326,7 @@ static enum FieldEffectOutcome BenefitsFromHailOrSnow(enum BattlerId battler, u3
     if (HasLightSensitiveMove(battler))
         return FIELD_EFFECT_NEGATIVE;
 
-    if (HasMoveWithFlag(GetBattlerLeftFoe(battler), MoveAlwaysHitsInHailSnow))
+    if (HasMoveWithFlag(GetLiveFoe(battler), MoveAlwaysHitsInHailSnow))
         return FIELD_EFFECT_NEGATIVE;
 
     return FIELD_EFFECT_NEUTRAL;
@@ -326,7 +348,7 @@ static enum FieldEffectOutcome BenefitsFromRain(enum BattlerId battler)
     if (HasLightSensitiveMove(battler) || HasDamagingMoveOfType(battler, TYPE_FIRE))
         return FIELD_EFFECT_NEGATIVE;
 
-    if (HasMoveWithFlag(GetBattlerLeftFoe(battler), MoveAlwaysHitsInRain))
+    if (HasMoveWithFlag(GetLiveFoe(battler), MoveAlwaysHitsInRain))
         return FIELD_EFFECT_NEGATIVE;
 
     return FIELD_EFFECT_NEUTRAL;
@@ -341,12 +363,11 @@ static enum FieldEffectOutcome BenefitsFromElectricTerrain(enum BattlerId battle
     if (HasBattlerTerrainBoostMove(battler, B_TERRAIN_ELECTRIC))
         return FIELD_EFFECT_POSITIVE;
 
-    if ((HasMoveWithEffect(GetBattlerLeftFoe(battler), EFFECT_REST) && AI_IsBattlerGrounded(GetBattlerLeftFoe(battler)))
-     || (HasMoveWithEffect(GetBattlerRightFoe(battler), EFFECT_REST) && AI_IsBattlerGrounded(GetBattlerRightFoe(battler))))
+    if (HasGroundedFoeWithRest(battler))
         return FIELD_EFFECT_POSITIVE;
 
     bool32 grounded = AI_IsBattlerGrounded(battler);
-    if (grounded && HasBattlerSideMoveWithAdditionalEffect(GetBattlerLeftFoe(battler), MOVE_EFFECT_SLEEP))
+    if (grounded && HasBattlerSideMoveWithAdditionalEffect(GetLiveFoe(battler), MOVE_EFFECT_SLEEP))
         return FIELD_EFFECT_POSITIVE;
 
     if (grounded && ((gBattleMons[battler].status1 & STATUS1_SLEEP)
@@ -373,16 +394,17 @@ static enum FieldEffectOutcome BenefitsFromGrassyTerrain(enum BattlerId battler)
         return FIELD_EFFECT_POSITIVE;
 
     bool32 grounded = AI_IsBattlerGrounded(battler);
+    enum BattlerId foe = GetLiveFoe(battler);
 
     // Weaken spamming Earthquake, Magnitude, and Bulldoze.
-    if (grounded && (HasBattlerSideMoveWithEffect(GetBattlerLeftFoe(battler), EFFECT_EARTHQUAKE)
-    || HasBattlerSideMoveWithEffect(GetBattlerLeftFoe(battler), EFFECT_MAGNITUDE)))
+    if (grounded && (HasBattlerSideMoveWithEffect(foe, EFFECT_EARTHQUAKE)
+    || HasBattlerSideMoveWithEffect(foe, EFFECT_MAGNITUDE)))
         return FIELD_EFFECT_POSITIVE;
 
     if (grounded && HasDamagingMoveOfType(battler, TYPE_GRASS))
         return FIELD_EFFECT_POSITIVE;
 
-    if (HasBattlerSideMoveWithEffect(GetBattlerLeftFoe(battler), EFFECT_GRASSY_GLIDE))
+    if (HasBattlerSideMoveWithEffect(foe, EFFECT_GRASSY_GLIDE))
         return FIELD_EFFECT_NEGATIVE;
 
 
@@ -404,17 +426,21 @@ static enum FieldEffectOutcome BenefitsFromMistyTerrain(enum BattlerId battler)
     if (HasPartner(battler))
         allyGrounded = AI_IsBattlerGrounded(GetPartnerBattler(battler));
 
-    if ((HasMoveWithEffect(GetBattlerLeftFoe(battler), EFFECT_REST) && AI_IsBattlerGrounded(GetBattlerLeftFoe(battler)))
-     || (HasMoveWithEffect(GetBattlerRightFoe(battler), EFFECT_REST) && AI_IsBattlerGrounded(GetBattlerRightFoe(battler))))
+    if (HasGroundedFoeWithRest(battler))
         return FIELD_EFFECT_POSITIVE;
+
+    enum BattlerId leftFoe = GetBattlerLeftFoe(battler);
+    enum BattlerId rightFoe = GetBattlerRightFoe(battler);
 
     // harass dragons
     if ((grounded || allyGrounded)
-     && (HasDamagingMoveOfType(GetBattlerLeftFoe(battler), TYPE_DRAGON) || HasDamagingMoveOfType(GetBattlerRightFoe(battler), TYPE_DRAGON)))
+     && ((IsBattlerAlive(leftFoe) && HasDamagingMoveOfType(leftFoe, TYPE_DRAGON))
+      || (IsBattlerAlive(rightFoe) && HasDamagingMoveOfType(rightFoe, TYPE_DRAGON))))
         return FIELD_EFFECT_POSITIVE;
 
     if ((grounded || allyGrounded)
-     && (HasNonVolatileMoveEffect(GetBattlerLeftFoe(battler), MOVE_EFFECT_SLEEP) || HasNonVolatileMoveEffect(GetBattlerRightFoe(battler), MOVE_EFFECT_SLEEP)))
+     && ((IsBattlerAlive(leftFoe) && HasNonVolatileMoveEffect(leftFoe, MOVE_EFFECT_SLEEP))
+      || (IsBattlerAlive(rightFoe) && HasNonVolatileMoveEffect(rightFoe, MOVE_EFFECT_SLEEP))))
         return FIELD_EFFECT_POSITIVE;
 
     if (grounded && (gBattleMons[battler].status1 & STATUS1_SLEEP || gBattleMons[battler].volatiles.yawn))
@@ -500,7 +526,7 @@ static enum FieldEffectOutcome BenefitsFromTrickRoom(enum BattlerId battler)
     if (IsBattle1v1())
     {
         // A double battle down to one Pokémon a side may have only the right foe left.
-        enum BattlerId foe = IsBattlerAlive(leftFoe) ? leftFoe : rightFoe;
+        enum BattlerId foe = GetLiveFoe(battler);
 
         if (gAiLogicData->speedStats[battler] < gAiLogicData->speedStats[foe])
             return FIELD_EFFECT_POSITIVE;
