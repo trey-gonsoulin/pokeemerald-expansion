@@ -451,7 +451,7 @@ Owner's decisions (2026-10-30):
 - Swaps: Mightyena Scary Face -> Crunch (7 slots), Claydol Guard Split -> Earth Power (6), Zigzagoon Growl -> Tackle (4), Roselia Leech Seed -> Mega Drain (4), Altaria Sing -> Dragon Pulse (4, evolution move), Wailmer and Wailord Rest -> Brine (4), Sharpedo Screech -> Night Slash (3), Gardevoir Life Dew -> Dazzling Gleam (3, evolution move), the Makuhita and Hariyama Force Palm (3), Skarmory Metal Sound -> Drill Peck (2), Dodrio Agility -> Pluck (2), the Route 119 rival Sceptile Double Team -> Energy Ball (2 teams, special like the Lilycove one), and one each: Chimecho Extrasensory, Gloom Giga Drain, Kecleon Slash, Machoke Vital Throw, Magneton Discharge, Swablu Round, Whismur Pound, Zangoose Crush Claw.
   - Kyra's Dodrio take Pluck where #139's review gave Dylan 2's and Maria 2's Tri Attack: by the rule's measure Pluck (Atk 110, STAB) beats Tri Attack (SpA 60).
   - The rival fights' other teams had no flagged slot: the Sceptile is on the two Mudkip-player teams only.
-- **Flags now** (all / story): no_attack 6 / 6 (Magikarp, Silcoon and Cascoon), one_attack 8 / 0, lost_stab 2 / 0. The ones left are off-stage teams: Gabby and Ty 1-5's Whismur and Loudred, Thomas's Zangoose, Leonard's Machop and Lea and Jed's Luvdisc.
+- **Flags now** (all / story): no_attack 6 / 6 (Magikarp, Silcoon and Cascoon), one_attack 8 / 0, lost_stab 2 / 0. The ones left are off-stage teams: Gabby and Ty 1-5's Whismur and Loudred, Thomas's Zangoose, Leonard's Machop and Lea and Jed's Luvdisc. #161 hand-wrote them too (section 13).
 
 **#145:** `RealRepo.test_set_moves_are_learnable` now checks every set move in `trainers.party` and `battle_partners.party`: the species or a pre-evolution has to learn it by level up at or below the slot's level, on evolving (level 0), from the teachable list or as an egg move (README). Every move #131, #139 and #159 wrote passes. 127 upstream slot moves don't, all illegal in upstream's own slot too (a raise or an evolution only adds learnable moves). `move_allowlist.json` lists them as 112 trainer, species and move entries (one per team, so a reordered team still matches), by cause:
 - `rematch`: 55 slot moves (55 entries) on the rematch teams #139 raised, such as Flannery 2-5's Rapidash Bounce, Brawly 2-4's Machamp Karate Chop and Norman 3-5's Kangaskhan Dizzy Punch (Brawly's Hitmontop Pursuit and Winona's Skarmory Whirlwind are egg moves, so they pass);
@@ -466,6 +466,18 @@ Before #133 no move on either team hit Gardevoir (Psychic/Fairy) super effective
 - Drake's Flygon: Crunch -> Iron Tail. Crunch was resisted by Fairy, Salamence keeps Drake's Dark move, and Flygon keeps Earthquake and Dragon Breath for STAB.
 
 Iron Tail hits Gardevoir 2x and Azumarill and Mawile 1x. It is the only strong Steel move the teams can learn here: Iron Head and Flash Cannon aren't on the Emerald TM or tutor list, and Steel Wing (70, 90% accuracy) is the weaker alternative. Steel over Poison: Poison misses Mawile, and the Poison moves these Pokémon learn are weak (Mightyena's Poison Fang and Kingdra's Clear Smog, 50) or special on a physical attacker (Crawdaunt's Sludge Bomb would be a boss flip onto a weaker stat, which #130 removed). Both teams are single fights: the Elite Four have no rematch teams and no Frontier copies. Levels are unchanged. Not playtested, so whether the AI picks Iron Tail against a Fairy lead is unchecked.
+
+## 13. Off-stage default sets (#161)
+#159 left 8 `one_attack` and 2 `lost_stab` flags on 9 default slots of off-stage teams, which no story stage raises. Each is now hand-written by #131's rule, as section 11 did: the Gen 9 default with one move (the first status move, or the weakest attack; every slot here had a status move) swapped for the strongest attack the species learns by that level or on evolving (power × STAB × the attacking stat), a same-type one for `lost_stab`. Levels and species are unchanged.
+- Gabby and Ty 1's Whismur (17): Howl -> Pound, as #159's Whismur (Astonish, its only other attack, scores half).
+- Gabby and Ty 2-5's Loudred (27, 30, 33, 36): Howl (2), Roar (3, 4) and Sleep Talk (5) -> Bite.
+  - Pound, Echoed Voice and Bite tie on the rule's measure (40 × 1.5 on Atk or SpA 71 against 60 on Atk 71). Bite is the stronger move and adds Dark, which hits the Ghost types the Normal moves can't.
+  - On 3 and 4 the first status move is Rest, whose loss would leave Sleep Talk with nothing to call (the AI has no other way to put Loudred to sleep), so Roar goes instead and Rest and Sleep Talk stay as on 2.
+- Thomas's Zangoose (45, both flags): Switcheroo -> Crush Claw, as #159's Zangoose.
+- Leonard's Machop (43, `lost_stab`): Bulk Up -> Vital Throw, as #159's Machoke.
+- Lea and Jed's two Luvdisc (45): Baby-Doll Eyes -> Water Pulse.
+
+**Flags now** (all / story): no_attack 6 / 6 (Magikarp, Silcoon and Cascoon), one_attack 0 / 0, lost_stab 0 / 0.
 
 ## Proposed balance changes (owner to accept or reject; each can be its own issue)
 1. **Soft level cap at each gym ace** (config). Set `B_LEVEL_CAP_TYPE LEVEL_CAP_FLAG_LIST` and `B_EXP_CAP_TYPE EXP_CAP_SOFT`. `sLevelCapFlagMap` in `src/caps.c` already holds exactly the measured aces (15/19/24/29/31/33/42/46/58). Consider `B_RARE_CANDY_CAP` too.

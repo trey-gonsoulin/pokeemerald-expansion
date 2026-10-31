@@ -1020,6 +1020,10 @@ IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 Whismur
 Level: 17
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
+- Echoed Voice
+- Pound
+- Rest
+- Sleep Talk
 
 === TRAINER_GABBY_AND_TY_2 ===
 Name: GABBY & TY
@@ -1037,6 +1041,10 @@ IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 Loudred
 Level: 27
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Bite
+- Rest
+- Sleep Talk
+- Stomp
 
 === TRAINER_GABBY_AND_TY_3 ===
 Name: GABBY & TY
@@ -1054,6 +1062,10 @@ IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 Loudred
 Level: 30
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
+- Rest
+- Sleep Talk
+- Stomp
+- Bite
 
 === TRAINER_GABBY_AND_TY_4 ===
 Name: GABBY & TY
@@ -1071,6 +1083,10 @@ IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 Loudred
 Level: 33
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
+- Rest
+- Sleep Talk
+- Stomp
+- Bite
 
 === TRAINER_GABBY_AND_TY_5 ===
 Name: GABBY & TY
@@ -1088,6 +1104,10 @@ IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 Loudred
 Level: 36
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
+- Bite
+- Stomp
+- Roar
+- Supersonic
 
 === TRAINER_GABBY_AND_TY_6 ===
 Name: GABBY & TY
@@ -4738,6 +4758,10 @@ AI: Check Bad Move
 Zangoose
 Level: 45
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Crush Claw
+- Detect
+- X-Scissor
+- Taunt
 
 === TRAINER_WALTER_2 ===
 Name: WALTER
@@ -9499,6 +9523,10 @@ AI: Check Bad Move
 Machop
 Level: 43
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Strength
+- Dual Chop
+- Vital Throw
+- Seismic Toss
 
 Pelipper
 Level: 43
@@ -12392,10 +12420,18 @@ AI: Check Bad Move
 Luvdisc
 Level: 45
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Take Down
+- Water Pulse
+- Aqua Ring
+- Soak
 
 Luvdisc
 Level: 45
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Take Down
+- Water Pulse
+- Aqua Ring
+- Soak
 
 === TRAINER_KIRA_AND_DAN_1 ===
 Name: KIRA & DAN
