@@ -21,20 +21,22 @@ AI flag sets (top 12):
 |---|---|
 | Check Bad Move | 636 |
 | Basic Trainer | 93 |
-| Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin | 84 |
+| Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin / Ace Pokemon | 79 |
 | (none) | 16 |
 | Check Bad Move / Try To Faint / Force Setup First Turn | 11 |
 | Check Bad Move / Try To Faint | 7 |
-| Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin / Risky | 5 |
-| Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin / Force Setup First Turn | 3 |
+| Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin / Risky / Ace Pokemon | 5 |
+| Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin / Double Ace Pokemon | 5 |
+| Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin / Force Setup First Turn / Ace Pokemon | 3 |
 
 Story bosses by AI:
 
 | AI | bosses |
 |---|---|
-| Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin | May Route 103 Mudkip, Roxanne 1, Brawly 1, May Route 110 Mudkip, Wally Mauville, Wattson 1, Tabitha Mt Chimney, Maxie Mt Chimney, Flannery 1, Norman 1, May Route 119 Mudkip, Shelly Weather Institute, May Lilycove Mudkip, Tabitha Magma Hideout, Maxie Magma Hideout, Matt, Tate And Liza 1, Tabitha Mossdeep, Maxie Mossdeep, Shelly Seafloor Cavern, Archie, Juan 1, Wally Vr 1, Phoebe, Glacia, Drake, Wallace |
-| Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin / Force Setup First Turn | May Rustboro Mudkip, Sidney |
-| Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin / Risky | Winona 1 |
+| Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin / Ace Pokemon | May Route 103 Mudkip, Roxanne 1, Brawly 1, May Route 110 Mudkip, Wally Mauville, Wattson 1, Tabitha Mt Chimney, Maxie Mt Chimney, Flannery 1, Norman 1, May Route 119 Mudkip, Shelly Weather Institute, May Lilycove Mudkip, Tabitha Magma Hideout, Maxie Magma Hideout, Matt, Tabitha Mossdeep, Maxie Mossdeep, Shelly Seafloor Cavern, Archie, Juan 1, Wally Vr 1, Phoebe, Glacia, Drake, Wallace |
+| Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin / Force Setup First Turn / Ace Pokemon | May Rustboro Mudkip, Sidney |
+| Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin / Risky / Ace Pokemon | Winona 1 |
+| Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / Randomize Switchin / Double Ace Pokemon | Tate And Liza 1 |
 
 ## Level curve
 
@@ -62,7 +64,7 @@ Party level just before each boss. Every party member is Medium Slow (the starte
 | Tate and Liza | Tabitha Magma Hideout | 66 | 62.2 | 90 | 57.8 | 65 | 55.8 | 65 | 62.0 |
 | Tate and Liza | Maxie Magma Hideout | 66 | 65.0 | 90 | 57.8 | 65 | 56.0 | 65 | 62.0 |
 | Tate and Liza | Matt | 66 | 66.0 | 90 | 57.8 | 66 | 56.5 | 66 | 62.0 |
-| Tate and Liza | Tate And Liza 1 | 66 | 65.5 | 90 | 58.0 | 66 | 56.8 | 66 | 62.0 |
+| Tate and Liza | Tate And Liza 1 | 66 | 65.5 | 90 | 58.2 | 66 | 56.8 | 66 | 62.0 |
 | Juan | Tabitha Mossdeep | 74 | 72.0 | 99 | 63.5 | 72 | 61.5 | 72 | 69.0 |
 | Juan | Maxie Mossdeep | 74 | 73.0 | 99 | 63.5 | 73 | 61.8 | 73 | 69.0 |
 | Juan | Shelly Seafloor Cavern | 74 | 74.0 | 99 | 63.8 | 73 | 62.2 | 73 | 69.0 |
@@ -72,7 +74,7 @@ Party level just before each boss. Every party member is Medium Slow (the starte
 | Elite Four | Sidney | 79 | 77.4 | 100 | 66.5 | 78 | 65.5 | 78 | 73.0 |
 | Elite Four | Phoebe | 80 | 78.4 | 100 | 66.8 | 79 | 65.8 | 79 | 74.0 |
 | Elite Four | Glacia | 81 | 79.4 | 100 | 67.0 | 79 | 66.0 | 79 | 74.0 |
-| Elite Four | Drake | 82 | 80.4 | 100 | 67.0 | 80 | 66.5 | 80 | 75.0 |
+| Elite Four | Drake | 82 | 80.4 | 100 | 67.2 | 80 | 66.5 | 80 | 75.0 |
 | Elite Four | Wallace | 85 | 83.3 | 100 | 67.8 | 81 | 66.8 | 81 | 75.0 |
 
 ### half clear (gym leaders, Elite Four, Champion)
@@ -611,8 +613,8 @@ Per boss Pokemon: retyping, defensive multipliers that changed (attacking type: 
 
 - Numel 34 (default moves): takes Fairy new->0.5x; hits Bug 1x->2x, Grass 1x->2x, Ice 1x->2x
 - Mightyena 36 (default moves): takes Fairy new->2x; hits Dark none->0.5x, Fighting none->0.5x, Ghost none->2x, Psychic none->2x, Fairy new->0.5x
-- Camerupt 38 (default moves): takes Fairy new->0.5x; hits Flying 2x->1x, Grass 1x->2x
 - Golbat 38 (default moves): takes Fairy new->0.5x; hits Steel 0.5x->1x, Fairy new->2x
+- Camerupt 38 (default moves): takes Fairy new->0.5x; hits Flying 2x->1x, Grass 1x->2x
 
 ### Maxie Mt Chimney
 
@@ -639,8 +641,8 @@ Per boss Pokemon: retyping, defensive multipliers that changed (attacking type: 
 
 ### Shelly Weather Institute
 
-- Sharpedo 55 (default moves): takes Fairy new->2x; hits Fire 1x->2x, Ghost 0x->2x, Ground 1x->2x, Psychic 1x->2x, Rock 0.5x->2x, Steel 0.5x->1x
 - Mightyena 55 (default moves): takes Fairy new->2x; hits Steel 0.5x->1x
+- Sharpedo 55 (default moves): takes Fairy new->2x; hits Fire 1x->2x, Ghost 0x->2x, Ground 1x->2x, Psychic 1x->2x, Rock 0.5x->2x, Steel 0.5x->1x
 
 ### Winona 1
 
@@ -690,8 +692,8 @@ Per boss Pokemon: retyping, defensive multipliers that changed (attacking type: 
 
 ### Shelly Seafloor Cavern
 
-- Sharpedo 74 (default moves): takes Fairy new->2x; hits Fire 1x->2x, Ghost 0x->2x, Ground 1x->2x, Psychic 1x->2x, Rock 0.5x->2x, Steel 0.5x->1x
 - Mightyena 74 (default moves): takes Fairy new->2x; hits Dark 1x->2x, Dragon 1x->2x, Fighting 1x->2x, Steel 0.5x->1x
+- Sharpedo 74 (default moves): takes Fairy new->2x; hits Fire 1x->2x, Ghost 0x->2x, Ground 1x->2x, Psychic 1x->2x, Rock 0.5x->2x, Steel 0.5x->1x
 
 ### Archie
 
