@@ -283,7 +283,8 @@ void ResetSpriteData(void)
     FreeSpriteTileRanges();
     gOamLimit = 64;
     gReservedSpriteTileCount = 0;
-    AllocSpriteTiles(0);
+    for (u32 i = 0; i < TOTAL_OBJ_TILE_COUNT; i++)
+        FREE_SPRITE_TILE(i);
     gSpriteCoordOffsetX = 0;
     gSpriteCoordOffsetY = 0;
 }
@@ -655,14 +656,9 @@ s16 AllocSpriteTiles(u16 tileCount)
     s16 start;
     u16 numTilesFound;
 
+    // A count of 0 (a frame or sheet under one tile) used to free every unreserved tile and return 0.
     if (tileCount == 0)
-    {
-        // Free all unreserved tiles if the tile count is 0.
-        for (i = gReservedSpriteTileCount; i < TOTAL_OBJ_TILE_COUNT; i++)
-            FREE_SPRITE_TILE(i);
-
-        return 0;
-    }
+        return -1;
 
     i = gReservedSpriteTileCount;
 
@@ -1508,12 +1504,10 @@ void SetOamMatrixRotationScaling(u8 matrixNum, s16 xScale, s16 yScale, u16 rotat
 static u16 LoadSpriteSheetWithOffset(const struct SpriteSheet *sheet, u32 offset)
 {
     s16 tileStart = -1;
-    u16 tileCount = sheet->size / TILE_SIZE_4BPP;
 
-    // AllocSpriteTiles(0) frees every unreserved tile, so a sheet under one tile fails.
     // With every tile range slot taken, AllocSpriteTileRange would write past sSpriteTileRangeTags.
-    if (tileCount != 0 && IndexOfSpriteTileTag(TAG_NONE) != 0xFF)
-        tileStart = AllocSpriteTiles(tileCount);
+    if (IndexOfSpriteTileTag(TAG_NONE) != 0xFF)
+        tileStart = AllocSpriteTiles(sheet->size / TILE_SIZE_4BPP);
 
     if (tileStart < 0)
     {
@@ -1524,7 +1518,7 @@ static u16 LoadSpriteSheetWithOffset(const struct SpriteSheet *sheet, u32 offset
     }
     else
     {
-        AllocSpriteTileRange(sheet->tag, (u16)tileStart, tileCount);
+        AllocSpriteTileRange(sheet->tag, (u16)tileStart, sheet->size / TILE_SIZE_4BPP);
         CpuSmartCopy16(sheet->data, (u8 *)OBJ_VRAM0 + TILE_SIZE_4BPP * tileStart + offset, sheet->size - offset);
         return (u16)tileStart;
     }
