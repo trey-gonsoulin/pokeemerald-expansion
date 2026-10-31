@@ -41,6 +41,7 @@
 #include "constants/form_change_types.h"
 #include "constants/items.h"
 #include "constants/map_types.h"
+#include "constants/maps.h"
 #include "constants/party_menu.h"
 #include "constants/moves.h"
 #include "constants/region_map_sections.h"
@@ -1631,14 +1632,38 @@ void ShowPokemonStorageSystemPC(void)
     LockPlayerFieldControls();
 }
 
+// From the first Elite Four room to the Hall of Fame, as no PC is reachable there
+static const u16 sNoBoxMaps[] =
+{
+    MAP_EVER_GRANDE_CITY_SIDNEYS_ROOM,
+    MAP_EVER_GRANDE_CITY_HALL1,
+    MAP_EVER_GRANDE_CITY_PHOEBES_ROOM,
+    MAP_EVER_GRANDE_CITY_HALL2,
+    MAP_EVER_GRANDE_CITY_GLACIAS_ROOM,
+    MAP_EVER_GRANDE_CITY_HALL3,
+    MAP_EVER_GRANDE_CITY_DRAKES_ROOM,
+    MAP_EVER_GRANDE_CITY_HALL4,
+    MAP_EVER_GRANDE_CITY_CHAMPIONS_ROOM,
+    MAP_EVER_GRANDE_CITY_HALL5,
+    MAP_EVER_GRANDE_CITY_HALL_OF_FAME,
+};
+
 bool32 CanOpenBoxFromPartyMenu(void)
 {
-    if (!OW_PC_ANYWHERE || !FlagGet(FLAG_SYS_PC_LANETTE))
+    u32 i;
+    u16 map = (gSaveBlock1Ptr->location.mapGroup << 8) | gSaveBlock1Ptr->location.mapNum;
+
+    if (!OW_PC_ANYWHERE || !FlagGet(FLAG_RECEIVED_DOLL_LANETTE))
         return FALSE;
     if (gMapHeader.regionMapSectionId == MAPSEC_BATTLE_FRONTIER
      || gMapHeader.regionMapSectionId == MAPSEC_TRAINER_HILL
      || gMapHeader.mapType == MAP_TYPE_UNDERWATER)
         return FALSE;
+    for (i = 0; i < ARRAY_COUNT(sNoBoxMaps); i++)
+    {
+        if (map == sNoBoxMaps[i])
+            return FALSE;
+    }
     if (IsOverworldLinkActive() || InUnionRoom())
         return FALSE;
     return TRUE;
@@ -1688,7 +1713,7 @@ static void CB2_ExitPokeStorage(void)
     if (sOpenedFromPartyMenu)
     {
         sOpenedFromPartyMenu = FALSE;
-        // Reopens the start menu's field party menu, keeping its cursor
+        // Reopens the start menu's party menu, on the same slot if it still holds a Pokémon
         SetMainCallback2(CB2_ReturnToPartyMenuFromFlyMap);
         return;
     }

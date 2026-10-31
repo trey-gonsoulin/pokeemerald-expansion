@@ -3,14 +3,17 @@
 #include "pokemon_storage_system.h"
 #include "test/test.h"
 #include "constants/map_types.h"
+#include "constants/maps.h"
 #include "constants/region_map_sections.h"
 
 TEST("Box from party menu: opens only after Lanette and where it's allowed")
 {
-    u32 mapsec = MAPSEC_PETALBURG_CITY, mapType = MAP_TYPE_CITY;
-    bool32 metLanette = TRUE, expected = TRUE;
+    u32 mapsec = MAPSEC_PETALBURG_CITY, mapType = MAP_TYPE_CITY, map = MAP_PETALBURG_CITY;
+    bool32 metLanette = TRUE, expected = TRUE, result;
     u8 savedMapsec = gMapHeader.regionMapSectionId;
     u8 savedMapType = gMapHeader.mapType;
+    struct WarpData savedLocation = gSaveBlock1Ptr->location;
+    bool32 savedFlag = FlagGet(FLAG_RECEIVED_DOLL_LANETTE);
 
     PARAMETRIZE { }
     PARAMETRIZE { metLanette = FALSE; expected = FALSE; }
@@ -18,17 +21,28 @@ TEST("Box from party menu: opens only after Lanette and where it's allowed")
     PARAMETRIZE { mapsec = MAPSEC_BATTLE_FRONTIER; expected = FALSE; }
     PARAMETRIZE { mapsec = MAPSEC_TRAINER_HILL; expected = FALSE; }
     PARAMETRIZE { mapsec = MAPSEC_UNDERWATER_124; mapType = MAP_TYPE_UNDERWATER; expected = FALSE; }
+    PARAMETRIZE { mapsec = MAPSEC_EVER_GRANDE_CITY; map = MAP_EVER_GRANDE_CITY_POKEMON_LEAGUE_1F; }
+    PARAMETRIZE { mapsec = MAPSEC_EVER_GRANDE_CITY; map = MAP_EVER_GRANDE_CITY_SIDNEYS_ROOM; expected = FALSE; }
+    PARAMETRIZE { mapsec = MAPSEC_EVER_GRANDE_CITY; map = MAP_EVER_GRANDE_CITY_HALL_OF_FAME; expected = FALSE; }
 
     if (metLanette)
-        FlagSet(FLAG_SYS_PC_LANETTE);
+        FlagSet(FLAG_RECEIVED_DOLL_LANETTE);
     else
-        FlagClear(FLAG_SYS_PC_LANETTE);
+        FlagClear(FLAG_RECEIVED_DOLL_LANETTE);
     gMapHeader.regionMapSectionId = mapsec;
     gMapHeader.mapType = mapType;
+    gSaveBlock1Ptr->location.mapGroup = MAP_GROUP(map);
+    gSaveBlock1Ptr->location.mapNum = MAP_NUM(map);
 
-    EXPECT_EQ(CanOpenBoxFromPartyMenu(), expected);
+    result = CanOpenBoxFromPartyMenu();
 
     gMapHeader.regionMapSectionId = savedMapsec;
     gMapHeader.mapType = savedMapType;
-    FlagClear(FLAG_SYS_PC_LANETTE);
+    gSaveBlock1Ptr->location = savedLocation;
+    if (savedFlag)
+        FlagSet(FLAG_RECEIVED_DOLL_LANETTE);
+    else
+        FlagClear(FLAG_RECEIVED_DOLL_LANETTE);
+
+    EXPECT_EQ(result, expected);
 }
