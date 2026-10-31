@@ -182,6 +182,27 @@ TEST("LoadSpriteSheet fails on a sheet smaller than one tile")
     ResetSpriteData();
 }
 
+TEST("CreateSpriteUnchecked fails on an untagged frame smaller than one tile")
+{
+    static const struct SpriteFrameImage subTileImage[] = { { sTestTile, TILE_SIZE_4BPP / 2 } };
+    struct SpriteTemplate template = gDummySpriteTemplate;
+    u32 spriteId, tileStart;
+    template.tileTag = TAG_NONE;
+    template.images = subTileImage;
+    ResetSpriteData();
+    tileStart = LoadTestSheet(0);
+    EXPECT_EQ(tileStart, 0);
+
+    // AllocSpriteTiles(0) freed every tile and gave the sprite tile 0.
+    // CreateSprite would stop the test on the failure (fatal_assertf).
+    spriteId = CreateSpriteUnchecked(&template, 0, 0, 0);
+    EXPECT_EQ(spriteId, MAX_SPRITES);
+
+    tileStart = LoadTestSheet(1);
+    EXPECT_EQ(tileStart, 1);
+    ResetSpriteData();
+}
+
 // Old implementation.
 
 #define UBFIX
