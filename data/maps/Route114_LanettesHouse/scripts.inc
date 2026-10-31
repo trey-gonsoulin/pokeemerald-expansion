@@ -17,6 +17,7 @@ Route114_LanettesHouse_EventScript_Lanette::
 	setflag FLAG_RECEIVED_DOLL_LANETTE
 .if OW_PC_ANYWHERE == TRUE
 	msgbox Route114_LanettesHouse_Text_TestingBoxesFromAnywhere, MSGBOX_DEFAULT
+	msgbox Route114_LanettesHouse_Text_StillBeingTested, MSGBOX_DEFAULT
 .endif
 	release
 	end
@@ -25,6 +26,7 @@ Route114_LanettesHouse_EventScript_OfferAdvice::
 	msgbox Route114_LanettesHouse_Text_OrganizeYourBoxes, MSGBOX_DEFAULT
 .if OW_PC_ANYWHERE == TRUE
 	msgbox Route114_LanettesHouse_Text_BoxesFromAnywhereReminder, MSGBOX_DEFAULT
+	msgbox Route114_LanettesHouse_Text_StillBeingTested, MSGBOX_DEFAULT
 .endif
 	release
 	end
@@ -72,13 +74,13 @@ Route114_LanettesHouse_Text_TestingBoxesFromAnywhere:
 	.string "Look at your POKéMON menu, and you'll\n"
 	.string "see how to open your BOXES.\p"
 	.string "The signal can't reach everywhere\n"
-	.string "yet, so it won't work in some places.\p"
-	.string "It's still being tested, so please\n"
-	.string "tell me if anything goes wrong!$"
+	.string "yet, so it won't work in some places.$"
 
 Route114_LanettesHouse_Text_BoxesFromAnywhereReminder:
 	.string "And remember, you can open your BOXES\n"
-	.string "from your POKéMON menu.\p"
+	.string "from your POKéMON menu.$"
+
+Route114_LanettesHouse_Text_StillBeingTested:
 	.string "It's still being tested, so please\n"
 	.string "tell me if anything goes wrong!$"
 

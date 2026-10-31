@@ -1771,8 +1771,8 @@ static u16 GetBoxButton(void)
 
 static void PrintBoxButtonHint(u8 windowId, const u8 *message)
 {
-    const u8 *hint = (GetBoxButton() == SELECT_BUTTON) ? COMPOUND_STRING("{SELECT_BUTTON} BOX") : COMPOUND_STRING("{R_BUTTON} BOX");
-    s32 x = WindowWidthPx(windowId) - GetStringWidth(FONT_NORMAL, hint, 0);
+    const u8 *hint = (gSaveBlock2Ptr->optionsButtonMode == OPTIONS_BUTTON_MODE_LR) ? COMPOUND_STRING("{SELECT_BUTTON} BOX") : COMPOUND_STRING("{R_BUTTON} BOX");
+    s32 x = GetStringRightAlignXOffset(FONT_NORMAL, hint, WindowWidthPx(windowId));
 
     if (x > GetStringWidth(FONT_NORMAL, message, 0))
         AddTextPrinterParameterized(windowId, FONT_NORMAL, hint, x, 1, 0, 0);
@@ -1815,6 +1815,7 @@ static u16 PartyMenuButtonHandler(s8 *slotPtr)
     if (JOY_NEW(START_BUTTON))
         return START_BUTTON;
 
+    // SELECT_BUTTON means "open the boxes", whichever key GetBoxButton gives
     if (JOY_NEW(GetBoxButton()) && CanOpenBoxFromThisPartyMenu())
         return SELECT_BUTTON;
 

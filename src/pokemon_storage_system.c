@@ -1688,6 +1688,7 @@ static void CB2_ExitPokeStorage(void)
     if (sOpenedFromPartyMenu)
     {
         sOpenedFromPartyMenu = FALSE;
+        // Reopens the start menu's field party menu, keeping its cursor
         SetMainCallback2(CB2_ReturnToPartyMenuFromFlyMap);
         return;
     }
