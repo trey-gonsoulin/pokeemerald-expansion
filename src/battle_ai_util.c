@@ -1718,10 +1718,15 @@ bool32 CanTargetFaintAiWithMod(enum BattlerId battlerDef, enum BattlerId battler
     s32 dmg;
     enum Move *moves = GetMovesArray(battlerDef);
     u32 hpCheck = gBattleMons[battlerAtk].hp + hpMod;
-    u32 moveLimitations = aiData->moveLimitations[battlerAtk];
+    u32 moveLimitations = aiData->moveLimitations[battlerDef];
+    u32 hpPercent = aiData->hpPercents[battlerAtk];
+    bool32 canFaint = FALSE;
 
     if (hpCheck > gBattleMons[battlerAtk].maxHP)
         hpCheck = gBattleMons[battlerAtk].maxHP;
+
+    // Applies modified HP percent to AI data for consideration when running CanEndureHit, restored before returning.
+    aiData->hpPercents[battlerAtk] = (100 * hpCheck) / gBattleMons[battlerAtk].maxHP;
 
     for (u32 moveIndex = 0; moveIndex < MAX_MON_MOVES; moveIndex++)
     {
@@ -1733,18 +1738,15 @@ bool32 CanTargetFaintAiWithMod(enum BattlerId battlerDef, enum BattlerId battler
         if (dmgMod)
             dmg *= dmgMod;
 
-        // Applies modified HP percent to AI data for consideration when running CanEndureHit
-        gAiLogicData->hpPercents[battlerAtk] = (hpCheck/gBattleMons[battlerAtk].maxHP)*100;
-
         if (dmg >= hpCheck && !(CanEndureHit(battlerDef, battlerAtk, moves[moveIndex]) && (dmgMod <= 1)))
         {
-            gAiLogicData->hpPercents[battlerAtk] = (gBattleMons[battlerAtk].hp / gBattleMons[battlerAtk].maxHP) * 100;
-            return TRUE;
+            canFaint = TRUE;
+            break;
         }
-        gAiLogicData->hpPercents[battlerAtk] = (gBattleMons[battlerAtk].hp / gBattleMons[battlerAtk].maxHP) * 100;
     }
 
-    return FALSE;
+    aiData->hpPercents[battlerAtk] = hpPercent;
+    return canFaint;
 }
 
 bool32 AI_IsAbilityOnSide(enum BattlerId battlerId, enum Ability ability)

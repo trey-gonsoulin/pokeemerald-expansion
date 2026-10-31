@@ -1169,6 +1169,43 @@ AI_DOUBLE_BATTLE_TEST("AI field status: weather follows the user's opinion over 
     }
 }
 
+AI_DOUBLE_BATTLE_TEST("AI field status: weather ignores a fainted foe's moves")
+{
+    // The player's Thunder makes rain bad for Wobbuffet until its user faints to its own Memento; then Lotad's Swift Swim decides.
+    GIVEN {
+        ASSUME(GetMoveEffect(MOVE_RAIN_DANCE) == EFFECT_WEATHER);
+        ASSUME(GetMoveEffect(MOVE_MEMENTO) == EFFECT_MEMENTO);
+        ASSUME(MoveAlwaysHitsInRain(MOVE_THUNDER));
+        ASSUME(GetSpeciesAbility(SPECIES_LOTAD, 0) == ABILITY_SWIFT_SWIM);
+        AI_FLAGS(AI_FLAG_CHECK_BAD_MOVE | AI_FLAG_CHECK_VIABILITY | AI_FLAG_TRY_TO_FAINT | AI_FLAG_OMNISCIENT);
+        PLAYER(SPECIES_WOBBUFFET) { Moves(MOVE_THUNDER, MOVE_MEMENTO); }
+        PLAYER(SPECIES_WOBBUFFET) { Moves(MOVE_CELEBRATE); }
+        OPPONENT(SPECIES_WOBBUFFET) { Moves(MOVE_RAIN_DANCE, MOVE_RETURN); }
+        OPPONENT(SPECIES_LOTAD) { Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        TURN { MOVE(playerLeft, MOVE_MEMENTO, target: opponentLeft); NOT_EXPECT_MOVE(opponentLeft, MOVE_RAIN_DANCE); }
+        TURN { MOVE(playerRight, MOVE_CELEBRATE); EXPECT_MOVE(opponentLeft, MOVE_RAIN_DANCE); }
+    }
+}
+
+AI_DOUBLE_BATTLE_TEST("AI field status: terrain ignores a fainted foe's moves")
+{
+    // The player's Grassy Glide makes Grassy Terrain bad for Wobbuffet until its user faints to its own Memento; then Gogoat's Grass Pelt decides.
+    GIVEN {
+        ASSUME(GetMoveEffect(MOVE_GRASSY_TERRAIN) == EFFECT_TERRAIN);
+        ASSUME(GetMoveEffect(MOVE_GRASSY_GLIDE) == EFFECT_GRASSY_GLIDE);
+        ASSUME(GetMoveEffect(MOVE_MEMENTO) == EFFECT_MEMENTO);
+        AI_FLAGS(AI_FLAG_CHECK_BAD_MOVE | AI_FLAG_CHECK_VIABILITY | AI_FLAG_TRY_TO_FAINT | AI_FLAG_OMNISCIENT);
+        PLAYER(SPECIES_WOBBUFFET) { Moves(MOVE_GRASSY_GLIDE, MOVE_MEMENTO); }
+        PLAYER(SPECIES_WOBBUFFET) { Moves(MOVE_CELEBRATE); }
+        OPPONENT(SPECIES_WOBBUFFET) { Moves(MOVE_GRASSY_TERRAIN, MOVE_RETURN); }
+        OPPONENT(SPECIES_GOGOAT) { Ability(ABILITY_GRASS_PELT); Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        TURN { MOVE(playerLeft, MOVE_MEMENTO, target: opponentLeft); NOT_EXPECT_MOVE(opponentLeft, MOVE_GRASSY_TERRAIN); }
+        TURN { MOVE(playerRight, MOVE_CELEBRATE); EXPECT_MOVE(opponentLeft, MOVE_GRASSY_TERRAIN); }
+    }
+}
+
 AI_DOUBLE_BATTLE_TEST("AI field status: Trick Room ignores a fainted foe's speed")
 {
     // Wynaut, slower than Indeedee, faints to its own Memento, which leaves only the faster Wobbuffet.
