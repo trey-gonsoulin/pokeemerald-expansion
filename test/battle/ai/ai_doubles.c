@@ -1095,6 +1095,54 @@ AI_DOUBLE_BATTLE_TEST("AI sets up terrain for its ally")
     }
 }
 
+AI_DOUBLE_BATTLE_TEST("AI field status: terrain follows the user's opinion over its ally's")
+{
+    // The player's Rising Voltage makes Electric Terrain bad for the side, but Surge Surfer makes it good for Raichu.
+    u32 userSpecies, partnerSpecies;
+
+    PARAMETRIZE { userSpecies = SPECIES_RAICHU_ALOLA; partnerSpecies = SPECIES_WOBBUFFET; }
+    PARAMETRIZE { userSpecies = SPECIES_WOBBUFFET; partnerSpecies = SPECIES_RAICHU_ALOLA; }
+
+    GIVEN {
+        ASSUME(GetMoveEffect(MOVE_ELECTRIC_TERRAIN) == EFFECT_TERRAIN);
+        ASSUME(GetMoveEffect(MOVE_RISING_VOLTAGE) == EFFECT_TERRAIN_BOOST);
+        AI_FLAGS(AI_FLAG_CHECK_BAD_MOVE | AI_FLAG_CHECK_VIABILITY | AI_FLAG_TRY_TO_FAINT | AI_FLAG_OMNISCIENT);
+        PLAYER(SPECIES_WOBBUFFET) { Moves(MOVE_RISING_VOLTAGE, MOVE_CELEBRATE); }
+        PLAYER(SPECIES_WOBBUFFET) { Moves(MOVE_CELEBRATE); }
+        OPPONENT(userSpecies) { Ability(userSpecies == SPECIES_RAICHU_ALOLA ? ABILITY_SURGE_SURFER : ABILITY_SHADOW_TAG); Moves(MOVE_ELECTRIC_TERRAIN, MOVE_RETURN, MOVE_TAUNT); }
+        OPPONENT(partnerSpecies) { Ability(partnerSpecies == SPECIES_RAICHU_ALOLA ? ABILITY_SURGE_SURFER : ABILITY_SHADOW_TAG); Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        if (userSpecies == SPECIES_RAICHU_ALOLA)
+            TURN { EXPECT_MOVE(opponentLeft, MOVE_ELECTRIC_TERRAIN); }
+        else
+            TURN { NOT_EXPECT_MOVE(opponentLeft, MOVE_ELECTRIC_TERRAIN); }
+    }
+}
+
+AI_DOUBLE_BATTLE_TEST("AI field status: Gravity follows the user's opinion over its ally's")
+{
+    // Gravity grounds the player's Pidgeys for Wobbuffet's Earthquake, but Pidgey on the AI's side doesn't want it.
+    u32 userSpecies, partnerSpecies;
+
+    PARAMETRIZE { userSpecies = SPECIES_WOBBUFFET; partnerSpecies = SPECIES_PIDGEY; }
+    PARAMETRIZE { userSpecies = SPECIES_PIDGEY; partnerSpecies = SPECIES_WOBBUFFET; }
+
+    GIVEN {
+        ASSUME(GetMoveEffect(MOVE_GRAVITY) == EFFECT_GRAVITY);
+        ASSUME(GetSpeciesType(SPECIES_PIDGEY, 1) == TYPE_FLYING);
+        AI_FLAGS(AI_FLAG_CHECK_BAD_MOVE | AI_FLAG_CHECK_VIABILITY | AI_FLAG_TRY_TO_FAINT | AI_FLAG_OMNISCIENT);
+        PLAYER(SPECIES_PIDGEY);
+        PLAYER(SPECIES_PIDGEY);
+        OPPONENT(userSpecies) { Moves(MOVE_GRAVITY, MOVE_EARTHQUAKE, MOVE_TACKLE); }
+        OPPONENT(partnerSpecies) { Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        if (userSpecies == SPECIES_WOBBUFFET)
+            TURN { EXPECT_MOVE(opponentLeft, MOVE_GRAVITY); }
+        else
+            TURN { NOT_EXPECT_MOVE(opponentLeft, MOVE_GRAVITY); }
+    }
+}
+
 AI_DOUBLE_BATTLE_TEST("AI uses After You to set up Trick Room")
 {
     enum Move move;
@@ -1126,8 +1174,8 @@ AI_DOUBLE_BATTLE_TEST("AI uses Trick Room intelligently")
     u32 speed;
 
     PARAMETRIZE { move = MOVE_DRAINING_KISS; ability = ABILITY_SYNCHRONIZE; speed = 4; }
-    // PARAMETRIZE { move = MOVE_DAZZLING_GLEAM; ability = ABILITY_SYNCHRONIZE; speed = 4; }
-    // PARAMETRIZE { move = MOVE_DRAINING_KISS; ability = ABILITY_PSYCHIC_SURGE; speed = 4; }
+    PARAMETRIZE { move = MOVE_DAZZLING_GLEAM; ability = ABILITY_SYNCHRONIZE; speed = 4; }
+    PARAMETRIZE { move = MOVE_DRAINING_KISS; ability = ABILITY_PSYCHIC_SURGE; speed = 4; }
     PARAMETRIZE { move = MOVE_DRAINING_KISS; ability = ABILITY_SYNCHRONIZE; speed = 2; }
     PARAMETRIZE { move = MOVE_DAZZLING_GLEAM; ability = ABILITY_SYNCHRONIZE; speed = 2; }
     PARAMETRIZE { move = MOVE_DRAINING_KISS; ability = ABILITY_PSYCHIC_SURGE; speed = 2; }
