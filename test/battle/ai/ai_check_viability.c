@@ -629,3 +629,23 @@ AI_DOUBLE_BATTLE_TEST("AI scores Order Up's stat boost only with Commander")
         }
     }
 }
+
+AI_SINGLE_BATTLE_TEST("AI field status: Steel Roller and Ice Spinner score removing a terrain that helps the foe")
+{
+    // Psychic Terrain is bad for Wobbuffet against Expanding Force (clearing it: GOOD_EFFECT) and good for Indeedee (DECENT_EFFECT).
+    enum Move move;
+
+    PARAMETRIZE { move = MOVE_ICE_SPINNER; }
+    PARAMETRIZE { move = MOVE_STEEL_ROLLER; }
+
+    GIVEN {
+        ASSUME(GetMoveEffect(MOVE_STEEL_ROLLER) == EFFECT_STEEL_ROLLER);
+        ASSUME(GetMoveEffect(MOVE_ICE_SPINNER) == EFFECT_ICE_SPINNER);
+        ASSUME(GetMoveEffect(MOVE_EXPANDING_FORCE) == EFFECT_TERRAIN_BOOST);
+        AI_FLAGS(AI_FLAG_CHECK_VIABILITY | AI_FLAG_OMNISCIENT);
+        PLAYER(SPECIES_INDEEDEE_M) { Ability(ABILITY_PSYCHIC_SURGE); Moves(MOVE_EXPANDING_FORCE); }
+        OPPONENT(SPECIES_WOBBUFFET) { Moves(move); }
+    } WHEN {
+        TURN { SCORE_EQ_VAL(opponent, move, AI_SCORE_DEFAULT + BEST_DAMAGE_MOVE + GOOD_EFFECT + DECENT_EFFECT); }
+    }
+}

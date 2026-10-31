@@ -31,13 +31,13 @@ static bool32 HasLightSensitiveMove(enum BattlerId battler);
 // BenefitsFrom functions all return FIELD_EFFECT_POSITIVE if the weather or field effect is good to have in place from the perspective of the battler, FIELD_EFFECT_NEUTRAL if it is neither good nor bad, and FIELD_EFFECT_NEGATIVE if it is bad.
 // The purpose of WeatherChecker and FieldStatusChecker is to cleanly homogenize the logic that's the same with all of them, and to more easily apply single battle logic to double battles.
 // ShouldSetWeather and ShouldClearWeather are looking for a positive or negative result respectively, and check the entire side.
-// If one Pokémon has a positive result and the other has a negative result, it defaults to the opinion of the battler that may change the weather or field status.
+// WeatherChecker goes by the result of the battler that may change the weather, and uses its partner's only when the battler's is neutral.
 static enum FieldEffectOutcome BenefitsFromSun(enum BattlerId battler);
 static enum FieldEffectOutcome BenefitsFromSandstorm(enum BattlerId battler);
 static enum FieldEffectOutcome BenefitsFromHailOrSnow(enum BattlerId battler, u32 weather);
 static enum FieldEffectOutcome BenefitsFromRain(enum BattlerId battler);
 // The following functions all feed into FieldStatusChecker, which is then called by ShouldSetFieldStatus and ShouldClearFieldStatus.
-// They work approximately the same as the weather functions, but TerrainChecker and FieldStatusChecker go by the battler's own result
+// They work approximately the same as the weather functions: TerrainChecker and FieldStatusChecker also go by the battler's own result
 // and use its partner's only when the battler's is neutral. Trick Room needs both results to agree.
 static enum FieldEffectOutcome BenefitsFromElectricTerrain(enum BattlerId battler);
 static enum FieldEffectOutcome BenefitsFromGrassyTerrain(enum BattlerId battler);
@@ -63,34 +63,34 @@ static bool32 HasBattlerTerrainBoostMove(enum BattlerId battler, enum BattleTerr
     return FALSE;
 }
 
+static enum FieldEffectOutcome BenefitsFromWeather(enum BattlerId battler, u32 weather)
+{
+    if (weather & B_WEATHER_RAIN)
+        return BenefitsFromRain(battler);
+    if (weather & B_WEATHER_SUN)
+        return BenefitsFromSun(battler);
+    if (weather & B_WEATHER_SANDSTORM)
+        return BenefitsFromSandstorm(battler);
+    if (weather & B_WEATHER_ICY_ANY)
+        return BenefitsFromHailOrSnow(battler, weather);
+    return FIELD_EFFECT_NEUTRAL;
+}
+
+// The battler's own opinion decides, and its partner's only when the battler has none.
 bool32 WeatherChecker(enum BattlerId battler, u32 weather, enum FieldEffectOutcome desiredResult)
 {
     if (IsWeatherActive(B_WEATHER_PRIMAL_ANY) != WEATHER_INACTIVE)
         return (FIELD_EFFECT_BLOCKED == desiredResult);
 
-    enum SideBattlers { USER, PARTNER, COUNT };
+    enum BattlerId partner = GetPartnerBattler(battler);
+    enum FieldEffectOutcome result = FIELD_EFFECT_NEUTRAL;
 
-    enum SideBattlers sideBattlers = USER;
-    enum FieldEffectOutcome result[COUNT] = { FIELD_EFFECT_NEUTRAL, FIELD_EFFECT_NEUTRAL };
+    if (IsBattlerAlive(battler))
+        result = BenefitsFromWeather(battler, weather);
+    if (result == FIELD_EFFECT_NEUTRAL && IsBattlerAlive(partner))
+        result = BenefitsFromWeather(partner, weather);
 
-    for (u32 battlerIndex = 0; battlerIndex < gBattlersCount; battlerIndex++)
-    {
-        if (!IsBattlerAlive(battlerIndex) || !IsBattlerAlly(battler, battlerIndex))
-            continue;
-
-        if (weather & B_WEATHER_RAIN)
-            result[sideBattlers] = BenefitsFromRain(battlerIndex);
-        else if (weather & B_WEATHER_SUN)
-            result[sideBattlers] = BenefitsFromSun(battlerIndex);
-        else if (weather & B_WEATHER_SANDSTORM)
-            result[sideBattlers] = BenefitsFromSandstorm(battlerIndex);
-        else if (weather & B_WEATHER_ICY_ANY)
-            result[sideBattlers] = BenefitsFromHailOrSnow(battlerIndex, weather);
-
-        sideBattlers = PARTNER;
-    }
-
-    return result[USER] == desiredResult || result[PARTNER] == desiredResult;
+    return result == desiredResult;
 }
 
 static enum FieldEffectOutcome BenefitsFromTerrain(enum BattlerId battler, enum BattleTerrain terrain)
@@ -519,8 +519,11 @@ static enum FieldEffectOutcome BenefitsFromTrickRoom(enum BattlerId battler)
         }
     }
 
-    // If we are faster or tie, we don't want trick room.
-    if ((gAiLogicData->speedStats[battler] >= gAiLogicData->speedStats[GetBattlerLeftFoe(battler)]) || (gAiLogicData->speedStats[battler] >= gAiLogicData->speedStats[GetBattlerRightFoe(battler)]))
+    // If we are faster than or tie with a foe still in battle, we don't want trick room.
+    enum BattlerId leftFoe = GetBattlerLeftFoe(battler);
+    enum BattlerId rightFoe = GetBattlerRightFoe(battler);
+    if ((IsBattlerAlive(leftFoe) && gAiLogicData->speedStats[battler] >= gAiLogicData->speedStats[leftFoe])
+     || (IsBattlerAlive(rightFoe) && gAiLogicData->speedStats[battler] >= gAiLogicData->speedStats[rightFoe]))
         return FIELD_EFFECT_NEGATIVE;
 
     return FIELD_EFFECT_POSITIVE;
