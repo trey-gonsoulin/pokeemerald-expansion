@@ -657,7 +657,7 @@ AI_SINGLE_BATTLE_TEST("AI field status: Steel Roller and Ice Spinner score remov
     }
 }
 
-AI_SINGLE_BATTLE_TEST("AI hp percent: scoring a recovery move keeps the user's HP percent for the moves after it")
+AI_SINGLE_BATTLE_TEST("AI recovery scoring: the user's HP percent stays the same for the moves scored after it")
 {
     // Wobbuffet at 95% is faster than Mewtwo, whose Psystrike can knock it out, so the AI checks whether Recover would let it survive.
     // Bide loses 2 points under 90% HP: it mustn't when Recover is scored first.
@@ -693,5 +693,18 @@ AI_SINGLE_BATTLE_TEST("AI absent partner: Haze and Psych Up don't read the stat 
         OPPONENT(SPECIES_WOBBUFFET) { Moves(move); }
     } WHEN {
         TURN { SCORE_EQ_VAL(opponent, move, AI_SCORE_DEFAULT); }
+    }
+}
+
+AI_SINGLE_BATTLE_TEST("AI recovery scoring: whether the foe can knock out the healed user goes by the foe's usable moves")
+{
+    // Psystrike knocks Wobbuffet out even after Recover. It sits in the slot where Wobbuffet's own move has no PP left, which mustn't hide it.
+    GIVEN {
+        ASSUME(GetMoveEffect(MOVE_RECOVER) == EFFECT_RESTORE_HP);
+        AI_FLAGS(AI_FLAG_CHECK_VIABILITY | AI_FLAG_OMNISCIENT);
+        PLAYER(SPECIES_MEWTWO) { Speed(1); Moves(MOVE_CELEBRATE, MOVE_PSYSTRIKE); }
+        OPPONENT(SPECIES_WOBBUFFET) { MaxHP(100); HP(50); Speed(100); MovesWithPP({MOVE_RECOVER, 10}, {MOVE_TACKLE, 0}); }
+    } WHEN {
+        TURN { SCORE_EQ_VAL(opponent, MOVE_RECOVER, AI_SCORE_DEFAULT); }
     }
 }
