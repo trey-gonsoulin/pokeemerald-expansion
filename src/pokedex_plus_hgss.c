@@ -3020,7 +3020,6 @@ static void Task_SwitchScreensFromStatsScreen(u8 taskId)
             gTasks[taskId].func = Task_LoadEvolutionScreen;
             break;
         default:
-            gTasks[taskId].tSkipCry = TRUE; // The item icon used data[3]
             gTasks[taskId].func = Task_LoadInfoScreen;
             break;
         }
@@ -4633,7 +4632,7 @@ bool32 TryLoadSizeScreen_HGSS(u8 taskId)
             ResetOtherVideoRegisters(DISPCNT_BG1_ON);
             sPokedexView->selectedScreen = SIZE_SCREEN;
             // B goes back to the info page (Task_SwitchScreensFromSizeScreen),
-            // after the stats or evolution page may have reused data[3]
+            // after the evolution page may have reused data[3]
             gTasks[taskId].tSkipCry = TRUE;
             gMain.state = 1;
         }

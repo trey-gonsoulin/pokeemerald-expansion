@@ -4,6 +4,7 @@
 #include "sprite.h"
 #include "task.h"
 #include "test/test.h"
+#include "config/pokedex_plus_hgss.h"
 
 static u64 GetSpritesInUse(void)
 {
@@ -135,6 +136,8 @@ TEST("HGSS info page starts the cry unless tSkipCry")
 
     PARAMETRIZE { skipCry = FALSE; expectedState = 9; }
     PARAMETRIZE { skipCry = TRUE; expectedState = 10; }
+
+    ASSUME(POKEDEX_PLUS_HGSS);
 
     taskId = CreateTask(TaskDummy, 0);
     EXPECT_EQ(Test_StartInfoScreenCry(taskId, NATIONAL_DEX_PIKACHU, skipCry), expectedState);
