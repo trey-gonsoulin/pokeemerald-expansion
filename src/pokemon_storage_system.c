@@ -16,6 +16,7 @@
 #include "item.h"
 #include "item_icon.h"
 #include "item_menu.h"
+#include "link.h"
 #include "mail.h"
 #include "main.h"
 #include "menu.h"
@@ -39,8 +40,11 @@
 #include "window.h"
 #include "constants/form_change_types.h"
 #include "constants/items.h"
+#include "constants/map_types.h"
+#include "constants/maps.h"
 #include "constants/party_menu.h"
 #include "constants/moves.h"
+#include "constants/region_map_sections.h"
 #include "constants/rgb.h"
 #include "constants/songs.h"
 #include "constants/pokemon_icon.h"
@@ -544,6 +548,7 @@ EWRAM_DATA static struct ChooseBoxMenu *sChooseBoxMenu = NULL;
 EWRAM_DATA static struct PokemonStorageSystemData *sStorage = NULL;
 EWRAM_DATA static bool8 sInPartyMenu = 0;
 EWRAM_DATA static u8 sCurrentBoxOption = 0;
+EWRAM_DATA static bool8 sOpenedFromPartyMenu = FALSE;
 EWRAM_DATA static u8 sDepositBoxId = 0;
 EWRAM_DATA static u8 sWhichToReshow = 0;
 EWRAM_DATA static u8 sLastUsedBox = 0;
@@ -1627,6 +1632,49 @@ void ShowPokemonStorageSystemPC(void)
     LockPlayerFieldControls();
 }
 
+// From the first Elite Four room to the Hall of Fame, as no PC is reachable there
+static const u16 sNoBoxMaps[] =
+{
+    MAP_EVER_GRANDE_CITY_SIDNEYS_ROOM,
+    MAP_EVER_GRANDE_CITY_HALL1,
+    MAP_EVER_GRANDE_CITY_PHOEBES_ROOM,
+    MAP_EVER_GRANDE_CITY_HALL2,
+    MAP_EVER_GRANDE_CITY_GLACIAS_ROOM,
+    MAP_EVER_GRANDE_CITY_HALL3,
+    MAP_EVER_GRANDE_CITY_DRAKES_ROOM,
+    MAP_EVER_GRANDE_CITY_HALL4,
+    MAP_EVER_GRANDE_CITY_CHAMPIONS_ROOM,
+    MAP_EVER_GRANDE_CITY_HALL5,
+    MAP_EVER_GRANDE_CITY_HALL_OF_FAME,
+};
+
+bool32 CanOpenBoxFromPartyMenu(void)
+{
+    u32 i;
+    u16 map = (gSaveBlock1Ptr->location.mapGroup << 8) | gSaveBlock1Ptr->location.mapNum;
+
+    if (!OW_PC_ANYWHERE || !FlagGet(FLAG_RECEIVED_DOLL_LANETTE))
+        return FALSE;
+    if (gMapHeader.regionMapSectionId == MAPSEC_BATTLE_FRONTIER
+     || gMapHeader.regionMapSectionId == MAPSEC_TRAINER_HILL
+     || gMapHeader.mapType == MAP_TYPE_UNDERWATER)
+        return FALSE;
+    for (i = 0; i < ARRAY_COUNT(sNoBoxMaps); i++)
+    {
+        if (map == sNoBoxMaps[i])
+            return FALSE;
+    }
+    if (IsOverworldLinkActive() || InUnionRoom())
+        return FALSE;
+    return TRUE;
+}
+
+void CB2_OpenBoxFromPartyMenu(void)
+{
+    sOpenedFromPartyMenu = TRUE;
+    EnterPokeStorage(OPTION_MOVE_MONS);
+}
+
 static void FieldTask_ReturnToPcMenu(void)
 {
     u8 taskId;
@@ -1662,6 +1710,13 @@ static void CreateMainMenu(u8 whichMenu, s16 *windowIdPtr)
 
 static void CB2_ExitPokeStorage(void)
 {
+    if (sOpenedFromPartyMenu)
+    {
+        sOpenedFromPartyMenu = FALSE;
+        // Reopens the start menu's party menu, on the same slot if it still holds a Pokémon
+        SetMainCallback2(CB2_ReturnToPartyMenuFromFlyMap);
+        return;
+    }
     sPreviousBoxOption = GetCurrentBoxOption();
     gFieldCallback = FieldTask_ReturnToPcMenu;
     SetMainCallback2(CB2_ReturnToField);

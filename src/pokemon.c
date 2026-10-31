@@ -781,6 +781,9 @@ STATIC_ASSERT(MAX_LEVEL <= 100, PokemonSubstruct0_experience_PotentiallyTooSmall
 static u32 CompressStatus(u32 status)
 {
     s32 i;
+    status &= ~STATUS1_TOXIC_COUNTER;
+    if ((status & STATUS1_SLEEP) > STATUS1_SLEEP_TURN(5))
+        status = (status & ~STATUS1_SLEEP) | STATUS1_SLEEP_TURN(5);
     for (i = 0; i < ARRAY_COUNT(sCompressedStatuses); i++)
     {
         if (sCompressedStatuses[i] == status)
