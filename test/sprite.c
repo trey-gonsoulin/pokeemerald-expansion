@@ -144,13 +144,17 @@ TEST("LoadSpriteSheet fails once every tile range slot is taken")
     }
 
     // A 65th tag had no slot: it took tile 64 and wrote its range past sSpriteTileRangeTags.
+    gLoadFail = FALSE;
     tileStart = LoadTestSheet(MAX_SPRITES);
+    EXPECT_EQ(gLoadFail, TRUE);
     EXPECT_EQ(tileStart, 0);
     EXPECT_EQ(GetSpriteTileStartByTag(TAG_TEST_SHEET + MAX_SPRITES), TAG_NONE);
 
     // A freed slot takes the next sheet, at the first free tile.
+    gLoadFail = FALSE;
     FreeSpriteTilesByTag(TAG_TEST_SHEET + 1);
     tileStart = LoadTestSheet(MAX_SPRITES);
+    EXPECT_EQ(gLoadFail, FALSE);
     EXPECT_EQ(tileStart, 1);
     ResetSpriteData();
 }
