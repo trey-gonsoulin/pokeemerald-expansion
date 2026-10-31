@@ -79,7 +79,7 @@ The exp math follows `Cmd_getexp` and is checked against `test/battle/exp.c`.
   - Wattson's Voltorb: Spark, 55 -> 30, now Charge Beam (level 16, special 50, raises Sp. Atk).
   - No rematch team has the same Pokémon with the same move: Wattson's rematches carry Electrode without Spark, and the Elite Four and Wallace have no rematch teams. The model covers story fights only, so other weakened flips on rematch teams aren't listed or fixed, such as Hyper Beam on Norman 2-5's Slaking, Roxanne 5's Aerodactyl and Winona 5's Dragonite.
 - **Boss flips onto a stronger stat:**
-  - Drake: Salamence's Dragon Claw and Crunch 110 -> 135, Flygon's Crunch 80 -> 100, Shelgon's Dragon Claw 60 -> 95;
+  - Drake: Salamence's Dragon Claw and Crunch 110 -> 135, Flygon's Crunch 80 -> 100 (now Iron Tail, section 12), Shelgon's Dragon Claw 60 -> 95;
   - Norman: Slaking's Feint Attack 95 -> 160;
   - Juan's Crawdaunt: Crabhammer 90 -> 120;
   - Sidney's Mightyena: Crunch 60 -> 90;
@@ -460,6 +460,13 @@ Owner's decisions (2026-10-30):
 
 The most common are Feint Attack (27), Odor Sleuth (13), Dragon Dance and Assist (11 each) and Magnitude (7). Replacing them is the owner's call, so they stay; the test fails on an entry that becomes learnable or goes away, so the list only shrinks.
 
+## 12. Fairy coverage for Sidney and Drake (#133)
+Before #133 no move on either team hit Gardevoir (Psychic/Fairy) super effectively: Dragon misses it, Dark and Fighting are resisted, and the rest are neutral. Against Azumarill only Cacturne's Needle Arm did, and against Mawile only Flygon's Flamethrower and Earthquake and Salamence's Flamethrower. Each team now has one Steel move, on a Pokémon that learns it in this build (teachable) and in place of a move the set misses least:
+- Sidney's Mightyena: Sand Attack -> Iron Tail (physical 100, 75% accuracy, on Atk 90). It leads, so it meets a Fairy lead first.
+- Drake's Flygon: Crunch -> Iron Tail. Crunch was resisted by Fairy, Salamence keeps Drake's Dark move, and Flygon keeps Earthquake and Dragon Breath for STAB.
+
+Iron Tail hits Gardevoir 2x and Azumarill and Mawile 1x. It is the only strong Steel move the teams can learn here: Iron Head and Flash Cannon aren't on the Emerald TM or tutor list, and Steel Wing (70, 90% accuracy) is the weaker alternative. Steel over Poison: Poison misses Mawile, and the Poison moves these Pokémon learn are weak (Mightyena's Poison Fang and Kingdra's Clear Smog, 50) or special on a physical attacker (Crawdaunt's Sludge Bomb would be a boss flip onto a weaker stat, which #130 removed). Both teams are single fights: the Elite Four have no rematch teams and no Frontier copies. Levels are unchanged. Not playtested, so whether the AI picks Iron Tail against a Fairy lead is unchecked.
+
 ## Proposed balance changes (owner to accept or reject; each can be its own issue)
 1. **Soft level cap at each gym ace** (config). Set `B_LEVEL_CAP_TYPE LEVEL_CAP_FLAG_LIST` and `B_EXP_CAP_TYPE EXP_CAP_SOFT`. `sLevelCapFlagMap` in `src/caps.c` already holds exactly the measured aces (15/19/24/29/31/33/42/46/58). Consider `B_RARE_CANDY_CAP` too.
 2. **Boss AI to `Smart Trainer`** (data) for the gym leaders, the Elite Four, Wallace, and optionally the rivals and team leaders. Done in #129 for all of them, without Omniscient and Smart Tera (see "Corrections").
@@ -467,7 +474,7 @@ The most common are Feint Attack (27), Odor Sleuth (13), Dragon Dance and Assist
 4. **Hand-write movesets for the story Pokémon that lost STAB or kept one attack** (43 and 59 slots; the list is in `output/trainer_mons.csv`). Start with the Makuhita/Hariyama line, the Museum Carvanha and Jeff's and Jace's Slugma. Done in #131 (section 2) on the post-#127 and #138 list, 47 and 61 slots, after #138 evolved the under-evolved raised Pokémon (section 7).
 5. **Review the 157 story slots with strong new default moves** route by route (they may be welcome). A trainers-only Gen 3 learnset would need code: `P_LVL_UP_LEARNSETS` is a single include.
 6. **Optional `B_TRAINER_EXP_MULTIPLIER GEN_6`** to restore the 1.5x (GEN_7 also restores it: `Cmd_getexp` checks `<= GEN_7`), only if the Exp. Share isn't the intended way to play. Evaluated with the Exp. Share in section 7.
-7. **One Steel or Poison coverage move each for Drake and Sidney**, whose whole teams are weak to Fairy (low priority).
+7. **One Steel or Poison coverage move each for Drake and Sidney**, whose whole teams are weak to Fairy (low priority). Done in #133 with Iron Tail on Sidney's Mightyena and Drake's Flygon (section 12).
 8. **Sludge Bomb at Dewford:** move it later, or accept it (low priority).
 9. **Economy:** leave it, or set `I_HEALTH_RECOVERY GEN_3` if late-game healing feels too expensive in a playtest.
 
@@ -477,4 +484,4 @@ Not proposed: reverting `P_LVL_UP_LEARNSETS` globally, which would also change e
 - The full clear is an upper bound.
 - Sections 1-6 have no catch exp or affection (1.2x at 4 hearts, `B_AFFECTION_MECHANICS` TRUE); section 7 adds both. The Lucky Egg and traded bonuses push levels higher still.
 - The stages are approximate, and some TMs and wild slots open later than their map's stage. A stage holds what's reachable before its bosses, so each Trick House puzzle sits in the stage after the badge it needs (Puzzle 2, badge 3, with Flannery, up to Puzzle 7, badge 8, with the Elite Four), and Meteor Falls 1F_2R (Waterfall) is with the Elite Four. Route 103's grass counts from the first rival fight, its Surf-only swimmers from Winona. Post-game maps (`unstaged` in `story_stages.json`, including Trick House Puzzle 8) are left out.
-- Spot-check Phoebe and Sidney against a Steel lead, Drake against a Fairy, and Wallace's Gyarados on the debug ROM before items 3 and 7.
+- Spot-check Phoebe and Sidney against a Steel lead, Drake against a Fairy, and Wallace's Gyarados on the debug ROM before items 3 and 7. For item 7, #133 checked the gap with the type chart instead (section 12).
