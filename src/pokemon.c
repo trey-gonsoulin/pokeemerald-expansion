@@ -1105,6 +1105,16 @@ void CreateMonWithIVsPersonality(struct Pokemon *mon, enum Species species, u8 l
     GiveMonInitialMoveset(mon);
 }
 
+// For a trainer's mon made from data with no Dynamax or Tera settings: the values
+// that tell ShouldTrainerBattlerUseGimmick the AI shouldn't use either gimmick.
+void BlockTrainerMonGimmicks(struct Pokemon *mon)
+{
+    u32 data = BLOCK_AI_DYNAMAX;
+    SetMonData(mon, MON_DATA_DYNAMAX_LEVEL, &data);
+    data = TYPE_MYSTERY;
+    SetMonData(mon, MON_DATA_TERA_TYPE, &data);
+}
+
 void CreateBattleTowerMon(struct Pokemon *mon, struct BattleTowerPokemon *src)
 {
     s32 i;
@@ -1156,6 +1166,7 @@ void CreateBattleTowerMon(struct Pokemon *mon, struct BattleTowerPokemon *src)
     value = src->spDefenseIV;
     SetMonData(mon, MON_DATA_SPDEF_IV, &value);
     MonRestorePP(mon);
+    BlockTrainerMonGimmicks(mon);
     CalculateMonStats(mon);
 }
 
@@ -1218,6 +1229,7 @@ void CreateBattleTowerMon_HandleLevel(struct Pokemon *mon, struct BattleTowerPok
     value = src->spDefenseIV;
     SetMonData(mon, MON_DATA_SPDEF_IV, &value);
     MonRestorePP(mon);
+    BlockTrainerMonGimmicks(mon);
     CalculateMonStats(mon);
 }
 
@@ -1247,6 +1259,7 @@ void CreateApprenticeMon(struct Pokemon *mon, const struct Apprentice *src, u8 m
     language = src->language;
     SetMonData(mon, MON_DATA_LANGUAGE, &language);
     SetMonData(mon, MON_DATA_OT_NAME, GetApprenticeNameInLanguage(src->id, language));
+    BlockTrainerMonGimmicks(mon);
     CalculateMonStats(mon);
 }
 
@@ -3136,6 +3149,7 @@ void CreateSecretBaseEnemyParty(struct SecretBase *secretBaseRecord)
                 OTID_STRUCT_RANDOM_NO_SHINY,
                 15);
             SetMonData(&gParties[B_TRAINER_OPPONENT_A][i], MON_DATA_HELD_ITEM, &gBattleResources->secretBase->party.heldItems[i]);
+            BlockTrainerMonGimmicks(&gParties[B_TRAINER_OPPONENT_A][i]);
 
             for (j = 0; j < NUM_STATS; j++)
                 SetMonData(&gParties[B_TRAINER_OPPONENT_A][i], MON_DATA_HP_EV + j, &gBattleResources->secretBase->party.EVs[i]);
