@@ -71,5 +71,6 @@ void ShowDecorationCategoriesWindow(u8 taskId);
 void CopyDecorationCategoryName(u8 *dest, u8 category);
 bool8 IsSelectedDecorInThePC(void);
 u8 AddDecorationIconObject(u8 decor, s16 x, s16 y, u8 priority, u16 tilesTag, u16 paletteTag);
+void Test_SetUpDecorationPutAway(u8 *items, u8 *pos, u16 flagId);
 
 #endif //GUARD_DECORATION_H
