@@ -1725,8 +1725,7 @@ bool32 CanTargetFaintAiWithMod(enum BattlerId battlerDef, enum BattlerId battler
     if (hpCheck > gBattleMons[battlerAtk].maxHP)
         hpCheck = gBattleMons[battlerAtk].maxHP;
 
-    // Applies modified HP percent to AI data for consideration when running CanEndureHit.
-    // The percent is restored afterwards: (hp / maxHP) * 100 left it at 0 below full HP for the moves scored next.
+    // Applies modified HP percent to AI data for consideration when running CanEndureHit, restored before returning.
     aiData->hpPercents[battlerAtk] = (100 * hpCheck) / gBattleMons[battlerAtk].maxHP;
 
     for (u32 moveIndex = 0; moveIndex < MAX_MON_MOVES; moveIndex++)
