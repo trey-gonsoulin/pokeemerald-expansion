@@ -283,7 +283,8 @@ void ResetSpriteData(void)
     FreeSpriteTileRanges();
     gOamLimit = 64;
     gReservedSpriteTileCount = 0;
-    AllocSpriteTiles(0);
+    for (u32 i = 0; i < TOTAL_OBJ_TILE_COUNT; i++)
+        FREE_SPRITE_TILE(i);
     gSpriteCoordOffsetX = 0;
     gSpriteCoordOffsetY = 0;
 }
@@ -655,14 +656,9 @@ s16 AllocSpriteTiles(u16 tileCount)
     s16 start;
     u16 numTilesFound;
 
+    // A count of 0 (a frame or sheet under one tile) used to free every unreserved tile and return 0.
     if (tileCount == 0)
-    {
-        // Free all unreserved tiles if the tile count is 0.
-        for (i = gReservedSpriteTileCount; i < TOTAL_OBJ_TILE_COUNT; i++)
-            FREE_SPRITE_TILE(i);
-
-        return 0;
-    }
+        return -1;
 
     i = gReservedSpriteTileCount;
 
