@@ -1758,6 +1758,7 @@ static bool32 CanOpenBoxFromThisPartyMenu(void)
 {
     return gPartyMenu.menuType == PARTY_MENU_TYPE_FIELD
         && gPartyMenu.action == PARTY_ACTION_CHOOSE_MON
+        && gPartyMenu.exitCallback == CB2_ReturnToFieldWithOpenMenu
         && CanOpenBoxFromPartyMenu();
 }
 
@@ -1771,7 +1772,7 @@ static u16 GetBoxButton(void)
 
 static void PrintBoxButtonHint(u8 windowId, const u8 *message)
 {
-    const u8 *hint = (gSaveBlock2Ptr->optionsButtonMode == OPTIONS_BUTTON_MODE_LR) ? COMPOUND_STRING("{SELECT_BUTTON} BOX") : COMPOUND_STRING("{R_BUTTON} BOX");
+    const u8 *hint = (GetBoxButton() == SELECT_BUTTON) ? COMPOUND_STRING("{SELECT_BUTTON} BOX") : COMPOUND_STRING("{R_BUTTON} BOX");
     s32 x = GetStringRightAlignXOffset(FONT_NORMAL, hint, WindowWidthPx(windowId));
 
     if (x > GetStringWidth(FONT_NORMAL, message, 0))

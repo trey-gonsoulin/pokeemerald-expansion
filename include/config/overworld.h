@@ -30,7 +30,7 @@
 #define OW_PC_HEAL                  GEN_LATEST // In Gen8+, Pokémon are not healed when deposited in the PC.
 #define OW_PC_MOVE_ORDER            GEN_LATEST // Starting in Gen4, the order of options in the PC menu change.
 #define OW_PC_RELEASE_ITEM          GEN_LATEST // In Gen8+, Pokémon that get released with a held item return it to the bag.
-#define OW_PC_ANYWHERE              TRUE       // If TRUE, after talking to Lanette (FLAG_SYS_PC_LANETTE), R in the field party menu (Select in the L/R button mode) opens the boxes, except in the Battle Frontier, Trainer Hill, underwater and link play. Pair it with OW_PC_HEAL >= GEN_8 so the boxes don't heal.
+#define OW_PC_ANYWHERE              TRUE       // If TRUE, after Lanette gives the Lotad Doll (FLAG_RECEIVED_DOLL_LANETTE), R in the start menu's party menu (Select in the L/R button mode) opens the boxes, except in the Battle Frontier, Trainer Hill, the Elite Four rooms, underwater and link play. Pair it with OW_PC_HEAL >= GEN_8 so the boxes don't heal.
 
 #define OW_BERRY_MUTATIONS             FALSE      // If enabled, Berry plants can mutate based on berries planted next to them.
 #define OW_BERRY_MUTATION_CHANCE       25         // Determines the % chance of a mutation.
