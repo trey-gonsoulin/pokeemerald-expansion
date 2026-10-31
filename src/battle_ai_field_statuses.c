@@ -37,7 +37,8 @@ static enum FieldEffectOutcome BenefitsFromSandstorm(enum BattlerId battler);
 static enum FieldEffectOutcome BenefitsFromHailOrSnow(enum BattlerId battler, u32 weather);
 static enum FieldEffectOutcome BenefitsFromRain(enum BattlerId battler);
 // The following functions all feed into FieldStatusChecker, which is then called by ShouldSetFieldStatus and ShouldClearFieldStatus.
-// They work approximately the same as the weather functions.
+// They work approximately the same as the weather functions, but TerrainChecker and FieldStatusChecker go by the battler's own result
+// and use its partner's only when the battler's is neutral. Trick Room needs both results to agree.
 static enum FieldEffectOutcome BenefitsFromElectricTerrain(enum BattlerId battler);
 static enum FieldEffectOutcome BenefitsFromGrassyTerrain(enum BattlerId battler);
 static enum FieldEffectOutcome BenefitsFromMistyTerrain(enum BattlerId battler);
