@@ -376,13 +376,14 @@ static bool32 NONNULL BagPocket_RemoveItem(struct BagPocket *pocket, enum Item i
             if (!itemRemoveIndex)
                 itemRemoveIndex = itemLookupIndex + 1;
 
-            // Gather quantities (+ 1 to tempPocketSlotQuantities so that even if setting to 0 we know which indices to target)
-            // Each stack only gives what the earlier stacks left to remove.
-            u32 toRemove = count - totalQuantity;
-            tempPocketSlotQuantities[itemLookupIndex] = (tempItem.quantity <= toRemove ? 0 : tempItem.quantity - toRemove) + 1;
-            if (tempItem.quantity <= toRemove)
+            // Each stack gives only what the earlier stacks left to remove
+            u32 taken = min(tempItem.quantity, count - totalQuantity);
+            if (taken == tempItem.quantity)
                 emptiedSlot = TRUE;
+
+            // Gather quantities (+ 1 to tempPocketSlotQuantities so that even if setting to 0 we know which indices to target)
             totalQuantity += tempItem.quantity;
+            tempPocketSlotQuantities[itemLookupIndex] = tempItem.quantity - taken + 1;
         }
     }
 
@@ -400,10 +401,10 @@ static bool32 NONNULL BagPocket_RemoveItem(struct BagPocket *pocket, enum Item i
             if (tempPocketSlotQuantities[itemRemoveIndex] > 0)
                 BagPocket_SetSlotItemIdAndCount(pocket, itemRemoveIndex, itemId, tempPocketSlotQuantities[itemRemoveIndex] - 1);
         }
-    }
 
-    if (totalQuantity >= count && emptiedSlot)
-        BagPocket_CompactItems(pocket);
+        if (emptiedSlot)
+            BagPocket_CompactItems(pocket);
+    }
 
     Free(tempPocketSlotQuantities);
     return totalQuantity >= count;
