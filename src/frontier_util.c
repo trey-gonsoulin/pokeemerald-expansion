@@ -2646,6 +2646,7 @@ void CreateFrontierBrainPokemon(void)
                 friendship = 0;
         }
         SetMonData(&gParties[B_TRAINER_OPPONENT_A][monPartyId], MON_DATA_FRIENDSHIP, &friendship);
+        BlockTrainerMonGimmicks(&gParties[B_TRAINER_OPPONENT_A][monPartyId]);
         CalculateMonStats(&gParties[B_TRAINER_OPPONENT_A][monPartyId]);
         monPartyId++;
     }
