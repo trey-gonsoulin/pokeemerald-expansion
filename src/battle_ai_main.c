@@ -5334,14 +5334,6 @@ static s32 AI_CalcMoveEffectScore(enum BattlerId battlerAtk, enum BattlerId batt
         break;
     }
     case EFFECT_STEEL_ROLLER:
-        {
-            enum BattleTerrain terrain = gFieldTimers.terrain;
-            if (ShouldClearTerrain(battlerAtk, terrain))
-                ADJUST_SCORE(GOOD_EFFECT);
-            if (ShouldSetTerrain(battlerDef, terrain))
-                ADJUST_SCORE(DECENT_EFFECT);
-        }
-        break;
     case EFFECT_ICE_SPINNER:
         {
             enum BattleTerrain terrain = gFieldTimers.terrain;
