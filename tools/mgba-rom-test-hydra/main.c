@@ -994,6 +994,15 @@ int main(int argc, char *argv[])
                 fprintf(stdout, "  - \e[32mand %d more...\e[0m\n", known_fails_passing - known_fails_passing_summaries.count);
         }
 
+        if (expected_fails_passing > 0)
+        {
+            fprintf(stdout, "\n  \e[31mEXPECT_FAIL\e[0m tests \e[32mPASSING\e[0m:\n");
+            for (int i = 0; i < expected_failing_summaries.count; i++)
+                fprintf(stdout, "  - \e[31m%s\e[0m: %s: %s.\n", expected_failing_summaries.results[i].filename_line, expected_failing_summaries.results[i].test_name, expected_failing_summaries.results[i].output_line);
+            if (expected_fails_passing > expected_failing_summaries.count)
+                fprintf(stdout, "  - \e[31mand %d more...\e[0m\n", expected_fails_passing - expected_failing_summaries.count);
+        }
+
         fprintf(stdout, "\n");
         if (fails > 0)
             fprintf(stdout, "- Tests \e[31mFAILED\e[0m:          %d    Add TESTS='X' to run tests with the defined prefix.\n", fails);
