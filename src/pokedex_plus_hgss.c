@@ -3169,7 +3169,7 @@ static void Task_LoadEvolutionScreen(u8 taskId)
         u32 depth = sPokedexView->numPreEvolutions;
         u32 iconDepth = depth;
         //Print evo info and icons
-        gTasks[taskId].data[3] = 0; // The info screen's tSkipCry after A, see PrintEvolutionTargetSpeciesAndMethod
+        gTasks[taskId].data[3] = 0;
         PrintEvolutionTargetSpeciesAndMethod(taskId, NationalPokedexNumToSpeciesForm(sPokedexListItem->dexNum), 0, &depth, alreadyPrintedIcons, &iconDepth, 0);
         LoadSpritePalette(&gSpritePalette_Arrow);
         TryLoadDarkModeArrowPalette();
@@ -3616,7 +3616,6 @@ static void PrintEvolutionTargetSpeciesAndMethod(u8 taskId, enum Species species
     else if (times > 10)
         times = 10;
 
-    // No longer read by the exits, but A leaves it to the info screen as tSkipCry
     gTasks[taskId].data[3] = times;
 
     //If there are evolutions find out which and print them 1 by 1
