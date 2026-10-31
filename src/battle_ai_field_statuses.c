@@ -64,12 +64,13 @@ static bool32 HasBattlerTerrainBoostMove(enum BattlerId battler, enum BattleTerr
 }
 
 // The foe that the checks on one foe read: the left foe, or the right foe once the left has fainted,
-// so a fainted foe's moves and ability don't decide the opinion.
+// so a fainted foe's moves and ability don't decide the opinion. A single battle has no right foe.
 static enum BattlerId GetLiveFoe(enum BattlerId battler)
 {
     enum BattlerId leftFoe = GetBattlerLeftFoe(battler);
+    enum BattlerId rightFoe = GetBattlerRightFoe(battler);
 
-    return IsBattlerAlive(leftFoe) ? leftFoe : GetBattlerRightFoe(battler);
+    return (!IsBattlerAlive(leftFoe) && IsBattlerAlive(rightFoe)) ? rightFoe : leftFoe;
 }
 
 // Electric and Misty Terrain keep a grounded foe from using Rest.
@@ -393,16 +394,17 @@ static enum FieldEffectOutcome BenefitsFromGrassyTerrain(enum BattlerId battler)
         return FIELD_EFFECT_POSITIVE;
 
     bool32 grounded = AI_IsBattlerGrounded(battler);
+    enum BattlerId foe = GetLiveFoe(battler);
 
     // Weaken spamming Earthquake, Magnitude, and Bulldoze.
-    if (grounded && (HasBattlerSideMoveWithEffect(GetLiveFoe(battler), EFFECT_EARTHQUAKE)
-    || HasBattlerSideMoveWithEffect(GetLiveFoe(battler), EFFECT_MAGNITUDE)))
+    if (grounded && (HasBattlerSideMoveWithEffect(foe, EFFECT_EARTHQUAKE)
+    || HasBattlerSideMoveWithEffect(foe, EFFECT_MAGNITUDE)))
         return FIELD_EFFECT_POSITIVE;
 
     if (grounded && HasDamagingMoveOfType(battler, TYPE_GRASS))
         return FIELD_EFFECT_POSITIVE;
 
-    if (HasBattlerSideMoveWithEffect(GetLiveFoe(battler), EFFECT_GRASSY_GLIDE))
+    if (HasBattlerSideMoveWithEffect(foe, EFFECT_GRASSY_GLIDE))
         return FIELD_EFFECT_NEGATIVE;
 
 

@@ -1718,7 +1718,7 @@ bool32 CanTargetFaintAiWithMod(enum BattlerId battlerDef, enum BattlerId battler
     s32 dmg;
     enum Move *moves = GetMovesArray(battlerDef);
     u32 hpCheck = gBattleMons[battlerAtk].hp + hpMod;
-    u32 moveLimitations = aiData->moveLimitations[battlerAtk];
+    u32 moveLimitations = aiData->moveLimitations[battlerDef];
     u32 hpPercent = aiData->hpPercents[battlerAtk];
     bool32 canFaint = FALSE;
 
