@@ -941,7 +941,8 @@ class RealRepo(unittest.TestCase):
 
     def test_smart_ai_bosses_send_their_ace_last(self):
         """Every Smart Switching team (#129's bosses) holds back its ace (#144): Ace Pokemon, or
-        Double Ace Pokemon for Tate and Liza, and the reserved last slots are the team's highest level."""
+        Double Ace Pokemon for Tate and Liza, and the reserved last slots are the team's highest level.
+        On a level tie the Magma or Aqua signature line goes last."""
         trainers = G.parse_trainers(os.path.join(G.REPO, 'src', 'data', 'trainers.party'))
         bosses = [t for t in trainers.values() if 'Smart Switching' in t.ai]
         self.assertTrue(bosses)
@@ -950,6 +951,10 @@ class RealRepo(unittest.TestCase):
             self.assertTrue(aces, t.id)
             levels = [mon.level for mon in t.mons]
             self.assertEqual(min(levels[-aces:]), max(levels), t.id)
+        for tid, ace in [('TRAINER_TABITHA_MT_CHIMNEY', 'SPECIES_CAMERUPT'),
+                         ('TRAINER_SHELLY_WEATHER_INSTITUTE', 'SPECIES_SHARPEDO'),
+                         ('TRAINER_SHELLY_SEAFLOOR_CAVERN', 'SPECIES_SHARPEDO')]:
+            self.assertEqual(trainers[tid].mons[-1].species, ace, tid)
 
     def test_every_map_with_trainers_tms_or_wild_has_a_stage(self):
         with open(RB.DEFAULT_STAGES, encoding='utf-8') as f:
