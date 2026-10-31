@@ -461,7 +461,7 @@ Owner's decisions (2026-10-30):
 The most common are Feint Attack (27), Odor Sleuth (13), Dragon Dance and Assist (11 each) and Magnitude (7). Replacing them is the owner's call, so they stay; the test fails on an entry that becomes learnable or goes away, so the list only shrinks.
 
 ## 12. Fairy coverage for Sidney and Drake (#133)
-Before #133 no move on either team hit Gardevoir (Psychic/Fairy) super effectively: Dragon misses it, Dark and Fighting are resisted, and the rest are neutral. Against Azumarill only Cacturne's Needle Arm did, and against Mawile only Flygon's Flamethrower and Earthquake and Salamence's Flamethrower. Each team now has one Steel move, on a Pokémon that learns it in this build (teachable) and in place of a move the set misses least:
+Before #133 no move on either team hit Gardevoir (Psychic/Fairy) super effectively: Dragon misses it, Dark is neutral (Psychic's weakness cancels Fairy's resistance), Shiftry's Extrasensory is resisted, and the rest are neutral. Against Azumarill only Cacturne's Needle Arm did, and against Mawile only Flygon's Flamethrower and Earthquake and Salamence's Flamethrower. Each team now has one Steel move, on a Pokémon that learns it in this build (teachable) and in place of a move the set misses least:
 - Sidney's Mightyena: Sand Attack -> Iron Tail (physical 100, 75% accuracy, on Atk 90). It leads, so it meets a Fairy lead first.
 - Drake's Flygon: Crunch -> Iron Tail. Crunch was resisted by Fairy, Salamence keeps Drake's Dark move, and Flygon keeps Earthquake and Dragon Breath for STAB.
 
