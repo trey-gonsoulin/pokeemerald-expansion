@@ -404,7 +404,7 @@ Flags (all default Pokemon / story trainers only):
 | flag | species (count) |
 |---|---|
 | above_band | Azumarill (14), Xatu (2), Magcargo (1), Trapinch (1), Girafarig (1), Wailord (1) |
-| new_strong | Azumarill (34), Tentacruel (32), Sharpedo (27), Manectric (27), Linoone (25), Gyarados (25), Staryu (25), Breloom (23), Machoke (23), Swellow (22), Lombre (19), Mightyena (17) |
+| new_strong | Azumarill (34), Tentacruel (32), Sharpedo (27), Manectric (27), Linoone (25), Gyarados (25), Staryu (25), Breloom (23), Swellow (22), Machoke (22), Lombre (19), Mightyena (17) |
 | no_attack | Magikarp (5), Silcoon (1) |
 
 ## Hand-written movesets
