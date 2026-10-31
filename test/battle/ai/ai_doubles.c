@@ -1144,6 +1144,70 @@ AI_DOUBLE_BATTLE_TEST("AI field status: Gravity follows the user's opinion over 
     }
 }
 
+AI_DOUBLE_BATTLE_TEST("AI field status: weather follows the user's opinion over its ally's")
+{
+    // The player's Thunder makes rain bad for the side, but Swift Swim makes it good for Lotad.
+    u32 userSpecies, partnerSpecies;
+
+    PARAMETRIZE { userSpecies = SPECIES_LOTAD; partnerSpecies = SPECIES_WOBBUFFET; }
+    PARAMETRIZE { userSpecies = SPECIES_WOBBUFFET; partnerSpecies = SPECIES_LOTAD; }
+
+    GIVEN {
+        ASSUME(GetMoveEffect(MOVE_RAIN_DANCE) == EFFECT_WEATHER);
+        ASSUME(MoveAlwaysHitsInRain(MOVE_THUNDER));
+        ASSUME(GetSpeciesAbility(SPECIES_LOTAD, 0) == ABILITY_SWIFT_SWIM);
+        AI_FLAGS(AI_FLAG_CHECK_BAD_MOVE | AI_FLAG_CHECK_VIABILITY | AI_FLAG_TRY_TO_FAINT | AI_FLAG_OMNISCIENT);
+        PLAYER(SPECIES_WOBBUFFET) { Moves(MOVE_THUNDER, MOVE_CELEBRATE); }
+        PLAYER(SPECIES_WOBBUFFET) { Moves(MOVE_CELEBRATE); }
+        OPPONENT(userSpecies) { Moves(MOVE_RAIN_DANCE, MOVE_RETURN, MOVE_TAUNT); }
+        OPPONENT(partnerSpecies) { Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        if (userSpecies == SPECIES_LOTAD)
+            TURN { EXPECT_MOVE(opponentLeft, MOVE_RAIN_DANCE); }
+        else
+            TURN { NOT_EXPECT_MOVE(opponentLeft, MOVE_RAIN_DANCE); }
+    }
+}
+
+AI_DOUBLE_BATTLE_TEST("AI field status: Trick Room ignores a fainted foe's speed")
+{
+    // Wynaut, slower than Indeedee, faints to its own Memento, which leaves only the faster Wobbuffet.
+    GIVEN {
+        ASSUME(GetMoveEffect(MOVE_TRICK_ROOM) == EFFECT_TRICK_ROOM);
+        ASSUME(GetMoveEffect(MOVE_MEMENTO) == EFFECT_MEMENTO);
+        ASSUME(IsHealingMove(MOVE_DRAINING_KISS)); // Doesn't have the Healing Move flag in Gen 5
+        AI_FLAGS(AI_FLAG_CHECK_BAD_MOVE | AI_FLAG_TRY_TO_FAINT | AI_FLAG_CHECK_VIABILITY | AI_FLAG_DOUBLE_BATTLE);
+        PLAYER(SPECIES_WOBBUFFET) { Speed(4); Moves(MOVE_CELEBRATE); }
+        PLAYER(SPECIES_WYNAUT) { Speed(2); Moves(MOVE_MEMENTO); }
+        OPPONENT(SPECIES_COMFEY) { Ability(ABILITY_TRIAGE); Speed(5); Moves(MOVE_DRAINING_KISS); }
+        OPPONENT(SPECIES_INDEEDEE) { Ability(ABILITY_SYNCHRONIZE); Speed(3); Moves(MOVE_TRICK_ROOM, MOVE_PSYCHIC); }
+    } WHEN {
+        TURN { MOVE(playerRight, MOVE_MEMENTO, target: opponentLeft); NOT_EXPECT_MOVE(opponentRight, MOVE_TRICK_ROOM); }
+        TURN { MOVE(playerLeft, MOVE_CELEBRATE); EXPECT_MOVE(opponentRight, MOVE_TRICK_ROOM); }
+    }
+}
+
+AI_DOUBLE_BATTLE_TEST("AI field status: Trick Room ignores a fainted foe's speed when one Pokémon a side is left")
+{
+    // Wynaut, slower than Indeedee, faints to its own Memento on the left, and Wobbuffet knocks out Indeedee's partner.
+    GIVEN {
+        ASSUME(GetMoveEffect(MOVE_TRICK_ROOM) == EFFECT_TRICK_ROOM);
+        ASSUME(GetMoveEffect(MOVE_MEMENTO) == EFFECT_MEMENTO);
+        AI_FLAGS(AI_FLAG_CHECK_BAD_MOVE | AI_FLAG_TRY_TO_FAINT | AI_FLAG_CHECK_VIABILITY | AI_FLAG_DOUBLE_BATTLE);
+        PLAYER(SPECIES_WYNAUT) { Speed(2); Moves(MOVE_MEMENTO); }
+        PLAYER(SPECIES_WOBBUFFET) { Speed(4); Moves(MOVE_TACKLE, MOVE_CELEBRATE); }
+        OPPONENT(SPECIES_WOBBUFFET) { HP(1); Speed(1); Moves(MOVE_CELEBRATE); }
+        OPPONENT(SPECIES_INDEEDEE) { Ability(ABILITY_SYNCHRONIZE); Speed(3); Moves(MOVE_TRICK_ROOM, MOVE_PSYCHIC); }
+    } WHEN {
+        TURN {
+            MOVE(playerLeft, MOVE_MEMENTO, target: opponentRight);
+            MOVE(playerRight, MOVE_TACKLE, target: opponentLeft);
+            NOT_EXPECT_MOVE(opponentRight, MOVE_TRICK_ROOM);
+        }
+        TURN { MOVE(playerRight, MOVE_CELEBRATE); EXPECT_MOVE(opponentRight, MOVE_TRICK_ROOM); }
+    }
+}
+
 AI_DOUBLE_BATTLE_TEST("AI uses After You to set up Trick Room")
 {
     enum Move move;
