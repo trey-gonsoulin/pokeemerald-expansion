@@ -163,3 +163,45 @@ TEST("Items are correctly sorted and compacted in the bag")
     EXPECT_EQ(pocket->itemSlots[5].itemId, ITEM_NONE);
     EXPECT_EQ(pocket->itemSlots[6].itemId, ITEM_NONE);
 }
+
+TEST("RemoveBagItem removes only the count asked for from an item split over two stacks")
+{
+    ASSUME(GetItemPocket(ITEM_POTION) == POCKET_ITEMS);
+    ASSUME(GetItemPocket(ITEM_ANTIDOTE) == POCKET_ITEMS);
+    ClearBag();
+
+    // Potion stacks of 999 and 5 with an Antidote between them, then 2 and 5 once the first stack is mostly used up.
+    EXPECT(AddBagItem(ITEM_POTION, MAX_BAG_ITEM_CAPACITY));
+    EXPECT(AddBagItem(ITEM_ANTIDOTE, 1));
+    EXPECT(AddBagItem(ITEM_POTION, 5));
+    EXPECT(RemoveBagItem(ITEM_POTION, MAX_BAG_ITEM_CAPACITY - 2));
+    EXPECT_EQ(GetBagItemQuantity(POCKET_ITEMS, 0), 2);
+    EXPECT_EQ(GetBagItemId(POCKET_ITEMS, 1), ITEM_ANTIDOTE);
+    EXPECT_EQ(GetBagItemQuantity(POCKET_ITEMS, 2), 5);
+
+    // Takes the 2 from the first stack and 1 from the second, and the emptied first slot is compacted away.
+    EXPECT(RemoveBagItem(ITEM_POTION, 3));
+    EXPECT_EQ(CountTotalItemQuantityInBag(ITEM_POTION), 4);
+    EXPECT_EQ(GetBagItemId(POCKET_ITEMS, 0), ITEM_ANTIDOTE);
+    EXPECT_EQ(GetBagItemQuantity(POCKET_ITEMS, 0), 1);
+    EXPECT_EQ(GetBagItemId(POCKET_ITEMS, 1), ITEM_POTION);
+    EXPECT_EQ(GetBagItemQuantity(POCKET_ITEMS, 1), 4);
+    EXPECT_EQ(GetBagItemId(POCKET_ITEMS, 2), ITEM_NONE);
+}
+
+TEST("RemoveBagItem empties both stacks of a split item or leaves them alone when there aren't enough")
+{
+    ASSUME(GetItemPocket(ITEM_POTION) == POCKET_ITEMS);
+    ClearBag();
+
+    EXPECT(AddBagItem(ITEM_POTION, MAX_BAG_ITEM_CAPACITY + 5));
+    EXPECT(RemoveBagItem(ITEM_POTION, MAX_BAG_ITEM_CAPACITY - 2));
+
+    EXPECT(!RemoveBagItem(ITEM_POTION, 8));
+    EXPECT_EQ(GetBagItemQuantity(POCKET_ITEMS, 0), 2);
+    EXPECT_EQ(GetBagItemQuantity(POCKET_ITEMS, 1), 5);
+
+    EXPECT(RemoveBagItem(ITEM_POTION, 7));
+    EXPECT_EQ(CountTotalItemQuantityInBag(ITEM_POTION), 0);
+    EXPECT_EQ(GetBagItemId(POCKET_ITEMS, 0), ITEM_NONE);
+}
