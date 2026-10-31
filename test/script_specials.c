@@ -80,12 +80,15 @@ TEST("Script specials: SetDaycareCompatibilityString returns the compatibility s
 // only when the doll's object is on screen; here it isn't spawned at all.
 TEST("Script specials: putting away a doll sets its flag")
 {
-    u8 items[1] = {DECOR_PICHU_DOLL};
-    u8 pos[1] = {0x11};
-    const struct ObjectEventTemplate doll = {.localId = 1, .flagId = FLAG_DECORATION_1};
-    const struct MapEvents events = {.objectEventCount = 1, .objectEvents = &doll};
+    // Static, because the decoration context and gMapHeader keep pointing at them.
+    static u8 items[1];
+    static u8 pos[1];
+    static const struct ObjectEventTemplate doll = {.localId = 1, .flagId = FLAG_DECORATION_1};
+    static const struct MapEvents events = {.objectEventCount = 1, .objectEvents = &doll};
     const struct MapEvents *mapEvents = gMapHeader.events;
 
+    items[0] = DECOR_PICHU_DOLL;
+    pos[0] = 0x11;
     FlagClear(FLAG_DECORATION_1);
     gMapHeader.events = &events;
     Test_SetUpDecorationPutAway(items, pos, FLAG_DECORATION_1);
