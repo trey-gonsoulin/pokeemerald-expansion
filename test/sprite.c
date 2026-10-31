@@ -159,6 +159,29 @@ TEST("LoadSpriteSheet fails once every tile range slot is taken")
     ResetSpriteData();
 }
 
+TEST("LoadSpriteSheet fails on a sheet smaller than one tile")
+{
+    const struct SpriteSheet subTileSheet = { .data = sTestTile, .size = TILE_SIZE_4BPP / 2, .tag = TAG_TEST_SHEET + 1 };
+    u32 tileStart;
+    ResetSpriteData();
+    tileStart = LoadTestSheet(0);
+    EXPECT_EQ(tileStart, 0);
+
+    // AllocSpriteTiles(0) freed every tile, and the sheet registered the range {0, 0}.
+    gLoadFail = FALSE;
+    tileStart = LoadSpriteSheet(&subTileSheet);
+    EXPECT_EQ(gLoadFail, TRUE);
+    EXPECT_EQ(tileStart, 0);
+    EXPECT_EQ(GetSpriteTileStartByTag(TAG_TEST_SHEET + 1), TAG_NONE);
+
+    // The first sheet keeps its tile, so the next one goes after it.
+    gLoadFail = FALSE;
+    tileStart = LoadTestSheet(2);
+    EXPECT_EQ(gLoadFail, FALSE);
+    EXPECT_EQ(tileStart, 1);
+    ResetSpriteData();
+}
+
 // Old implementation.
 
 #define UBFIX
