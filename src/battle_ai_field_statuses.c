@@ -30,7 +30,7 @@ static bool32 HasLightSensitiveMove(enum BattlerId battler);
 // The following functions all feed into WeatherChecker, which is then called by ShouldSetWeather and ShouldClearWeather.
 // BenefitsFrom functions all return FIELD_EFFECT_POSITIVE if the weather or field effect is good to have in place from the perspective of the battler, FIELD_EFFECT_NEUTRAL if it is neither good nor bad, and FIELD_EFFECT_NEGATIVE if it is bad.
 // The purpose of WeatherChecker and FieldStatusChecker is to cleanly homogenize the logic that's the same with all of them, and to more easily apply single battle logic to double battles.
-// ShouldSetWeather and ShouldClearWeather are looking for a positive or negative result respectively, and check the entire side.
+// ShouldSetWeather and ShouldClearWeather are looking for a positive or negative result respectively.
 // WeatherChecker goes by the result of the battler that may change the weather, and uses its partner's only when the battler's is neutral.
 static enum FieldEffectOutcome BenefitsFromSun(enum BattlerId battler);
 static enum FieldEffectOutcome BenefitsFromSandstorm(enum BattlerId battler);
@@ -493,13 +493,19 @@ static enum FieldEffectOutcome BenefitsFromGravity(enum BattlerId battler)
 
 static enum FieldEffectOutcome BenefitsFromTrickRoom(enum BattlerId battler)
 {
+    enum BattlerId leftFoe = GetBattlerLeftFoe(battler);
+    enum BattlerId rightFoe = GetBattlerRightFoe(battler);
+
     // If we're in singles, we literally only care about speed.
     if (IsBattle1v1())
     {
-        if (gAiLogicData->speedStats[battler] < gAiLogicData->speedStats[GetBattlerLeftFoe(battler)])
+        // A double battle down to one Pokémon a side may have only the right foe left.
+        enum BattlerId foe = IsBattlerAlive(leftFoe) ? leftFoe : rightFoe;
+
+        if (gAiLogicData->speedStats[battler] < gAiLogicData->speedStats[foe])
             return FIELD_EFFECT_POSITIVE;
         // If we tie, we shouldn't change trick room state.
-        else if (gAiLogicData->speedStats[battler] == gAiLogicData->speedStats[GetBattlerLeftFoe(battler)])
+        else if (gAiLogicData->speedStats[battler] == gAiLogicData->speedStats[foe])
             return FIELD_EFFECT_NEUTRAL;
         else
             return FIELD_EFFECT_NEGATIVE;
@@ -520,8 +526,6 @@ static enum FieldEffectOutcome BenefitsFromTrickRoom(enum BattlerId battler)
     }
 
     // If we are faster than or tie with a foe still in battle, we don't want trick room.
-    enum BattlerId leftFoe = GetBattlerLeftFoe(battler);
-    enum BattlerId rightFoe = GetBattlerRightFoe(battler);
     if ((IsBattlerAlive(leftFoe) && gAiLogicData->speedStats[battler] >= gAiLogicData->speedStats[leftFoe])
      || (IsBattlerAlive(rightFoe) && gAiLogicData->speedStats[battler] >= gAiLogicData->speedStats[rightFoe]))
         return FIELD_EFFECT_NEGATIVE;

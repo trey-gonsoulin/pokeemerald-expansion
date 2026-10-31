@@ -632,20 +632,27 @@ AI_DOUBLE_BATTLE_TEST("AI scores Order Up's stat boost only with Commander")
 
 AI_SINGLE_BATTLE_TEST("AI field status: Steel Roller and Ice Spinner score removing a terrain that helps the foe")
 {
-    // Psychic Terrain is bad for Wobbuffet against Expanding Force (clearing it: GOOD_EFFECT) and good for Indeedee (DECENT_EFFECT).
-    enum Move move;
+    // The foe's terrain-boosted move makes its terrain bad for Wobbuffet (clearing it: GOOD_EFFECT), and that move
+    // or a Psychic-type attack makes the terrain good for the foe (DECENT_EFFECT).
+    enum Move move, foeMove;
+    u32 species;
+    enum Ability ability;
+    s32 effectScore;
 
-    PARAMETRIZE { move = MOVE_ICE_SPINNER; }
-    PARAMETRIZE { move = MOVE_STEEL_ROLLER; }
+    PARAMETRIZE { move = MOVE_ICE_SPINNER;  species = SPECIES_INDEEDEE_M; ability = ABILITY_PSYCHIC_SURGE;  foeMove = MOVE_EXPANDING_FORCE; effectScore = GOOD_EFFECT + DECENT_EFFECT; }
+    PARAMETRIZE { move = MOVE_STEEL_ROLLER; species = SPECIES_INDEEDEE_M; ability = ABILITY_PSYCHIC_SURGE;  foeMove = MOVE_EXPANDING_FORCE; effectScore = GOOD_EFFECT + DECENT_EFFECT; }
+    PARAMETRIZE { move = MOVE_ICE_SPINNER;  species = SPECIES_INDEEDEE_M; ability = ABILITY_PSYCHIC_SURGE;  foeMove = MOVE_PSYCHIC;         effectScore = DECENT_EFFECT; }
+    PARAMETRIZE { move = MOVE_ICE_SPINNER;  species = SPECIES_TAPU_KOKO;  ability = ABILITY_ELECTRIC_SURGE; foeMove = MOVE_RISING_VOLTAGE;  effectScore = GOOD_EFFECT + DECENT_EFFECT; }
 
     GIVEN {
         ASSUME(GetMoveEffect(MOVE_STEEL_ROLLER) == EFFECT_STEEL_ROLLER);
         ASSUME(GetMoveEffect(MOVE_ICE_SPINNER) == EFFECT_ICE_SPINNER);
         ASSUME(GetMoveEffect(MOVE_EXPANDING_FORCE) == EFFECT_TERRAIN_BOOST);
+        ASSUME(GetMoveEffect(MOVE_RISING_VOLTAGE) == EFFECT_TERRAIN_BOOST);
         AI_FLAGS(AI_FLAG_CHECK_VIABILITY | AI_FLAG_OMNISCIENT);
-        PLAYER(SPECIES_INDEEDEE_M) { Ability(ABILITY_PSYCHIC_SURGE); Moves(MOVE_EXPANDING_FORCE); }
+        PLAYER(species) { Ability(ability); Moves(foeMove); }
         OPPONENT(SPECIES_WOBBUFFET) { Moves(move); }
     } WHEN {
-        TURN { SCORE_EQ_VAL(opponent, move, AI_SCORE_DEFAULT + BEST_DAMAGE_MOVE + GOOD_EFFECT + DECENT_EFFECT); }
+        TURN { SCORE_EQ_VAL(opponent, move, AI_SCORE_DEFAULT + BEST_DAMAGE_MOVE + effectScore); }
     }
 }

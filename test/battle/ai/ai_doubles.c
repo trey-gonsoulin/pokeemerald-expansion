@@ -1187,6 +1187,27 @@ AI_DOUBLE_BATTLE_TEST("AI field status: Trick Room ignores a fainted foe's speed
     }
 }
 
+AI_DOUBLE_BATTLE_TEST("AI field status: Trick Room ignores a fainted foe's speed when one Pokémon a side is left")
+{
+    // Wynaut, slower than Indeedee, faints to its own Memento on the left, and Wobbuffet knocks out Indeedee's partner.
+    GIVEN {
+        ASSUME(GetMoveEffect(MOVE_TRICK_ROOM) == EFFECT_TRICK_ROOM);
+        ASSUME(GetMoveEffect(MOVE_MEMENTO) == EFFECT_MEMENTO);
+        AI_FLAGS(AI_FLAG_CHECK_BAD_MOVE | AI_FLAG_TRY_TO_FAINT | AI_FLAG_CHECK_VIABILITY | AI_FLAG_DOUBLE_BATTLE);
+        PLAYER(SPECIES_WYNAUT) { Speed(2); Moves(MOVE_MEMENTO); }
+        PLAYER(SPECIES_WOBBUFFET) { Speed(4); Moves(MOVE_TACKLE, MOVE_CELEBRATE); }
+        OPPONENT(SPECIES_WOBBUFFET) { HP(1); Speed(1); Moves(MOVE_CELEBRATE); }
+        OPPONENT(SPECIES_INDEEDEE) { Ability(ABILITY_SYNCHRONIZE); Speed(3); Moves(MOVE_TRICK_ROOM, MOVE_PSYCHIC); }
+    } WHEN {
+        TURN {
+            MOVE(playerLeft, MOVE_MEMENTO, target: opponentRight);
+            MOVE(playerRight, MOVE_TACKLE, target: opponentLeft);
+            NOT_EXPECT_MOVE(opponentRight, MOVE_TRICK_ROOM);
+        }
+        TURN { MOVE(playerRight, MOVE_CELEBRATE); EXPECT_MOVE(opponentRight, MOVE_TRICK_ROOM); }
+    }
+}
+
 AI_DOUBLE_BATTLE_TEST("AI uses After You to set up Trick Room")
 {
     enum Move move;
