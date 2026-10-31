@@ -412,10 +412,10 @@ Flags (all default Pokemon / story trainers only):
 | measure | value |
 |---|---|
 | trainer Pokemon with set moves | 635 |
-| attacking set moves whose data changed | 604 |
-|   category flips (physical <-> special) | 265 |
-|   of them now on a weaker / similar / stronger stat | 30 / 91 / 144 |
-|   Pokemon with at least one flip | 233 |
+| attacking set moves whose data changed | 603 |
+|   category flips (physical <-> special) | 264 |
+|   of them now on a weaker / similar / stronger stat | 30 / 91 / 143 |
+|   Pokemon with at least one flip | 232 |
 |   Pokemon with a flip onto a weaker stat | 28 |
 |   type changes | 0 |
 |   power changes | 353 |
@@ -426,7 +426,7 @@ Changed attacking moves (set-move slots; weaker/similar/stronger: the category f
 | move | slots |
 |---|---|
 | Tackle | data 40 |
-| Crunch | stronger 21, similar 9 |
+| Crunch | stronger 20, similar 9 |
 | Ice Beam | data 28 |
 | Feint Attack | stronger 25, similar 2 |
 | Flamethrower | data 26 |
@@ -520,7 +520,6 @@ Changed attacking moves (set-move slots; weaker/similar/stronger: the category f
 | Glacia | Glalie | 78 | Crunch | Special -> Physical | 80 -> 80 | similar |
 | Glacia | Glalie | 80 | Shadow Ball | Physical -> Special | 80 -> 80 | similar |
 | Drake | Shelgon | 79 | Dragon Claw | Special -> Physical | 60 -> 95 | stronger |
-| Drake | Flygon | 80 | Crunch | Special -> Physical | 80 -> 100 | stronger |
 | Drake | Salamence | 82 | Dragon Claw | Special -> Physical | 110 -> 135 | stronger |
 | Drake | Salamence | 82 | Crunch | Special -> Physical | 110 -> 135 | stronger |
 | Flannery 1 | Slugma | 34 | Smog | Physical -> Special | 40 -> 70 | stronger |
@@ -717,7 +716,7 @@ Per boss Pokemon: retyping, defensive multipliers that changed (attacking type: 
 
 ### Sidney
 
-- Mightyena 76: takes Fairy new->2x; hits Steel 0.5x->1x
+- Mightyena 76: takes Fairy new->2x; hits Steel 0.5x->1x, Fairy new->2x
 - Shiftry 78: takes Fairy new->2x
 - Cacturne 76: takes Fairy new->2x; hits Steel 0.5x->1x
 - Crawdaunt 78: takes Fairy new->2x
@@ -739,7 +738,7 @@ Per boss Pokemon: retyping, defensive multipliers that changed (attacking type: 
 - Shelgon 79: takes Fairy new->2x
 - Altaria 81: takes Fairy new->2x
 - Kingdra 80: takes Fairy new->2x
-- Flygon 80: takes Fairy new->2x
+- Flygon 80: takes Fairy new->2x; hits Fairy new->2x
 - Salamence 82: takes Fairy new->2x
 
 ### Wallace
