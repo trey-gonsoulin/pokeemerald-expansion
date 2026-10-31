@@ -1507,7 +1507,11 @@ void SetOamMatrixRotationScaling(u8 matrixNum, s16 xScale, s16 yScale, u16 rotat
 
 static u16 LoadSpriteSheetWithOffset(const struct SpriteSheet *sheet, u32 offset)
 {
-    s16 tileStart = AllocSpriteTiles(sheet->size / TILE_SIZE_4BPP);
+    s16 tileStart = -1;
+
+    // With every tile range slot taken, AllocSpriteTileRange would write past sSpriteTileRangeTags.
+    if (IndexOfSpriteTileTag(TAG_NONE) != 0xFF)
+        tileStart = AllocSpriteTiles(sheet->size / TILE_SIZE_4BPP);
 
     if (tileStart < 0)
     {
