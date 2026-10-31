@@ -16,6 +16,7 @@
 #include "item.h"
 #include "item_icon.h"
 #include "item_menu.h"
+#include "link.h"
 #include "mail.h"
 #include "main.h"
 #include "menu.h"
@@ -39,8 +40,10 @@
 #include "window.h"
 #include "constants/form_change_types.h"
 #include "constants/items.h"
+#include "constants/map_types.h"
 #include "constants/party_menu.h"
 #include "constants/moves.h"
+#include "constants/region_map_sections.h"
 #include "constants/rgb.h"
 #include "constants/songs.h"
 #include "constants/pokemon_icon.h"
@@ -544,6 +547,7 @@ EWRAM_DATA static struct ChooseBoxMenu *sChooseBoxMenu = NULL;
 EWRAM_DATA static struct PokemonStorageSystemData *sStorage = NULL;
 EWRAM_DATA static bool8 sInPartyMenu = 0;
 EWRAM_DATA static u8 sCurrentBoxOption = 0;
+EWRAM_DATA static bool8 sOpenedFromPartyMenu = FALSE;
 EWRAM_DATA static u8 sDepositBoxId = 0;
 EWRAM_DATA static u8 sWhichToReshow = 0;
 EWRAM_DATA static u8 sLastUsedBox = 0;
@@ -1627,6 +1631,25 @@ void ShowPokemonStorageSystemPC(void)
     LockPlayerFieldControls();
 }
 
+bool32 CanOpenBoxFromPartyMenu(void)
+{
+    if (!OW_PC_ANYWHERE || !FlagGet(FLAG_SYS_PC_LANETTE))
+        return FALSE;
+    if (gMapHeader.regionMapSectionId == MAPSEC_BATTLE_FRONTIER
+     || gMapHeader.regionMapSectionId == MAPSEC_TRAINER_HILL
+     || gMapHeader.mapType == MAP_TYPE_UNDERWATER)
+        return FALSE;
+    if (IsOverworldLinkActive() || InUnionRoom())
+        return FALSE;
+    return TRUE;
+}
+
+void CB2_OpenBoxFromPartyMenu(void)
+{
+    sOpenedFromPartyMenu = TRUE;
+    EnterPokeStorage(OPTION_MOVE_MONS);
+}
+
 static void FieldTask_ReturnToPcMenu(void)
 {
     u8 taskId;
@@ -1662,6 +1685,12 @@ static void CreateMainMenu(u8 whichMenu, s16 *windowIdPtr)
 
 static void CB2_ExitPokeStorage(void)
 {
+    if (sOpenedFromPartyMenu)
+    {
+        sOpenedFromPartyMenu = FALSE;
+        SetMainCallback2(CB2_ReturnToPartyMenuFromFlyMap);
+        return;
+    }
     sPreviousBoxOption = GetCurrentBoxOption();
     gFieldCallback = FieldTask_ReturnToPcMenu;
     SetMainCallback2(CB2_ReturnToField);
