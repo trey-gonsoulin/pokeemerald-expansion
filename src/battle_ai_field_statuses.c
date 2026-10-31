@@ -37,7 +37,8 @@ static enum FieldEffectOutcome BenefitsFromSandstorm(enum BattlerId battler);
 static enum FieldEffectOutcome BenefitsFromHailOrSnow(enum BattlerId battler, u32 weather);
 static enum FieldEffectOutcome BenefitsFromRain(enum BattlerId battler);
 // The following functions all feed into FieldStatusChecker, which is then called by ShouldSetFieldStatus and ShouldClearFieldStatus.
-// They work approximately the same as the weather functions.
+// They work approximately the same as the weather functions, but TerrainChecker and FieldStatusChecker go by the battler's own result
+// and use its partner's only when the battler's is neutral. Trick Room needs both results to agree.
 static enum FieldEffectOutcome BenefitsFromElectricTerrain(enum BattlerId battler);
 static enum FieldEffectOutcome BenefitsFromGrassyTerrain(enum BattlerId battler);
 static enum FieldEffectOutcome BenefitsFromMistyTerrain(enum BattlerId battler);
@@ -92,66 +93,65 @@ bool32 WeatherChecker(enum BattlerId battler, u32 weather, enum FieldEffectOutco
     return result[USER] == desiredResult || result[PARTNER] == desiredResult;
 }
 
-bool32 TerrainChecker(enum BattlerId battler, enum BattleTerrain terrain, enum FieldEffectOutcome desiredResult)
+static enum FieldEffectOutcome BenefitsFromTerrain(enum BattlerId battler, enum BattleTerrain terrain)
 {
-    enum FieldEffectOutcome result = FIELD_EFFECT_NEUTRAL;
-    enum FieldEffectOutcome firstResult = FIELD_EFFECT_NEUTRAL;
-
-    for (u32 battlerIndex = 0; battlerIndex < gBattlersCount; battlerIndex++)
+    switch (terrain)
     {
-        if (!IsBattlerAlive(battlerIndex) || !IsBattlerAlly(battler, battlerIndex))
-            continue;
-
-        switch (terrain)
-        {
-        case B_TERRAIN_ELECTRIC:
-            result = BenefitsFromElectricTerrain(battlerIndex);
-            break;
-        case B_TERRAIN_GRASSY:
-            result = BenefitsFromGrassyTerrain(battlerIndex);
-            break;
-        case B_TERRAIN_MISTY:
-            result = BenefitsFromMistyTerrain(battlerIndex);
-            break;
-        case B_TERRAIN_PSYCHIC:
-            result = BenefitsFromPsychicTerrain(battlerIndex);
-            break;
-        default:
-            break;
-        }
+    case B_TERRAIN_ELECTRIC:
+        return BenefitsFromElectricTerrain(battler);
+    case B_TERRAIN_GRASSY:
+        return BenefitsFromGrassyTerrain(battler);
+    case B_TERRAIN_MISTY:
+        return BenefitsFromMistyTerrain(battler);
+    case B_TERRAIN_PSYCHIC:
+        return BenefitsFromPsychicTerrain(battler);
+    default:
+        return FIELD_EFFECT_NEUTRAL;
     }
-
-    if (firstResult != FIELD_EFFECT_NEUTRAL)
-        return (firstResult == result) && (result == desiredResult);
-    return (result == desiredResult);
 }
 
+static enum FieldEffectOutcome BenefitsFromFieldStatus(enum BattlerId battler, u32 fieldStatus)
+{
+    if (fieldStatus & STATUS_FIELD_TRICK_ROOM)
+        return BenefitsFromTrickRoom(battler);
+    if (fieldStatus & STATUS_FIELD_GRAVITY)
+        return BenefitsFromGravity(battler);
+    return FIELD_EFFECT_NEUTRAL;
+}
+
+// The battler's own opinion decides, and its partner's only when the battler has none.
+bool32 TerrainChecker(enum BattlerId battler, enum BattleTerrain terrain, enum FieldEffectOutcome desiredResult)
+{
+    enum BattlerId partner = GetPartnerBattler(battler);
+    enum FieldEffectOutcome result = FIELD_EFFECT_NEUTRAL;
+
+    if (IsBattlerAlive(battler))
+        result = BenefitsFromTerrain(battler, terrain);
+    if (result == FIELD_EFFECT_NEUTRAL && IsBattlerAlive(partner))
+        result = BenefitsFromTerrain(partner, terrain);
+
+    return result == desiredResult;
+}
+
+// As TerrainChecker, except that Trick Room wants both Pokémon to agree, not just one.
 bool32 FieldStatusChecker(enum BattlerId battler, u32 fieldStatus, enum FieldEffectOutcome desiredResult)
 {
+    enum BattlerId partner = GetPartnerBattler(battler);
     enum FieldEffectOutcome result = FIELD_EFFECT_NEUTRAL;
-    enum FieldEffectOutcome firstResult = FIELD_EFFECT_NEUTRAL;
 
-    for (u32 battlerIndex = 0; battlerIndex < gBattlersCount; battlerIndex++)
+    if (IsBattlerAlive(battler))
+        result = BenefitsFromFieldStatus(battler, fieldStatus);
+    if (IsBattlerAlive(partner))
     {
-        if (!IsBattlerAlive(battlerIndex) || !IsBattlerAlly(battler, battlerIndex))
-            continue;
+        enum FieldEffectOutcome partnerResult = BenefitsFromFieldStatus(partner, fieldStatus);
 
-        // other field statuses
-        if (fieldStatus & STATUS_FIELD_GRAVITY)
-            result = BenefitsFromGravity(battlerIndex);
-        if (fieldStatus & STATUS_FIELD_TRICK_ROOM)
-            result = BenefitsFromTrickRoom(battlerIndex);
-
-        if (result != FIELD_EFFECT_NEUTRAL)
-        {
-            // Trick room wants both Pokémon to agree, not just one
-            if (fieldStatus & STATUS_FIELD_TRICK_ROOM && battlerIndex == GetBattlerLeftFoe(battler))
-                firstResult = result;
-        }
+        if ((fieldStatus & STATUS_FIELD_TRICK_ROOM) && IsBattlerAlive(battler) && partnerResult != result)
+            return FALSE;
+        if (result == FIELD_EFFECT_NEUTRAL)
+            result = partnerResult;
     }
-    if (firstResult != FIELD_EFFECT_NEUTRAL)
-        return (firstResult == result) && (result == desiredResult);
-    return (result == desiredResult);
+
+    return result == desiredResult;
 }
 
 static bool32 DoesAbilityBenefitFromWeather(enum Ability ability, u32 weather)
