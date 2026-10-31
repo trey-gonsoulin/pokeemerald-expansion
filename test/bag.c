@@ -163,3 +163,22 @@ TEST("Items are correctly sorted and compacted in the bag")
     EXPECT_EQ(pocket->itemSlots[5].itemId, ITEM_NONE);
     EXPECT_EQ(pocket->itemSlots[6].itemId, ITEM_NONE);
 }
+
+TEST("RemoveBagItem removes only the count asked for from an item split over two stacks")
+{
+    ASSUME(GetItemPocket(ITEM_POTION) == POCKET_ITEMS);
+    ClearBag();
+
+    // Two stacks: [999, 5], then [2, 5] once the first stack is mostly used up.
+    EXPECT(AddBagItem(ITEM_POTION, MAX_BAG_ITEM_CAPACITY + 5));
+    EXPECT(RemoveBagItem(ITEM_POTION, MAX_BAG_ITEM_CAPACITY - 2));
+    EXPECT_EQ(GetBagItemQuantity(POCKET_ITEMS, 0), 2);
+    EXPECT_EQ(GetBagItemQuantity(POCKET_ITEMS, 1), 5);
+
+    // Takes the 2 from the first stack and 1 from the second, and the emptied first slot is compacted away.
+    EXPECT(RemoveBagItem(ITEM_POTION, 3));
+    EXPECT_EQ(CountTotalItemQuantityInBag(ITEM_POTION), 4);
+    EXPECT_EQ(GetBagItemId(POCKET_ITEMS, 0), ITEM_POTION);
+    EXPECT_EQ(GetBagItemQuantity(POCKET_ITEMS, 0), 4);
+    EXPECT_EQ(GetBagItemId(POCKET_ITEMS, 1), ITEM_NONE);
+}
