@@ -656,3 +656,42 @@ AI_SINGLE_BATTLE_TEST("AI field status: Steel Roller and Ice Spinner score remov
         TURN { SCORE_EQ_VAL(opponent, move, AI_SCORE_DEFAULT + BEST_DAMAGE_MOVE + effectScore); }
     }
 }
+
+AI_SINGLE_BATTLE_TEST("AI hp percent: scoring a recovery move keeps the user's HP percent for the moves after it")
+{
+    // Wobbuffet at 95% is faster than Mewtwo, whose Psystrike can knock it out, so the AI checks whether Recover would let it survive.
+    // Bide loses 2 points under 90% HP: it mustn't when Recover is scored first.
+    enum Move move1, move2;
+
+    PARAMETRIZE { move1 = MOVE_BIDE; move2 = MOVE_RECOVER; }
+    PARAMETRIZE { move1 = MOVE_RECOVER; move2 = MOVE_BIDE; }
+
+    GIVEN {
+        ASSUME(GetMoveEffect(MOVE_RECOVER) == EFFECT_RESTORE_HP);
+        ASSUME(GetMoveEffect(MOVE_BIDE) == EFFECT_BIDE);
+        AI_FLAGS(AI_FLAG_CHECK_VIABILITY | AI_FLAG_OMNISCIENT);
+        PLAYER(SPECIES_MEWTWO) { Speed(1); Moves(MOVE_PSYSTRIKE); }
+        OPPONENT(SPECIES_WOBBUFFET) { MaxHP(100); HP(95); Speed(100); Moves(move1, move2); }
+    } WHEN {
+        TURN { SCORE_EQ_VAL(opponent, MOVE_BIDE, AI_SCORE_DEFAULT + BEST_DAMAGE_MOVE); } // Bide (1 power) is the only damaging move
+    }
+}
+
+AI_SINGLE_BATTLE_TEST("AI absent partner: Haze and Psych Up don't read the stat stages of the empty partner slot in a single battle")
+{
+    // No stat stage has changed, so neither move has anything to undo. The empty slot's stages are 0, which read as lowered.
+    enum Move move;
+
+    PARAMETRIZE { move = MOVE_HAZE; }
+    PARAMETRIZE { move = MOVE_PSYCH_UP; }
+
+    GIVEN {
+        ASSUME(GetMoveEffect(MOVE_HAZE) == EFFECT_HAZE);
+        ASSUME(GetMoveEffect(MOVE_PSYCH_UP) == EFFECT_PSYCH_UP);
+        AI_FLAGS(AI_FLAG_CHECK_BAD_MOVE);
+        PLAYER(SPECIES_WOBBUFFET);
+        OPPONENT(SPECIES_WOBBUFFET) { Moves(move); }
+    } WHEN {
+        TURN { SCORE_EQ_VAL(opponent, move, AI_SCORE_DEFAULT); }
+    }
+}
