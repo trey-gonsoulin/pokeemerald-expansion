@@ -1657,7 +1657,7 @@ bool32 CanOpenBoxFromPartyMenu(void)
         return FALSE;
     if (gMapHeader.regionMapSectionId == MAPSEC_BATTLE_FRONTIER
      || gMapHeader.regionMapSectionId == MAPSEC_TRAINER_HILL
-     || gMapHeader.mapType == MAP_TYPE_UNDERWATER)
+     || (!OW_FIELD_MOVES_WITHOUT_MON && gMapHeader.mapType == MAP_TYPE_UNDERWATER))
         return FALSE;
     for (i = 0; i < ARRAY_COUNT(sNoBoxMaps); i++)
     {
@@ -6664,6 +6664,13 @@ struct
 static void GetRestrictedReleaseMoves(u16 *moves)
 {
     s32 i;
+
+    // Field moves don't need a Pokémon that knows them, so releasing one can't strand the player
+    if (OW_FIELD_MOVES_WITHOUT_MON)
+    {
+        *moves = MOVES_COUNT;
+        return;
+    }
 
     for (i = 0; i < ARRAY_COUNT(sRestrictedReleaseMoves); i++)
     {

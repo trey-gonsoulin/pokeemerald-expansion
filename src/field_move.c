@@ -191,3 +191,31 @@ const struct FieldMoveInfo gFieldMoveInfo[FIELD_MOVES_COUNT] =
         .hideIfLocked = TRUE,
     },
 };
+
+// The party slot shown using a field move: the first Pokémon that knows it,
+// else (OW_FIELD_MOVES_WITHOUT_MON, a move unlocked by its badge) the lead,
+// the first conscious non-Egg. PARTY_SIZE if nobody can use it.
+u32 GetFieldMoveUserSlot(enum FieldMove fieldMove)
+{
+    enum Move move = FieldMove_GetMoveId(fieldMove);
+    u32 i, lead = PARTY_SIZE;
+
+    for (i = 0; i < PARTY_SIZE; i++)
+    {
+        struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][i];
+        if (GetMonData(mon, MON_DATA_SPECIES) == SPECIES_NONE)
+            break;
+        if (GetMonData(mon, MON_DATA_IS_EGG))
+            continue;
+        if (MonKnowsMove(mon, move))
+            return i;
+        if (lead == PARTY_SIZE || (GetMonData(&gParties[B_TRAINER_PLAYER][lead], MON_DATA_HP) == 0 && GetMonData(mon, MON_DATA_HP) != 0))
+            lead = i;
+    }
+
+    if (!OW_FIELD_MOVES_WITHOUT_MON
+     || gFieldMoveInfo[fieldMove].unlockType != BADGE_UNLOCK
+     || !IsFieldMoveUnlocked(fieldMove))
+        return PARTY_SIZE;
+    return lead;
+}
