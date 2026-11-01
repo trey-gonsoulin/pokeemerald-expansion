@@ -270,7 +270,6 @@ static void DisplayPartyPokemonHPBarCheck(struct Pokemon *, struct PartyMenuBox 
 static void DisplayPartyPokemonDescriptionText(u8, struct PartyMenuBox *, u8);
 static bool8 IsMonAllowedInMinigame(u8);
 static void DisplayPartyPokemonDataToTeachMove(u8, enum Move);
-static enum CanMoveBeLearned CanTeachMove(struct Pokemon *, enum Move);
 static void DisplayPartyPokemonBarDetail(u8, const u8 *, u8, const u8 *);
 static void DisplayPartyPokemonBarDetailToFit(u8 windowId, const u8 *str, u8 color, const u8 *align, u32 width);
 static void DisplayPartyPokemonLevel(u8, struct PartyMenuBox *);
@@ -1201,7 +1200,7 @@ static bool8 DisplayPartyPokemonDataForMoveTutorOrEvolutionItem(u8 slot)
 
 static void DisplayPartyPokemonDataToTeachMove(u8 slot, enum Move move)
 {
-    switch (CanTeachMove(&gParties[B_TRAINER_PLAYER][slot], move))
+    switch (GetTeachMoveStatus(&gParties[B_TRAINER_PLAYER][slot], move))
     {
     case CANNOT_LEARN_MOVE:
     case CANNOT_LEARN_MOVE_IS_EGG:
@@ -2418,7 +2417,7 @@ static void Task_HandleCancelParticipationYesNoInput(u8 taskId)
     }
 }
 
-static enum CanMoveBeLearned CanTeachMove(struct Pokemon *mon, enum Move move)
+enum CanMoveBeLearned GetTeachMoveStatus(struct Pokemon *mon, enum Move move)
 {
     if (GetMonData(mon, MON_DATA_IS_EGG))
         return CANNOT_LEARN_MOVE_IS_EGG;
@@ -2428,6 +2427,30 @@ static enum CanMoveBeLearned CanTeachMove(struct Pokemon *mon, enum Move move)
         return ALREADY_KNOWS_MOVE;
     else
         return CAN_LEARN_MOVE;
+}
+
+// The party Pokémon that the party menu would mark ABLE for this move. Eggs count
+// in neither number, and a Pokémon that already knows the move isn't able.
+u32 CountPartyMonsAbleToLearn(enum Move move, u32 *partyCount)
+{
+    u32 i, ableCount = 0;
+
+    *partyCount = 0;
+    for (i = 0; i < PARTY_SIZE; i++)
+    {
+        struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][i];
+        enum CanMoveBeLearned status;
+
+        if (GetMonData(mon, MON_DATA_SPECIES) == SPECIES_NONE)
+            continue;
+        status = GetTeachMoveStatus(mon, move);
+        if (status == CANNOT_LEARN_MOVE_IS_EGG)
+            continue;
+        (*partyCount)++;
+        if (status == CAN_LEARN_MOVE)
+            ableCount++;
+    }
+    return ableCount;
 }
 
 static void InitPartyMenuWindows(enum PartyMenuLayout layout)
@@ -5729,7 +5752,7 @@ void ItemUseCB_TMHM(u8 taskId, TaskFunc task)
     GetMonNickname(mon, gStringVar1);
     StringCopy(gStringVar2, GetMoveName(move));
 
-    switch (CanTeachMove(mon, move))
+    switch (GetTeachMoveStatus(mon, move))
     {
     case CANNOT_LEARN_MOVE:
         DisplayLearnMoveMessageAndClose(taskId, gText_PkmnCantLearnMove);
@@ -7208,7 +7231,7 @@ static void TryTutorSelectedMon(u8 taskId)
         gPartyMenu.data1 = gSpecialVar_0x8005;
         StringCopy(gStringVar2, GetMoveName(gPartyMenu.data1));
         gPartyMenu.learnMoveState = 2;
-        switch (CanTeachMove(mon, gPartyMenu.data1))
+        switch (GetTeachMoveStatus(mon, gPartyMenu.data1))
         {
         case CANNOT_LEARN_MOVE:
             DisplayLearnMoveMessageAndClose(taskId, gText_PkmnCantLearnMove);

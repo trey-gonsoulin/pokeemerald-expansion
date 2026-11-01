@@ -3,6 +3,7 @@
 
 #include "main.h"
 #include "task.h"
+#include "constants/party_menu.h"
 
 enum PartyMenuLayout
 {
@@ -98,6 +99,8 @@ void ItemUseCB_PPRecovery(u8 taskId, TaskFunc task);
 void ItemUseCB_PPUp(u8 taskId, TaskFunc task);
 enum Move ItemIdToBattleMoveId(enum Item item);
 bool8 MonKnowsMove(struct Pokemon *mon, enum Move move);
+enum CanMoveBeLearned GetTeachMoveStatus(struct Pokemon *mon, enum Move move);
+u32 CountPartyMonsAbleToLearn(enum Move move, u32 *partyCount);
 bool8 BoxMonKnowsMove(struct BoxPokemon *boxMon, enum Move move);
 void ItemUseCB_TMHM(u8 taskId, TaskFunc task);
 void ItemUseCB_RareCandy(u8 taskId, TaskFunc task);
