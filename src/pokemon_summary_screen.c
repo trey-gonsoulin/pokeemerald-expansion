@@ -1885,7 +1885,6 @@ static void ShowMonSkillsInfo(u8 taskId, s16 mode)
     PrintLeftColumnStats();
     BufferRightColumnStats();
     PrintRightColumnStats();
-    gTasks[taskId].func = Task_HandleInput;
 }
 
 void ExtractMonSkillStatsData(struct Pokemon *mon, struct PokeSummary *sum)
@@ -2621,7 +2620,6 @@ static void Task_HandleReplaceMoveInput(u8 taskId)
                 if (JOY_NEW(A_BUTTON) && ShouldShowIvEvPrompt())
                 {
                     ShowMonSkillsInfo(taskId, IncrementSkillsStatsMode(sMonSummaryScreen->skillsPageMode));
-                    gTasks[taskId].func = Task_HandleReplaceMoveInput; // ShowMonSkillsInfo sets Task_HandleInput
                     PlaySE(SE_SELECT);
                 }
             }
@@ -3398,7 +3396,9 @@ static void ClearPageWindowTilemaps(u8 page)
         if (ShouldShowIvEvPrompt())
             ClearWindowTilemap(PSS_LABEL_WINDOW_PROMPT_UTILITY);
         ClearWindowTilemap(PSS_LABEL_WINDOW_PROMPT_RELEARN);
-        if (sMonSummaryScreen->mode == SUMMARY_MODE_SELECT_MOVE)
+        // Unless the Move Deleter's Cancel row has the power/accuracy window slid away
+        if (sMonSummaryScreen->mode == SUMMARY_MODE_SELECT_MOVE
+            && (sMonSummaryScreen->newMove != MOVE_NONE || sMonSummaryScreen->firstMoveIndex != MAX_MON_MOVES))
         {
             ClearWindowTilemap(PSS_LABEL_WINDOW_PORTRAIT_SPECIES);
             ClearWindowTilemap(PSS_LABEL_WINDOW_POKEMON_SKILLS_STATUS);
