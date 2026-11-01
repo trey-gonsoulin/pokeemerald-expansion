@@ -577,30 +577,9 @@ TEST("Type names fit on Pokedex Search Screen")
 
 TEST("Map names fit in popup")
 {
-    ASSUME(OW_POPUP_GENERATION == GEN_3);
-    const u32 fontId = FONT_NARROWER;
-    u32 widthPx = 80;
-    s8 mapGroup = 0;
-    s8 mapNum = 0;
-    u8 mapName[MAP_POPUP_STRING_BUFFER_LENGTH - MAP_POPUP_PREFIX_BUFFER_LENGTH];
-    for (u32 i = 0; MAP_GROUP_COUNT[i] != 0; i++)
-    {
-        for (u32 j = 0; j < MAP_GROUP_COUNT[i]; j++)
-        {
-            const struct MapHeader *mapHeader = Overworld_GetMapHeaderByGroupAndId(i, j);
-            if (mapHeader->showMapName)
-                PARAMETRIZE_LABEL("%S", GetPopUpMapName(mapName, mapHeader)) { mapGroup = i; mapNum = j;}
-        }
-    }
-    EXPECT_LE(GetStringWidth(fontId, GetPopUpMapName(mapName, Overworld_GetMapHeaderByGroupAndId(mapGroup, mapNum)), 0), widthPx);
-}
-
-// The fork's B2W2 bar (#202) prints the name from x 8 across the 30-tile window.
-TEST("Map names fit in the Gen 5 popup")
-{
-    ASSUME(OW_POPUP_GENERATION == GEN_5);
-    const u32 fontId = FONT_SHORT;
-    u32 widthPx = DISPLAY_WIDTH - 8;
+    // The fork's B2W2 bar (#202) prints the name from x 8 across the 30-tile window.
+    const u32 fontId = OW_POPUP_GENERATION == GEN_5 ? FONT_SHORT : FONT_NARROWER;
+    u32 widthPx = OW_POPUP_GENERATION == GEN_5 ? DISPLAY_WIDTH - 8 : 80;
     s8 mapGroup = 0;
     s8 mapNum = 0;
     u8 mapName[MAP_POPUP_STRING_BUFFER_LENGTH - MAP_POPUP_PREFIX_BUFFER_LENGTH];
