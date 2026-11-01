@@ -1191,6 +1191,8 @@ struct SaveBlock1
 #endif //FREE_TRAINER_HILL
 #if FREE_MYSTERY_EVENT_BUFFERS == FALSE
     /*0x3???*/ struct RamScript ramScript;
+#elif I_BAG_HOLDS_EVERYTHING
+    /*0x3???*/ struct ItemSlot bagItems[BAG_ITEMS_ALL_COUNT]; // In ramScript's place, so nothing after it moves
 #endif //FREE_MYSTERY_EVENT_BUFFERS
     /*0x3???*/ struct RecordMixingGift recordMixingGift;
     /*0x3???*/ LilycoveLady lilycoveLady;
