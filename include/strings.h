@@ -661,6 +661,9 @@ extern const u8 gText_ShopSell[];
 extern const u8 gText_ShopQuit[];
 extern const u8 gText_ThatItemIsSoldOut[];
 extern const u8 gText_SoldOut[];
+extern const u8 gText_YouAlreadyHaveThatTM[];
+extern const u8 gText_Owned[];
+extern const u8 gText_AbleVar1OfVar2[];
 
 extern const u8 gText_HallOfFame[];
 extern const u8 gText_LogOff[];

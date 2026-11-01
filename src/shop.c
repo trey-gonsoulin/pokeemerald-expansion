@@ -159,7 +159,7 @@ static void Task_HandleShopMenuBuy(u8 taskId);
 static void Task_HandleShopMenuSell(u8 taskId);
 static void BuyMenuPrintItemDescriptionAndShowItemIcon(s32 item, bool8 onInit, struct ListMenu *list);
 static void BuyMenuPrintPriceInList(u8 windowId, u32 itemId, u8 y);
-static void BuyMenuPrintInBagCount(s32 item);
+static void BuyMenuPrintInBagOrAbleCount(s32 item);
 
 static const struct YesNoFuncTable sShopPurchaseYesNoFuncs =
 {
@@ -644,18 +644,36 @@ static void BuyMenuPrintItemDescriptionAndShowItemIcon(s32 item, bool8 onInit, s
 
     FillWindowPixelBuffer(WIN_ITEM_DESCRIPTION, PIXEL_FILL(0));
     BuyMenuPrint(WIN_ITEM_DESCRIPTION, description, 3, 1, 0, COLORID_NORMAL);
-    BuyMenuPrintInBagCount(item);
+    BuyMenuPrintInBagOrAbleCount(item);
 }
 
-// "IN BAG: N" for the highlighted item, right-aligned against the item list.
+static bool32 IsMartTM(u32 itemId)
+{
+    return sMartInfo.martType == MART_TYPE_NORMAL && GetItemPocket(itemId) == POCKET_TM_HM;
+}
+
+// "IN BAG: N" for the highlighted item, or "ABLE x/y" (the party Pokémon that
+// can learn it, Eggs left out) for a TM, right-aligned against the item list.
 // Decoration marts and the "Quit shopping" row show nothing.
-static void BuyMenuPrintInBagCount(s32 item)
+static void BuyMenuPrintInBagOrAbleCount(s32 item)
 {
     FillWindowPixelBuffer(WIN_IN_BAG_HOVER, PIXEL_FILL(0));
     if (item != LIST_CANCEL && sMartInfo.martType == MART_TYPE_NORMAL)
     {
-        ConvertIntToDecimalStringN(gStringVar1, CountTotalItemQuantityInBag(item), STR_CONV_MODE_RIGHT_ALIGN, MAX_ITEM_DIGITS + 1);
-        StringExpandPlaceholders(gStringVar4, gText_InBagVar1);
+        if (IsMartTM(item))
+        {
+            u32 partyCount;
+            u32 ableCount = CountPartyMonsAbleToLearn(GetItemTMHMMoveId(item), &partyCount);
+
+            ConvertIntToDecimalStringN(gStringVar1, ableCount, STR_CONV_MODE_LEFT_ALIGN, 1);
+            ConvertIntToDecimalStringN(gStringVar2, partyCount, STR_CONV_MODE_LEFT_ALIGN, 1);
+            StringExpandPlaceholders(gStringVar4, gText_AbleVar1OfVar2);
+        }
+        else
+        {
+            ConvertIntToDecimalStringN(gStringVar1, CountTotalItemQuantityInBag(item), STR_CONV_MODE_RIGHT_ALIGN, MAX_ITEM_DIGITS + 1);
+            StringExpandPlaceholders(gStringVar4, gText_InBagVar1);
+        }
         BuyMenuPrint(WIN_IN_BAG_HOVER, gStringVar4, GetStringRightAlignXOffset(FONT_NORMAL, gStringVar4, SHOP_IN_BAG_HOVER_WIDTH * 8), 1, TEXT_SKIP_DRAW, COLORID_NORMAL);
     }
     CopyWindowToVram(WIN_IN_BAG_HOVER, COPYWIN_GFX);
@@ -685,7 +703,7 @@ static void BuyMenuPrintPriceInList(u8 windowId, u32 itemId, u8 y)
         }
 
         if (GetItemImportance(itemId) && (CheckBagHasItem(itemId, 1) || CheckPCHasItem(itemId, 1)))
-            StringCopy(gStringVar4, gText_SoldOut);
+            StringCopy(gStringVar4, IsMartTM(itemId) ? gText_Owned : gText_SoldOut);
         else
             StringExpandPlaceholders(gStringVar4, gText_PokedollarVar1);
         x = GetStringRightAlignXOffset(FONT_NARROW, gStringVar4, 120);
@@ -1051,7 +1069,7 @@ static void Task_BuyMenu(u8 taskId)
                 sShopData->totalCost = gDecorations[itemId].price;
 
             if (GetItemImportance(itemId) && (CheckBagHasItem(itemId, 1) || CheckPCHasItem(itemId, 1)))
-                BuyMenuDisplayMessage(taskId, gText_ThatItemIsSoldOut, BuyMenuReturnToItemList);
+                BuyMenuDisplayMessage(taskId, IsMartTM(itemId) ? gText_YouAlreadyHaveThatTM : gText_ThatItemIsSoldOut, BuyMenuReturnToItemList);
             else if (!IsEnoughMoney(&gSaveBlock1Ptr->money, sShopData->totalCost))
             {
                 BuyMenuDisplayMessage(taskId, gText_YouDontHaveMoney, BuyMenuReturnToItemList);
@@ -1269,7 +1287,7 @@ static void BuyMenuReturnToItemList(u8 taskId)
     PutWindowTilemap(WIN_ITEM_LIST);
     PutWindowTilemap(WIN_ITEM_DESCRIPTION);
     // A purchase changes the count, but the cursor hasn't moved to reprint it
-    BuyMenuPrintInBagCount(tItemId);
+    BuyMenuPrintInBagOrAbleCount(tItemId);
     PutWindowTilemap(WIN_IN_BAG_HOVER);
     ScheduleBgCopyTilemapToVram(0);
     BuyMenuAddScrollIndicatorArrows();
