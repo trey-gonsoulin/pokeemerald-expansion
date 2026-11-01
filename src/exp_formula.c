@@ -6,7 +6,7 @@
 #include "exp_formula.h"
 
 // The test override stores these configs in 8 bits (config_changes.h).
-STATIC_ASSERT(B_EXP_OVERLEVEL_CUTOFF <= 255 && B_EXP_OVERLEVEL_HALVING <= 255, ExpOverlevelConfigsFitIn8Bits);
+STATIC_ASSERT(B_EXP_OVERLEVEL_CUTOFF <= 255 && B_EXP_OVERLEVEL_WIDTH <= 255 && B_EXP_OVERLEVEL_FLOOR <= 100, ExpOverlevelConfigsFitIn8Bits);
 
 // (i^3.5)/4: the level scaling with B_SCALED_EXP_STEEP, in place of
 // sExperienceScalingFactors' (i^2.5)/4.
@@ -41,29 +41,57 @@ const s32 gExperienceScalingFactorsSteep[MAX_LEVEL * 2 + 11] =
     32446038, 32995294, 33551160,
 };
 
-// 4096 * 2^(-k/16): the over-level penalty's fraction of a halving, in 16ths.
-static const u16 sExpHalvingFractions[16] =
+// 4096 / (1 + e^(k/16)): the over-level penalty's logistic curve, for t from 0
+// to 10 in 16ths.
+static const u16 sExpLogistic[161] =
 {
-    4096, 3922, 3756, 3597, 3444, 3298, 3158, 3025, 2896, 2774, 2656, 2543, 2435, 2332, 2233, 2139,
+    2048, 1984, 1920, 1857, 1793, 1731, 1668, 1607, 1546, 1487, 1428, 1370, 1314, 1259, 1205, 1153,
+    1102, 1052, 1004, 957, 912, 869, 827, 786, 747, 710, 674, 639, 606, 575, 545, 516,
+    488, 462, 437, 413, 391, 369, 349, 329, 311, 293, 277, 261, 246, 232, 219, 206,
+    194, 183, 172, 162, 153, 144, 136, 128, 120, 113, 106, 100, 94, 89, 83, 78,
+    74, 69, 65, 61, 58, 54, 51, 48, 45, 42, 40, 37, 35, 33, 31, 29,
+    27, 26, 24, 23, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 11,
+    10, 10, 9, 8, 8, 7, 7, 7, 6, 6, 5, 5, 5, 5, 4, 4,
+    4, 4, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0,
 };
 
-// Past B_EXP_OVERLEVEL_CUTOFF percent above the fainted Pokémon's level, the
-// exp halves every B_EXP_OVERLEVEL_HALVING percent of its level further (the
-// whole halvings as a shift, the rest in 16ths), at least 1. Halving 0 gives
-// 1 exp straight past the cutoff. No exp stays no exp.
+// 4096 / (1 + e^(n/d)): sExpLogistic, interpolated in 256ths of t, and 0 past
+// its end. At d = 0, the curve's limit: a step at n = 0.
+static u32 ExpLogistic(s32 n, s32 d)
+{
+    u32 t, i;
+
+    if (d == 0)
+        return n > 0 ? 0 : 4096;
+    if (n < 0)
+        return 4096 - ExpLogistic(-n, d);
+    t = (u32)n * 256 / d;
+    i = t / 16;
+    if (i >= ARRAY_COUNT(sExpLogistic) - 1)
+        return 0;
+    return sExpLogistic[i] - (sExpLogistic[i] - sExpLogistic[i + 1]) * (t % 16) / 16;
+}
+
+// Above the fainted Pokémon's level, the exp follows a logistic curve in the
+// percent of its level the getter is over it (#189): full at its level, falling
+// fastest at B_EXP_OVERLEVEL_CUTOFF percent over B_EXP_OVERLEVEL_WIDTH percent
+// (0: all at once past the cutoff), down to B_EXP_OVERLEVEL_FLOOR percent of
+// the exp, at least 1. No exp stays no exp.
 s32 ApplyOverlevelPenalty(s32 exp, u32 faintedLevel, u32 expGetterLevel)
 {
-    s32 over = (s32)(expGetterLevel * 100) - (s32)(faintedLevel * (100 + GetConfig(B_EXP_OVERLEVEL_CUTOFF)));
-    s32 span = faintedLevel * GetConfig(B_EXP_OVERLEVEL_HALVING);
-    s32 halvings;
+    s32 over = (s32)(expGetterLevel - faintedLevel) * 100;
+    s32 cutoff = faintedLevel * GetConfig(B_EXP_OVERLEVEL_CUTOFF);
+    s32 width = faintedLevel * GetConfig(B_EXP_OVERLEVEL_WIDTH);
+    u32 floorPercent = min(GetConfig(B_EXP_OVERLEVEL_FLOOR), 100);
+    u32 full, here;
 
-    if (exp <= 0 || over <= 0)
+    if (exp <= 0 || expGetterLevel <= faintedLevel)
         return exp;
-    if (span == 0)
-        return 1;
-    halvings = over / span;
-    if (halvings >= 32)
-        return 1;
-    exp = ((u64)exp * sExpHalvingFractions[(over % span) * 16 / span]) >> (12 + halvings);
+    full = ExpLogistic(-cutoff, width);
+    here = ExpLogistic(over - cutoff, width);
+    exp = (u64)exp * (floorPercent * full + (100 - floorPercent) * here) / (100 * full);
     return exp > 0 ? exp : 1;
 }

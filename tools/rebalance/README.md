@@ -75,11 +75,14 @@ The knobs:
   (`B_SCALED_EXP`), and three options:
   - `scaling_power`: the scaling table is `floor(i^p / 4)`. It's 2.5 in
     upstream and 3.5 under the fork's `B_SCALED_EXP_STEEP` (#154).
-  - `overlevel_cutoff`: 1 exp past that many levels above the foe, or
-    percent of its level with `overlevel_unit`. With `overlevel_halflife`
-    the exp instead halves every that many levels or percent past the
-    cutoff (`Overlevel`). The fork's `B_EXP_OVERLEVEL_PENALTY` (#154) is
-    10% and 5%.
+  - `overlevel_cutoff`, `overlevel_width` and `overlevel_floor`: the
+    over-level penalty (`Overlevel`). Above the foe's level, the exp falls
+    on a logistic curve: fastest at the cutoff, over the width, then
+    levelling out at the floor (percent of the exp, at least 1 exp). The
+    cutoff and the width are in levels, or in percent of the foe's level
+    with `overlevel_unit`. Without a width, the exp drops to the floor
+    straight past the cutoff. The fork's `B_EXP_OVERLEVEL_PENALTY` (#154,
+    #189) is 15%, 4% and 10%.
   - `share_fraction`: the Exp. Share bench's share, the game's half; not a
     game option.
 
