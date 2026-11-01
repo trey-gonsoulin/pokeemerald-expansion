@@ -1,4 +1,6 @@
 #include "global.h"
+#include "bag_holds_everything.h"
+#include "event_data.h"
 #include "item.h"
 #include "load_save.h"
 #include "registered_items.h"
@@ -107,7 +109,26 @@ TEST("Register items: a save with only registeredItem set reads as one registere
     EXPECT_EQ(GetRegisteredItem(1), ITEM_OLD_ROD);
 }
 
-TEST("Register items: the extra slots survive the link bag backup")
+TEST("Register items: an old save's Items pocket isn't read as registered items once converted")
+{
+    ASSUME(I_REGISTERED_ITEMS_COUNT >= 2);
+    ASSUME(I_BAG_HOLDS_EVERYTHING);
+    ClearBagAndRegisteredItems();
+
+    // Before the conversion, the extra slots' bytes hold the old Items pocket
+    gSaveBlock1Ptr->registeredItem = ITEM_MACH_BIKE;
+    gSaveBlock1Ptr->bag.items[0] = (struct ItemSlot) { ITEM_POTION, 3 };
+    gSaveBlock1Ptr->bag.items[1] = (struct ItemSlot) { ITEM_ANTIDOTE, 5 };
+    FlagClear(I_BAG_CONVERTED_FLAG);
+
+    ConvertSaveForBagHoldsEverything();
+
+    EXPECT_EQ(CountRegisteredItems(), 1);
+    EXPECT_EQ(GetRegisteredItem(0), ITEM_MACH_BIKE);
+    EXPECT(!IsItemRegistered(ITEM_POTION));
+}
+
+TEST("Register items: the link bag backup restores every slot together")
 {
     ASSUME(I_REGISTERED_ITEMS_COUNT >= 2);
     ClearBagAndRegisteredItems();
@@ -115,8 +136,9 @@ TEST("Register items: the extra slots survive the link bag backup")
     ToggleRegisteredItem(ITEM_MACH_BIKE);
     ToggleRegisteredItem(ITEM_OLD_ROD);
     LoadPlayerBag();
-    ClearBag();
+    ToggleRegisteredItem(ITEM_MACH_BIKE);
     SavePlayerBag();
+    EXPECT_EQ(CountRegisteredItems(), 2);
     EXPECT_EQ(GetRegisteredItem(0), ITEM_MACH_BIKE);
     EXPECT_EQ(GetRegisteredItem(1), ITEM_OLD_ROD);
 }

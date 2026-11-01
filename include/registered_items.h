@@ -8,6 +8,7 @@ bool32 IsItemRegistered(enum Item item);
 void ClearRegisteredItems(void);
 bool32 ToggleRegisteredItem(enum Item item);
 void RemoveUnownedRegisteredItems(void);
+void SwapRegisteredBike(void);
 void UseRegisteredItemsOnField(void);
 
 #endif // GUARD_REGISTERED_ITEMS_H
