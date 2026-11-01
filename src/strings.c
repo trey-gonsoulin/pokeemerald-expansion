@@ -95,6 +95,7 @@ const u8 gText_Coins[] = _("{STR_VAR_1} COINS");
 const u8 gText_CloseBag[] = _("CLOSE BAG");
 const u8 gText_Var1IsSelected[] = _("{STR_VAR_1}\nis selected.");
 const u8 gText_CantWriteMail[] = _("You can't write\nMAIL here.");
+const u8 gText_YouCanRegisterUpToVar1Items[] = _("You can register up to\n{STR_VAR_1} items to SELECT.");
 const u8 gText_NoPokemon[] = _("There is no\nPOKéMON.");
 const u8 gText_MoveVar1Where[] = _("Move the\n{STR_VAR_1}\nwhere?");
 const u8 gText_Var1CantBeHeld[] = _("The {STR_VAR_1} can't be held.");
