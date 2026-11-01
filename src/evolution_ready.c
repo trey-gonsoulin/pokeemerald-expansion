@@ -76,7 +76,7 @@ bool32 CanPartyMonEvolveNow(struct Pokemon *mon)
     return FALSE;
 }
 
-// An invisible marker, or SPRITE_NONE if there's no sprite, tile or palette room for it
+// The marker (the caller sets its visibility), or SPRITE_NONE if there's no sprite, tile or palette room for it
 u8 CreateEvolutionReadyMarkerSprite(s16 x, s16 y)
 {
     u32 spriteId;
@@ -90,8 +90,5 @@ u8 CreateEvolutionReadyMarkerSprite(s16 x, s16 y)
         return SPRITE_NONE;
 
     spriteId = CreateSpriteUnchecked(&sSpriteTemplate_EvolutionReady, x, y, 0);
-    if (spriteId == MAX_SPRITES)
-        return SPRITE_NONE;
-    gSprites[spriteId].invisible = TRUE;
-    return spriteId;
+    return spriteId == MAX_SPRITES ? SPRITE_NONE : spriteId;
 }
