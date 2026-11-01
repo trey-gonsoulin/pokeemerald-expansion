@@ -291,7 +291,7 @@ Each rival row goes on all six teams of that fight: May or Brendan, with each st
 - **6/0 runs away harder than 1/5** under the targets: measured against the lowest member, a rotating team's lowest member is higher, so every target raises more.
 - Each game option (a bench share, a cutoff or an exponent) would need a config in `include/config/`, code in `Cmd_getexp` / `ApplyExperienceMultipliers` and tests in `test/battle/exp.c`. That's a follow-up once the owner picks a curve.
 
-**Percent gaps and a soft over-level falloff.** The explorer can also set the targets in percent of the reference (`gap_unit`), and the cutoff in percent of the foe's level (`overlevel_unit`). The cutoff can also fall off instead of dropping straight to 1 exp: past it, the exp halves every `overlevel_halflife` levels (or percent), as a 4096ths multiplier the way the game's own multipliers work. Wallace's ace and the highest member's peak, with #150's targets in levels (5 / 10, margin 1) and in percent (trainers 10%, wilds 20%, margin 2%):
+**Percent gaps and a soft over-level falloff** (#151 and #154's halving knob, since replaced by #189's logistic). The explorer can also set the targets in percent of the reference (`gap_unit`), and the cutoff in percent of the foe's level (`overlevel_unit`). The cutoff can also fall off instead of dropping straight to 1 exp: past it, the exp halves every `overlevel_halflife` levels (or percent), as a 4096ths multiplier the way the game's own multipliers work. Wallace's ace and the highest member's peak, with #150's targets in levels (5 / 10, margin 1) and in percent (trainers 10%, wilds 20%, margin 2%):
 
 | over-level option | levels, 1/5 | levels, 6/0 | percent, 1/5 | percent, 6/0 |
 |---|---|---|---|---|
@@ -308,7 +308,7 @@ Each rival row goes on all six teams of that fight: May or Brendan, with each st
 - **A falloff holds the curve down far less than a hard cutoff.** The targets keep the route trainers about 5 levels (10%) below the party, right at a +5 or +10% cutoff. A hard cutoff stops the party there, because each trainer it outgrows gives 1 exp. A falloff lets it keep pulling ahead slowly, and the targets follow it up. To hold Wallace near 80 with a falloff, it has to start at the party's own level (+0) and halve every 10 levels or 20%.
 - **Percent targets change little at these settings**: 10% is about 5 levels at level 50. They put the early game closer (a level-10 party's trainers 1 below rather than 5) and the endgame further apart.
 
-**Owner's choice (2026-10-30, for now):** the explorer settings
+**Owner's choice (2026-10-30, for now):** the explorer settings (#154's halving knobs: #189 replaced `overlevel_halflife` with `overlevel_width` and `overlevel_floor`, so `curve` no longer takes this block as is)
 
 ```json
 {"wild_battles": 6, "scaling_power": 3.5, "overlevel_unit": "percent", "overlevel_cutoff": 10,
@@ -336,6 +336,15 @@ Each rival row goes on all six teams of that fight: May or Brendan, with each st
     - wild land tables up to +21.
 - **The same settings with all six rotating** put the bosses higher: Flannery 45, Winona 62, Juan 82, Wallace 92, with the team at 84-85 by Wallace. The applied levels have to pick one rotation. **Owner's decision (2026-10-30): build them for 1 lead and 5 benched.**
 - **The formula is now in the game** (#154: `B_SCALED_EXP_STEEP`, `B_EXP_OVERLEVEL_PENALTY` 10 / 5). The game and the model compute the falloff the same way, in integers: whole halvings as a shift, the rest in 16ths of a halving. The table above was measured with the explorer's float falloff. The integer one puts Juan and Wallace 1 higher (77 / 87), and the bench at 73 / 79.
+- **The halving is now a logistic curve** (#189, the owner's values on 2026-11-01: `B_EXP_OVERLEVEL_CUTOFF` 15, `B_EXP_OVERLEVEL_WIDTH` 4, `B_EXP_OVERLEVEL_FLOOR` 10). The halving gave next to nothing in play once the party led a stage, so the exp now falls slowly just above the foe's level, fastest around the cutoff, and levels out at a tenth of the exp. Its multipliers by how far the getter is above the foe, the halving's in brackets:
+  - +5%: 0.95 (1.00);
+  - +11%, where route trainers sit: 0.77 (0.86);
+  - +15%: 0.56 (0.50);
+  - +25%, where wild Pokémon sit: 0.17 (0.12);
+  - +40% and beyond: 0.10 (0.02 and falling).
+- **Why these values:** they keep the curve where it was. The issue's sample, 10 / 4 / 10%, cuts route trainers to 0.52 and puts the bench at Wallace 2 lower. 20 / 5 / 10% lifts it 4 higher, so `apply` would raise 60 bosses (Wallace 89, Steven 100).
+- **What `apply` changed with 15 / 4 / 10%:** only Norman's stage, by 1. Norman 1's ace is 41, and ten of the stage's route trainers moved too. The bench at Wallace is 76 (77 with the halving).
+- **The game and the model compute it in the same integers:** `sExpLogistic` (4096 / (1 + e^t) in 16ths of t), interpolated in 256ths.
 - **The game's formula with today's levels is too hard:** the bench reaches Roxanne at 11 (her ace is 15), Juan at 48 (57) and Wallace at 55 (66). #154 needs #150's raises before a playthrough.
 - **The scaling table:** `ApplyExperienceMultipliers` already scales in u64. The level^3.5 table tops out at about 3.4e7 (index 210), so it fits the s32 `sExperienceScalingFactors` and can be swapped in.
 

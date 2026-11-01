@@ -19,9 +19,10 @@
 #define B_UNEVOLVED_EXP_MULTIPLIER  GEN_LATEST // In Gen6+, if a Pokémon is at or past the level where it would be able to evolve, but it has not, it gains ~1.2x experience. This only applies to species with the EVO_LEVEL method.
 #define B_LEVEL_UP_NOTIFICATION     GEN_LATEST // In Gen9+, if a Pokémon gains enough experience to level up multiple times, a message is only displayed once.
 #define B_SCALED_EXP_STEEP          TRUE       // Emerald Plus (#154): with scaled experience (B_SCALED_EXP), the level weighting uses level^3.5 instead of level^2.5, so a Pokémon gains less from foes below its level and more from foes above it.
-#define B_EXP_OVERLEVEL_PENALTY     TRUE       // Emerald Plus (#154): a Pokémon more than B_EXP_OVERLEVEL_CUTOFF percent above the fainted Pokémon's level gains less experience,
-#define B_EXP_OVERLEVEL_CUTOFF      10         // halving for every further B_EXP_OVERLEVEL_HALVING percent of the fainted Pokémon's level (at least 1). Both at most 255.
-#define B_EXP_OVERLEVEL_HALVING     5          // At 0, it gains 1 experience straight past the cutoff.
+#define B_EXP_OVERLEVEL_PENALTY     TRUE       // Emerald Plus (#154, #189): a Pokémon above the fainted Pokémon's level gains less experience, on a logistic curve: slowly at first,
+#define B_EXP_OVERLEVEL_CUTOFF      15         // fastest around B_EXP_OVERLEVEL_CUTOFF percent above the fainted Pokémon's level, over B_EXP_OVERLEVEL_WIDTH percent of its level (at 0, all at once past the cutoff),
+#define B_EXP_OVERLEVEL_WIDTH       4          // then levelling out at B_EXP_OVERLEVEL_FLOOR percent of the experience (at least 1). Full experience at the fainted Pokémon's level.
+#define B_EXP_OVERLEVEL_FLOOR       10         // The cutoff and width at most 255, the floor at most 100.
 
 // Stat settings
 #define B_BADGE_BOOST               GEN_LATEST // In Gen4+, Gym Badges no longer boost a Pokémon's stats. (Setting this to GEN_2 does not include the additional boost to the type matching the Gym the Badge is from.)
