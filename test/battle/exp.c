@@ -554,7 +554,10 @@ WILD_BATTLE_TEST("Exp formula: steep scaling gives less from lower-level foes, m
 TEST("Exp formula: the over-level penalty follows a logistic curve down to its floor (#189)")
 {
     // The same cases as tools/rebalance's test_overlevel, at the configs' 15 / 4 / 10%.
-    ASSUME(B_EXP_OVERLEVEL_CUTOFF == 15 && B_EXP_OVERLEVEL_WIDTH == 4 && B_EXP_OVERLEVEL_FLOOR == 10);
+    // Retuning the configs fails here: update these cases and the model's with them.
+    EXPECT_EQ(B_EXP_OVERLEVEL_CUTOFF, 15);
+    EXPECT_EQ(B_EXP_OVERLEVEL_WIDTH, 4);
+    EXPECT_EQ(B_EXP_OVERLEVEL_FLOOR, 10);
     EXPECT_EQ(ApplyOverlevelPenalty(1000, 30, 30), 1000); // full exp at the foe's level
     EXPECT_EQ(ApplyOverlevelPenalty(1000, 30, 25), 1000); // and below it
     EXPECT_EQ(ApplyOverlevelPenalty(1000, 30, 31), 973);  // slowly at first
@@ -636,6 +639,7 @@ WILD_BATTLE_TEST("Exp formula: the over-level penalty also applies to the Gen 6 
         results[i].benchExp = GetMonData(&gParties[B_TRAINER_PLAYER][1], MON_DATA_EXP) - EXP_AT_LEVEL(SPECIES_WYNAUT, 23);
     } FINALLY {
         EXPECT_GT(results[0].benchExp, 1);
+        EXPECT_LT(results[1].benchExp, results[0].benchExp);
         EXPECT_EQ(results[1].benchExp, ApplyOverlevelPenalty(results[0].benchExp, 20, 23)); // the bench Wynaut is 15% over
     }
 }

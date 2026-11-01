@@ -291,7 +291,7 @@ Each rival row goes on all six teams of that fight: May or Brendan, with each st
 - **6/0 runs away harder than 1/5** under the targets: measured against the lowest member, a rotating team's lowest member is higher, so every target raises more.
 - Each game option (a bench share, a cutoff or an exponent) would need a config in `include/config/`, code in `Cmd_getexp` / `ApplyExperienceMultipliers` and tests in `test/battle/exp.c`. That's a follow-up once the owner picks a curve.
 
-**Percent gaps and a soft over-level falloff.** The explorer can also set the targets in percent of the reference (`gap_unit`), and the cutoff in percent of the foe's level (`overlevel_unit`). The cutoff can also fall off instead of dropping straight to 1 exp: past it, the exp halves every `overlevel_halflife` levels (or percent), as a 4096ths multiplier the way the game's own multipliers work. Wallace's ace and the highest member's peak, with #150's targets in levels (5 / 10, margin 1) and in percent (trainers 10%, wilds 20%, margin 2%):
+**Percent gaps and a soft over-level falloff** (#151 and #154's halving knob, since replaced by #189's logistic). The explorer can also set the targets in percent of the reference (`gap_unit`), and the cutoff in percent of the foe's level (`overlevel_unit`). The cutoff can also fall off instead of dropping straight to 1 exp: past it, the exp halves every `overlevel_halflife` levels (or percent), as a 4096ths multiplier the way the game's own multipliers work. Wallace's ace and the highest member's peak, with #150's targets in levels (5 / 10, margin 1) and in percent (trainers 10%, wilds 20%, margin 2%):
 
 | over-level option | levels, 1/5 | levels, 6/0 | percent, 1/5 | percent, 6/0 |
 |---|---|---|---|---|
