@@ -8,14 +8,15 @@
 #include "item.h"
 #include "item_icon.h"
 #include "item_menu.h"
-#include "list_menu.h"
 #include "main.h"
 #include "menu.h"
 #include "script.h"
 #include "script_menu.h"
 #include "sound.h"
 #include "sprite.h"
+#include "string_util.h"
 #include "task.h"
+#include "text.h"
 #include "window.h"
 #include "constants/songs.h"
 
@@ -29,31 +30,29 @@
 STATIC_ASSERT(sizeof(((struct Bag *)0)->extraRegisteredItems) <= sizeof(((struct Bag *)0)->items), ExtraRegisteredItemsFitInOldItemsPocket);
 STATIC_ASSERT(offsetof(struct Bag, keyItems) == sizeof(struct ItemSlot) * BAG_ITEMS_COUNT, ExtraRegisteredItemsKeepBagLayout);
 #endif
-STATIC_ASSERT(I_REGISTERED_ITEMS_COUNT >= 1, RegisteredItemsCountAtLeastOne);
+STATIC_ASSERT(I_REGISTERED_ITEMS_COUNT >= 1 && I_REGISTERED_ITEMS_COUNT <= 9, RegisteredItemsCountIsOneDigit); // The selector prints "n/N"
 
 #define TAG_REGISTERED_ITEM_ICON 5501
+#define SELECTOR_SHOW_DELAY      12 // Frames Select is held before the selector shows
+#define SELECTOR_TEXT_X          28 // The icon takes the window's first 24 pixels
+#define SELECTOR_HEIGHT          4  // Tiles: the name, then the arrows and position
 
-#define tListTaskId data[0]
-#define tWindowId   data[1]
-#define tReady      data[2]
+enum {
+    SELECTOR_HOLDING, // Select held: the D-pad rotates, and a release without rotating uses the item
+    SELECTOR_OPEN,    // Released after rotating: Select or A uses the item, B closes
+};
+
+#define tState        data[0]
+#define tSlot         data[1]
+#define tCount        data[2]
+#define tWindowId     data[3]
+#define tHeldFrames   data[4]
+#define tRotated      data[5]
+#define tIconSpriteId data[6]
 
 static EWRAM_DATA enum Item sLastRegisteredItemUsed = ITEM_NONE;
-static EWRAM_DATA struct ListMenuItem sMenuItems[I_REGISTERED_ITEMS_COUNT] = {0};
-static EWRAM_DATA u8 sIconSpriteId = 0;
-static EWRAM_DATA u8 sIconX = 0;
-static EWRAM_DATA u8 sIconY = 0;
 
-static const struct ListMenuTemplate sRegisteredItemsListTemplate =
-{
-    .item_X = 8,
-    .upText_Y = 1,
-    .cursorPal = 2,
-    .fillValue = 1,
-    .cursorShadowPal = 3,
-    .lettersSpacing = 1,
-    .scrollMultiple = LIST_NO_MULTIPLE_SCROLL,
-    .fontId = FONT_NORMAL,
-};
+static const u8 sText_SelectorPosition[] = _("{LEFT_ARROW}{STR_VAR_1}/{STR_VAR_2}{RIGHT_ARROW}");
 
 static u16 *GetRegisteredItemSlot(u32 slot)
 {
@@ -189,132 +188,161 @@ static void UseRegisteredItem(enum Item item)
 
 #undef tUsingRegisteredKeyItem
 
-static void ShowRegisteredItemIcon(enum Item item)
+static void BufferSelectorPosition(u32 slot, u32 count)
 {
-    sIconSpriteId = AddItemIconSprite(TAG_REGISTERED_ITEM_ICON, TAG_REGISTERED_ITEM_ICON, item);
-    if (sIconSpriteId != MAX_SPRITES)
+    ConvertIntToDecimalStringN(gStringVar1, slot + 1, STR_CONV_MODE_LEFT_ALIGN, 1);
+    ConvertIntToDecimalStringN(gStringVar2, count, STR_CONV_MODE_LEFT_ALIGN, 1);
+    StringExpandPlaceholders(gStringVar4, sText_SelectorPosition);
+}
+
+static void HideSelectorIcon(s16 *data)
+{
+    // Frees the tiles and palette only if no object event uses them
+    if (tIconSpriteId != MAX_SPRITES)
+        FieldEffectFreeGraphicsResources(&gSprites[tIconSpriteId]);
+    tIconSpriteId = MAX_SPRITES;
+}
+
+// The selector, in the top-right corner like the start menu: one item at a time, its icon, name and position
+static void DrawSelector(s16 *data)
+{
+    enum Item item = GetRegisteredItem(tSlot);
+    u32 i, width, left;
+
+    if (tWindowId == WINDOW_NONE)
     {
-        gSprites[sIconSpriteId].oam.priority = 0;
-        gSprites[sIconSpriteId].x = sIconX;
-        gSprites[sIconSpriteId].y = sIconY;
+        // Wide enough for every name, so the window keeps its size as it rotates
+        BufferSelectorPosition(tCount - 1, tCount);
+        width = GetStringWidth(FONT_NORMAL, gStringVar4, 0);
+        for (i = 0; i < tCount; i++)
+            width = max(width, GetStringWidth(FONT_NORMAL, GetItemName(GetRegisteredItem(i)), 0));
+        width = (SELECTOR_TEXT_X + width + 4 + 7) / 8;
+        left = DISPLAY_TILE_WIDTH - 2 - width; // The frame's left column; its right one is the screen's last
+
+        PlaySE(SE_WIN_OPEN);
+        LoadMessageBoxAndBorderGfx();
+        tWindowId = CreateWindowFromRect(left, 0, width, SELECTOR_HEIGHT);
+        SetStandardWindowBorderStyle(tWindowId, FALSE);
+    }
+
+    FillWindowPixelBuffer(tWindowId, PIXEL_FILL(1));
+    AddTextPrinterParameterized(tWindowId, FONT_NORMAL, GetItemName(item), SELECTOR_TEXT_X, 1, TEXT_SKIP_DRAW, NULL);
+    BufferSelectorPosition(tSlot, tCount);
+    AddTextPrinterParameterized(tWindowId, FONT_NORMAL, gStringVar4, SELECTOR_TEXT_X, 17, TEXT_SKIP_DRAW, NULL);
+    CopyWindowToVram(tWindowId, COPYWIN_FULL);
+
+    HideSelectorIcon(data);
+    tIconSpriteId = AddItemIconSprite(TAG_REGISTERED_ITEM_ICON, TAG_REGISTERED_ITEM_ICON, item);
+    if (tIconSpriteId != MAX_SPRITES)
+    {
+        gSprites[tIconSpriteId].oam.priority = 0;
+        gSprites[tIconSpriteId].x = (GetWindowAttribute(tWindowId, WINDOW_TILEMAP_LEFT) * 8) + 12;
+        gSprites[tIconSpriteId].y = 8 + SELECTOR_HEIGHT * 4;
     }
 }
 
-static void HideRegisteredItemIcon(void)
-{
-    // Frees the tiles and palette only if no object event uses them
-    if (sIconSpriteId != MAX_SPRITES)
-        FieldEffectFreeGraphicsResources(&gSprites[sIconSpriteId]);
-    sIconSpriteId = MAX_SPRITES;
-}
-
-static void RegisteredItemsMenu_MoveCursor(s32 itemIndex, bool8 onInit, struct ListMenu *list)
-{
-    if (!onInit)
-        PlaySE(SE_SELECT);
-    HideRegisteredItemIcon();
-    ShowRegisteredItemIcon(GetRegisteredItem(itemIndex));
-}
-
-static void CloseRegisteredItemsMenu(u8 taskId)
+static void CloseSelector(u8 taskId)
 {
     s16 *data = gTasks[taskId].data;
 
-    HideRegisteredItemIcon();
-    DestroyListMenuTask(tListTaskId, NULL, NULL);
-    ClearStdWindowAndFrame(tWindowId, TRUE);
-    RemoveWindow(tWindowId);
+    if (tWindowId != WINDOW_NONE)
+    {
+        HideSelectorIcon(data);
+        ClearStdWindowAndFrame(tWindowId, TRUE);
+        RemoveWindow(tWindowId);
+    }
     DestroyTask(taskId);
 }
 
-static void Task_RegisteredItemsMenu(u8 taskId)
+static void UseSelectedItem(u8 taskId)
+{
+    enum Item item = GetRegisteredItem(gTasks[taskId].tSlot);
+
+    CloseSelector(taskId);
+    UseRegisteredItem(item);
+}
+
+// Right or Down shows the next item, Left or Up the previous one, and both wrap
+static bool32 TryRotateSelector(s16 *data)
+{
+    if (JOY_NEW(DPAD_RIGHT | DPAD_DOWN))
+        tSlot = (tSlot + 1) % tCount;
+    else if (JOY_NEW(DPAD_LEFT | DPAD_UP))
+        tSlot = (tSlot + tCount - 1) % tCount;
+    else
+        return FALSE;
+    PlaySE(SE_SELECT);
+    DrawSelector(data);
+    return TRUE;
+}
+
+// Works like the battle's last-used Ball (B_LAST_USED_BALL_CYCLE): a tap of Select uses the item shown, which starts
+// as the last one used, and holding Select while pressing the D-pad rotates to another without using it
+static void Task_RegisteredItemSelector(u8 taskId)
 {
     s16 *data = gTasks[taskId].data;
-    s32 input;
 
-    // The task first runs in the frame of the Select press that opened the menu
-    if (!tReady)
+    if (JOY_NEW(B_BUTTON))
     {
-        tReady = TRUE;
-        return;
-    }
-
-    // Select again steps down the list, and wraps
-    if (JOY_NEW(SELECT_BUTTON))
-    {
-        struct ListMenu *list = (struct ListMenu *)gTasks[tListTaskId].data;
-        u16 selected;
-
-        ListMenuGetCurrentItemArrayId(tListTaskId, &selected);
-        if (selected + 1 < list->template.totalItems)
-            ListMenuChangeSelectionFull(list, TRUE, TRUE, 1, TRUE);
-        else
-            ListMenuChangeSelectionFull(list, TRUE, TRUE, selected, FALSE);
-        return;
-    }
-
-    input = ListMenu_ProcessInput(tListTaskId);
-    switch (input)
-    {
-    case LIST_NOTHING_CHOSEN:
-        break;
-    case LIST_CANCEL:
         PlaySE(SE_SELECT);
-        CloseRegisteredItemsMenu(taskId);
+        CloseSelector(taskId);
         ScriptUnfreezeObjectEvents();
         UnlockPlayerFieldControls();
-        break;
-    default:
-        PlaySE(SE_SELECT);
-        CloseRegisteredItemsMenu(taskId);
-        UseRegisteredItem(GetRegisteredItem(input));
-        break;
+        return;
     }
-}
 
-// A small menu in the top-right corner: the registered items' names, and the highlighted one's icon to their right
-static void OpenRegisteredItemsMenu(u32 count)
-{
-    u32 i, textWidth, windowLeft, windowWidth, cursor = 0;
-    s32 width = 0;
-    u8 taskId, windowId;
-
-    for (i = 0; i < count; i++)
+    switch (tState)
     {
-        enum Item item = GetRegisteredItem(i);
-
-        sMenuItems[i].name = GetItemName(item);
-        sMenuItems[i].id = i;
-        width = DisplayTextAndGetWidth(sMenuItems[i].name, width);
-        if (item == sLastRegisteredItemUsed)
-            cursor = i;
+    case SELECTOR_HOLDING:
+        if (!JOY_HELD(SELECT_BUTTON))
+        {
+            if (tRotated)
+                tState = SELECTOR_OPEN;
+            else
+                UseSelectedItem(taskId);
+        }
+        else if (TryRotateSelector(data))
+        {
+            tRotated = TRUE;
+        }
+        else if (tWindowId == WINDOW_NONE && ++tHeldFrames >= SELECTOR_SHOW_DELAY)
+        {
+            DrawSelector(data);
+        }
+        break;
+    case SELECTOR_OPEN:
+        if (JOY_NEW(A_BUTTON))
+        {
+            PlaySE(SE_SELECT);
+            UseSelectedItem(taskId);
+        }
+        else if (JOY_NEW(SELECT_BUTTON))
+        {
+            tState = SELECTOR_HOLDING;
+            tRotated = FALSE;
+        }
+        else
+        {
+            TryRotateSelector(data);
+        }
+        break;
     }
-    textWidth = ConvertPixelWidthToTileWidth(width);
-    windowWidth = textWidth + 3;
-    windowLeft = DISPLAY_TILE_WIDTH - 2 - windowWidth; // The frame's left column; its right one is the screen's last
-    sIconX = (windowLeft + 1 + textWidth) * 8 + 12;
-    sIconY = 8 + count * 8;
-    sIconSpriteId = MAX_SPRITES;
-
-    PlaySE(SE_WIN_OPEN);
-    LoadMessageBoxAndBorderGfx();
-    windowId = CreateWindowFromRect(windowLeft, 0, windowWidth, count * 2);
-    SetStandardWindowBorderStyle(windowId, FALSE);
-
-    gMultiuseListMenuTemplate = sRegisteredItemsListTemplate;
-    gMultiuseListMenuTemplate.windowId = windowId;
-    gMultiuseListMenuTemplate.items = sMenuItems;
-    gMultiuseListMenuTemplate.totalItems = count;
-    gMultiuseListMenuTemplate.maxShowed = count;
-    gMultiuseListMenuTemplate.moveCursorFunc = RegisteredItemsMenu_MoveCursor;
-
-    taskId = CreateTask(Task_RegisteredItemsMenu, 8);
-    gTasks[taskId].tWindowId = windowId;
-    gTasks[taskId].tListTaskId = ListMenuInit(&gMultiuseListMenuTemplate, 0, cursor);
-    CopyWindowToVram(windowId, COPYWIN_FULL);
 }
 
-// Select in the field (UseRegisteredKeyItemOnField): uses the registered item, or with several opens a menu of them
+static void StartRegisteredItemSelector(u32 count)
+{
+    u8 taskId = CreateTask(Task_RegisteredItemSelector, 8);
+    s16 *data = gTasks[taskId].data;
+    s32 slot = FindRegisteredItemSlot(sLastRegisteredItemUsed);
+
+    tState = SELECTOR_HOLDING;
+    tSlot = slot >= 0 ? slot : 0;
+    tCount = count;
+    tWindowId = WINDOW_NONE;
+    tIconSpriteId = MAX_SPRITES;
+}
+
+// Select in the field (UseRegisteredKeyItemOnField): uses the registered item, or with several starts the selector
 void UseRegisteredItemsOnField(void)
 {
     u32 count;
@@ -334,5 +362,5 @@ void UseRegisteredItemsOnField(void)
     if (count == 1)
         UseRegisteredItem(GetRegisteredItem(0));
     else
-        OpenRegisteredItemsMenu(count);
+        StartRegisteredItemSelector(count);
 }
