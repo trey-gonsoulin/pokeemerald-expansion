@@ -16,7 +16,7 @@ EventScript_EndUseSurf::
 EventScript_CurrentTooFast::
 	lockall
 	checkfieldmove FIELD_MOVE_SURF
-	goto_if_eq VAR_RESULT, FALSE, EventScript_CurrentTooFastEndMsg
+	goto_if_eq VAR_RESULT, PARTY_SIZE, EventScript_CurrentTooFastEndMsg
 	playse SE_SELECT
 	msgbox Text_CurrentTooFast
 EventScript_CurrentTooFastEndMsg::
