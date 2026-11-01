@@ -13,7 +13,7 @@
 #define OW_DEFOG_FIELD_MOVE             FALSE      // If enabled, Defog can be used as a Field Move as seen in DPPt.
 #define OW_ROCK_CLIMB_FIELD_MOVE        FALSE      // If enabled, Rock Climb can be used as a Field Move as seen in DPPt.
 #define OW_CHOOSE_FROM_PC_AND_PARTY     TRUE       // If enabled, NPCs like move tutors or trainers asking for trade will let you pick a Pokémon from your PC or party instead of just your party
-#define OW_FIELD_MOVES_WITHOUT_MON      TRUE       // If enabled, the travel HMs (Cut, Flash, Rock Smash, Strength, Surf, Fly, Dive, Waterfall, Rock Climb) only need their badge, as in later games: the party's lead stands in when nobody knows the move, and Flash lights caves on entry. Pair with OW_FLAG_POKE_RIDER for Fly.
+#define OW_FIELD_MOVES_WITHOUT_MON      TRUE       // If enabled, the field moves unlocked by a badge (Cut, Flash, Rock Smash, Strength, Surf, Fly, Dive, Waterfall) only need that badge, as in later games: the party's lead stands in when nobody knows the move, Flash lights caves on entry, and OW_FLAG_POKE_RIDER flies from the Town Map.
 
 // Item Obtain Description Box
 #define OW_ITEM_DESCRIPTIONS_OFF        0   // never show descriptions
@@ -112,7 +112,7 @@
 #define OW_FLAG_PAUSE_TIME          0  // If this flag is set and OW_USE_FAKE_RTC is enabled, seconds on the in-game clock will not advance.
 #define OW_FLAG_NO_TRAINER_SEE      0  // If this flag is set, trainers will not battle the player unless they're talked to.
 #define OW_FLAG_NO_COLLISION        0  // If this flag is set, the player will be able to walk over tiles with collision. Mainly intended for debugging purposes.
-#define OW_FLAG_POKE_RIDER          FLAG_BADGE06_GET  // If this flag is set, the player will be able to use fly from the Pokenav Region Map and the Town Map key item by pressing 'R' on a city/location they are able to fly to.
+#define OW_FLAG_POKE_RIDER          (OW_FIELD_MOVES_WITHOUT_MON ? (IS_FRLG ? FLAG_BADGE03_GET : FLAG_BADGE06_GET) : 0)  // (emerald-plus: Fly's badge with OW_FIELD_MOVES_WITHOUT_MON) If this flag is set, the player will be able to use fly from the Pokenav Region Map and the Town Map key item by pressing 'R' on a city/location they are able to fly to.
 
 #define BATTLE_PYRAMID_RANDOM_ENCOUNTERS    FALSE    // If set to TRUE, battle pyramid Pokemon will be generated randomly based on the round's challenge instead of hardcoded in src/data/battle_frontier/battle_pyramid_level_50_wild_mons.h (or open_level_wild_mons.h)
 

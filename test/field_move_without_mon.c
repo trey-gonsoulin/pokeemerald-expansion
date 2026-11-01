@@ -56,6 +56,8 @@ TEST("Field move without mon: travel HMs fall back to the lead once the badge is
     PARAMETRIZE { kinds[0] = MON_FAINTED; expected = LEAD(1); }
     PARAMETRIZE { kinds[0] = MON_EGG_KNOWER; expected = LEAD(1); }
     PARAMETRIZE { kinds[0] = MON_EGG_KNOWER; kinds[2] = MON_KNOWER; expected = 2; }
+    PARAMETRIZE { kinds[0] = MON_FAINTED; kinds[1] = MON_FAINTED; kinds[2] = MON_FAINTED; expected = LEAD(0); }
+    PARAMETRIZE { kinds[0] = MON_EGG_KNOWER; kinds[1] = MON_NONE; kinds[2] = MON_NONE; expected = PARTY_SIZE; }
     PARAMETRIZE { fieldMove = FIELD_MOVE_SURF; badge = FLAG_BADGE05_GET; }
     PARAMETRIZE { fieldMove = FIELD_MOVE_DIVE; badge = FLAG_BADGE07_GET; }
     PARAMETRIZE { fieldMove = FIELD_MOVE_DIVE; badge = FLAG_BADGE07_GET; hasBadge = FALSE; expected = PARTY_SIZE; }
@@ -63,6 +65,7 @@ TEST("Field move without mon: travel HMs fall back to the lead once the badge is
     PARAMETRIZE { fieldMove = FIELD_MOVE_DIG; expected = PARTY_SIZE; }
     PARAMETRIZE { fieldMove = FIELD_MOVE_SWEET_SCENT; expected = PARTY_SIZE; }
     PARAMETRIZE { fieldMove = FIELD_MOVE_SECRET_POWER; kinds[1] = MON_KNOWER; expected = 1; }
+    PARAMETRIZE { fieldMove = FIELD_MOVE_ROCK_CLIMB; expected = PARTY_SIZE; }
 
     SetUpFieldMoveParty(kinds, FieldMove_GetMoveId(fieldMove));
     savedBadge = FlagGet(badge);
