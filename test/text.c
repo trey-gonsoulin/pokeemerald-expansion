@@ -595,6 +595,27 @@ TEST("Map names fit in popup")
     EXPECT_LE(GetStringWidth(fontId, GetPopUpMapName(mapName, Overworld_GetMapHeaderByGroupAndId(mapGroup, mapNum)), 0), widthPx);
 }
 
+// The fork's B2W2 bar (#202) prints the name from x 8 across the 30-tile window.
+TEST("Map names fit in the Gen 5 popup")
+{
+    ASSUME(OW_POPUP_GENERATION == GEN_5);
+    const u32 fontId = FONT_SHORT;
+    u32 widthPx = DISPLAY_WIDTH - 8;
+    s8 mapGroup = 0;
+    s8 mapNum = 0;
+    u8 mapName[MAP_POPUP_STRING_BUFFER_LENGTH - MAP_POPUP_PREFIX_BUFFER_LENGTH];
+    for (u32 i = 0; MAP_GROUP_COUNT[i] != 0; i++)
+    {
+        for (u32 j = 0; j < MAP_GROUP_COUNT[i]; j++)
+        {
+            const struct MapHeader *mapHeader = Overworld_GetMapHeaderByGroupAndId(i, j);
+            if (mapHeader->showMapName)
+                PARAMETRIZE_LABEL("%S", GetPopUpMapName(mapName, mapHeader)) { mapGroup = i; mapNum = j;}
+        }
+    }
+    EXPECT_LE(GetStringWidth(fontId, GetPopUpMapName(mapName, Overworld_GetMapHeaderByGroupAndId(mapGroup, mapNum)), 0), widthPx);
+}
+
 extern u16 sBattlerAbilities[MAX_BATTLERS_COUNT];
 //*
 #define BATTLE_STRING_BUFFER_SIZE 1000
