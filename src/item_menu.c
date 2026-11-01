@@ -2165,7 +2165,6 @@ static void Task_ItemContext_UseOnPartyMon(u8 taskId)
     {
         FillWindowPixelBuffer(WIN_DESCRIPTION, PIXEL_FILL(0));
         ScheduleBgCopyTilemapToVram(0);
-        SetItemUseOnChosenMonPending();
         GetItemFieldFunc(gSpecialVar_ItemId)(taskId);
     }
     else

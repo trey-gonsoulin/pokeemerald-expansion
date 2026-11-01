@@ -92,8 +92,8 @@ What the fork adds over upstream (`git diff origin/master...origin/emerald-plus 
   - **What it does.** It opens the bag on the Items pocket (`ITEMMENULOCATION_PARTY_USE`, `src/item_menu.c`). Any pocket but Key Items works. The item goes on that Pokémon, and the bag stays open for the next one. B goes back to the party menu on that Pokémon.
   - **Which items.** An item works if it opens the party menu (`ITEM_USE_PARTY_MENU` or `_MOVES`): Medicine, Rare Candy, vitamins, Ethers, stones, TMs. Anything else gets "can't be used on a POKéMON" (`CanUseItemOnChosenPartyMon`, `src/party_menu.c`).
   - **How.** The item's own field function opens the item-use party menu as usual.
-    - `CB2_ShowPartyMenuForItemUse` then runs `gItemUseCB` on the kept slot (`sItemUseMonSlot`), once per pick (`sItemUseOnChosenMonPending`).
-    - Every way back to choosing a Pokémon goes back to the bag instead (`IsUsingItemOnChosenMon`, in `Task_ReturnToChooseMonAfterText`, `ReturnToUseOnWhichMon` and `Task_HandleChooseMonInput`), and so does a Rare Candy evolution's return.
+    - `CB2_ShowPartyMenuForItemUse` then runs `gItemUseCB` on the kept slot (`sItemUseMonSlot`; Sacred Ash moves `gPartyMenu.slotId`).
+    - Every way back to choosing a Pokémon goes back to the bag instead (`IsUsingItemOnChosenMon`, in `Task_ReturnToChooseMonAfterText`, `ReturnToUseOnWhichMon` and `Task_HandleChooseMonInput`), and so does a Rare Candy evolution's return (`PartyMenuTryEvolution`), which would otherwise reopen the item-use party menu and use the candy again.
     - Sacred Ash still revives the whole party.
   - **Where it's offered.** `CanUseItemFromThisPartyMenu` gates it like #185's Box: start menu only, not in the Battle Pyramid, link play or the Union Room. The ITEM window grows to five rows only when Use is in it.
   - **TMs from the Pokémon's side.** These come from upstream's TM relearner (`P_TM_MOVES_RELEARNER`, `include/config/summary_screen.h`), turned on with #193: the summary screen's Relearn lists the bag's TMs the Pokémon can learn. #194 (P3) would add the TM pocket with ABLE/NOT ABLE marks.
