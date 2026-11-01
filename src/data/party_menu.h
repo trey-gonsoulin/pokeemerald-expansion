@@ -798,6 +798,7 @@ struct
     [MENU_CANCEL1]         = {gText_Cancel2,                      CursorCb_Cancel1},
     [MENU_ITEM]            = {COMPOUND_STRING("ITEM"),            CursorCb_Item},
     [MENU_GIVE]            = {gMenuText_Give,                     CursorCb_Give},
+    [MENU_USE_ITEM]        = {gMenuText_Use,                      CursorCb_UseItem},
     [MENU_TAKE_ITEM]       = {COMPOUND_STRING("TAKE"),            CursorCb_TakeItem},
     [MENU_MOVE_ITEM]       = {COMPOUND_STRING("MOVE"),            CursorCb_MoveItem},
     [MENU_MAIL]            = {COMPOUND_STRING("MAIL"),            CursorCb_Mail},
