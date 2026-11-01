@@ -1,5 +1,6 @@
 #include "global.h"
 #include "overworld.h"
+#include "bag_holds_everything.h"
 #include "battle_pyramid.h"
 #include "battle_setup.h"
 #include "battle_util.h"
@@ -2123,6 +2124,7 @@ void CB2_ContinueSavedGame(void)
 
     FieldClearVBlankHBlankCallbacks();
     StopMapMusic();
+    ConvertSaveForBagHoldsEverything();
     ResetSafariZoneFlag_();
     if (gSaveFileStatus == SAVE_STATUS_ERROR)
         ResetWinStreaks();

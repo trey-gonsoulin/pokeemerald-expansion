@@ -31,6 +31,13 @@
 #define I_EXP_SHARE_FLAG        FLAG_UNUSED_0x264           // If this flag is set, every Pokémon in the party will gain experience, regardless if they participated in the battle or not.
 #define I_EXP_SHARE_ITEM        GEN_6       // In Gen6+, the Exp. Share is a Key item that toggles the effect described above.
 
+// Bag config
+// The Items pocket holds BAG_ITEMS_ALL_COUNT kinds instead of BAG_ITEMS_COUNT, in the bytes of the save's mystery-event
+// script (needs FREE_MYSTERY_EVENT_BUFFERS), and the PC shows Item Storage only while it holds something.
+// Saves from before it are converted on Continue, once, which sets I_BAG_CONVERTED_FLAG.
+#define I_BAG_HOLDS_EVERYTHING      TRUE
+#define I_BAG_CONVERTED_FLAG        FLAG_UNUSED_0x020
+
 // Repel/Lure config
 // These two settings are both independent and complementary.
 #define VAR_LAST_REPEL_LURE_USED    0       // If this var has been assigned, the last Repel/Lure used will be saved and the player will be prompted with the vanilla repel YES/NO option, unless I_REPEL_LURE_MENU is set to TRUE.
