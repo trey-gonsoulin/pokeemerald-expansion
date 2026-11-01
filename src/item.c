@@ -39,6 +39,14 @@ static enum Item SanitizeBagItemId(enum Item itemId);
 
 EWRAM_DATA struct BagPocket gBagPockets[POCKETS_COUNT] = {0};
 
+#if I_BAG_HOLDS_EVERYTHING
+#if FREE_MYSTERY_EVENT_BUFFERS == FALSE
+#error "I_BAG_HOLDS_EVERYTHING needs FREE_MYSTERY_EVENT_BUFFERS: the Items pocket takes ramScript's bytes"
+#endif
+STATIC_ASSERT(sizeof(((struct SaveBlock1 *)0)->bagItems) == sizeof(struct RamScript), BagItemsFillRamScript);
+FEATURE_FLAG_ASSERT(I_BAG_CONVERTED_FLAG, BagConvertedFlag);
+#endif
+
 #include "data/pokemon/item_effects.h"
 #include "data/items.h"
 
@@ -144,8 +152,13 @@ void ApplyNewEncryptionKeyToBagItems(u32 newKey)
 
 void SetBagItemsPointers(void)
 {
+#if I_BAG_HOLDS_EVERYTHING
+    gBagPockets[POCKET_ITEMS].itemSlots = gSaveBlock1Ptr->bagItems;
+    gBagPockets[POCKET_ITEMS].capacity = BAG_ITEMS_POCKET_COUNT;
+#else
     gBagPockets[POCKET_ITEMS].itemSlots = gSaveBlock1Ptr->bag.items;
     gBagPockets[POCKET_ITEMS].capacity = BAG_ITEMS_COUNT;
+#endif
     gBagPockets[POCKET_ITEMS].id = POCKET_ITEMS;
 
     gBagPockets[POCKET_KEY_ITEMS].itemSlots = gSaveBlock1Ptr->bag.keyItems;
@@ -566,6 +579,9 @@ void MoveItemSlotInPC(struct ItemSlot *itemSlots, u32 from, u32 to)
 void ClearBag(void)
 {
     CpuFastFill(0, &gSaveBlock1Ptr->bag, sizeof(struct Bag));
+#if I_BAG_HOLDS_EVERYTHING
+    memset(gSaveBlock1Ptr->bagItems, 0, sizeof(gSaveBlock1Ptr->bagItems));
+#endif
 }
 
 static inline u16 NONNULL BagPocket_CountTotalItemQuantity(struct BagPocket *pocket, enum Item itemId)

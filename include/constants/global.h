@@ -111,6 +111,8 @@ enum Language
 
 // Bag constants
 #define BAG_ITEMS_COUNT 30
+#define BAG_ITEMS_ALL_COUNT 251 // I_BAG_HOLDS_EVERYTHING: the Items pocket fills sizeof(struct RamScript)
+#define BAG_ITEMS_POCKET_COUNT (I_BAG_HOLDS_EVERYTHING ? BAG_ITEMS_ALL_COUNT : BAG_ITEMS_COUNT)
 #define BAG_KEYITEMS_COUNT 30
 #define BAG_POKEBALLS_COUNT 16
 #define BAG_TMHM_COUNT 64
