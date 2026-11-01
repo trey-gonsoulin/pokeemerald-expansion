@@ -1231,7 +1231,8 @@ void ShowPokemonSummaryScreen(u8 mode, void *mons, u8 monIndex, u8 maxMonIndex, 
         sMonSummaryScreen->lockMovesFlag = TRUE;
         break;
     case SUMMARY_MODE_SELECT_MOVE:
-        sMonSummaryScreen->minPageIndex = PSS_PAGE_BATTLE_MOVES;
+        // Left reaches the Skills page, but the screen opens on Battle Moves (#199)
+        sMonSummaryScreen->minPageIndex = PSS_PAGE_SKILLS;
         sMonSummaryScreen->maxPageIndex = maxPageIndex;
         sMonSummaryScreen->lockMonFlag = TRUE;
         break;
@@ -1241,6 +1242,8 @@ void ShowPokemonSummaryScreen(u8 mode, void *mons, u8 monIndex, u8 maxMonIndex, 
         sMonSummaryScreen->currPageIndex = PSS_PAGE_BATTLE_MOVES;
     else if (mode == SUMMARY_MODE_RELEARNER_CONTEST)
         sMonSummaryScreen->currPageIndex = PSS_PAGE_CONTEST_MOVES;
+    else if (mode == SUMMARY_MODE_SELECT_MOVE)
+        sMonSummaryScreen->currPageIndex = PSS_PAGE_BATTLE_MOVES;
     else
         sMonSummaryScreen->currPageIndex = sMonSummaryScreen->minPageIndex;
 
@@ -1587,15 +1590,13 @@ static void SetDefaultTilemaps(void)
         DrawContestMoveHearts(sMonSummaryScreen->summary.moves[sMonSummaryScreen->firstMoveIndex]);
         TilemapFiveMovesDisplay(sMonSummaryScreen->bgTilemapBuffers[PSS_PAGE_BATTLE_MOVES][0], 3, FALSE);
         TilemapFiveMovesDisplay(sMonSummaryScreen->bgTilemapBuffers[PSS_PAGE_CONTEST_MOVES][0], 1, FALSE);
-        SetBgTilemapBuffer(1, sMonSummaryScreen->bgTilemapBuffers[PSS_PAGE_CONTEST_MOVES][0]);
-        SetBgTilemapBuffer(2, sMonSummaryScreen->bgTilemapBuffers[PSS_PAGE_BATTLE_MOVES][0]);
-        ChangeBgX(2, 0x10000, BG_COORD_ADD);
         ClearWindowTilemap(PSS_LABEL_WINDOW_PORTRAIT_SPECIES);
         ClearWindowTilemap(PSS_LABEL_WINDOW_POKEMON_SKILLS_STATUS);
     }
 
     // these blocks handle preparing the gfx to return straight to the respective move info screens
-    if (sMonSummaryScreen->mode == SUMMARY_MODE_RELEARNER_BATTLE)
+    // SUMMARY_MODE_SELECT_MOVE also opens on Battle Moves with Skills behind it, so Left slides in Skills (#199)
+    if (sMonSummaryScreen->mode == SUMMARY_MODE_RELEARNER_BATTLE || sMonSummaryScreen->mode == SUMMARY_MODE_SELECT_MOVE)
     {
         SetBgTilemapBuffer(1, sMonSummaryScreen->bgTilemapBuffers[PSS_PAGE_SKILLS][0]);
         SetBgTilemapBuffer(2, sMonSummaryScreen->bgTilemapBuffers[PSS_PAGE_BATTLE_MOVES][0]);
@@ -2614,7 +2615,17 @@ static void Task_HandleReplaceMoveInput(u8 taskId)
     {
         if (gPaletteFade.active != TRUE)
         {
-            if (JOY_NEW(DPAD_UP))
+            if (sMonSummaryScreen->currPageIndex == PSS_PAGE_SKILLS && JOY_NEW(DPAD_UP | DPAD_DOWN | A_BUTTON))
+            {
+                // No move is shown on the Skills page (#199): Up and Down do nothing, and A cycles the stats, IVs and EVs
+                if (JOY_NEW(A_BUTTON) && ShouldShowIvEvPrompt())
+                {
+                    ShowMonSkillsInfo(taskId, IncrementSkillsStatsMode(sMonSummaryScreen->skillsPageMode));
+                    gTasks[taskId].func = Task_HandleReplaceMoveInput; // ShowMonSkillsInfo sets Task_HandleInput
+                    PlaySE(SE_SELECT);
+                }
+            }
+            else if (JOY_NEW(DPAD_UP))
             {
                 data[0] = 4;
                 ChangeSelectedMove(data, -1, &sMonSummaryScreen->firstMoveIndex);
@@ -3323,6 +3334,13 @@ static void PutPageWindowTilemaps(u8 page)
         PutWindowTilemap(PSS_LABEL_WINDOW_POKEMON_SKILLS_EXP);
         if (ShouldShowIvEvPrompt())
             PutWindowTilemap(PSS_LABEL_WINDOW_PROMPT_UTILITY);
+        if (sMonSummaryScreen->mode == SUMMARY_MODE_SELECT_MOVE)
+        {
+            // The move pages' power/accuracy window covers these, so they're off there (#199)
+            PutWindowTilemap(PSS_LABEL_WINDOW_PORTRAIT_SPECIES);
+            if (!gSprites[sMonSummaryScreen->spriteIds[SPRITE_ARR_ID_STATUS]].invisible)
+                PutWindowTilemap(PSS_LABEL_WINDOW_POKEMON_SKILLS_STATUS);
+        }
         break;
     case PSS_PAGE_BATTLE_MOVES:
         PutWindowTilemap(PSS_LABEL_WINDOW_BATTLE_MOVES_TITLE);
@@ -3380,6 +3398,11 @@ static void ClearPageWindowTilemaps(u8 page)
         if (ShouldShowIvEvPrompt())
             ClearWindowTilemap(PSS_LABEL_WINDOW_PROMPT_UTILITY);
         ClearWindowTilemap(PSS_LABEL_WINDOW_PROMPT_RELEARN);
+        if (sMonSummaryScreen->mode == SUMMARY_MODE_SELECT_MOVE)
+        {
+            ClearWindowTilemap(PSS_LABEL_WINDOW_PORTRAIT_SPECIES);
+            ClearWindowTilemap(PSS_LABEL_WINDOW_POKEMON_SKILLS_STATUS);
+        }
         break;
     case PSS_PAGE_BATTLE_MOVES:
         if (sMonSummaryScreen->mode == SUMMARY_MODE_SELECT_MOVE)
@@ -4694,6 +4717,10 @@ static void SpriteCB_MoveSelector(struct Sprite *sprite)
         sprite->data[1] = 0;
         sprite->invisible = FALSE;
     }
+
+    // The forget-a-move screen can leave the move pages for Skills (#199)
+    if (!IS_MOVE_PAGE(sMonSummaryScreen->currPageIndex))
+        sprite->invisible = TRUE;
 
     if (sprite->data[0] == SPRITE_ARR_ID_MOVE_SELECTOR1)
         sprite->y2 = sMonSummaryScreen->firstMoveIndex * 16;
