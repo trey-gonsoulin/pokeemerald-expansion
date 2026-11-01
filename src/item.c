@@ -1,6 +1,5 @@
 #include "global.h"
 #include "item.h"
-#include "registered_items.h"
 #include "berry.h"
 #include "pokeball.h"
 #include "string_util.h"
@@ -526,24 +525,6 @@ void CompactPCItems(void)
 {
     struct BagPocket dummyPocket = DUMMY_PC_BAG_POCKET;
     BagPocket_CompactItems(&dummyPocket);
-}
-
-void SwapRegisteredBike(void)
-{
-    for (u32 i = 0; i < I_REGISTERED_ITEMS_COUNT; i++)
-    {
-        switch (GetRegisteredItem(i))
-        {
-        case ITEM_MACH_BIKE:
-            SetRegisteredItem(i, ITEM_ACRO_BIKE);
-            break;
-        case ITEM_ACRO_BIKE:
-            SetRegisteredItem(i, ITEM_MACH_BIKE);
-            break;
-        default:
-            break;
-        }
-    }
 }
 
 void CompactItemsInBagPocket(enum Pocket pocketId)
