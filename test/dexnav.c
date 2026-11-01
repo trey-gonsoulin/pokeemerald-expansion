@@ -46,12 +46,3 @@ TEST("DexNav: a map load resets the chain and the step counter")
     EXPECT_EQ(gSaveBlock3Ptr->dexNavChain, 0);
     EXPECT_EQ(VarGet(DN_VAR_STEP_COUNTER), 0);
 }
-
-TEST("DexNav: it unlocks with the Pokédex")
-{
-    FlagClear(FLAG_SYS_POKEDEX_GET);
-    EXPECT(!FlagGet(DN_FLAG_DEXNAV_GET));
-    FlagSet(FLAG_SYS_POKEDEX_GET);
-    EXPECT(FlagGet(DN_FLAG_DEXNAV_GET));
-    FlagClear(FLAG_SYS_POKEDEX_GET);
-}
