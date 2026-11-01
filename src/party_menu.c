@@ -225,7 +225,7 @@ EWRAM_DATA u8 gBattlePartyCurrentOrder[PARTY_SIZE / 2] = {0}; // bits 0-3 are th
 static EWRAM_DATA u8 sInitialLevel = 0;
 static EWRAM_DATA u8 sFinalLevel = 0;
 static EWRAM_DATA u8 sItemUseMonSlot = 0; // the Pokémon the party menu's Use opened the bag for
-static EWRAM_DATA u8 sFieldBagPocket = 0; // the start menu bag's pocket, which that bag would replace
+static EWRAM_DATA struct BagPosition sFieldBagPosition = {0}; // the start menu bag's pocket and cursors, which that bag shares
 
 // IWRAM common
 COMMON_DATA void (*gItemUseCB)(u8, TaskFunc) = NULL;
@@ -3560,19 +3560,19 @@ static void CursorCb_UseItem(u8 taskId)
 
 static void CB2_SelectBagItemToUse(void)
 {
-    sFieldBagPocket = gBagPosition.pocket;
+    sFieldBagPosition = gBagPosition;
     GoToBagMenu(ITEMMENULOCATION_PARTY_USE, POCKET_ITEMS, CB2_ReturnToPartyMenuFromUseItemBag);
 }
 
 static void CB2_ReturnToPartyMenuFromUseItemBag(void)
 {
-    gBagPosition.location = ITEMMENULOCATION_FIELD;
-    gBagPosition.pocket = sFieldBagPocket;
+    gBagPosition = sFieldBagPosition;
     gPartyMenu.slotId = sItemUseMonSlot;
     CB2_ReturnToPartyMenuFromFlyMap();
 }
 
-// The items that open the party menu to pick a Pokémon, except the flutes and Persim Berry, which don't
+// The items that open the party menu to pick a Pokémon, except the Red, Yellow, Black and White Flutes and Persim
+// Berry, which don't
 bool32 CanUseItemOnChosenPartyMon(enum Item item)
 {
     enum ItemType type = GetItemType(item);
@@ -3581,7 +3581,6 @@ bool32 CanUseItemOnChosenPartyMon(enum Item item)
     return fieldFunc != NULL
         && fieldFunc != ItemUseOutOfBattle_CannotUse
         && fieldFunc != ItemUseOutOfBattle_BlackWhiteFlute
-        && item != ITEM_ENIGMA_BERRY_E_READER
         && GetItemPocket(item) != POCKET_KEY_ITEMS
         && (type == ITEM_USE_PARTY_MENU || type == ITEM_USE_PARTY_MENU_MOVES);
 }
@@ -3593,11 +3592,9 @@ static bool32 IsBagForChosenMon(void)
     return gBagPosition.location == ITEMMENULOCATION_PARTY_USE && CurrentBattlePyramidLocation() == PYRAMID_LOCATION_NONE;
 }
 
-// The party menu must still be the screen: an evolution stone leaves the task running under the evolution scene
 static bool32 IsUsingItemOnChosenMon(void)
 {
-    return gMain.callback2 == CB2_UpdatePartyMenu
-        && gPartyMenu.menuType == PARTY_MENU_TYPE_FIELD
+    return gPartyMenu.menuType == PARTY_MENU_TYPE_FIELD
         && gPartyMenu.exitCallback == CB2_ReturnToBagMenu
         && IsBagForChosenMon();
 }
@@ -3609,6 +3606,9 @@ static void Task_UseItemOnChosenMon(u8 taskId)
         // Callbacks that ask first (Mints, Ability Capsule) restore this func on No, which goes back to the bag
         gTasks[taskId].func = Task_HandleChooseMonInput;
         gItemUseCB(taskId, Task_ClosePartyMenuAfterText);
+        // An evolution stone starts the evolution scene and frees the party menu, but leaves this task running
+        if (gMain.callback2 != CB2_UpdatePartyMenu)
+            DestroyTask(taskId);
     }
 }
 
