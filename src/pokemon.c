@@ -4646,7 +4646,8 @@ enum Species GetEvolutionTargetSpecies(struct Pokemon *mon, enum EvolutionMode m
      && GetGMaxTargetSpecies(species) != species
      && GetGMaxTargetSpecies(targetSpecies) == targetSpecies)
     {
-        sEvolutionItems.mon = NULL;
+        if (evoState == DO_EVO)
+            sEvolutionItems.mon = NULL;
         return SPECIES_NONE;
     }
 

@@ -15,6 +15,7 @@
 #include "easy_chat.h"
 #include "event_data.h"
 #include "event_object_movement.h"
+#include "evolution_ready.h"
 #include "evolution_scene.h"
 #include "field_control_avatar.h"
 #include "field_effect.h"
@@ -206,7 +207,12 @@ struct PartyMenuBox
     u8 itemSpriteId;
     u8 pokeballSpriteId;
     u8 statusSpriteId;
+    u8 evoSpriteId; // P_PARTY_EVOLUTION_MARKER's arrow, which stays with the slot
 };
+
+// The evolution marker's center, from the icon's: the icon's top-right corner, left of the nickname
+#define EVO_MARKER_X_OFFSET 10
+#define EVO_MARKER_Y_OFFSET -8
 
 // EWRAM vars
 static EWRAM_DATA struct PartyMenuInternal *sPartyMenuInternal = NULL;
@@ -287,6 +293,8 @@ static void CreatePartyMonHeldItemSprite(struct Pokemon *, struct PartyMenuBox *
 static void CreatePartyMonPokeballSprite(struct Pokemon *, struct PartyMenuBox *);
 static void CreatePartyMonIconSprite(struct Pokemon *, struct PartyMenuBox *);
 static void CreatePartyMonStatusSprite(struct Pokemon *, struct PartyMenuBox *);
+static void CreatePartyMonEvolutionMarker(struct Pokemon *, struct PartyMenuBox *);
+static void UpdatePartyEvolutionMarkers(void);
 static u8 CreateSmallPokeballButtonSprite(u8, u8);
 static void DrawCancelConfirmButtons(void);
 static u8 CreatePokeballButtonSprite(u8, u8);
@@ -995,6 +1003,7 @@ static void LoadPartyMenuBoxes(enum PartyMenuLayout layout)
         sPartyMenuBoxes[i].itemSpriteId = SPRITE_NONE;
         sPartyMenuBoxes[i].pokeballSpriteId = SPRITE_NONE;
         sPartyMenuBoxes[i].statusSpriteId = SPRITE_NONE;
+        sPartyMenuBoxes[i].evoSpriteId = SPRITE_NONE;
     }
 
     // The first party mon goes in the left column
@@ -1300,6 +1309,7 @@ static void CreatePartyMonSprites(u8 slot)
         CreatePartyMonHeldItemSprite(&party[partySlot], &sPartyMenuBoxes[slot]);
         CreatePartyMonPokeballSprite(&party[partySlot], &sPartyMenuBoxes[slot]);
         CreatePartyMonStatusSprite(&party[partySlot], &sPartyMenuBoxes[slot]);
+        CreatePartyMonEvolutionMarker(&party[partySlot], &sPartyMenuBoxes[slot]);
     }
 }
 
@@ -2115,6 +2125,9 @@ static void Task_ReturnToChooseMonAfterText(u8 taskId)
     {
         ClearStdWindowAndFrameToTransparent(WIN_MSG, FALSE);
         ClearWindowTilemap(WIN_MSG);
+        // Every give, take, move item, mail and item use that keeps the menu open ends here
+        if (!IsUsingItemOnChosenMon())
+            UpdatePartyEvolutionMarkers();
         if (IsUsingItemOnChosenMon())
         {
             Task_ClosePartyMenu(taskId);
@@ -3384,6 +3397,8 @@ static void MovePartyMenuBoxSprites(struct PartyMenuBox *menuBox, s16 offset)
     gSprites[menuBox->itemSpriteId].x2 += offset * 8;
     gSprites[menuBox->monSpriteId].x2 += offset * 8;
     gSprites[menuBox->statusSpriteId].x2 += offset * 8;
+    if (menuBox->evoSpriteId != SPRITE_NONE)
+        gSprites[menuBox->evoSpriteId].x2 += offset * 8;
 }
 
 static void SlidePartyMenuBoxSpritesOneStep(u8 taskId)
@@ -3515,6 +3530,9 @@ static void SwitchPartyMon(void)
     SwitchMenuBoxSprites(&menuBoxes[0]->itemSpriteId, &menuBoxes[1]->itemSpriteId);
     SwitchMenuBoxSprites(&menuBoxes[0]->monSpriteId, &menuBoxes[1]->monSpriteId);
     SwitchMenuBoxSprites(&menuBoxes[0]->statusSpriteId, &menuBoxes[1]->statusSpriteId);
+    // The markers stay with their slots (both are offscreen, so they slide back in with the
+    // new mons), and a new leader can change an IF_MIN_OVERWORLD_STEPS evolution
+    UpdatePartyEvolutionMarkers();
 }
 
 // Finish switching mons or using Softboiled
@@ -4668,6 +4686,29 @@ static void ShowOrHideHeldItemSprite(enum Item item, struct PartyMenuBox *menuBo
         else
             StartSpriteAnim(&gSprites[menuBox->itemSpriteId], 0);
         gSprites[menuBox->itemSpriteId].invisible = FALSE;
+    }
+}
+
+// The field menus only: battles, contests and the Frontier choosers can't evolve a Pokémon
+static void CreatePartyMonEvolutionMarker(struct Pokemon *mon, struct PartyMenuBox *menuBox)
+{
+    if (!P_PARTY_EVOLUTION_MARKER || gPartyMenu.menuType != PARTY_MENU_TYPE_FIELD)
+        return;
+
+    menuBox->evoSpriteId = CreateEvolutionReadyMarkerSprite(menuBox->spriteCoords[0] + EVO_MARKER_X_OFFSET, menuBox->spriteCoords[1] + EVO_MARKER_Y_OFFSET);
+    if (menuBox->evoSpriteId != SPRITE_NONE)
+        gSprites[menuBox->evoSpriteId].invisible = !CanPartyMonEvolveNow(mon);
+}
+
+// Rechecks every slot: an item given to or used on one Pokémon (the last Fire Stone) can change another's
+static void UpdatePartyEvolutionMarkers(void)
+{
+    u32 i;
+
+    for (i = 0; i < PARTY_SIZE; i++)
+    {
+        if (sPartyMenuBoxes[i].evoSpriteId != SPRITE_NONE)
+            gSprites[sPartyMenuBoxes[i].evoSpriteId].invisible = !CanPartyMonEvolveNow(&gParties[B_TRAINER_PLAYER][i]);
     }
 }
 
