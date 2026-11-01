@@ -291,11 +291,11 @@ static void CreatePartyMonStatusSpriteParameterized(enum Species, u8, struct Par
 // These next 4 functions are essentially redundant with the above 4
 // The only difference is that rather than receive the data directly they retrieve it from the mon struct
 static void CreatePartyMonHeldItemSprite(struct Pokemon *, struct PartyMenuBox *);
-static void CreatePartyMonEvolutionMarker(struct Pokemon *, struct PartyMenuBox *);
-static void UpdatePartyEvolutionMarkers(void);
 static void CreatePartyMonPokeballSprite(struct Pokemon *, struct PartyMenuBox *);
 static void CreatePartyMonIconSprite(struct Pokemon *, struct PartyMenuBox *);
 static void CreatePartyMonStatusSprite(struct Pokemon *, struct PartyMenuBox *);
+static void CreatePartyMonEvolutionMarker(struct Pokemon *, struct PartyMenuBox *);
+static void UpdatePartyEvolutionMarkers(void);
 static u8 CreateSmallPokeballButtonSprite(u8, u8);
 static void DrawCancelConfirmButtons(void);
 static u8 CreatePokeballButtonSprite(u8, u8);
