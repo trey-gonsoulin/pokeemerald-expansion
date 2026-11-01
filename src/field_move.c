@@ -219,29 +219,24 @@ u32 GetFieldMoveUserSlot(enum FieldMove fieldMove)
 {
     enum Move move = FieldMove_GetMoveId(fieldMove);
     struct Pokemon *lead;
-    u32 i;
+    u32 i, firstNonEgg = PARTY_SIZE;
 
     for (i = 0; i < PARTY_SIZE; i++)
     {
         struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][i];
         if (GetMonData(mon, MON_DATA_SPECIES) == SPECIES_NONE)
             break;
-        if (!GetMonData(mon, MON_DATA_IS_EGG) && MonKnowsMove(mon, move))
+        if (GetMonData(mon, MON_DATA_IS_EGG))
+            continue;
+        if (MonKnowsMove(mon, move))
             return i;
+        if (firstNonEgg == PARTY_SIZE)
+            firstNonEgg = i;
     }
 
     if (!OW_FIELD_MOVES_WITHOUT_MON || !IsTravelFieldMove(fieldMove) || !IsFieldMoveUnlocked(fieldMove))
         return PARTY_SIZE;
 
     lead = GetFirstLiveMon();
-    if (lead != NULL)
-        return lead - gParties[B_TRAINER_PLAYER];
-    for (i = 0; i < PARTY_SIZE; i++)
-    {
-        if (GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_SPECIES) == SPECIES_NONE)
-            break;
-        if (!GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_IS_EGG))
-            return i;
-    }
-    return PARTY_SIZE;
+    return lead != NULL ? lead - gParties[B_TRAINER_PLAYER] : firstNonEgg;
 }
