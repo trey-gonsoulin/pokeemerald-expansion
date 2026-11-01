@@ -89,7 +89,7 @@ static s32 FindRegisteredItemSlot(enum Item item)
 {
     u32 i;
 
-    for (i = 0; i < CountRegisteredItems(); i++)
+    for (i = 0; i < I_REGISTERED_ITEMS_COUNT && GetRegisteredItem(i) != ITEM_NONE; i++)
     {
         if (GetRegisteredItem(i) == item)
             return i;
@@ -99,7 +99,15 @@ static s32 FindRegisteredItemSlot(enum Item item)
 
 bool32 IsItemRegistered(enum Item item)
 {
-    return item != ITEM_NONE && FindRegisteredItemSlot(item) >= 0;
+    return FindRegisteredItemSlot(item) >= 0;
+}
+
+void ClearRegisteredItems(void)
+{
+    u32 i;
+
+    for (i = 0; i < I_REGISTERED_ITEMS_COUNT; i++)
+        SetRegisteredItem(i, ITEM_NONE);
 }
 
 static void RemoveRegisteredItemSlot(u32 slot)
@@ -131,14 +139,37 @@ bool32 ToggleRegisteredItem(enum Item item)
 
 void RemoveUnownedRegisteredItems(void)
 {
-    u32 i = 0;
+    u32 i, count = CountRegisteredItems(), kept = 0;
 
-    while (i < CountRegisteredItems())
+    for (i = 0; i < count; i++)
     {
-        if (CheckBagHasItem(GetRegisteredItem(i), 1))
-            i++;
-        else
-            RemoveRegisteredItemSlot(i);
+        enum Item item = GetRegisteredItem(i);
+
+        if (CheckBagHasItem(item, 1))
+            SetRegisteredItem(kept++, item);
+    }
+    for (; kept < count; kept++)
+        SetRegisteredItem(kept, ITEM_NONE);
+}
+
+// The Mauville Bike Shop's swap moves a registered bike's slot to the other bike
+void SwapRegisteredBike(void)
+{
+    u32 i;
+
+    for (i = 0; i < I_REGISTERED_ITEMS_COUNT; i++)
+    {
+        switch (GetRegisteredItem(i))
+        {
+        case ITEM_MACH_BIKE:
+            SetRegisteredItem(i, ITEM_ACRO_BIKE);
+            break;
+        case ITEM_ACRO_BIKE:
+            SetRegisteredItem(i, ITEM_MACH_BIKE);
+            break;
+        default:
+            break;
+        }
     }
 }
 
@@ -218,7 +249,6 @@ static void Task_RegisteredItemsMenu(u8 taskId)
     switch (input)
     {
     case LIST_NOTHING_CHOSEN:
-    case LIST_HEADER:
         break;
     case LIST_CANCEL:
         PlaySE(SE_SELECT);

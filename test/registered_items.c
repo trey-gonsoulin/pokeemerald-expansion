@@ -4,16 +4,16 @@
 #include "registered_items.h"
 #include "test/test.h"
 
-static void ClearRegisteredItems(void)
+static void ClearBagAndRegisteredItems(void)
 {
     ClearBag();
-    gSaveBlock1Ptr->registeredItem = ITEM_NONE;
+    ClearRegisteredItems();
 }
 
 TEST("Register items: toggling adds in order and removing keeps the slots packed")
 {
     ASSUME(I_REGISTERED_ITEMS_COUNT >= 3);
-    ClearRegisteredItems();
+    ClearBagAndRegisteredItems();
 
     EXPECT(ToggleRegisteredItem(ITEM_MACH_BIKE));
     EXPECT(ToggleRegisteredItem(ITEM_OLD_ROD));
@@ -37,7 +37,7 @@ TEST("Register items: registering past I_REGISTERED_ITEMS_COUNT is refused")
     u32 i;
 
     ASSUME(I_REGISTERED_ITEMS_COUNT < ARRAY_COUNT(items));
-    ClearRegisteredItems();
+    ClearBagAndRegisteredItems();
 
     for (i = 0; i < I_REGISTERED_ITEMS_COUNT; i++)
         EXPECT(ToggleRegisteredItem(items[i]));
@@ -50,7 +50,7 @@ TEST("Register items: registering past I_REGISTERED_ITEMS_COUNT is refused")
 TEST("Register items: IsItemRegistered finds slot 0 and the extra slots")
 {
     ASSUME(I_REGISTERED_ITEMS_COUNT >= 2);
-    ClearRegisteredItems();
+    ClearBagAndRegisteredItems();
 
     EXPECT(!IsItemRegistered(ITEM_NONE));
     ToggleRegisteredItem(ITEM_ACRO_BIKE);
@@ -64,7 +64,7 @@ TEST("Register items: IsItemRegistered finds slot 0 and the extra slots")
 TEST("Register items: SwapRegisteredBike swaps a bike in an extra slot")
 {
     ASSUME(I_REGISTERED_ITEMS_COUNT >= 3);
-    ClearRegisteredItems();
+    ClearBagAndRegisteredItems();
 
     ToggleRegisteredItem(ITEM_OLD_ROD);
     ToggleRegisteredItem(ITEM_MACH_BIKE);
@@ -80,7 +80,7 @@ TEST("Register items: SwapRegisteredBike swaps a bike in an extra slot")
 TEST("Register items: RemoveUnownedRegisteredItems drops items no longer in the bag")
 {
     ASSUME(I_REGISTERED_ITEMS_COUNT >= 4);
-    ClearRegisteredItems();
+    ClearBagAndRegisteredItems();
 
     AddBagItem(ITEM_GOOD_ROD, 1);
     AddBagItem(ITEM_WAILMER_PAIL, 1);
@@ -97,7 +97,7 @@ TEST("Register items: RemoveUnownedRegisteredItems drops items no longer in the 
 
 TEST("Register items: a save with only registeredItem set reads as one registered item")
 {
-    ClearRegisteredItems();
+    ClearBagAndRegisteredItems();
 
     gSaveBlock1Ptr->registeredItem = ITEM_MACH_BIKE;
     EXPECT_EQ(CountRegisteredItems(), 1);
@@ -110,7 +110,7 @@ TEST("Register items: a save with only registeredItem set reads as one registere
 TEST("Register items: the extra slots survive the link bag backup")
 {
     ASSUME(I_REGISTERED_ITEMS_COUNT >= 2);
-    ClearRegisteredItems();
+    ClearBagAndRegisteredItems();
 
     ToggleRegisteredItem(ITEM_MACH_BIKE);
     ToggleRegisteredItem(ITEM_OLD_ROD);
