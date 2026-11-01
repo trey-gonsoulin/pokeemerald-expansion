@@ -851,7 +851,7 @@ static bool8 InitDexNavSearch(enum Species species, u32 environment)
     sDexNavSearchDataPtr->isHiddenMon = (environment == ENCOUNTER_TYPE_HIDDEN) ? TRUE : FALSE;
     sDexNavSearchDataPtr->monLevel = DexNavTryGenerateMonLevel(species, environment);
 
-    if (GetFlashLevel() > 0)
+    if (GetFlashLevel() > 0 && !FlagGet(FLAG_SYS_USE_FLASH))
     {
         DexNavSearchBail(EventScript_TooDark);
         return TRUE;
@@ -2474,7 +2474,7 @@ bool32 TryFindHiddenPokemon(void)
             || sDexNavSearchDataPtr == NULL
             || !FlagGet(DN_FLAG_DETECTOR_MODE)
             || FlagGet(DN_FLAG_SEARCHING)
-            || GetFlashLevel() > 0)
+            || (GetFlashLevel() > 0 && !FlagGet(FLAG_SYS_USE_FLASH)))
     {
         if (stepPtr != NULL)
             (*stepPtr) = 0;

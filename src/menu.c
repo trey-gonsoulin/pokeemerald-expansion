@@ -390,11 +390,20 @@ void DisplayYesNoMenuWithDefault(u8 initialCursorPos)
     CreateYesNoMenu(&sYesNo_WindowTemplates, STD_WINDOW_BASE_TILE_NUM, STD_WINDOW_PALETTE_NUM, initialCursorPos);
 }
 
+// Nine entries (the fork's DexNav, #203) would run off the screen with the 9 px top margin,
+// so a menu that long fills the 18 rows between the frames and starts its entries at y 0.
+#define START_MENU_MAX_HEIGHT 18
+
 u8 AddStartMenuWindow(u8 numActions)
 {
     if (sStartMenuWindowId == WINDOW_NONE)
-        sStartMenuWindowId = AddWindowParameterized(0, 22, 1, 7, (numActions * 2) + 2, 15, 0x139);
+        sStartMenuWindowId = AddWindowParameterized(0, 22, 1, 7, min((numActions * 2) + 2, START_MENU_MAX_HEIGHT), 15, 0x139);
     return sStartMenuWindowId;
+}
+
+u8 GetStartMenuTextTop(u8 numActions)
+{
+    return (numActions * 2) + 2 > START_MENU_MAX_HEIGHT ? 0 : 9;
 }
 
 u8 GetStartMenuWindowId(void)
