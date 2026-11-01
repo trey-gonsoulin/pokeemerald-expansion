@@ -7,6 +7,7 @@
 #include "field_screen_effect.h"
 #include "field_weather.h"
 #include "international_string_util.h"
+#include "event_data.h"
 #include "item.h"
 #include "item_icon.h"
 #include "item_menu.h"
@@ -165,6 +166,7 @@ static void ItemStorage_PrintMenuItem(u8, u32, u8);
 
 static EWRAM_DATA const u8 *sTopMenuOptionOrder = NULL;
 static EWRAM_DATA u8 sTopMenuNumOptions = 0;
+static EWRAM_DATA bool8 sIsBedroomPC = FALSE;
 EWRAM_DATA struct PlayerPCItemPageStruct gPlayerPCItemPageInfo = {};
 static EWRAM_DATA struct ItemStorageMenu *sItemStorageMenu = NULL;
 
@@ -362,23 +364,35 @@ void NewGameInitPCItems(void)
     {
         if (sNewGamePCItems[i][0] == ITEM_NONE || sNewGamePCItems[i][1] == 0)
             break;
-        if (AddPCItem(sNewGamePCItems[i][0], sNewGamePCItems[i][1]) != TRUE)
+        if ((I_BAG_HOLDS_EVERYTHING ? AddBagItem : AddPCItem)(sNewGamePCItems[i][0], sNewGamePCItems[i][1]) != TRUE)
             break;
         i++;
     }
+#if I_BAG_HOLDS_EVERYTHING
+    FlagSet(I_BAG_CONVERTED_FLAG);
+#endif
+}
+
+// With I_BAG_HOLDS_EVERYTHING, Item Storage (the first option) shows only while it holds something
+static void SetTopMenuOptions(void)
+{
+    const u8 *optionOrder = sIsBedroomPC ? sBedroomPC_OptionOrder : sPlayerPC_OptionOrder;
+    u32 numOptions = sIsBedroomPC ? NUM_BEDROOM_PC_OPTIONS : NUM_PLAYER_PC_OPTIONS;
+    u32 skip = I_BAG_HOLDS_EVERYTHING && optionOrder[0] == MENU_ITEMSTORAGE && CountUsedPCItemSlots() == 0;
+
+    sTopMenuOptionOrder = optionOrder + skip;
+    sTopMenuNumOptions = numOptions - skip;
 }
 
 void BedroomPC(void)
 {
-    sTopMenuOptionOrder = sBedroomPC_OptionOrder;
-    sTopMenuNumOptions = NUM_BEDROOM_PC_OPTIONS;
+    sIsBedroomPC = TRUE;
     DisplayItemMessageOnField(CreateTask(TaskDummy, 0), gText_WhatWouldYouLike, InitPlayerPCMenu);
 }
 
 void PlayerPC(void)
 {
-    sTopMenuOptionOrder = sPlayerPC_OptionOrder;
-    sTopMenuNumOptions = NUM_PLAYER_PC_OPTIONS;
+    sIsBedroomPC = FALSE;
     DisplayItemMessageOnField(CreateTask(TaskDummy, 0), gText_WhatWouldYouLike, InitPlayerPCMenu);
 }
 
@@ -394,11 +408,13 @@ static void InitPlayerPCMenu(u8 taskId)
     struct WindowTemplate windowTemplate;
     data = gTasks[taskId].data;
 
-    if (sTopMenuNumOptions == NUM_PLAYER_PC_OPTIONS)
+    SetTopMenuOptions();
+    if (!sIsBedroomPC)
         windowTemplate = sWindowTemplates_MainMenus[WIN_MAIN_MENU];
-    else // Bedroom PC
+    else
         windowTemplate = sWindowTemplates_MainMenus[WIN_MAIN_MENU_BEDROOM];
 
+    windowTemplate.height = sTopMenuNumOptions * 2;
     windowTemplate.width = GetMaxWidthInSubsetOfMenuTable(sPlayerPCMenuActions, sTopMenuOptionOrder, sTopMenuNumOptions);
     tWindowId = AddWindow(&windowTemplate);
     SetStandardWindowBorderStyle(tWindowId, FALSE);
@@ -414,7 +430,7 @@ static void PlayerPCProcessMenuInput(u8 taskId)
     s8 inputOptionId;
 
     data = gTasks[taskId].data;
-    if (sTopMenuNumOptions > 3)
+    if (sIsBedroomPC)
         inputOptionId = Menu_ProcessInput();
     else
         inputOptionId = Menu_ProcessInputNoWrap();
@@ -489,7 +505,7 @@ static void PlayerPC_Decoration(u8 taskId)
 
 static void PlayerPC_TurnOff(u8 taskId)
 {
-    if (sTopMenuNumOptions == NUM_BEDROOM_PC_OPTIONS) // Flimsy way to determine if Bedroom PC is in use
+    if (sIsBedroomPC)
     {
         if (gMapHeader.mapLayoutId == LAYOUT_PALLET_TOWN_PLAYERS_HOUSE_2F_FRLG)
             ScriptContext_SetupScript(EventScript_PalletTown_PlayersHouse_2F_ShutDownPC);
