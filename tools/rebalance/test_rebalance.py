@@ -317,33 +317,35 @@ class Exp(unittest.TestCase):
 
         def award(getter, foe=20, **kw):
             return RB.exp_award(d, self.scaling, 98, foe, getter, False, 1, **kw)
+        # No width: full exp up to the cutoff, the floor past it (at least 1).
         hard = RB.Overlevel(5)
         self.assertEqual(award(25, overlevel=hard), award(25))
         self.assertEqual(award(26, overlevel=hard), 1)
-        # A getter that gets nothing still gets nothing.
+        self.assertEqual(RB.Overlevel(5, floor=10).apply(1000, 20, 26), 100)
+        # A getter that gets nothing still gets nothing, and one at or below the foe's level loses nothing.
         self.assertEqual(award(30, sent_out=False, overlevel=hard), 0)
+        self.assertEqual(award(15, overlevel=RB.Overlevel(0, width=1)), award(15))
         # Percent of the foe's level: 25% above a level-20 foe is level 25.
         rel = RB.Overlevel(25, relative=True)
         self.assertEqual(award(25, overlevel=rel), award(25))
         self.assertEqual(award(26, overlevel=rel), 1)
         self.assertEqual(award(50, foe=40, overlevel=rel), award(50, foe=40))
-        # The falloff halves the exp every halflife levels past the cutoff, down to 1.
-        soft = RB.Overlevel(5, halflife=2)
-        self.assertEqual(award(25, overlevel=soft), award(25))
-        self.assertEqual(award(27, overlevel=soft), award(27) * 2048 // 4096)
-        self.assertEqual(award(29, overlevel=soft), award(29) * 1024 // 4096)
-        self.assertEqual(award(26, overlevel=soft), award(26) * 2896 // 4096)  # 4096 / sqrt(2)
-        self.assertEqual(award(100, overlevel=soft), 1)
-        # In percent: 10% of the foe's level per halving, past 25% above it.
-        soft_rel = RB.Overlevel(25, relative=True, halflife=10)
-        self.assertEqual(award(27, overlevel=soft_rel), award(27) * 2048 // 4096)
-        self.assertEqual(soft_rel.apply(1000, 40, 54), 500)
-        # The same cases as test/battle/exp.c's: deep halvings keep their 16ths, no exp stays none.
-        game = RB.Overlevel(10, True, 5)
-        self.assertEqual(game.apply(1000, 40, 55), 1000 * 2896 >> 17)  # 5.5 halvings
-        self.assertEqual(game.apply(1000, 20, 60), 1)
+        # The logistic: slow just above the foe, about half the way down at the cutoff, then the floor.
+        soft = RB.Overlevel(3, width=1, floor=10)
+        self.assertEqual(soft.apply(1000, 20, 21), 932)
+        self.assertEqual(soft.apply(1000, 20, 23), 572)
+        self.assertEqual(soft.apply(1000, 20, 40), 100)
+        self.assertEqual(RB.Overlevel(3, width=1).apply(1000, 20, 40), 1)
+        # The same cases as test/battle/exp.c's, at the game's 15 / 4 / 10%.
+        game = RB.Overlevel(15, True, 4, 10)
+        for foe, getter, exp in ((30, 30, 1000), (30, 31, 973), (30, 33, 816), (30, 35, 466), (30, 36, 305),
+                                 (30, 40, 109), (20, 23, 560), (40, 46, 560), (20, 60, 100)):
+            self.assertEqual(game.apply(1000, foe, getter), exp, (foe, getter))
         self.assertEqual(game.apply(0, 20, 60), 0)
-        self.assertEqual(RB.Overlevel(10, True).apply(1000, 20, 23), 1)
+        self.assertEqual(game.apply(5, 20, 60), 1)
+        # Width 0: the floor straight past the cutoff.
+        self.assertEqual(RB.Overlevel(15, True, 0, 10).apply(1000, 20, 23), 1000)
+        self.assertEqual(RB.Overlevel(15, True, 0, 10).apply(1000, 20, 24), 100)
 
     def test_scaling_factors(self):
         # The fixture copies the game's table, which is (i^2.5)/4.
@@ -604,7 +606,7 @@ class Analysis(unittest.TestCase):
         for knobs in ({}, {'margin': 1, 'trainer_gap': 0, 'wild_gap': 0, 'ko_takers': 6, 'boss_ref': 'party_mean'},
                       {'scaled_exp': False, 'trainer_exp': '1.5x on', 'share_fraction': 0.25, 'evolve': False},
                       {'scaling_power': 3.0, 'overlevel_cutoff': 2, 'clear': 0.5, 'wild_battles': 4},
-                      {'overlevel_cutoff': 10, 'overlevel_unit': 'percent', 'overlevel_halflife': 15,
+                      {'overlevel_cutoff': 10, 'overlevel_unit': 'percent', 'overlevel_width': 5, 'overlevel_floor': 15,
                        'gap_unit': 'percent', 'margin': 5, 'trainer_gap': 10, 'wild_gap': 20}):
             self.assertEqual(RB.explore_run(snap, knobs), RB.explore_run(live, knobs), knobs)
         got = RB.explore_run(snap, {'ko_takers': 6})
@@ -898,10 +900,9 @@ class RealRepo(unittest.TestCase):
         # #154's tables: the model computes the game's steep scaling and over-level penalty.
         self.assertEqual(RB.scaling_factors(3.5),
                          G.parse_scaling_factors(G.REPO, 'gExperienceScalingFactorsSteep', 'exp_formula.c'))
-        self.assertEqual(list(RB.HALVING_FRACTIONS), G.parse_scaling_factors(G.REPO, 'sExpHalvingFractions',
-                                                                              'exp_formula.c'))
+        self.assertEqual(list(RB.LOGISTIC), G.parse_scaling_factors(G.REPO, 'sExpLogistic', 'exp_formula.c'))
         gd = G.load(G.REPO)
-        self.assertEqual(RB.Overlevel.from_configs(gd['modern']), RB.Overlevel(10, True, 5))
+        self.assertEqual(RB.Overlevel.from_configs(gd['modern']), RB.Overlevel(15, True, 4, 10))
         self.assertIsNone(RB.Overlevel.from_configs(gd['vanilla']))
         self.assertEqual(RB.game_scaling(gd['modern'], RB.scaling_factors(2.5)), RB.scaling_factors(3.5))
 
