@@ -34,7 +34,7 @@ static void SetUpFieldMoveParty(const u8 *kinds, enum Move move)
     gPartiesCount[B_TRAINER_PLAYER] = CalculatePlayerPartyCount();
 }
 
-static void SetBadge(u32 flag, bool32 set)
+static void SetFlagTo(u32 flag, bool32 set)
 {
     if (set)
         FlagSet(flag);
@@ -66,11 +66,11 @@ TEST("Field move without mon: travel HMs fall back to the lead once the badge is
 
     SetUpFieldMoveParty(kinds, FieldMove_GetMoveId(fieldMove));
     savedBadge = FlagGet(badge);
-    SetBadge(badge, hasBadge);
+    SetFlagTo(badge, hasBadge);
 
     result = GetFieldMoveUserSlot(fieldMove);
 
-    SetBadge(badge, savedBadge);
+    SetFlagTo(badge, savedBadge);
 
     EXPECT_EQ(result, expected);
 }
@@ -84,11 +84,11 @@ TEST("Field move without mon: Surf is offered with the Balance Badge and no Surf
     PARAMETRIZE { hasBadge = FALSE; }
 
     SetUpFieldMoveParty(kinds, MOVE_SURF);
-    SetBadge(FLAG_BADGE05_GET, hasBadge);
+    SetFlagTo(FLAG_BADGE05_GET, hasBadge);
 
     result = PartyHasMonWithSurf();
 
-    SetBadge(FLAG_BADGE05_GET, savedBadge);
+    SetFlagTo(FLAG_BADGE05_GET, savedBadge);
 
     EXPECT_EQ(result, OW_FIELD_MOVES_WITHOUT_MON && hasBadge);
 }
@@ -104,7 +104,7 @@ TEST("Field move without mon: caves are lit on entry with the Knuckle Badge")
     PARAMETRIZE { hasBadge = FALSE; expected = gMaxFlashLevel - 1; }
     PARAMETRIZE { cave = FALSE; expected = 0; }
 
-    SetBadge(FLAG_BADGE02_GET, hasBadge);
+    SetFlagTo(FLAG_BADGE02_GET, hasBadge);
     FlagClear(FLAG_SYS_USE_FLASH);
     gMapHeader.cave = cave;
 
@@ -113,8 +113,8 @@ TEST("Field move without mon: caves are lit on entry with the Knuckle Badge")
 
     gMapHeader.cave = savedCave;
     gSaveBlock1Ptr->flashLevel = savedLevel;
-    SetBadge(FLAG_SYS_USE_FLASH, savedFlash);
-    SetBadge(FLAG_BADGE02_GET, savedBadge);
+    SetFlagTo(FLAG_SYS_USE_FLASH, savedFlash);
+    SetFlagTo(FLAG_BADGE02_GET, savedBadge);
 
     EXPECT_EQ(level, expected);
 }

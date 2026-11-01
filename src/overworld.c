@@ -1105,6 +1105,7 @@ bool32 Overworld_IsBikingAllowed(void)
 // Flash level of 8 is fully black
 void SetDefaultFlashLevel(void)
 {
+    // Flash's badge lights caves on entry, as if Flash had been used
     if (gMapHeader.cave && OW_FIELD_MOVES_WITHOUT_MON && IsFieldMoveUnlocked(FIELD_MOVE_FLASH))
         FlagSet(FLAG_SYS_USE_FLASH);
 
