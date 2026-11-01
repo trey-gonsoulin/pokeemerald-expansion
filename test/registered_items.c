@@ -35,7 +35,7 @@ TEST("Register items: toggling adds in order and removing keeps the slots packed
 
 TEST("Register items: registering past I_REGISTERED_ITEMS_COUNT is refused")
 {
-    static const u16 items[] = { ITEM_MACH_BIKE, ITEM_OLD_ROD, ITEM_GOOD_ROD, ITEM_SUPER_ROD, ITEM_ITEMFINDER, ITEM_WAILMER_PAIL };
+    static const u16 items[] = { ITEM_MACH_BIKE, ITEM_OLD_ROD, ITEM_GOOD_ROD, ITEM_SUPER_ROD, ITEM_ITEMFINDER, ITEM_WAILMER_PAIL, ITEM_POKEBLOCK_CASE, ITEM_COIN_CASE, ITEM_POWDER_JAR, ITEM_DEVON_SCOPE };
     u32 i;
 
     ASSUME(I_REGISTERED_ITEMS_COUNT < ARRAY_COUNT(items));
