@@ -581,8 +581,10 @@ GAME = 'game'
 
 
 def logistic(n, d):
-    """4096 / (1 + e^(n/d)) for d > 0, as ExpLogistic computes it: LOGISTIC
-    interpolated in 256ths of t, 0 past its end."""
+    """4096 / (1 + e^(n/d)), as ExpLogistic computes it: LOGISTIC
+    interpolated in 256ths of t, 0 past its end; at d = 0, a step at n = 0."""
+    if not d:
+        return 0 if n > 0 else 4096
     if n < 0:
         return 4096 - logistic(-n, d)
     t = n * 256 // d
@@ -596,7 +598,7 @@ class Overlevel(collections.namedtuple('Overlevel', 'cutoff relative width floor
     """An over-level penalty (#151, #189): above the foe, exp follows a
     logistic curve, full at the foe's level, falling fastest at ``cutoff``
     levels above it (``relative``: percent of the foe's level) over
-    ``width`` levels (percent; 0 or None: all at once past the cutoff), down
+    ``width`` levels (percent; 0: all at once past the cutoff), down
     to ``floor`` percent of the exp, at least 1. The game's is relative:
     ApplyOverlevelPenalty."""
 
@@ -617,12 +619,9 @@ class Overlevel(collections.namedtuple('Overlevel', 'cutoff relative width floor
             return exp
         scale = foe_level if self.relative else 1
         over = (getter_level - foe_level) * (100 if self.relative else 1)
-        cutoff, width = self.cutoff * scale, (self.width or 0) * scale
-        floor = min(self.floor or 0, 100)
-        if width:
-            full, here = logistic(-cutoff, width), logistic(over - cutoff, width)
-        else:
-            full, here = 4096, 0 if over > cutoff else 4096
+        cutoff, width = self.cutoff * scale, self.width * scale
+        floor = min(self.floor, 100)
+        full, here = logistic(-cutoff, width), logistic(over - cutoff, width)
         return max(exp * (floor * full + (100 - floor) * here) // (100 * full), 1)
 
 
@@ -1301,7 +1300,7 @@ def explore_run(snap, knobs=None):
         if k[key] not in UNITS:
             raise ValueError(f'{key} must be one of {UNITS}')
     overlevel = None if k['overlevel_cutoff'] is None else Overlevel(
-        k['overlevel_cutoff'], k['overlevel_unit'] == 'percent', k['overlevel_width'], k['overlevel_floor'])
+        k['overlevel_cutoff'], k['overlevel_unit'] == 'percent', k['overlevel_width'] or 0, k['overlevel_floor'])
     gd = with_configs(snap['gd'], B_TRAINER_EXP_MULTIPLIER=TRAINER_EXP[k['trainer_exp']],
                       B_SCALED_EXP='GEN_LATEST' if k['scaled_exp'] else 'GEN_6')
     # The game's own table at its exponent (scaling_factors matches it, tested).
