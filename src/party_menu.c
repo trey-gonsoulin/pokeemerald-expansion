@@ -2127,7 +2127,8 @@ static void Task_ReturnToChooseMonAfterText(u8 taskId)
         ClearStdWindowAndFrameToTransparent(WIN_MSG, FALSE);
         ClearWindowTilemap(WIN_MSG);
         // Every give, take, move item, mail and item use that keeps the menu open ends here
-        UpdatePartyEvolutionMarkers();
+        if (!IsUsingItemOnChosenMon())
+            UpdatePartyEvolutionMarkers();
         if (IsUsingItemOnChosenMon())
         {
             Task_ClosePartyMenu(taskId);

@@ -49,6 +49,15 @@ TEST("Evolution ready: Eevee is ready with a Water Stone in the bag")
     EXPECT_EQ(CanPartyMonEvolveNow(eevee), TRUE);
 }
 
+TEST("Evolution ready: a trade item the bag can use counts like a stone")
+{
+    struct Pokemon *onix = CreateReadyCheckMon(SPECIES_ONIX, 30, ITEM_NONE);
+
+    ASSUME(I_USE_EVO_HELD_ITEMS_FROM_BAG == TRUE);
+    EXPECT(AddBagItem(ITEM_METAL_COAT, 1));
+    EXPECT_EQ(CanPartyMonEvolveNow(onix), TRUE);
+}
+
 TEST("Evolution ready: an Everstone stops an item evolution")
 {
     struct Pokemon *pikachu = CreateReadyCheckMon(SPECIES_PIKACHU, 30, ITEM_EVERSTONE);

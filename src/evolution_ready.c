@@ -1,6 +1,7 @@
 #include "global.h"
 #include "evolution_ready.h"
 #include "item.h"
+#include "item_use.h"
 #include "pokemon.h"
 #include "sprite.h"
 
@@ -49,21 +50,25 @@ static const struct SpriteTemplate sSpriteTemplate_EvolutionReady =
 bool32 CanPartyMonEvolveNow(struct Pokemon *mon)
 {
     u32 i;
+    enum Species species = GetMonData(mon, MON_DATA_SPECIES);
     const struct Evolution *evolutions;
 
-    if (GetMonData(mon, MON_DATA_SPECIES) == SPECIES_NONE || GetMonData(mon, MON_DATA_IS_EGG))
+    if (species == SPECIES_NONE || GetMonData(mon, MON_DATA_IS_EGG))
         return FALSE;
 
     if (GetEvolutionTargetSpecies(mon, EVO_MODE_NORMAL, ITEM_NONE, NULL, NULL, CHECK_EVO) != SPECIES_NONE)
         return TRUE;
 
-    evolutions = GetSpeciesEvolutions(GetMonData(mon, MON_DATA_SPECIES));
+    evolutions = GetSpeciesEvolutions(species);
     if (evolutions == NULL)
         return FALSE;
 
+    // The bag uses an item on a Pokémon only through this field function: without
+    // I_USE_EVO_HELD_ITEMS_FROM_BAG, a Metal Coat's EVO_ITEM entry can't be reached
     for (i = 0; evolutions[i].method != EVOLUTIONS_END; i++)
     {
         if (evolutions[i].method == EVO_ITEM
+         && GetItemFieldFunc(evolutions[i].param) == ItemUseOutOfBattle_EvolutionStone
          && CheckBagHasItem(evolutions[i].param, 1)
          && GetEvolutionTargetSpecies(mon, EVO_MODE_ITEM_USE, evolutions[i].param, NULL, NULL, CHECK_EVO) != SPECIES_NONE)
             return TRUE;
