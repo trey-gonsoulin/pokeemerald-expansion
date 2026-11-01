@@ -25,6 +25,7 @@ import functools
 import http.server
 import itertools
 import json
+import math
 import os
 import re
 import shutil
@@ -573,43 +574,56 @@ def game_scaling(gd, table):
     return scaling_factors(3.5, len(table)) if gd.flag('B_SCALED_EXP_STEEP') else table
 
 
-# sExpHalvingFractions: 4096 * 2^(-k/16), the over-level penalty's fraction of a halving (#154).
-HALVING_FRACTIONS = tuple(round(4096 * 2 ** (-k / 16)) for k in range(16))
+# sExpLogistic: 4096 / (1 + e^(k/16)) for t from 0 to 10, the over-level penalty's curve (#189).
+LOGISTIC = tuple(round(4096 / (1 + math.exp(k / 16))) for k in range(161))
 # exp_award's overlevel default: the penalty gd's configs set.
 GAME = 'game'
 
 
-class Overlevel(collections.namedtuple('Overlevel', 'cutoff relative halflife', defaults=(False, None))):
-    """An over-level penalty (#151): past ``cutoff`` levels above the foe
-    (``relative``: percent of the foe's level above it), exp drops to 1, or
-    with ``halflife`` halves every that many levels (percent) past the
-    cutoff. The game's (#154) is relative: ApplyOverlevelPenalty."""
+def logistic(n, d):
+    """4096 / (1 + e^(n/d)) for d > 0, as ExpLogistic computes it: LOGISTIC
+    interpolated in 256ths of t, 0 past its end."""
+    if n < 0:
+        return 4096 - logistic(-n, d)
+    t = n * 256 // d
+    i = t // 16
+    if i >= len(LOGISTIC) - 1:
+        return 0
+    return LOGISTIC[i] - (LOGISTIC[i] - LOGISTIC[i + 1]) * (t % 16) // 16
+
+
+class Overlevel(collections.namedtuple('Overlevel', 'cutoff relative width floor', defaults=(False, 0, 0))):
+    """An over-level penalty (#151, #189): above the foe, exp follows a
+    logistic curve, full at the foe's level, falling fastest at ``cutoff``
+    levels above it (``relative``: percent of the foe's level) over
+    ``width`` levels (percent; 0 or None: all at once past the cutoff), down
+    to ``floor`` percent of the exp, at least 1. The game's is relative:
+    ApplyOverlevelPenalty."""
 
     @classmethod
     def from_configs(cls, gd):
         """B_EXP_OVERLEVEL_PENALTY's penalty, or None."""
         if not gd.flag('B_EXP_OVERLEVEL_PENALTY'):
             return None
-        return cls(gd.flag('B_EXP_OVERLEVEL_CUTOFF'), True, gd.flag('B_EXP_OVERLEVEL_HALVING') or None)
+        return cls(gd.flag('B_EXP_OVERLEVEL_CUTOFF'), True, gd.flag('B_EXP_OVERLEVEL_WIDTH'),
+                   gd.flag('B_EXP_OVERLEVEL_FLOOR'))
 
     def apply(self, exp, foe_level, getter_level):
-        """``exp`` after the penalty, as ApplyOverlevelPenalty computes it:
-        unchanged up to the cutoff, then the whole halvings as a shift and
-        the rest in 16ths (HALVING_FRACTIONS), at least 1; 1 straight past
-        the cutoff without a halflife."""
-        halflife = self.halflife or 0
-        if self.relative:
-            over, span = getter_level * 100 - foe_level * (100 + self.cutoff), foe_level * halflife
-        else:
-            over, span = getter_level - foe_level - self.cutoff, halflife
-        if exp <= 0 or over <= 0:
+        """``exp`` after the penalty, in ApplyOverlevelPenalty's integers:
+        exp * (floor * S(t0) + (100 - floor) * S(t)) / (100 * S(t0)), where
+        S is ``logistic``, t the distance past the cutoff in widths and t0
+        the foe's level's."""
+        if exp <= 0 or getter_level <= foe_level:
             return exp
-        if not span:
-            return 1
-        halvings = int(over // span)
-        if halvings >= 32:
-            return 1
-        return max(exp * HALVING_FRACTIONS[int(over % span * 16 // span)] >> (12 + halvings), 1)
+        scale = foe_level if self.relative else 1
+        over = (getter_level - foe_level) * (100 if self.relative else 1)
+        cutoff, width = self.cutoff * scale, (self.width or 0) * scale
+        floor = min(self.floor or 0, 100)
+        if width:
+            full, here = logistic(-cutoff, width), logistic(over - cutoff, width)
+        else:
+            full, here = 4096, 0 if over > cutoff else 4096
+        return max(exp * (floor * full + (100 - floor) * here) // (100 * full), 1)
 
 
 def exp_award(gd, scaling, yield_, foe_level, getter_level, trainer, sent_in, sent_out=True, holders=0,
@@ -1257,7 +1271,7 @@ EXPLORER_KNOBS = {
     'ko_takers': 1, 'boss_ref': 'bench', 'clear': 1.0, 'catches': CATCHES_PER_STAGE, 'wild_battles': 0,
     'walk_steps': WALK_STEPS_PER_STAGE, 'affection': 'friendship', 'trainer_exp': '1.5x off',
     'scaled_exp': True, 'scaling_power': 2.5, 'overlevel_cutoff': None, 'overlevel_unit': 'levels',
-    'overlevel_halflife': None, 'share_fraction': 0.5, 'gap_unit': 'levels', 'margin': None,
+    'overlevel_width': None, 'overlevel_floor': 0, 'share_fraction': 0.5, 'gap_unit': 'levels', 'margin': None,
     'league_steps': True, 'trainer_gap': None, 'wild_gap': None, 'evolve': True, 'rematch_step': None,
 }
 UNITS = ('levels', 'percent')
@@ -1269,7 +1283,7 @@ def explorer_defaults(gd):
     o = Overlevel.from_configs(gd)
     return {**EXPLORER_KNOBS, 'scaling_power': 3.5 if gd.flag('B_SCALED_EXP_STEEP') else 2.5,
             'overlevel_cutoff': o and o.cutoff, 'overlevel_unit': 'percent' if o and o.relative else 'levels',
-            'overlevel_halflife': o and o.halflife}
+            'overlevel_width': o and o.width, 'overlevel_floor': o.floor if o else 0}
 
 
 def explore_run(snap, knobs=None):
@@ -1287,7 +1301,7 @@ def explore_run(snap, knobs=None):
         if k[key] not in UNITS:
             raise ValueError(f'{key} must be one of {UNITS}')
     overlevel = None if k['overlevel_cutoff'] is None else Overlevel(
-        k['overlevel_cutoff'], k['overlevel_unit'] == 'percent', k['overlevel_halflife'])
+        k['overlevel_cutoff'], k['overlevel_unit'] == 'percent', k['overlevel_width'], k['overlevel_floor'])
     gd = with_configs(snap['gd'], B_TRAINER_EXP_MULTIPLIER=TRAINER_EXP[k['trainer_exp']],
                       B_SCALED_EXP='GEN_LATEST' if k['scaled_exp'] else 'GEN_6')
     # The game's own table at its exponent (scaling_factors matches it, tested).

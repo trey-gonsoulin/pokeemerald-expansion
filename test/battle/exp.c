@@ -1,4 +1,5 @@
 #include "global.h"
+#include "exp_formula.h"
 #include "test/battle.h"
 
 WILD_BATTLE_TEST("Pokemon gain experience after catching a Pokemon (Gen6+)")
@@ -550,43 +551,64 @@ WILD_BATTLE_TEST("Exp formula: steep scaling gives less from lower-level foes, m
     }
 }
 
-WILD_BATTLE_TEST("Exp formula: the over-level penalty halves the exp every B_EXP_OVERLEVEL_HALVING percent past the cutoff (#154)", s32 exp)
+TEST("Exp formula: the over-level penalty follows a logistic curve down to its floor (#189)")
 {
-    u32 foe = 0, getter = 0, penalty = FALSE, halving = 5;
+    // The same cases as tools/rebalance's test_overlevel, at the configs' 15 / 4 / 10%.
+    ASSUME(B_EXP_OVERLEVEL_CUTOFF == 15 && B_EXP_OVERLEVEL_WIDTH == 4 && B_EXP_OVERLEVEL_FLOOR == 10);
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 30, 30), 1000); // full exp at the foe's level
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 30, 25), 1000); // and below it
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 30, 31), 973);  // slowly at first
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 30, 33), 816);
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 30, 35), 466);  // fastest around the cutoff
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 30, 36), 305);
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 30, 40), 109);
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 20, 23), 560);  // the cutoff, in percent of the foe's level
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 40, 46), 560);
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 20, 60), 100);  // the floor
+    EXPECT_EQ(ApplyOverlevelPenalty(5, 20, 60), 1);       // at least 1
+    EXPECT_EQ(ApplyOverlevelPenalty(0, 20, 60), 0);       // no exp stays no exp
+}
 
-    PARAMETRIZE { foe = 20; getter = 22; penalty = FALSE; }
-    PARAMETRIZE { foe = 20; getter = 22; penalty = TRUE; }
+WILD_BATTLE_TEST("Exp formula: the over-level penalty applies its configs in battle (#189)", s32 exp)
+{
+    u32 foe = 0, getter = 0, penalty = FALSE, width = 4, floorPercent = 10;
+
+    PARAMETRIZE { foe = 30; getter = 30; penalty = FALSE; }
+    PARAMETRIZE { foe = 30; getter = 30; penalty = TRUE; }
+    PARAMETRIZE { foe = 30; getter = 31; penalty = FALSE; }
+    PARAMETRIZE { foe = 30; getter = 31; penalty = TRUE; }
     PARAMETRIZE { foe = 20; getter = 23; penalty = FALSE; }
     PARAMETRIZE { foe = 20; getter = 23; penalty = TRUE; }
-    PARAMETRIZE { foe = 20; getter = 24; penalty = FALSE; }
-    PARAMETRIZE { foe = 20; getter = 24; penalty = TRUE; }
-    PARAMETRIZE { foe = 40; getter = 45; penalty = FALSE; }
-    PARAMETRIZE { foe = 40; getter = 45; penalty = TRUE; }
-    PARAMETRIZE { foe = 20; getter = 23; penalty = TRUE; halving = 0; }
-    PARAMETRIZE { foe = 40; getter = 55; penalty = FALSE; }
-    PARAMETRIZE { foe = 40; getter = 55; penalty = TRUE; }
+    PARAMETRIZE { foe = 20; getter = 60; penalty = FALSE; }
     PARAMETRIZE { foe = 20; getter = 60; penalty = TRUE; }
+    PARAMETRIZE { foe = 20; getter = 23; penalty = TRUE; width = 0; }
+    PARAMETRIZE { foe = 20; getter = 24; penalty = FALSE; }
+    PARAMETRIZE { foe = 20; getter = 24; penalty = TRUE; width = 0; }
+    PARAMETRIZE { foe = 20; getter = 60; penalty = TRUE; floorPercent = 0; }
 
     GIVEN {
         WITH_CONFIG(B_EXP_OVERLEVEL_PENALTY, penalty);
-        WITH_CONFIG(B_EXP_OVERLEVEL_CUTOFF, 10);
-        WITH_CONFIG(B_EXP_OVERLEVEL_HALVING, halving);
+        WITH_CONFIG(B_EXP_OVERLEVEL_CUTOFF, 15);
+        WITH_CONFIG(B_EXP_OVERLEVEL_WIDTH, width);
+        WITH_CONFIG(B_EXP_OVERLEVEL_FLOOR, floorPercent);
         PLAYER(SPECIES_WOBBUFFET) { Level(getter); }
-        OPPONENT(SPECIES_CATERPIE) { Level(foe); HP(1); }
+        OPPONENT(SPECIES_BLISSEY) { Level(foe); HP(1); }
     } WHEN {
         TURN { MOVE(player, MOVE_SCRATCH); }
     } SCENE {
         MESSAGE("Wobbuffet used Scratch!");
-        MESSAGE("The wild Caterpie fainted!");
+        MESSAGE("The wild Blissey fainted!");
         EXPERIENCE_BAR(player, captureGainedExp: &results[i].exp);
     } FINALLY {
-        EXPECT_EQ(results[1].exp, results[0].exp);               // at the cutoff, 10% above the foe
-        EXPECT_EQ(results[3].exp, results[2].exp / 2);           // 5% past it: one halving
-        EXPECT_EQ(results[5].exp, results[4].exp / 4);           // 10% past it: two
-        EXPECT_EQ(results[7].exp, results[6].exp * 2896 / 4096); // 2.5% past it: 2^(-8/16)
-        EXPECT_EQ(results[8].exp, 1);                            // halving 0: 1 exp past the cutoff
-        EXPECT_EQ(results[10].exp, max(1, (results[9].exp * 2896) >> 17)); // 27.5% past it: 5.5 halvings
-        EXPECT_EQ(results[11].exp, 1);                           // 190% past it: the floor
+        EXPECT_EQ(results[1].exp, results[0].exp);                  // full exp at the foe's level
+        EXPECT_LT(results[3].exp, results[2].exp);                  // 3% over: a little less
+        EXPECT_GE(results[3].exp * 100, results[2].exp * 96);
+        EXPECT_GE(results[5].exp * 100, results[4].exp * 50);       // the cutoff: about half
+        EXPECT_LE(results[5].exp * 100, results[4].exp * 60);
+        EXPECT_EQ(results[7].exp, results[6].exp / 10);             // 200% over: the floor
+        EXPECT_EQ(results[8].exp, results[4].exp);                  // width 0: full exp up to the cutoff,
+        EXPECT_EQ(results[10].exp, results[9].exp / 10);            // the floor past it
+        EXPECT_EQ(results[11].exp, 1);                              // floor 0: at least 1
     }
 }
 
@@ -602,8 +624,6 @@ WILD_BATTLE_TEST("Exp formula: the over-level penalty also applies to the Gen 6 
         ASSUME(B_SPLIT_EXP >= GEN_6);
         WITH_CONFIG(B_SPLIT_EXP, GEN_6);
         WITH_CONFIG(B_EXP_OVERLEVEL_PENALTY, penalty);
-        WITH_CONFIG(B_EXP_OVERLEVEL_CUTOFF, 10);
-        WITH_CONFIG(B_EXP_OVERLEVEL_HALVING, 5);
         FLAG_SET(I_EXP_SHARE_FLAG);
         PLAYER(SPECIES_WOBBUFFET) { Level(20); }
         PLAYER(SPECIES_WYNAUT) { Level(23); }
@@ -616,6 +636,6 @@ WILD_BATTLE_TEST("Exp formula: the over-level penalty also applies to the Gen 6 
         results[i].benchExp = GetMonData(&gParties[B_TRAINER_PLAYER][1], MON_DATA_EXP) - EXP_AT_LEVEL(SPECIES_WYNAUT, 23);
     } FINALLY {
         EXPECT_GT(results[0].benchExp, 1);
-        EXPECT_EQ(results[1].benchExp, results[0].benchExp / 2); // the bench Wynaut is 5% past the cutoff
+        EXPECT_EQ(results[1].benchExp, ApplyOverlevelPenalty(results[0].benchExp, 20, 23)); // the bench Wynaut is 15% over
     }
 }
