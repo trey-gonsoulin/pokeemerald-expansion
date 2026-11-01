@@ -132,6 +132,7 @@ enum {
     ACTIONS_TAKEITEM_TOSS,
     ACTIONS_ROTOM_CATALOG,
     ACTIONS_ZYGARDE_CUBE,
+    ACTIONS_ITEM_USE,
 };
 
 enum {
@@ -224,7 +225,6 @@ EWRAM_DATA u8 gBattlePartyCurrentOrder[PARTY_SIZE / 2] = {0}; // bits 0-3 are th
 static EWRAM_DATA u8 sInitialLevel = 0;
 static EWRAM_DATA u8 sFinalLevel = 0;
 static EWRAM_DATA u8 sItemUseMonSlot = 0; // the Pokémon the party menu's Use opened the bag for
-static EWRAM_DATA bool8 sItemUseOnChosenMonPending = FALSE; // an item picked there, not yet used on it
 
 // IWRAM common
 COMMON_DATA void (*gItemUseCB)(u8, TaskFunc) = NULL;
@@ -1481,11 +1481,14 @@ u8 GetPartyMenuType(void)
 
 void Task_HandleChooseMonInput(u8 taskId)
 {
-    if (!gPaletteFade.active && IsUsingItemOnChosenMon())
+    if (gPaletteFade.active)
+        return;
+
+    if (IsUsingItemOnChosenMon())
     {
         Task_ClosePartyMenu(taskId);
     }
-    else if (!gPaletteFade.active && MenuHelpers_ShouldWaitForLinkRecv() != TRUE)
+    else if (MenuHelpers_ShouldWaitForLinkRecv() != TRUE)
     {
         s8 *slotPtr = GetCurrentPartySlotPtr();
 
@@ -3532,15 +3535,7 @@ static void CursorCb_Item(u8 taskId)
     PlaySE(SE_SELECT);
     PartyMenuRemoveWindow(&sPartyMenuInternal->windowId[0]);
     PartyMenuRemoveWindow(&sPartyMenuInternal->windowId[1]);
-    SetPartyMonSelectionActions(gParties[B_TRAINER_PLAYER], gPartyMenu.slotId, ACTIONS_ITEM);
-    if (CanUseItemFromThisPartyMenu())
-    {
-        // Give, Use, Take, Move, Cancel
-        for (u32 i = sPartyMenuInternal->numActions; i > 1; i--)
-            sPartyMenuInternal->actions[i] = sPartyMenuInternal->actions[i - 1];
-        sPartyMenuInternal->actions[1] = MENU_USE_ITEM;
-        sPartyMenuInternal->numActions++;
-    }
+    SetPartyMonSelectionActions(gParties[B_TRAINER_PLAYER], gPartyMenu.slotId, CanUseItemFromThisPartyMenu() ? ACTIONS_ITEM_USE : ACTIONS_ITEM);
     DisplaySelectionWindow(SELECTWINDOW_ITEM);
     DisplayPartyMenuStdMessage(PARTY_MSG_DO_WHAT_WITH_ITEM);
     gTasks[taskId].data[0] = 0xFF;
@@ -3571,7 +3566,7 @@ static void CB2_ReturnToPartyMenuFromUseItemBag(void)
 {
     gBagPosition.location = ITEMMENULOCATION_FIELD;
     gPartyMenu.slotId = sItemUseMonSlot;
-    InitPartyMenu(PARTY_MENU_TYPE_FIELD, PARTY_LAYOUT_SINGLE, PARTY_ACTION_CHOOSE_MON, TRUE, PARTY_MSG_CHOOSE_MON, Task_HandleChooseMonInput, CB2_ReturnToFieldWithOpenMenu);
+    CB2_ReturnToPartyMenuFromFlyMap();
 }
 
 bool32 CanUseItemOnChosenPartyMon(enum Item item)
@@ -3581,11 +3576,6 @@ bool32 CanUseItemOnChosenPartyMon(enum Item item)
     return GetItemFieldFunc(item) != NULL
         && GetItemPocket(item) != POCKET_KEY_ITEMS
         && (type == ITEM_USE_PARTY_MENU || type == ITEM_USE_PARTY_MENU_MOVES);
-}
-
-void SetItemUseOnChosenMonPending(void)
-{
-    sItemUseOnChosenMonPending = TRUE;
 }
 
 // The bag the party menu's Use opened, or a party menu it opened to use an item. Every way back to choosing a
@@ -4862,18 +4852,13 @@ void CB2_ShowPartyMenuForItemUse(void)
         task = Task_HandleChooseMonInput;
     }
 
-    // Use the item picked in the bag on the chosen Pokémon once. Coming back after that (a Rare Candy evolution)
-    // goes back to the bag through Task_HandleChooseMonInput. Sacred Ash revives the whole party as usual.
+    // Use the item picked in the bag on the chosen Pokémon. Sacred Ash revives the whole party as usual.
     if (callback == CB2_ReturnToBagMenu && menuType == PARTY_MENU_TYPE_FIELD && IsBagForChosenMon() && task != Task_SetSacredAshCB)
     {
+        gPartyMenu.slotId = sItemUseMonSlot;
+        task = Task_UseItemOnChosenMon;
         msgId = PARTY_MSG_NONE;
-        if (sItemUseOnChosenMonPending)
-        {
-            gPartyMenu.slotId = sItemUseMonSlot;
-            task = Task_UseItemOnChosenMon;
-        }
     }
-    sItemUseOnChosenMonPending = FALSE;
 
     InitPartyMenu(menuType, partyLayout, PARTY_ACTION_USE_ITEM, TRUE, msgId, task, callback);
 }
@@ -6203,7 +6188,8 @@ static void PartyMenuTryEvolution(u8 taskId)
     {
         GetEvolutionTargetSpecies(mon, EVO_MODE_NORMAL, ITEM_NONE, NULL, &canStopEvo, DO_EVO);
         FreePartyPointers();
-        if (GetItemFieldFunc(gSpecialVar_ItemId) == ItemUseOutOfBattle_RareCandy && gPartyMenu.menuType == PARTY_MENU_TYPE_FIELD && CheckBagHasItem(gSpecialVar_ItemId, 1))
+        if (GetItemFieldFunc(gSpecialVar_ItemId) == ItemUseOutOfBattle_RareCandy && gPartyMenu.menuType == PARTY_MENU_TYPE_FIELD && CheckBagHasItem(gSpecialVar_ItemId, 1)
+         && !IsBagForChosenMon()) // Use from the party menu goes back to the bag
             gCB2_AfterEvolution = CB2_ReturnToPartyMenuUsingRareCandy;
         else
             gCB2_AfterEvolution = gPartyMenu.exitCallback;
