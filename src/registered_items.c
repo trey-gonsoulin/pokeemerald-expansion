@@ -37,9 +37,10 @@ STATIC_ASSERT(I_REGISTERED_ITEMS_COUNT >= 1 && I_REGISTERED_ITEMS_COUNT <= 9, Re
 #define SELECTOR_TEXT_X          28 // The icon takes the window's first 24 pixels
 #define SELECTOR_HEIGHT          4  // Tiles: the name, then the arrows and position
 
-enum {
-    SELECTOR_HOLDING, // Select held: the D-pad rotates, and a release without rotating uses the item
-    SELECTOR_OPEN,    // Released after rotating: Select or A uses the item, B closes
+enum
+{
+    SELECTOR_HOLDING, // Select held: the D-pad rotates, and a quick release without rotating uses the item
+    SELECTOR_OPEN,    // Released after rotating or a long hold: Select or A uses the item, B closes
 };
 
 #define tState        data[0]
@@ -50,7 +51,8 @@ enum {
 #define tRotated      data[5]
 #define tIconSpriteId data[6]
 
-static EWRAM_DATA enum Item sLastRegisteredItemUsed = ITEM_NONE;
+// The item the selector starts on: the last one used or rotated to this session, as the battle keeps the Ball shown
+static EWRAM_DATA enum Item sSelectedRegisteredItem = ITEM_NONE;
 
 static const u8 sText_SelectorPosition[] = _("{LEFT_ARROW}{STR_VAR_1}/{STR_VAR_2}{RIGHT_ARROW}");
 
@@ -180,7 +182,7 @@ static void UseRegisteredItem(enum Item item)
 {
     u8 taskId;
 
-    sLastRegisteredItemUsed = item;
+    sSelectedRegisteredItem = item;
     gSpecialVar_ItemId = item;
     taskId = CreateTask(GetItemFieldFunc(item), 8);
     gTasks[taskId].tUsingRegisteredKeyItem = TRUE;
@@ -208,6 +210,7 @@ static void DrawSelector(s16 *data)
 {
     enum Item item = GetRegisteredItem(tSlot);
     u32 i, width, left;
+    u8 copyMode = COPYWIN_GFX;
 
     if (tWindowId == WINDOW_NONE)
     {
@@ -219,25 +222,29 @@ static void DrawSelector(s16 *data)
         width = (SELECTOR_TEXT_X + width + 4 + 7) / 8;
         left = DISPLAY_TILE_WIDTH - 2 - width; // The frame's left column; its right one is the screen's last
 
-        PlaySE(SE_WIN_OPEN);
         LoadMessageBoxAndBorderGfx();
         tWindowId = CreateWindowFromRect(left, 0, width, SELECTOR_HEIGHT);
+        if (tWindowId == WINDOW_NONE)
+            return;
+        PlaySE(SE_WIN_OPEN);
         SetStandardWindowBorderStyle(tWindowId, FALSE);
+        copyMode = COPYWIN_FULL;
     }
 
     FillWindowPixelBuffer(tWindowId, PIXEL_FILL(1));
     AddTextPrinterParameterized(tWindowId, FONT_NORMAL, GetItemName(item), SELECTOR_TEXT_X, 1, TEXT_SKIP_DRAW, NULL);
     BufferSelectorPosition(tSlot, tCount);
     AddTextPrinterParameterized(tWindowId, FONT_NORMAL, gStringVar4, SELECTOR_TEXT_X, 17, TEXT_SKIP_DRAW, NULL);
-    CopyWindowToVram(tWindowId, COPYWIN_FULL);
+    CopyWindowToVram(tWindowId, copyMode);
 
     HideSelectorIcon(data);
     tIconSpriteId = AddItemIconSprite(TAG_REGISTERED_ITEM_ICON, TAG_REGISTERED_ITEM_ICON, item);
     if (tIconSpriteId != MAX_SPRITES)
     {
         gSprites[tIconSpriteId].oam.priority = 0;
-        gSprites[tIconSpriteId].x = (GetWindowAttribute(tWindowId, WINDOW_TILEMAP_LEFT) * 8) + 12;
-        gSprites[tIconSpriteId].y = 8 + SELECTOR_HEIGHT * 4;
+        // The 24x24 art is in the top-left of the 32x32 sprite: at the window's left edge, centred vertically
+        gSprites[tIconSpriteId].x = (GetWindowAttribute(tWindowId, WINDOW_TILEMAP_LEFT) * 8) + 16;
+        gSprites[tIconSpriteId].y = 8 + (SELECTOR_HEIGHT * 8 - 24) / 2 + 16;
     }
 }
 
@@ -245,6 +252,7 @@ static void CloseSelector(u8 taskId)
 {
     s16 *data = gTasks[taskId].data;
 
+    sSelectedRegisteredItem = GetRegisteredItem(tSlot);
     if (tWindowId != WINDOW_NONE)
     {
         HideSelectorIcon(data);
@@ -277,7 +285,8 @@ static bool32 TryRotateSelector(s16 *data)
 }
 
 // Works like the battle's last-used Ball (B_LAST_USED_BALL_CYCLE): a tap of Select uses the item shown, which starts
-// as the last one used, and holding Select while pressing the D-pad rotates to another without using it
+// as the last one used or rotated to, and holding Select while pressing the D-pad rotates to another without using
+// it. A hold long enough to show the selector doesn't use the item either, so it can be held just to look.
 static void Task_RegisteredItemSelector(u8 taskId)
 {
     s16 *data = gTasks[taskId].data;
@@ -294,18 +303,17 @@ static void Task_RegisteredItemSelector(u8 taskId)
     switch (tState)
     {
     case SELECTOR_HOLDING:
+        // A D-pad press in the frame Select is released still counts
+        if (TryRotateSelector(data))
+            tRotated = TRUE;
         if (!JOY_HELD(SELECT_BUTTON))
         {
-            if (tRotated)
+            if (tRotated || tHeldFrames >= SELECTOR_SHOW_DELAY)
                 tState = SELECTOR_OPEN;
             else
                 UseSelectedItem(taskId);
         }
-        else if (TryRotateSelector(data))
-        {
-            tRotated = TRUE;
-        }
-        else if (tWindowId == WINDOW_NONE && ++tHeldFrames >= SELECTOR_SHOW_DELAY)
+        else if (tHeldFrames < SELECTOR_SHOW_DELAY && ++tHeldFrames == SELECTOR_SHOW_DELAY && tWindowId == WINDOW_NONE)
         {
             DrawSelector(data);
         }
@@ -320,6 +328,7 @@ static void Task_RegisteredItemSelector(u8 taskId)
         {
             tState = SELECTOR_HOLDING;
             tRotated = FALSE;
+            tHeldFrames = 0;
         }
         else
         {
@@ -333,7 +342,7 @@ static void StartRegisteredItemSelector(u32 count)
 {
     u8 taskId = CreateTask(Task_RegisteredItemSelector, 8);
     s16 *data = gTasks[taskId].data;
-    s32 slot = FindRegisteredItemSlot(sLastRegisteredItemUsed);
+    s32 slot = FindRegisteredItemSlot(sSelectedRegisteredItem);
 
     tState = SELECTOR_HOLDING;
     tSlot = slot >= 0 ? slot : 0;
