@@ -7296,9 +7296,8 @@ static bool8 ReturnGiveItemToBagOrPC(enum Item item)
 {
     if (gPartyMenu.action == PARTY_ACTION_GIVE_ITEM)
         return AddBagItem(item, 1);
-    if (I_BAG_HOLDS_EVERYTHING && AddBagItem(item, 1))
-        return TRUE;
-    return AddPCItem(item, 1);
+    else
+        return AddPCItem(item, 1);
 }
 
 void ChooseMonToGiveMailFromMailbox(void)

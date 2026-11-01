@@ -374,24 +374,25 @@ void NewGameInitPCItems(void)
 }
 
 // With I_BAG_HOLDS_EVERYTHING, Item Storage (the first option) shows only while it holds something
-static void SetTopMenuOptions(const u8 *optionOrder, u32 numOptions, bool32 isBedroomPC)
+static void SetTopMenuOptions(void)
 {
-    u32 skip = I_BAG_HOLDS_EVERYTHING && CountUsedPCItemSlots() == 0;
+    const u8 *optionOrder = sIsBedroomPC ? sBedroomPC_OptionOrder : sPlayerPC_OptionOrder;
+    u32 numOptions = sIsBedroomPC ? NUM_BEDROOM_PC_OPTIONS : NUM_PLAYER_PC_OPTIONS;
+    u32 skip = I_BAG_HOLDS_EVERYTHING && optionOrder[0] == MENU_ITEMSTORAGE && CountUsedPCItemSlots() == 0;
 
     sTopMenuOptionOrder = optionOrder + skip;
     sTopMenuNumOptions = numOptions - skip;
-    sIsBedroomPC = isBedroomPC;
 }
 
 void BedroomPC(void)
 {
-    SetTopMenuOptions(sBedroomPC_OptionOrder, NUM_BEDROOM_PC_OPTIONS, TRUE);
+    sIsBedroomPC = TRUE;
     DisplayItemMessageOnField(CreateTask(TaskDummy, 0), gText_WhatWouldYouLike, InitPlayerPCMenu);
 }
 
 void PlayerPC(void)
 {
-    SetTopMenuOptions(sPlayerPC_OptionOrder, NUM_PLAYER_PC_OPTIONS, FALSE);
+    sIsBedroomPC = FALSE;
     DisplayItemMessageOnField(CreateTask(TaskDummy, 0), gText_WhatWouldYouLike, InitPlayerPCMenu);
 }
 
@@ -407,6 +408,7 @@ static void InitPlayerPCMenu(u8 taskId)
     struct WindowTemplate windowTemplate;
     data = gTasks[taskId].data;
 
+    SetTopMenuOptions();
     if (!sIsBedroomPC)
         windowTemplate = sWindowTemplates_MainMenus[WIN_MAIN_MENU];
     else
@@ -428,7 +430,7 @@ static void PlayerPCProcessMenuInput(u8 taskId)
     s8 inputOptionId;
 
     data = gTasks[taskId].data;
-    if (sTopMenuNumOptions > 3)
+    if (sIsBedroomPC)
         inputOptionId = Menu_ProcessInput();
     else
         inputOptionId = Menu_ProcessInputNoWrap();
