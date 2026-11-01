@@ -1,5 +1,7 @@
 #include "global.h"
 #include "battle.h"
+#include "battle_ai_switch.h"
+#include "battle_ai_util.h"
 #include "battle_anim.h"
 #include "battle_arena.h"
 #include "battle_controllers.h"
@@ -2011,6 +2013,20 @@ static void HandleChooseActionAfterDma3(enum BattlerId battler)
     }
 }
 
+// The move the in-game partner will use this turn, or MOVE_NONE when it uses none or switches.
+static enum Move GetPartnerMoveThisTurn(enum BattlerId partner)
+{
+    if (gBattleMons[partner].volatiles.rechargeTimer > 0
+     || (GetBattlerAbility(partner) == ABILITY_TRUANT && gBattleMons[partner].volatiles.truantCounter != 0))
+        return MOVE_NONE;
+    if (gBattleMons[partner].volatiles.multipleTurns && gLockedMoves[partner] != MOVE_NONE)
+        return gLockedMoves[partner];
+    // AI_TrySwitchOrUseItem's check, which the partner's controller runs next
+    if (gBattleTypeFlags & BATTLE_TYPE_TRAINER && gAiLogicData->shouldSwitch & (1u << partner) && IsSwitchinValid(partner))
+        return MOVE_NONE;
+    return GetAIChosenMove(partner);
+}
+
 static void PlayerHandleChooseAction(enum BattlerId battler)
 {
     s32 i;
@@ -2028,21 +2044,25 @@ static void PlayerHandleChooseAction(enum BattlerId battler)
     BattleStringExpandPlaceholdersToDisplayedString(gText_WhatWillPkmnDo);
 
     enum BattlerId partner = GetBattlerAtPosition(B_POSITION_PLAYER_RIGHT);
+    enum Move move = MOVE_NONE;
     if (B_SHOW_PARTNER_TARGET && gBattleTypeFlags & BATTLE_TYPE_INGAME_PARTNER && IsBattlerAlive(partner))
+        move = GetPartnerMoveThisTurn(partner);
+    if (move != MOVE_NONE)
     {
+        // A locked move keeps the target it was chosen with
+        u32 target = gBattleMons[partner].volatiles.multipleTurns ? gBattleStruct->moveTarget[partner] : gAiBattleData->chosenTarget[partner];
         StringCopy(gStringVar1, COMPOUND_STRING("Partner will use:\n"));
-        enum Move move = GetBattlerChosenMove(partner);
         StringAppend(gStringVar1, GetMoveName(move));
         enum MoveTarget moveTarget = GetBattlerMoveSelectionTargetType(partner, move);
         if (moveTarget == TARGET_SELECTED || moveTarget == TARGET_SMART)
         {
-            if (gAiBattleData->chosenTarget[partner] == B_POSITION_OPPONENT_LEFT)
+            if (target == B_POSITION_OPPONENT_LEFT)
                 StringAppend(gStringVar1, COMPOUND_STRING(" -{UP_ARROW}"));
-            else if (gAiBattleData->chosenTarget[partner] == B_POSITION_OPPONENT_RIGHT)
+            else if (target == B_POSITION_OPPONENT_RIGHT)
                 StringAppend(gStringVar1, COMPOUND_STRING(" {UP_ARROW}-"));
-            else if (gAiBattleData->chosenTarget[partner] == B_POSITION_PLAYER_LEFT)
+            else if (target == B_POSITION_PLAYER_LEFT)
                 StringAppend(gStringVar1, COMPOUND_STRING(" {DOWN_ARROW}-"));
-            else if (gAiBattleData->chosenTarget[partner] == B_POSITION_PLAYER_RIGHT)
+            else if (target == B_POSITION_PLAYER_RIGHT)
                 StringAppend(gStringVar1, COMPOUND_STRING(" -{DOWN_ARROW}"));
         }
         else if (moveTarget == TARGET_USER_AND_ALLY)

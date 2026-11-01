@@ -8,7 +8,7 @@
 // Other settings
 #define OW_POISON_DAMAGE                GEN_LATEST // In Gen4, Pokémon no longer faint from Poison in the overworld. In Gen5+, they no longer take damage at all.
 #define OW_DOUBLE_APPROACH_WITH_ONE_MON FALSE      // If enabled, you can be spotted by two trainers at the same time even if you only have one eligible Pokémon in your party.
-#define OW_HIDE_REPEAT_MAP_POPUP        FALSE      // If enabled, map popups will not appear if entering a map with the same Map Section Id as the last.
+#define OW_HIDE_REPEAT_MAP_POPUP        TRUE       // If enabled, map popups will not appear if entering a map with the same Map Section Id as the last.
 #define OW_WHITEOUT_CUTSCENE            GEN_LATEST // In Gen4+, whiting out shows an additional message and post whiteout event script cutscene with a healing NPC. (While this change was also in FRLG, for the sake of simplicity, setting this to GEN_3 will result in RSE behavior.)
 #define OW_DEFOG_FIELD_MOVE             FALSE      // If enabled, Defog can be used as a Field Move as seen in DPPt.
 #define OW_ROCK_CLIMB_FIELD_MOVE        FALSE      // If enabled, Rock Climb can be used as a Field Move as seen in DPPt.
@@ -45,7 +45,7 @@
 #define OW_BERRY_GROWTH_RATE           GEN_3      // Presets for how long each Berry plant takes to grow.
 #define OW_BERRY_YIELD_RATE            GEN_3      // Presets for how many Berries each plant can yield.
 #define OW_BERRY_DRAIN_RATE            GEN_6_ORAS // If OW_BERRY_MOISTURE is enabled, this setting changes how fast the soil dries out. GEN_4 uses a Berry-dependent drain rate, GEN_6_XY dries out in 24 hours (4 hours with the relevant Mulch) and GEN_6_ORAS dries out in 4 hours. Other values are illegal.
-#define OW_BERRY_IMMORTAL              FALSE      // If enabled, once a Berry tree has grown a Berry, the tree will not disappear until picked by the player.
+#define OW_BERRY_IMMORTAL              TRUE       // If enabled, once a Berry tree has grown a Berry, the tree will not disappear until picked by the player.
 #define OW_BERRY_COLORS                GEN_6_ORAS // If set to GEN_6_XY or GEN_6_ORAS, the Chesto, Wiki, Bluk, Cornn, Pamtre, Belue, Ganlon, Watmel, Qualot, Spelon, Kasib, Colbur, Lansat, Kee, Payapa, Roseli, Liechi, Enigma, and Maranga will use their colors from the stated game. Other values are illegal.
 
 // Overworld Pokémon
@@ -117,7 +117,7 @@
 #define BATTLE_PYRAMID_RANDOM_ENCOUNTERS    FALSE    // If set to TRUE, battle pyramid Pokemon will be generated randomly based on the round's challenge instead of hardcoded in src/data/battle_frontier/battle_pyramid_level_50_wild_mons.h (or open_level_wild_mons.h)
 
 // Map pop-up config
-#define OW_POPUP_GENERATION        GEN_3    // Different generations display location names in overworld pop-ups differently.
+#define OW_POPUP_GENERATION        GEN_5    // Different generations display location names in overworld pop-ups differently.
                                             // Only choices are GEN_3 and GEN_5, all others will default to Gen3 pop-ups.
                                             // Due to changes in project scope, as detailed in docs/team_procedures/scope.md,
                                             // no other overworld popups will be implemented in expansion.
@@ -133,7 +133,7 @@
 
 // Configuration
 #define OW_POPUP_BW_COLOR          OW_POPUP_BW_COLOR_BLACK  // B2W2 use different colors for their map pop-ups.
-#define OW_POPUP_BW_TIME_MODE      OW_POPUP_BW_TIME_NONE    // Determines what type of time is shown.
+#define OW_POPUP_BW_TIME_MODE      OW_POPUP_BW_TIME_12_HR   // Determines what type of time is shown.
 #define OW_POPUP_BW_ALPHA_BLEND    FALSE                    // Enables alpha blending/transparency for the pop-ups. Mainly intended to be used with the black color option.
                                                             // Setting this to TRUE will cause graphical errors with the Day Night System enabled.
                                                             // It will also cause minor visual glitches of shadow and reflection sprites adjusting their transparency when the pop-up disappear

@@ -577,9 +577,9 @@ TEST("Type names fit on Pokedex Search Screen")
 
 TEST("Map names fit in popup")
 {
-    ASSUME(OW_POPUP_GENERATION == GEN_3);
-    const u32 fontId = FONT_NARROWER;
-    u32 widthPx = 80;
+    // The fork's B2W2 bar (#202) prints the name from x 8 across the 30-tile window.
+    const u32 fontId = OW_POPUP_GENERATION == GEN_5 ? FONT_SHORT : FONT_NARROWER;
+    u32 widthPx = OW_POPUP_GENERATION == GEN_5 ? DISPLAY_WIDTH - 8 : 80;
     s8 mapGroup = 0;
     s8 mapNum = 0;
     u8 mapName[MAP_POPUP_STRING_BUFFER_LENGTH - MAP_POPUP_PREFIX_BUFFER_LENGTH];

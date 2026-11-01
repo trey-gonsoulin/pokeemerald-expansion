@@ -1,5 +1,6 @@
 #include "global.h"
 #include "item.h"
+#include "item_use.h"
 #include "pokemon.h"
 #include "test/test.h"
 
@@ -98,4 +99,33 @@ TEST("Evolution party conditions: an Egg in the party counts, as in Platinum")
     SetMonData(&gParties[B_TRAINER_PLAYER][1], MON_DATA_IS_EGG, &isEgg);
 
     EXPECT_EQ(GetEvolutionTargetSpecies(mantyke, EVO_MODE_NORMAL, ITEM_NONE, NULL, NULL, CHECK_EVO), SPECIES_MANTINE);
+}
+
+// The fork sells the Linking Cord at Lilycove (#208) for the trade evolutions that need
+// no held item, and I_USE_EVO_HELD_ITEMS_FROM_BAG covers the ones that do.
+TEST("Linking Cord: evolves a trade evolution from the bag, and nothing else")
+{
+    struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][0];
+
+    ZeroPlayerPartyMons();
+    EXPECT_EQ(GetItemFieldFunc(ITEM_LINKING_CORD), ItemUseOutOfBattle_EvolutionStone);
+
+    CreatePartyMon(0, SPECIES_KADABRA, ITEM_NONE);
+    EXPECT_EQ(GetEvolutionTargetSpecies(mon, EVO_MODE_ITEM_USE, ITEM_LINKING_CORD, NULL, NULL, CHECK_EVO), SPECIES_ALAKAZAM);
+    CreatePartyMon(0, SPECIES_GRAVELER, ITEM_NONE);
+    EXPECT_EQ(GetEvolutionTargetSpecies(mon, EVO_MODE_ITEM_USE, ITEM_LINKING_CORD, NULL, NULL, CHECK_EVO), SPECIES_GOLEM);
+    CreatePartyMon(0, SPECIES_ABRA, ITEM_NONE);
+    EXPECT_EQ(GetEvolutionTargetSpecies(mon, EVO_MODE_ITEM_USE, ITEM_LINKING_CORD, NULL, NULL, CHECK_EVO), SPECIES_NONE);
+}
+
+TEST("Linking Cord: trade held items are used from the bag like stones")
+{
+    struct Pokemon *onix = &gParties[B_TRAINER_PLAYER][0];
+
+    ZeroPlayerPartyMons();
+    EXPECT_EQ(GetItemType(ITEM_METAL_COAT), ITEM_USE_PARTY_MENU);
+    EXPECT_EQ(GetItemFieldFunc(ITEM_METAL_COAT), ItemUseOutOfBattle_EvolutionStone);
+
+    CreatePartyMon(0, SPECIES_ONIX, ITEM_NONE);
+    EXPECT_EQ(GetEvolutionTargetSpecies(onix, EVO_MODE_ITEM_USE, ITEM_METAL_COAT, NULL, NULL, CHECK_EVO), SPECIES_STEELIX);
 }
