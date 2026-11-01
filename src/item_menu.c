@@ -210,6 +210,7 @@ static void Task_ItemContext_GiveToParty(u8);
 static void Task_ItemContext_Sell(u8);
 static void Task_ItemContext_Deposit(u8);
 static void Task_ItemContext_GiveToPC(u8);
+static void Task_ItemContext_UseOnPartyMon(u8);
 static void ConfirmToss(u8);
 static void CancelToss(u8);
 static void ConfirmSell(u8);
@@ -217,6 +218,7 @@ static void CancelSell(u8);
 static void Task_FadeAndCloseBagMenuIfMulch(u8 taskId);
 
 static const u8 sText_Var1CantBeHeldHere[] = _("The {STR_VAR_1} can't be held\nhere.");
+static const u8 sText_Var1CantBeUsedOnMon[] = _("The {STR_VAR_1} can't be used\non a POKéMON.");
 static const u8 sText_DepositHowManyVar1[] = _("Deposit how many\n{STR_VAR_1}?");
 static const u8 sText_DepositedVar2Var1s[] = _("Deposited {STR_VAR_2}\n{STR_VAR_1}.");
 static const u8 sText_NoRoomForItems[] = _("There's no room to\nstore items.");
@@ -384,6 +386,7 @@ static const TaskFunc sContextMenuFuncs[] =
     [ITEMMENULOCATION_PCBOX]                    = Task_ItemContext_GiveToPC,
     [ITEMMENULOCATION_BERRY_TREE_MULCH]         = Task_FadeAndCloseBagMenuIfMulch,
     [ITEMMENULOCATION_RAIDEND]                  = Task_ItemContext_Normal,
+    [ITEMMENULOCATION_PARTY_USE]                = Task_ItemContext_UseOnPartyMon,
 };
 
 static const struct YesNoFuncTable sYesNoTossFunctions = {ConfirmToss, CancelToss};
@@ -2153,6 +2156,23 @@ static void Task_ItemContext_GiveToPC(u8 taskId)
         gTasks[taskId].func = Task_FadeAndCloseBagMenu;
     else
         PrintItemCantBeHeld(taskId);
+}
+
+// Selected item to use on the Pokémon chosen in the party menu (I_USE_ITEM_FROM_PARTY_MENU)
+static void Task_ItemContext_UseOnPartyMon(u8 taskId)
+{
+    if (CanUseItemOnChosenPartyMon(gSpecialVar_ItemId))
+    {
+        FillWindowPixelBuffer(WIN_DESCRIPTION, PIXEL_FILL(0));
+        ScheduleBgCopyTilemapToVram(0);
+        GetItemFieldFunc(gSpecialVar_ItemId)(taskId);
+    }
+    else
+    {
+        CopyItemName(gSpecialVar_ItemId, gStringVar1);
+        StringExpandPlaceholders(gStringVar4, sText_Var1CantBeUsedOnMon);
+        DisplayItemMessage(taskId, FONT_NORMAL, gStringVar4, HandleErrorMessage);
+    }
 }
 
 #define tUsingRegisteredKeyItem data[3] // See usage in item_use.c
