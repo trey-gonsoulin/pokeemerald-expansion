@@ -100,6 +100,7 @@ LavaridgeTown_Gym_1F_EventScript_FlanneryRematch::
 
 LavaridgeTown_Gym_1F_EventScript_Cole::
 	trainerbattle_lavaridge LOCALID_COLE, TRAINER_COLE, LavaridgeTown_Gym_1F_Text_ColeIntro, LavaridgeTown_Gym_1F_Text_ColeDefeat, LavaridgeTown_Gym_EventScript_CheckTrainerScript
+	msgbox LavaridgeTown_Gym_1F_Text_ColePostBattle, MSGBOX_AUTOCLOSE
 	end
 
 LavaridgeTown_Gym_EventScript_CheckTrainerScript::
