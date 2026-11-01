@@ -1,6 +1,5 @@
 #include "global.h"
 #include "event_data.h"
-#include "event_object_movement.h"
 #include "field_move.h"
 #include "fldeff.h"
 #include "fldeff_misc.h"
@@ -193,33 +192,13 @@ const struct FieldMoveInfo gFieldMoveInfo[FIELD_MOVES_COUNT] =
     },
 };
 
-static bool32 IsTravelFieldMove(enum FieldMove fieldMove)
-{
-    switch (fieldMove)
-    {
-    case FIELD_MOVE_CUT:
-    case FIELD_MOVE_FLASH:
-    case FIELD_MOVE_ROCK_SMASH:
-    case FIELD_MOVE_STRENGTH:
-    case FIELD_MOVE_SURF:
-    case FIELD_MOVE_FLY:
-    case FIELD_MOVE_DIVE:
-    case FIELD_MOVE_WATERFALL:
-    case FIELD_MOVE_ROCK_CLIMB:
-        return TRUE;
-    default:
-        return FALSE;
-    }
-}
-
 // The party slot shown using a field move: the first Pokémon that knows it,
-// else (OW_FIELD_MOVES_WITHOUT_MON, travel HMs with their badge) the lead.
-// PARTY_SIZE if nobody can use it.
+// else (OW_FIELD_MOVES_WITHOUT_MON, a move unlocked by its badge) the lead,
+// the first conscious non-Egg. PARTY_SIZE if nobody can use it.
 u32 GetFieldMoveUserSlot(enum FieldMove fieldMove)
 {
     enum Move move = FieldMove_GetMoveId(fieldMove);
-    struct Pokemon *lead;
-    u32 i, firstNonEgg = PARTY_SIZE;
+    u32 i, lead = PARTY_SIZE;
 
     for (i = 0; i < PARTY_SIZE; i++)
     {
@@ -230,13 +209,13 @@ u32 GetFieldMoveUserSlot(enum FieldMove fieldMove)
             continue;
         if (MonKnowsMove(mon, move))
             return i;
-        if (firstNonEgg == PARTY_SIZE)
-            firstNonEgg = i;
+        if (lead == PARTY_SIZE || (GetMonData(&gParties[B_TRAINER_PLAYER][lead], MON_DATA_HP) == 0 && GetMonData(mon, MON_DATA_HP) != 0))
+            lead = i;
     }
 
-    if (!OW_FIELD_MOVES_WITHOUT_MON || !IsTravelFieldMove(fieldMove) || !IsFieldMoveUnlocked(fieldMove))
+    if (!OW_FIELD_MOVES_WITHOUT_MON
+     || gFieldMoveInfo[fieldMove].unlockType != BADGE_UNLOCK
+     || !IsFieldMoveUnlocked(fieldMove))
         return PARTY_SIZE;
-
-    lead = GetFirstLiveMon();
-    return lead != NULL ? lead - gParties[B_TRAINER_PLAYER] : firstNonEgg;
+    return lead;
 }
