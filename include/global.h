@@ -1085,7 +1085,14 @@ struct ExternalEventFlags
 
 struct Bag
 {
+#if I_REGISTERED_ITEMS_COUNT > 1
+    union {
+        struct ItemSlot items[BAG_ITEMS_COUNT]; // Only a save from before I_BAG_HOLDS_EVERYTHING, until it's converted
+        u16 extraRegisteredItems[I_REGISTERED_ITEMS_COUNT - 1]; // After registeredItem
+    };
+#else
     struct ItemSlot items[BAG_ITEMS_COUNT];
+#endif
     struct ItemSlot keyItems[BAG_KEYITEMS_COUNT];
     struct ItemSlot pokeBalls[BAG_POKEBALLS_COUNT];
     struct ItemSlot TMsHMs[BAG_TMHM_COUNT];
