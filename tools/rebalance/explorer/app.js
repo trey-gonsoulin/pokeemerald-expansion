@@ -44,7 +44,7 @@ const KNOBS = [
     { key: 'overlevel_width', label: 'Over-level width', type: 'optional', min: 1, max: 10, step: 1,
       unit: 'overlevel_unit', pct: [1, 20, 1], fmt: (v, u) => `over ${v}${u}`,
       help: 'B_EXP_OVERLEVEL_WIDTH: how gradually the curve falls around the cutoff. Off: straight to the floor past it.' },
-    { key: 'overlevel_floor', label: 'Over-level floor', type: 'range', min: 0, max: 50, step: 1,
+    { key: 'overlevel_floor', label: 'Over-level floor', type: 'range', min: 0, max: 100, step: 1,
       fmt: v => `${v}% of the exp`,
       help: 'B_EXP_OVERLEVEL_FLOOR: where the curve levels out, far above the foe (at least 1 exp).' },
     { key: 'share_fraction', label: 'Exp. Share bench share', type: 'range', min: 0, max: 1, step: 0.05, fmt: pct,

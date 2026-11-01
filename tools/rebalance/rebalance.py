@@ -587,7 +587,7 @@ def logistic(n, d):
         return 0 if n > 0 else 4096
     if n < 0:
         return 4096 - logistic(-n, d)
-    t = n * 256 // d
+    t = int(n * 256 // d)
     i = t // 16
     if i >= len(LOGISTIC) - 1:
         return 0
@@ -1282,7 +1282,7 @@ def explorer_defaults(gd):
     o = Overlevel.from_configs(gd)
     return {**EXPLORER_KNOBS, 'scaling_power': 3.5 if gd.flag('B_SCALED_EXP_STEEP') else 2.5,
             'overlevel_cutoff': o and o.cutoff, 'overlevel_unit': 'percent' if o and o.relative else 'levels',
-            'overlevel_width': o and o.width, 'overlevel_floor': o.floor if o else 0}
+            'overlevel_width': o.width or None if o else None, 'overlevel_floor': o.floor if o else 0}
 
 
 def explore_run(snap, knobs=None):
@@ -1300,7 +1300,7 @@ def explore_run(snap, knobs=None):
         if k[key] not in UNITS:
             raise ValueError(f'{key} must be one of {UNITS}')
     overlevel = None if k['overlevel_cutoff'] is None else Overlevel(
-        k['overlevel_cutoff'], k['overlevel_unit'] == 'percent', k['overlevel_width'] or 0, k['overlevel_floor'])
+        k['overlevel_cutoff'], k['overlevel_unit'] == 'percent', k['overlevel_width'] or 0, k['overlevel_floor'] or 0)
     gd = with_configs(snap['gd'], B_TRAINER_EXP_MULTIPLIER=TRAINER_EXP[k['trainer_exp']],
                       B_SCALED_EXP='GEN_LATEST' if k['scaled_exp'] else 'GEN_6')
     # The game's own table at its exponent (scaling_factors matches it, tested).
