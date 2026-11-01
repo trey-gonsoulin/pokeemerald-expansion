@@ -60,6 +60,7 @@ enum {
     WIN_QUANTITY_IN_BAG,
     WIN_QUANTITY_PRICE,
     WIN_MESSAGE,
+    WIN_IN_BAG_HOVER,
 };
 
 enum {
@@ -158,6 +159,7 @@ static void Task_HandleShopMenuBuy(u8 taskId);
 static void Task_HandleShopMenuSell(u8 taskId);
 static void BuyMenuPrintItemDescriptionAndShowItemIcon(s32 item, bool8 onInit, struct ListMenu *list);
 static void BuyMenuPrintPriceInList(u8 windowId, u32 itemId, u8 y);
+static void BuyMenuPrintInBagCount(s32 item);
 
 static const struct YesNoFuncTable sShopPurchaseYesNoFuncs =
 {
@@ -319,6 +321,16 @@ static const struct WindowTemplate sShopBuyMenuWindowTemplates[] =
         .height = 4,
         .paletteNum = 15,
         .baseBlock = 0x01A2,
+    },
+    // The highlighted item's bag count, without a frame, right of the item icon
+    [WIN_IN_BAG_HOVER] = {
+        .bg = 0,
+        .tilemapLeft = 14 - SHOP_IN_BAG_HOVER_WIDTH,
+        .tilemapTop = 11,
+        .width = SHOP_IN_BAG_HOVER_WIDTH,
+        .height = 2,
+        .paletteNum = 15,
+        .baseBlock = 0x0222, // After the yes/no window's
     },
     DUMMY_WIN_TEMPLATE
 };
@@ -632,6 +644,21 @@ static void BuyMenuPrintItemDescriptionAndShowItemIcon(s32 item, bool8 onInit, s
 
     FillWindowPixelBuffer(WIN_ITEM_DESCRIPTION, PIXEL_FILL(0));
     BuyMenuPrint(WIN_ITEM_DESCRIPTION, description, 3, 1, 0, COLORID_NORMAL);
+    BuyMenuPrintInBagCount(item);
+}
+
+// "IN BAG: N" for the highlighted item, right-aligned against the item list.
+// Decoration marts and the "Quit shopping" row show nothing.
+static void BuyMenuPrintInBagCount(s32 item)
+{
+    FillWindowPixelBuffer(WIN_IN_BAG_HOVER, PIXEL_FILL(0));
+    if (item != LIST_CANCEL && sMartInfo.martType == MART_TYPE_NORMAL)
+    {
+        ConvertIntToDecimalStringN(gStringVar1, CountTotalItemQuantityInBag(item), STR_CONV_MODE_RIGHT_ALIGN, MAX_ITEM_DIGITS + 1);
+        StringExpandPlaceholders(gStringVar4, gText_InBagVar1);
+        BuyMenuPrint(WIN_IN_BAG_HOVER, gStringVar4, GetStringRightAlignXOffset(FONT_NORMAL, gStringVar4, SHOP_IN_BAG_HOVER_WIDTH * 8), 1, TEXT_SKIP_DRAW, COLORID_NORMAL);
+    }
+    CopyWindowToVram(WIN_IN_BAG_HOVER, COPYWIN_GFX);
 }
 
 static void BuyMenuPrintPriceInList(u8 windowId, u32 itemId, u8 y)
@@ -773,6 +800,7 @@ static void BuyMenuInitWindows(void)
     PutWindowTilemap(WIN_MONEY);
     PutWindowTilemap(WIN_ITEM_LIST);
     PutWindowTilemap(WIN_ITEM_DESCRIPTION);
+    PutWindowTilemap(WIN_IN_BAG_HOVER);
 }
 
 static void BuyMenuPrint(u8 windowId, const u8 *text, u8 x, u8 y, s8 speed, u8 colorSet)
@@ -1013,6 +1041,7 @@ static void Task_BuyMenu(u8 taskId)
             PlaySE(SE_SELECT);
             tItemId = itemId;
             ClearWindowTilemap(WIN_ITEM_DESCRIPTION);
+            ClearWindowTilemap(WIN_IN_BAG_HOVER); // The "How many?" box shows the count
             BuyMenuRemoveScrollIndicatorArrows();
             BuyMenuPrintCursor(tListTaskId, COLORID_GRAY_CURSOR);
 
@@ -1239,6 +1268,9 @@ static void BuyMenuReturnToItemList(u8 taskId)
     BuyMenuPrintCursor(tListTaskId, COLORID_ITEM_LIST);
     PutWindowTilemap(WIN_ITEM_LIST);
     PutWindowTilemap(WIN_ITEM_DESCRIPTION);
+    // A purchase changes the count, but the cursor hasn't moved to reprint it
+    BuyMenuPrintInBagCount(tItemId);
+    PutWindowTilemap(WIN_IN_BAG_HOVER);
     ScheduleBgCopyTilemapToVram(0);
     BuyMenuAddScrollIndicatorArrows();
     gTasks[taskId].func = Task_BuyMenu;
