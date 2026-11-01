@@ -2031,11 +2031,15 @@ static void PlayerHandleChooseAction(enum BattlerId battler)
 
     enum BattlerId partner = GetBattlerAtPosition(B_POSITION_PLAYER_RIGHT);
     // The switch check is AI_TrySwitchOrUseItem's, which the partner's controller runs next.
+    // A recharging partner uses no move, and a locked one (Outrage, Fly) keeps its move.
     if (B_SHOW_PARTNER_TARGET && gBattleTypeFlags & BATTLE_TYPE_INGAME_PARTNER && IsBattlerAlive(partner)
-     && !(gAiLogicData->shouldSwitch & (1u << partner) && IsSwitchinValid(partner)))
+     && gBattleMons[partner].volatiles.rechargeTimer == 0
+     && !(gBattleTypeFlags & BATTLE_TYPE_TRAINER && gAiLogicData->shouldSwitch & (1u << partner) && IsSwitchinValid(partner)))
     {
         StringCopy(gStringVar1, COMPOUND_STRING("Partner will use:\n"));
         enum Move move = GetAIChosenMove(partner);
+        if (gBattleMons[partner].volatiles.multipleTurns && gLockedMoves[partner] != MOVE_NONE)
+            move = gLockedMoves[partner];
         StringAppend(gStringVar1, GetMoveName(move));
         enum MoveTarget moveTarget = GetBattlerMoveSelectionTargetType(partner, move);
         if (moveTarget == TARGET_SELECTED || moveTarget == TARGET_SMART)

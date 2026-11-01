@@ -6,7 +6,7 @@
 
 // The fork turns the DexNav on with search levels (#203): they live in SaveBlock3,
 // one byte per species, and decide the egg move, hidden ability and IV chances.
-TEST("DexNav: a battle won or caught raises the species' saved search level")
+TEST("DexNav: raising the search level adds one to that species' saved level")
 {
     gSaveBlock3Ptr->dexNavSearchLevels[SPECIES_ZIGZAGOON] = 4;
     gSaveBlock3Ptr->dexNavSearchLevels[SPECIES_WURMPLE] = 0;
