@@ -647,6 +647,12 @@ static void BuyMenuPrintItemDescriptionAndShowItemIcon(s32 item, bool8 onInit, s
     BuyMenuPrintInBagOrAbleCount(item);
 }
 
+// SOLD OUT (OWNED for a TM) in the list, and refused when chosen
+static bool32 IsOwnedImportantItem(u32 itemId)
+{
+    return GetItemImportance(itemId) && (CheckBagHasItem(itemId, 1) || CheckPCHasItem(itemId, 1));
+}
+
 static bool32 IsMartTM(u32 itemId)
 {
     return sMartInfo.martType == MART_TYPE_NORMAL && GetItemPocket(itemId) == POCKET_TM_HM;
@@ -663,7 +669,7 @@ static void BuyMenuPrintInBagOrAbleCount(s32 item)
         if (IsMartTM(item))
         {
             u32 partyCount;
-            u32 ableCount = CountPartyMonsAbleToLearn(GetItemTMHMMoveId(item), &partyCount);
+            u32 ableCount = CountPartyMonsAbleToLearn(ItemIdToBattleMoveId(item), &partyCount);
 
             ConvertIntToDecimalStringN(gStringVar1, ableCount, STR_CONV_MODE_LEFT_ALIGN, 1);
             ConvertIntToDecimalStringN(gStringVar2, partyCount, STR_CONV_MODE_LEFT_ALIGN, 1);
@@ -702,7 +708,7 @@ static void BuyMenuPrintPriceInList(u8 windowId, u32 itemId, u8 y)
                 6);
         }
 
-        if (GetItemImportance(itemId) && (CheckBagHasItem(itemId, 1) || CheckPCHasItem(itemId, 1)))
+        if (IsOwnedImportantItem(itemId))
             StringCopy(gStringVar4, IsMartTM(itemId) ? gText_Owned : gText_SoldOut);
         else
             StringExpandPlaceholders(gStringVar4, gText_PokedollarVar1);
@@ -1059,7 +1065,7 @@ static void Task_BuyMenu(u8 taskId)
             PlaySE(SE_SELECT);
             tItemId = itemId;
             ClearWindowTilemap(WIN_ITEM_DESCRIPTION);
-            ClearWindowTilemap(WIN_IN_BAG_HOVER); // The "How many?" box shows the count
+            ClearWindowTilemap(WIN_IN_BAG_HOVER); // Hidden behind the "How many?" box and the messages
             BuyMenuRemoveScrollIndicatorArrows();
             BuyMenuPrintCursor(tListTaskId, COLORID_GRAY_CURSOR);
 
@@ -1068,7 +1074,7 @@ static void Task_BuyMenu(u8 taskId)
             else
                 sShopData->totalCost = gDecorations[itemId].price;
 
-            if (GetItemImportance(itemId) && (CheckBagHasItem(itemId, 1) || CheckPCHasItem(itemId, 1)))
+            if (IsOwnedImportantItem(itemId))
                 BuyMenuDisplayMessage(taskId, IsMartTM(itemId) ? gText_YouAlreadyHaveThatTM : gText_ThatItemIsSoldOut, BuyMenuReturnToItemList);
             else if (!IsEnoughMoney(&gSaveBlock1Ptr->money, sShopData->totalCost))
             {
