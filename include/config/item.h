@@ -35,6 +35,7 @@
 // The Items pocket holds BAG_ITEMS_ALL_COUNT kinds instead of BAG_ITEMS_COUNT, in the bytes of the save's mystery-event
 // script (needs FREE_MYSTERY_EVENT_BUFFERS), and the PC shows Item Storage only while it holds something.
 // Saves from before it are converted on Continue, once, which sets I_BAG_CONVERTED_FLAG.
+// Turning it off again on a converted save strands the Items pocket in those bytes.
 #define I_BAG_HOLDS_EVERYTHING      TRUE
 #define I_BAG_CONVERTED_FLAG        FLAG_UNUSED_0x020
 

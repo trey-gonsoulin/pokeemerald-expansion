@@ -138,6 +138,7 @@ TEST("Bag holds everything: a new game's Potion goes in the bag")
 {
     ASSUME(I_BAG_HOLDS_EVERYTHING);
     ClearBag();
+    gSaveBlock1Ptr->pcItems[0] = (struct ItemSlot) { ITEM_ANTIDOTE, 1 };
     FlagClear(I_BAG_CONVERTED_FLAG);
 
     NewGameInitPCItems();
