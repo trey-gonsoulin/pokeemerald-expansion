@@ -41,6 +41,10 @@
 // The start menu's party menu offers Use in a Pokémon's Item submenu: it opens the bag, and an item that targets a
 // Pokémon (Medicine, Rare Candy, stones, TMs...) goes on that one. The bag stays open for the next item.
 #define I_USE_ITEM_FROM_PARTY_MENU  TRUE
+// How many key items can be registered to Select (1 in Gen 3, 4 in X and Y). With more than one registered, Select
+// opens a menu to pick among them. Above 1 it needs I_BAG_HOLDS_EVERYTHING: the extra slots use the bytes of the
+// old Items pocket it frees.
+#define I_REGISTERED_ITEMS_COUNT    4
 
 // Repel/Lure config
 // These two settings are both independent and complementary.
