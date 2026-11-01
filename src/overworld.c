@@ -17,6 +17,7 @@
 #include "field_control_avatar.h"
 #include "field_effect.h"
 #include "field_effect_helpers.h"
+#include "field_move.h"
 #include "field_message_box.h"
 #include "field_player_avatar.h"
 #include "field_screen_effect.h"
@@ -1104,6 +1105,9 @@ bool32 Overworld_IsBikingAllowed(void)
 // Flash level of 8 is fully black
 void SetDefaultFlashLevel(void)
 {
+    if (gMapHeader.cave && OW_FIELD_MOVES_WITHOUT_MON && IsFieldMoveUnlocked(FIELD_MOVE_FLASH))
+        FlagSet(FLAG_SYS_USE_FLASH);
+
     if (!gMapHeader.cave)
         gSaveBlock1Ptr->flashLevel = 0;
     else if (FlagGet(FLAG_SYS_USE_FLASH))

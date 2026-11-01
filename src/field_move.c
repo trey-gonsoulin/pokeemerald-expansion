@@ -1,5 +1,6 @@
 #include "global.h"
 #include "event_data.h"
+#include "event_object_movement.h"
 #include "field_move.h"
 #include "fldeff.h"
 #include "fldeff_misc.h"
@@ -191,3 +192,56 @@ const struct FieldMoveInfo gFieldMoveInfo[FIELD_MOVES_COUNT] =
         .hideIfLocked = TRUE,
     },
 };
+
+static bool32 IsTravelFieldMove(enum FieldMove fieldMove)
+{
+    switch (fieldMove)
+    {
+    case FIELD_MOVE_CUT:
+    case FIELD_MOVE_FLASH:
+    case FIELD_MOVE_ROCK_SMASH:
+    case FIELD_MOVE_STRENGTH:
+    case FIELD_MOVE_SURF:
+    case FIELD_MOVE_FLY:
+    case FIELD_MOVE_DIVE:
+    case FIELD_MOVE_WATERFALL:
+    case FIELD_MOVE_ROCK_CLIMB:
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+
+// The party slot shown using a field move: the first Pokémon that knows it,
+// else (OW_FIELD_MOVES_WITHOUT_MON, travel HMs with their badge) the lead.
+// PARTY_SIZE if nobody can use it.
+u32 GetFieldMoveUserSlot(enum FieldMove fieldMove)
+{
+    enum Move move = FieldMove_GetMoveId(fieldMove);
+    struct Pokemon *lead;
+    u32 i;
+
+    for (i = 0; i < PARTY_SIZE; i++)
+    {
+        struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][i];
+        if (GetMonData(mon, MON_DATA_SPECIES) == SPECIES_NONE)
+            break;
+        if (!GetMonData(mon, MON_DATA_IS_EGG) && MonKnowsMove(mon, move))
+            return i;
+    }
+
+    if (!OW_FIELD_MOVES_WITHOUT_MON || !IsTravelFieldMove(fieldMove) || !IsFieldMoveUnlocked(fieldMove))
+        return PARTY_SIZE;
+
+    lead = GetFirstLiveMon();
+    if (lead != NULL)
+        return lead - gParties[B_TRAINER_PLAYER];
+    for (i = 0; i < PARTY_SIZE; i++)
+    {
+        if (GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_SPECIES) == SPECIES_NONE)
+            break;
+        if (!GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_IS_EGG))
+            return i;
+    }
+    return PARTY_SIZE;
+}
