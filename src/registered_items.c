@@ -35,6 +35,7 @@ STATIC_ASSERT(I_REGISTERED_ITEMS_COUNT >= 1, RegisteredItemsCountAtLeastOne);
 
 #define tListTaskId data[0]
 #define tWindowId   data[1]
+#define tReady      data[2]
 
 static EWRAM_DATA enum Item sLastRegisteredItemUsed = ITEM_NONE;
 static EWRAM_DATA struct ListMenuItem sMenuItems[I_REGISTERED_ITEMS_COUNT] = {0};
@@ -230,6 +231,13 @@ static void Task_RegisteredItemsMenu(u8 taskId)
 {
     s16 *data = gTasks[taskId].data;
     s32 input;
+
+    // The task first runs in the frame of the Select press that opened the menu
+    if (!tReady)
+    {
+        tReady = TRUE;
+        return;
+    }
 
     // Select again steps down the list, and wraps
     if (JOY_NEW(SELECT_BUTTON))
