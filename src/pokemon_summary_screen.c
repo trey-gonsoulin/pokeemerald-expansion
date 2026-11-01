@@ -1238,12 +1238,10 @@ void ShowPokemonSummaryScreen(u8 mode, void *mons, u8 monIndex, u8 maxMonIndex, 
         break;
     }
 
-    if (mode == SUMMARY_MODE_RELEARNER_BATTLE)
+    if (mode == SUMMARY_MODE_RELEARNER_BATTLE || mode == SUMMARY_MODE_SELECT_MOVE)
         sMonSummaryScreen->currPageIndex = PSS_PAGE_BATTLE_MOVES;
     else if (mode == SUMMARY_MODE_RELEARNER_CONTEST)
         sMonSummaryScreen->currPageIndex = PSS_PAGE_CONTEST_MOVES;
-    else if (mode == SUMMARY_MODE_SELECT_MOVE)
-        sMonSummaryScreen->currPageIndex = PSS_PAGE_BATTLE_MOVES;
     else
         sMonSummaryScreen->currPageIndex = sMonSummaryScreen->minPageIndex;
 
