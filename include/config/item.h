@@ -38,6 +38,9 @@
 // Turning it off again on a converted save strands the Items pocket in those bytes.
 #define I_BAG_HOLDS_EVERYTHING      TRUE
 #define I_BAG_CONVERTED_FLAG        FLAG_UNUSED_0x020
+// The start menu's party menu offers Use in a Pokémon's Item submenu: it opens the bag, and an item that targets a
+// Pokémon (Medicine, Rare Candy, stones, TMs...) goes on that one. The bag stays open for the next item.
+#define I_USE_ITEM_FROM_PARTY_MENU  TRUE
 
 // Repel/Lure config
 // These two settings are both independent and complementary.
