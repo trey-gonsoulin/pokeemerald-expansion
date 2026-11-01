@@ -308,7 +308,7 @@ Each rival row goes on all six teams of that fight: May or Brendan, with each st
 - **A falloff holds the curve down far less than a hard cutoff.** The targets keep the route trainers about 5 levels (10%) below the party, right at a +5 or +10% cutoff. A hard cutoff stops the party there, because each trainer it outgrows gives 1 exp. A falloff lets it keep pulling ahead slowly, and the targets follow it up. To hold Wallace near 80 with a falloff, it has to start at the party's own level (+0) and halve every 10 levels or 20%.
 - **Percent targets change little at these settings**: 10% is about 5 levels at level 50. They put the early game closer (a level-10 party's trainers 1 below rather than 5) and the endgame further apart.
 
-**Owner's choice (2026-10-30, for now):** the explorer settings
+**Owner's choice (2026-10-30, for now):** the explorer settings (#154's halving knobs: #189 replaced `overlevel_halflife` with `overlevel_width` and `overlevel_floor`, so `curve` no longer takes this block as is)
 
 ```json
 {"wild_battles": 6, "scaling_power": 3.5, "overlevel_unit": "percent", "overlevel_cutoff": 10,

@@ -58,12 +58,14 @@ static const u16 sExpLogistic[161] =
     0,
 };
 
-// 4096 / (1 + e^(n/d)), d > 0: sExpLogistic, interpolated in 256ths of t, and 0
-// past its end.
+// 4096 / (1 + e^(n/d)): sExpLogistic, interpolated in 256ths of t, and 0 past
+// its end. At d = 0, the curve's limit: a step at n = 0.
 static u32 ExpLogistic(s32 n, s32 d)
 {
     u32 t, i;
 
+    if (d == 0)
+        return n > 0 ? 0 : 4096;
     if (n < 0)
         return 4096 - ExpLogistic(-n, d);
     t = (u32)n * 256 / d;
@@ -84,19 +86,12 @@ s32 ApplyOverlevelPenalty(s32 exp, u32 faintedLevel, u32 expGetterLevel)
     s32 cutoff = faintedLevel * GetConfig(B_EXP_OVERLEVEL_CUTOFF);
     s32 width = faintedLevel * GetConfig(B_EXP_OVERLEVEL_WIDTH);
     u32 floorPercent = min(GetConfig(B_EXP_OVERLEVEL_FLOOR), 100);
-    u32 full = 4096, here;
+    u32 full, here;
 
     if (exp <= 0 || expGetterLevel <= faintedLevel)
         return exp;
-    if (width == 0)
-    {
-        here = over > cutoff ? 0 : 4096;
-    }
-    else
-    {
-        full = ExpLogistic(-cutoff, width);
-        here = ExpLogistic(over - cutoff, width);
-    }
+    full = ExpLogistic(-cutoff, width);
+    here = ExpLogistic(over - cutoff, width);
     exp = (u64)exp * (floorPercent * full + (100 - floorPercent) * here) / (100 * full);
     return exp > 0 ? exp : 1;
 }
