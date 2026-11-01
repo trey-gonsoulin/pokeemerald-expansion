@@ -96,7 +96,7 @@ TEST("Bag holds everything: an old save's Items pocket and Item Storage move int
     EXPECT_EQ(CountTotalItemQuantityInBag(ITEM_TM05), 1);
     EXPECT_EQ(CountTotalItemQuantityInBag(ITEM_ORAN_BERRY), 6);
     EXPECT(IsSlotArrayEmpty(gSaveBlock1Ptr->bag.items, BAG_ITEMS_COUNT));
-    EXPECT(IsSlotArrayEmpty(gSaveBlock1Ptr->pcItems, PC_ITEMS_COUNT));
+    EXPECT_EQ(CountUsedPCItemSlots(), 0);
 
     // A second run changes nothing.
     gSaveBlock1Ptr->pcItems[0] = (struct ItemSlot) { ITEM_POTION, 2 };
