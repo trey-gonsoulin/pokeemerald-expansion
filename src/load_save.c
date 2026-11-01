@@ -31,6 +31,9 @@ struct LoadedSaveData
 #if I_BAG_HOLDS_EVERYTHING
     struct ItemSlot bagItems[BAG_ITEMS_ALL_COUNT];
 #endif
+#if I_REGISTERED_ITEMS_COUNT > 1
+    u16 registeredItem; // The other registered slots are in bag
+#endif
 };
 
 // EWRAM DATA
@@ -265,6 +268,9 @@ void LoadPlayerBag(void)
 #if I_BAG_HOLDS_EVERYTHING
     memcpy(gLoadedSaveData.bagItems, gSaveBlock1Ptr->bagItems, sizeof(gSaveBlock1Ptr->bagItems));
 #endif
+#if I_REGISTERED_ITEMS_COUNT > 1
+    gLoadedSaveData.registeredItem = gSaveBlock1Ptr->registeredItem;
+#endif
 
     // load mail.
     for (i = 0; i < MAIL_COUNT; i++)
@@ -282,6 +288,9 @@ void SavePlayerBag(void)
     memcpy(&gSaveBlock1Ptr->bag, &gLoadedSaveData.bag, sizeof(struct Bag));
 #if I_BAG_HOLDS_EVERYTHING
     memcpy(gSaveBlock1Ptr->bagItems, gLoadedSaveData.bagItems, sizeof(gSaveBlock1Ptr->bagItems));
+#endif
+#if I_REGISTERED_ITEMS_COUNT > 1
+    gSaveBlock1Ptr->registeredItem = gLoadedSaveData.registeredItem;
 #endif
 
     // save mail.

@@ -235,6 +235,7 @@ extern const u8 gText_TossHowManyVar1s[];
 extern const u8 gText_ConfirmTossItems[];
 extern const u8 gText_ThrewAwayVar2Var1s[];
 extern const u8 gText_CantWriteMail[];
+extern const u8 gText_YouCanRegisterUpToVar1Items[];
 extern const u8 gText_NoPokemon[];
 extern const u8 gText_Var1CantBeHeld[];
 extern const u8 gText_CantBuyKeyItem[];
