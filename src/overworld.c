@@ -53,6 +53,7 @@
 #include "palette.h"
 #include "play_time.h"
 #include "random.h"
+#include "rematch_indicator.h"
 #include "roamer.h"
 #include "rotating_gate.h"
 #include "rtc.h"
@@ -1859,6 +1860,7 @@ static void OverworldBasic(void)
     AnimateSprites();
     CameraUpdate();
     UpdateCameraPanning();
+    UpdateRematchIndicators();
     BuildOamBuffer();
     UpdatePaletteFade();
     UpdateTilesetAnimations();

@@ -92,7 +92,6 @@ static u8 GetVsSeekerResponseInArea(void);
 #if FREE_MATCH_CALL == FALSE
 static u8 GetResponseMovementTypeFromTrainerGraphicsId(u8 graphicsId);
 #endif //FREE_MATCH_CALL
-static u16 GetTrainerFlagFromScript(const u8 * script);
 static void ClearAllTrainerRematchStates(void);
 #if FREE_MATCH_CALL == FALSE
 static bool8 IsTrainerVisibleOnScreen(struct VsSeekerTrainerInfo * trainerInfo);
@@ -730,7 +729,7 @@ static u8 GetResponseMovementTypeFromTrainerGraphicsId(u8 graphicsId)
 }
 #endif //FREE_MATCH_CALL
 
-static u16 GetTrainerFlagFromScript(const u8 *script)
+u16 GetTrainerFlagFromScript(const u8 *script)
 {
     // The trainer flag is located 3 bytes (command + flags + localIdA) from the script pointer, assuming the trainerbattle command is first in the script.
     // Because scripts are unaligned, and because the ARM processor requires shorts to be 16-bit aligned, this function needs to perform explicit bitwise operations to get the correct flag.
