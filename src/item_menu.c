@@ -427,6 +427,18 @@ static const u8 sFontColorTable[][3] = {
     [COLORID_TMHM_INFO]   = {TEXT_COLOR_TRANSPARENT, TEXT_DYNAMIC_COLOR_5,  TEXT_DYNAMIC_COLOR_1}
 };
 
+// The quantity and the TM pocket's marks (#194) end here in the item list, and a TM or HM name beside a mark ends
+// TM_MARK_NAME_GAP px before the widest one
+#define ITEM_LIST_RIGHT_X 119
+#define TM_MARK_NAME_GAP  2
+
+static const u8 *const sTMPocketMarkTexts[] =
+{
+    [TM_POCKET_MARK_ABLE]     = gText_Able2,
+    [TM_POCKET_MARK_NOT_ABLE] = gText_NotAble,
+    [TM_POCKET_MARK_LEARNED]  = gText_Learned,
+};
+
 static const struct WindowTemplate sDefaultBagWindows[] =
 {
     [WIN_ITEM_LIST] = {
@@ -942,27 +954,50 @@ static void LoadBagItemListBuffers(u8 pocketId)
     gMultiuseListMenuTemplate.maxShowed = gBagMenu->numShownItems[pocketId];
 }
 
+// Where the widest TM pocket mark starts
+static u32 GetTMPocketMarkLeft(void)
+{
+    u32 i, width = 0;
+
+    for (i = TM_POCKET_MARK_ABLE; i < ARRAY_COUNT(sTMPocketMarkTexts); i++)
+        width = max(width, GetStringWidth(FONT_NARROW, sTMPocketMarkTexts[i], 0));
+    return ITEM_LIST_RIGHT_X - width;
+}
+
 static void GetItemNameFromPocket(u8 *dest, enum Item itemId)
 {
     u8 *end;
     switch (gBagPosition.pocket)
     {
     case POCKET_TM_HM:
-        end = StringCopy(gStringVar2, GetMoveName(ItemIdToBattleMoveId(itemId)));
-        PrependFontIdToFit(gStringVar2, end, FONT_NARROW, NUM_TECHNICAL_MACHINES >= 100 ? 60 : 65);
+    {
+        const u8 *format;
+        u32 nameWidth = NUM_TECHNICAL_MACHINES >= 100 ? 60 : 65;
+
         if (GetItemTMHMIndex(itemId) > NUM_TECHNICAL_MACHINES)
         {
             // Get HM number
             ConvertIntToDecimalStringN(gStringVar1, GetItemTMHMIndex(itemId) - NUM_TECHNICAL_MACHINES, STR_CONV_MODE_LEADING_ZEROS, 1);
-            StringExpandPlaceholders(dest, gText_NumberItem_HM);
+            format = gText_NumberItem_HM;
         }
         else
         {
             // Get TM number
             ConvertIntToDecimalStringN(gStringVar1, GetItemTMHMIndex(itemId), STR_CONV_MODE_LEADING_ZEROS, NUM_TECHNICAL_MACHINES >= 100 ? 3 : 2);
-            StringExpandPlaceholders(dest, gText_NumberItem_TMBerry);
+            format = gText_NumberItem_TMBerry;
         }
+        if (GetTMPocketMark(itemId) != TM_POCKET_MARK_NONE)
+        {
+            // Measure the number to fit the name before the marks
+            gStringVar2[0] = EOS;
+            StringExpandPlaceholders(dest, format);
+            nameWidth = min(nameWidth, GetTMPocketMarkLeft() - TM_MARK_NAME_GAP - sItemListMenu.item_X - GetStringWidth(FONT_NARROW, dest, 0));
+        }
+        end = StringCopy(gStringVar2, GetMoveName(ItemIdToBattleMoveId(itemId)));
+        PrependFontIdToFit(gStringVar2, end, FONT_NARROW, nameWidth);
+        StringExpandPlaceholders(dest, format);
         break;
+    }
     case POCKET_BERRIES:
         ConvertIntToDecimalStringN(gStringVar1, ItemIdToBerryType(itemId), STR_CONV_MODE_LEADING_ZEROS, 2);
         end = CopyItemName(itemId, gStringVar2);
@@ -1012,17 +1047,25 @@ static void BagMenu_ItemPrintCallback(u8 windowId, u32 itemIndex, u8 y)
         }
 
         struct ItemSlot itemSlot = GetBagItemIdAndQuantity(gBagPosition.pocket, itemIndex);
+        enum TMPocketMark mark = GetTMPocketMark(itemSlot.itemId);
 
         // Draw HM icon
         if (gBagPosition.pocket == POCKET_TM_HM && GetItemTMHMIndex(itemSlot.itemId) > NUM_TECHNICAL_MACHINES)
             BlitBitmapToWindow(windowId, gBagMenuHMIcon_Gfx, 8, y - 1, 16, 16);
 
-        if (gBagPosition.pocket != POCKET_KEY_ITEMS && GetItemImportance(itemSlot.itemId) == FALSE)
+        if (mark != TM_POCKET_MARK_NONE)
+        {
+            // Print ABLE, or NOT ABLE or LEARNED greyed out, in place of the quantity (#194)
+            offset = GetStringRightAlignXOffset(FONT_NARROW, sTMPocketMarkTexts[mark], ITEM_LIST_RIGHT_X);
+            BagMenu_Print(windowId, FONT_NARROW, sTMPocketMarkTexts[mark], offset, y, 0, 0, TEXT_SKIP_DRAW,
+                          mark == TM_POCKET_MARK_ABLE ? COLORID_NORMAL : COLORID_GRAY_CURSOR);
+        }
+        else if (gBagPosition.pocket != POCKET_KEY_ITEMS && GetItemImportance(itemSlot.itemId) == FALSE)
         {
             // Print item quantity
             ConvertIntToDecimalStringN(gStringVar1, itemSlot.quantity, STR_CONV_MODE_RIGHT_ALIGN, MAX_ITEM_DIGITS);
             StringExpandPlaceholders(gStringVar4, gText_xVar1);
-            offset = GetStringRightAlignXOffset(FONT_NARROW, gStringVar4, 119);
+            offset = GetStringRightAlignXOffset(FONT_NARROW, gStringVar4, ITEM_LIST_RIGHT_X);
             BagMenu_Print(windowId, FONT_NARROW, gStringVar4, offset, y, 0, 0, TEXT_SKIP_DRAW, COLORID_NORMAL);
         }
         else
@@ -3042,3 +3085,19 @@ static s32 CompareItemsByIndex(enum Pocket pocketId, struct ItemSlot item1, stru
 
     return 0; // Cannot have multiple stacks of indexed items
 }
+
+#if TESTING
+// The px between a TM or HM's name and the widest mark in the bag the party menu's Use opened (#194)
+s32 Test_GetTMPocketNameGap(enum Item item)
+{
+    struct BagPosition savedPosition = gBagPosition;
+    s32 gap;
+
+    gBagPosition.location = ITEMMENULOCATION_PARTY_USE;
+    gBagPosition.pocket = POCKET_TM_HM;
+    GetItemNameFromPocket(gStringVar4, item);
+    gap = (s32)GetTMPocketMarkLeft() - sItemListMenu.item_X - GetStringWidth(FONT_NARROW, gStringVar4, 0);
+    gBagPosition = savedPosition;
+    return gap;
+}
+#endif

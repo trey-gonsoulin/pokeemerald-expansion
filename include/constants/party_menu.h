@@ -108,4 +108,13 @@ enum CanMoveBeLearned
     CANNOT_LEARN_MOVE_IS_EGG
 };
 
+// The TM pocket's marks in the bag opened from a Pokémon's Use (#194)
+enum TMPocketMark
+{
+    TM_POCKET_MARK_NONE,
+    TM_POCKET_MARK_ABLE,
+    TM_POCKET_MARK_NOT_ABLE,
+    TM_POCKET_MARK_LEARNED,
+};
+
 #endif // GUARD_CONSTANTS_PARTY_MENU_H

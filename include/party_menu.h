@@ -116,6 +116,7 @@ enum ItemEffectType GetItemEffectType(enum Item item);
 void CB2_PartyMenuFromStartMenu(void);
 void CB2_ChooseMonToGiveItem(void);
 bool32 CanUseItemOnChosenPartyMon(enum Item item);
+enum TMPocketMark GetTMPocketMark(enum Item item);
 void ChooseMonToGiveMailFromMailbox(void);
 void InitChooseHalfPartyForBattle(u8 unused);
 void ClearSelectedPartyOrder(void);
