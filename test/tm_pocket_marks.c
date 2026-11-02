@@ -62,9 +62,11 @@ TEST("TM pocket marks: every TM and HM name ends 2 px before the widest mark")
 {
     u32 i;
 
+    FillParty(SPECIES_PIKACHU, FALSE, MOVE_NONE);
     for (i = 1; i <= NUM_ALL_MACHINES; i++)
     {
         s32 gap = Test_GetTMPocketNameGap(GetTMHMItemId(i));
+        EXPECT_EQ(GetItemPocket(GetTMHMItemId(i)), POCKET_TM_HM);
         EXPECT_GE(gap, 2);
     }
 }

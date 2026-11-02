@@ -991,7 +991,8 @@ static void GetItemNameFromPocket(u8 *dest, enum Item itemId)
             // Measure the number to fit the name before the marks
             gStringVar2[0] = EOS;
             StringExpandPlaceholders(dest, format);
-            nameWidth = min(nameWidth, GetTMPocketMarkLeft() - TM_MARK_NAME_GAP - sItemListMenu.item_X - GetStringWidth(FONT_NARROW, dest, 0));
+            s32 room = (s32)GetTMPocketMarkLeft() - TM_MARK_NAME_GAP - sItemListMenu.item_X - GetStringWidth(FONT_NARROW, dest, 0);
+            nameWidth = min(nameWidth, (u32)max(room, 0));
         }
         end = StringCopy(gStringVar2, GetMoveName(ItemIdToBattleMoveId(itemId)));
         PrependFontIdToFit(gStringVar2, end, FONT_NARROW, nameWidth);
