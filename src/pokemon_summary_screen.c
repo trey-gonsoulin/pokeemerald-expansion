@@ -1634,7 +1634,12 @@ static void SetDefaultTilemaps(void)
         // As after scrolling right from Info: Skills on top in BG 1, BG 2 free for the next page
         sMonSummaryScreen->bgDisplayOrder = 1;
         SetBgTilemapBuffer(1, sMonSummaryScreen->bgTilemapBuffers[PSS_PAGE_SKILLS][0]);
+        SetBgAttribute(1, BG_ATTR_PRIORITY, 1);
+        SetBgAttribute(2, BG_ATTR_PRIORITY, 2);
         ChangeBgX(1, 0x10000, BG_COORD_SET);
+        ChangeBgX(2, 0, BG_COORD_SET);
+        ShowBg(1);
+        ShowBg(2);
         TryDrawExperienceProgressBar();
     }
 
