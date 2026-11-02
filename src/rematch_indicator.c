@@ -94,6 +94,7 @@ static const struct SpriteTemplate sSpriteTemplate_RematchIndicator =
 // The trainers whose talk script registers them in Match Call once the player has it
 // (IsTrainerRegistered, then a TryRegister script). The other route trainers register only
 // right after their first battle; the gym leaders, Wally and the Elite Four never by talking.
+// test/rematch_indicator.c checks this list against the scripts.
 static bool32 RegistersWhenTalkedTo(s32 rematchTableId)
 {
     switch (rematchTableId)
@@ -229,9 +230,14 @@ static void UpdateIndicator(u32 objectEventId, bool32 fieldLocked)
     if (sprite == NULL && (sprite = CreateIndicator(objectEventId)) == NULL)
         return;
     if (sprite->animNum != indicator - 1)
+    {
         StartSpriteAnim(sprite, indicator - 1);
+        AnimateSprite(sprite); // AnimateSprites has run this frame
+    }
 
+    // The trainer's priority, so a bridge or roof that hides the trainer hides the ball too
     objectSprite = &gSprites[objectEvent->spriteId];
+    sprite->oam.priority = objectSprite->oam.priority;
     sprite->x = objectSprite->x;
     sprite->y = objectSprite->y + objectSprite->centerToCornerVecY + REMATCH_INDICATOR_Y_OFFSET;
     sprite->x2 = objectSprite->x2;
