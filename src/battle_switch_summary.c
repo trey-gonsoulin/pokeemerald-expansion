@@ -1,9 +1,7 @@
 #include "global.h"
 #include "battle.h"
 #include "battle_switch_summary.h"
-#include "party_menu.h"
 #include "pokemon_summary_screen.h"
-#include "constants/party_menu.h"
 
 // Emerald Plus (#200, B_SWITCH_SUMMARY_FIRST): A on a Pokémon in the battle party menu opens its summary
 // (SUMMARY_MODE_BATTLE_SWITCH) instead of the SHIFT / SUMMARY / CANCEL window. Start, or A on the Info page,
