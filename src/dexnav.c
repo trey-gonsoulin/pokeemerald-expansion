@@ -566,6 +566,24 @@ static u8 GetPlayerDistance(s16 x, s16 y)
     return deltaX + deltaY;
 }
 
+// Fork change (#210): upstream refused to search at any flash level above 0, but
+// Flash leaves flash level 1, a lit circle around the player. The search runs
+// there, on tiles wholly inside the circle; a cave without Flash is still too dark.
+bool32 IsDexNavSearchTooDark(void)
+{
+    return GetFlashLevel() > 1;
+}
+
+// dx and dy count metatiles from the player's, whose centre is the circle's
+bool32 IsDexNavTileLit(s32 dx, s32 dy)
+{
+    s32 radius = GetFlashLevelRadius(GetFlashLevel());
+    s32 farX = abs(dx) * 16 + 8;
+    s32 farY = abs(dy) * 16 + 8;
+
+    return farX * farX + farY * farY <= radius * radius;
+}
+
 static void DexNavProximityUpdate(void)
 {
     sDexNavSearchDataPtr->proximity = GetPlayerDistance(sDexNavSearchDataPtr->tileX, sDexNavSearchDataPtr->tileY);
@@ -575,10 +593,14 @@ static void DexNavProximityUpdate(void)
 static bool8 DexNavPickTile(enum EncounterType environment, u8 areaX, u8 areaY, bool8 smallScan)
 {
     // area of map to cover starting from camera position {-7, -7}
-    s16 topX = gSaveBlock1Ptr->pos.x - SCANSTART_X + (smallScan * 5);
+    s16 startX = gSaveBlock1Ptr->pos.x - SCANSTART_X + (smallScan * 5);
     s16 topY = gSaveBlock1Ptr->pos.y - SCANSTART_Y + (smallScan * 5);
-    s16 botX = topX + areaX;
-    s16 botY = topY + areaY;
+    s16 topX, botX, botY;
+    s16 playerX = gSaveBlock1Ptr->pos.x + MAP_OFFSET;
+    s16 playerY = gSaveBlock1Ptr->pos.y + MAP_OFFSET;
+    // Fork change (#210): in a cave lit by Flash the scan covers the lit circle
+    // instead, and every eligible tile wholly inside it can take the patch
+    bool32 litOnly = GetFlashLevel() > 0;
     u8 i;
     bool8 nextIter;
     u8 scale = 0;
@@ -586,10 +608,23 @@ static bool8 DexNavPickTile(enum EncounterType environment, u8 areaX, u8 areaY, 
     enum MapType currMapType = GetCurrentMapType();
     u8 tileBehaviour;
     u8 tileBuffer = 2;
-    u8 *xPos = AllocZeroed((botX - topX) * (botY - topY) * sizeof(u8));
-    u8 *yPos = AllocZeroed((botX - topX) * (botY - topY) * sizeof(u8));
+    u8 *xPos, *yPos;
     u32 iter = 0;
     bool32 ret = FALSE;
+
+    if (litOnly)
+    {
+        s16 reach = GetFlashLevelRadius(GetFlashLevel()) / 16;
+
+        startX = playerX - reach;
+        topY = playerY - reach;
+        areaX = areaY = 2 * reach + 1;
+    }
+    topX = startX;
+    botX = topX + areaX;
+    botY = topY + areaY;
+    xPos = AllocZeroed(areaX * areaY * sizeof(u8));
+    yPos = AllocZeroed(areaX * areaY * sizeof(u8));
 
     // loop through every tile in area and evaluate
     while (topY < botY)
@@ -604,9 +639,10 @@ static bool8 DexNavPickTile(enum EncounterType environment, u8 areaX, u8 areaY, 
             else if (TestPlayerAvatarFlags(PLAYER_AVATAR_FLAG_DASH))
                 tileBuffer = SNEAKING_PROXIMITY + 1;
 
-            if (GetPlayerDistance(topX, topY) <= tileBuffer)
+            if (GetPlayerDistance(topX, topY) <= tileBuffer
+             || (litOnly && !IsDexNavTileLit(topX - playerX, topY - playerY)))
             {
-                // tile too close to player
+                // tile too close to player, or in the dark
                 topX++;
                 continue;
             }
@@ -640,13 +676,13 @@ static bool8 DexNavPickTile(enum EncounterType environment, u8 areaX, u8 areaY, 
                             break; //occurs at same z coord
 
                         scale = 440 - (smallScan * 200) - (GetPlayerDistance(topX, topY) / 2)  - (2 * (topX + topY));
-                        weight = ((Random() % scale) < 1) && !MapGridGetCollisionAt(topX, topY);
+                        weight = (litOnly || (Random() % scale) < 1) && !MapGridGetCollisionAt(topX, topY);
                     }
                     else
                     {
                         // outdoors: grass
                         scale = 100 - (GetPlayerDistance(topX, topY) * 2);
-                        weight = (Random() % scale <= 5) && !MapGridGetCollisionAt(topX, topY);
+                        weight = (litOnly || Random() % scale <= 5) && !MapGridGetCollisionAt(topX, topY);
                     }
                 }
                 break;
@@ -657,7 +693,7 @@ static bool8 DexNavPickTile(enum EncounterType environment, u8 areaX, u8 areaY, 
                     if (IsElevationMismatchAt(gObjectEvents[gPlayerAvatar.spriteId].currentElevation, topX, topY))
                         break;
 
-                    weight = (Random() % scale <= 1) && !MapGridGetCollisionAt(topX, topY);
+                    weight = (litOnly || Random() % scale <= 1) && !MapGridGetCollisionAt(topX, topY);
                 }
                 break;
             default:
@@ -675,7 +711,7 @@ static bool8 DexNavPickTile(enum EncounterType environment, u8 areaX, u8 areaY, 
         }
 
         topY++;
-        topX = gSaveBlock1Ptr->pos.x - SCANSTART_X + (smallScan * 5);
+        topX = startX;
     }
 
     if (iter > 0)
@@ -851,7 +887,7 @@ static bool8 InitDexNavSearch(enum Species species, u32 environment)
     sDexNavSearchDataPtr->isHiddenMon = (environment == ENCOUNTER_TYPE_HIDDEN) ? TRUE : FALSE;
     sDexNavSearchDataPtr->monLevel = DexNavTryGenerateMonLevel(species, environment);
 
-    if (GetFlashLevel() > 0)
+    if (IsDexNavSearchTooDark())
     {
         DexNavSearchBail(EventScript_TooDark);
         return TRUE;
@@ -943,6 +979,27 @@ static void RevealHiddenSearch(void)
     DestroySprite(&gSprites[sDexNavSearchDataPtr->iconSpriteId]);
     sDexNavSearchDataPtr->hiddenSearch = FALSE; //now its a regular dexnav search
     RevealHiddenMon();
+}
+
+// Fork change (#210): in the debug ROM holding R and pressing Start opens the
+// debug menu, so R searches on its release, and not at all if Start was pressed
+// while it was held. Without the debug menu R searches when pressed, as upstream.
+bool32 IsDexNavSearchButtonPressed(u16 newKeys, u16 heldKeys)
+{
+    static bool8 sSearchOnRelease;
+
+    if (!DEBUG_OVERWORLD_MENU || DEBUG_OVERWORLD_IN_MENU || !(DEBUG_OVERWORLD_HELD_KEYS & R_BUTTON))
+        return (newKeys & R_BUTTON) != 0;
+
+    if (newKeys & R_BUTTON)
+        sSearchOnRelease = TRUE;
+    if (newKeys & START_BUTTON)
+        sSearchOnRelease = FALSE;
+    if (!sSearchOnRelease || (heldKeys & R_BUTTON))
+        return FALSE;
+
+    sSearchOnRelease = FALSE;
+    return TRUE;
 }
 
 bool32 TryStartDexNavSearch(void)
@@ -2474,7 +2531,7 @@ bool32 TryFindHiddenPokemon(void)
             || sDexNavSearchDataPtr == NULL
             || !FlagGet(DN_FLAG_DETECTOR_MODE)
             || FlagGet(DN_FLAG_SEARCHING)
-            || GetFlashLevel() > 0)
+            || IsDexNavSearchTooDark())
     {
         if (stepPtr != NULL)
             (*stepPtr) = 0;
