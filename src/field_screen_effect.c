@@ -73,6 +73,12 @@ static const u8 sText_PlayerRegroupHome[] = _("{PLAYER} scurried back home, to r
 static const u16 sFlashLevelToRadius[] = { 200, 72, 64, 56, 48, 40, 32, 24, 0 };
 const s32 gMaxFlashLevel = ARRAY_COUNT(sFlashLevelToRadius) - 1;
 
+// The lit circle's radius in pixels, centred on the player (the DexNav, #210)
+u32 GetFlashLevelRadius(u32 flashLevel)
+{
+    return sFlashLevelToRadius[min(flashLevel, (u32)gMaxFlashLevel)];
+}
+
 static const struct ScanlineEffectParams sFlashEffectParams =
 {
     &REG_WIN0H,
