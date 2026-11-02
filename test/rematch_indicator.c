@@ -1,9 +1,17 @@
 #include "global.h"
 #include "battle_setup.h"
 #include "event_data.h"
+#include "overworld.h"
 #include "rematch_indicator.h"
+#include "script.h"
 #include "test/test.h"
 #include "constants/rematches.h"
+#include "constants/script_commands.h"
+
+typedef u16 (*SpecialFunc)(void);
+extern const SpecialFunc gSpecials[];
+#define SPECIAL_REQUESTS_EFFECTS 0x2000000 // the ROM_SIZE that def_special's requests_effects adds
+bool32 IsTrainerRegistered(void);
 
 // The overworld rematch marker's decision (#207), on real map scripts.
 extern const u8 Route102_EventScript_Calvin[];
@@ -98,6 +106,60 @@ TEST("Rematch indicator: a trainer outside the rematch table and a non-trainer o
     EXPECT_EQ(GetRematchTableIdFromScript(Route102_EventScript_LittleBoy), -1);
     EXPECT_EQ(GetRematchTableIdFromScript(NULL), -1);
     EXPECT_EQ(GetRematchIndicator(-1), REMATCH_INDICATOR_NONE);
+}
+
+// The script's `specialvar VAR_RESULT, <func>` in [start, start + length)
+static const u8 *FindSpecialVarResult(const u8 *start, u32 length, void *func)
+{
+    u32 i;
+
+    for (i = 0; i < length; i++)
+    {
+        const u8 *cmd = start + i;
+        if (cmd[0] == SCR_OP_SPECIALVAR && cmd[1] == (VAR_RESULT & 0xFF) && cmd[2] == (VAR_RESULT >> 8)
+         && ((u32)gSpecials[cmd[3] | (cmd[4] << 8)] & ~SPECIAL_REQUESTS_EFFECTS) == (u32)func)
+            return cmd;
+    }
+    return NULL;
+}
+
+// The first-fight script of a table entry, on the entry's map
+static const u8 *FindRematchTrainerScript(s32 rematchTableId)
+{
+    const struct MapHeader *mapHeader = Overworld_GetMapHeaderByGroupAndId(gRematchTable[rematchTableId].mapGroup, gRematchTable[rematchTableId].mapNum);
+    u32 i;
+
+    for (i = 0; i < mapHeader->events->objectEventCount; i++)
+    {
+        const u8 *script = mapHeader->events->objectEvents[i].script;
+        if (GetRematchTableIdFromScript(script) == rematchTableId)
+            return script;
+    }
+    return NULL;
+}
+
+// RegistersWhenTalkedTo lists the trainers by hand: this pins it to the scripts, whose talk path
+// after the trainerbattle checks ShouldTryRematchBattle and then IsTrainerRegistered.
+TEST("Rematch indicator: the unregistered marker goes on exactly the trainers whose talk script registers them")
+{
+    s32 i;
+
+    FlagSet(FLAG_HAS_MATCH_CALL);
+    for (i = 0; i < REMATCH_SPECIAL_TRAINER_START; i++)
+    {
+        const u8 *script = FindRematchTrainerScript(i);
+        const u8 *rematchCheck;
+        bool32 registersOnTalk;
+        enum RematchIndicator indicator;
+
+        EXPECT(script != NULL);
+        rematchCheck = FindSpecialVarResult(script, 64, ShouldTryRematchBattle);
+        EXPECT(rematchCheck != NULL);
+        registersOnTalk = FindSpecialVarResult(rematchCheck, 32, IsTrainerRegistered) != NULL;
+        SetTrainerFlag(gRematchTable[i].trainerIds[0]);
+        indicator = GetRematchIndicator(i);
+        EXPECT_EQ(indicator, registersOnTalk ? REMATCH_INDICATOR_UNREGISTERED : REMATCH_INDICATOR_NONE);
+    }
 }
 
 #endif // FREE_MATCH_CALL
