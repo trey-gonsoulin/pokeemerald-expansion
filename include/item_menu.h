@@ -125,4 +125,8 @@ void CloseItemMessage(u8 taskId);
 void CB2_ChooseBall(void);
 void SortItemsInBag(struct BagPocket *pocket, enum BagSortOptions type);
 
+#if TESTING
+s32 Test_GetTMPocketNameGap(enum Item item);
+#endif
+
 #endif //GUARD_ITEM_MENU_H

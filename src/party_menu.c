@@ -3674,6 +3674,24 @@ static bool32 IsBagForChosenMon(void)
     return gBagPosition.location == ITEMMENULOCATION_PARTY_USE && CurrentBattlePyramidLocation() == PYRAMID_LOCATION_NONE;
 }
 
+// The mark for a TM or HM in the bag the party menu's Use opened, for that Pokémon, from the status the mart's ABLE
+// count reads (#194). None anywhere else.
+enum TMPocketMark GetTMPocketMark(enum Item item)
+{
+    if (!IsBagForChosenMon() || GetItemPocket(item) != POCKET_TM_HM)
+        return TM_POCKET_MARK_NONE;
+
+    switch (GetTeachMoveStatus(&gParties[B_TRAINER_PLAYER][sItemUseMonSlot], ItemIdToBattleMoveId(item)))
+    {
+    case CAN_LEARN_MOVE:
+        return TM_POCKET_MARK_ABLE;
+    case ALREADY_KNOWS_MOVE:
+        return TM_POCKET_MARK_LEARNED;
+    default:
+        return TM_POCKET_MARK_NOT_ABLE;
+    }
+}
+
 static bool32 IsUsingItemOnChosenMon(void)
 {
     return gPartyMenu.menuType == PARTY_MENU_TYPE_FIELD
