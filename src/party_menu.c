@@ -8,6 +8,7 @@
 #include "battle_pike.h"
 #include "battle_pyramid.h"
 #include "battle_pyramid_bag.h"
+#include "battle_switch_summary.h"
 #include "bg.h"
 #include "contest.h"
 #include "data.h"
@@ -321,6 +322,8 @@ static void TryGiveItemOrMailToSelectedMon(u8);
 static void SwitchSelectedMons(u8);
 static void TryEnterMonForMinigame(u8, u8);
 static void Task_TryCreateSelectionWindow(u8);
+static bool32 IsSummaryToSwitch(void);
+static void Task_SendOutChosenInSummary(u8);
 static void FinishTwoMonAction(u8);
 static void CancelParticipationPrompt(u8);
 static bool8 DisplayCancelChooseMonYesNo(u8);
@@ -1667,6 +1670,11 @@ static void HandleChooseMonSelection(u8 taskId, s8 *slotPtr)
         default:
         case PARTY_ACTION_ABILITY_PREVENTS:
         case PARTY_ACTION_SWITCHING:
+            if (IsSummaryToSwitch())
+            {
+                CursorCb_Summary(taskId);
+                break;
+            }
             PlaySE(SE_SELECT);
             Task_TryCreateSelectionWindow(taskId);
             break;
@@ -3255,12 +3263,14 @@ static void CB2_ShowPokemonSummaryScreen(void)
                 GetMultiPartyForSummaryScreen();
         }
 
+        u8 mode = IsSummaryToSwitch() ? SUMMARY_MODE_BATTLE_SWITCH : SUMMARY_MODE_LOCK_MOVES;
+
         if (gPartyMenu.layout == PARTY_LAYOUT_MULTI_FULL_PARTNER)
             ShowPokemonSummaryScreen(SUMMARY_MODE_LOCK_MOVES, gParties[B_TRAINER_PARTNER], gPartyMenu.slotId, CalculatePartyCount(B_TRAINER_PARTNER) - 1, CB2_ReturnToPartyMenuFromSummaryScreen);
         else if (gPartyMenu.layout == PARTY_LAYOUT_MULTI_FULL)
-            ShowPokemonSummaryScreen(SUMMARY_MODE_LOCK_MOVES, gParties[B_TRAINER_PLAYER], gPartyMenu.slotId, CalculatePartyCount(B_TRAINER_PLAYER) - 1, CB2_ReturnToPartyMenuFromSummaryScreen);
+            ShowPokemonSummaryScreen(mode, gParties[B_TRAINER_PLAYER], gPartyMenu.slotId, CalculatePartyCount(B_TRAINER_PLAYER) - 1, CB2_ReturnToPartyMenuFromSummaryScreen);
         else
-            ShowPokemonSummaryScreen(SUMMARY_MODE_LOCK_MOVES, gParties[B_TRAINER_PLAYER], gPartyMenu.slotId, CalculatePartyCountOfSide(B_BATTLER_0) - 1, CB2_ReturnToPartyMenuFromSummaryScreen);
+            ShowPokemonSummaryScreen(mode, gParties[B_TRAINER_PLAYER], gPartyMenu.slotId, CalculatePartyCountOfSide(B_BATTLER_0) - 1, CB2_ReturnToPartyMenuFromSummaryScreen);
     }
     else if (gPartyMenu.menuType == PARTY_MENU_TYPE_CHOOSE_HALF)
     {
@@ -3276,9 +3286,40 @@ void CB2_ReturnToPartyMenuFromSummaryScreen(void)
 {
     if (gBattleTypeFlags & BATTLE_TYPE_MULTI && !AreMultiPartiesFullTeams() && gPartyMenu.menuType == PARTY_MENU_TYPE_IN_BATTLE)
         RestoreMultiPartyFromSummaryScreen();
-    gPaletteFade.bufferTransferDisabled = TRUE;
     gPartyMenu.slotId = gLastViewedMonIndex;
+    if (IsSummaryToSwitch())
+    {
+        // Send out the Pokémon shown last as SHIFT would, straight back to the battle (#200)
+        if (gSummarySendOutRequested && TrySwitchInPokemon() == TRUE)
+        {
+            gSummarySendOutRequested = FALSE;
+            UpdatePartyToFieldOrder();
+            SetMainCallback2(gPartyMenu.exitCallback);
+            return;
+        }
+        gPaletteFade.bufferTransferDisabled = TRUE;
+        if (gSummarySendOutRequested)
+            InitPartyMenu(gPartyMenu.menuType, KEEP_PARTY_LAYOUT, gPartyMenu.action, TRUE, PARTY_MSG_NONE, Task_SendOutChosenInSummary, gPartyMenu.exitCallback);
+        else
+            InitPartyMenu(gPartyMenu.menuType, KEEP_PARTY_LAYOUT, gPartyMenu.action, TRUE, PARTY_MSG_CHOOSE_MON, Task_HandleChooseMonInput, gPartyMenu.exitCallback);
+        gSummarySendOutRequested = FALSE;
+        return;
+    }
+    gPaletteFade.bufferTransferDisabled = TRUE;
     InitPartyMenu(gPartyMenu.menuType, KEEP_PARTY_LAYOUT, gPartyMenu.action, TRUE, PARTY_MSG_DO_WHAT_WITH_MON, Task_TryCreateSelectionWindow, gPartyMenu.exitCallback);
+}
+
+static bool32 IsSummaryToSwitch(void)
+{
+    return ShouldOpenSummaryToSwitch(gPartyMenu.menuType, gPartyMenu.action, gPartyMenu.layout, gBattleTypeFlags);
+}
+
+// The summary asked to send out a Pokémon that can't go. TrySwitchInPokemon fails the same way again
+// (it changes nothing on failure) and buffers its message only now, since setting up the menu can reuse gStringVar4.
+static void Task_SendOutChosenInSummary(u8 taskId)
+{
+    if (!gPaletteFade.active && MenuHelpers_ShouldWaitForLinkRecv() != TRUE)
+        CursorCb_SendMon(taskId);
 }
 
 static void CursorCb_Switch(u8 taskId)
