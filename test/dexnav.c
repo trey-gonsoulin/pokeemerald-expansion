@@ -3,6 +3,7 @@
 #include "event_data.h"
 #include "field_screen_effect.h"
 #include "overworld.h"
+#include "script.h"
 #include "constants/region_map_sections.h"
 #include "test/test.h"
 
@@ -92,18 +93,68 @@ TEST("DexNav: in Flash's light the patch tiles are the 45 wholly inside the circ
 
 // In the debug ROM R+Start opens the debug menu, so R searches on its release,
 // and not if Start came while it was held; otherwise R searches when pressed.
+// One string per run of frames: 'R' pressed, 'r' held, 'S' Start while R is
+// held, 's' Start between tiles, '-' nothing held, 'm' nothing held between tiles,
+// 'L' nothing held while a script holds the field.
+static u32 Test_DexNavSearchLockedFrame(void)
+{
+    u32 searched;
+
+    LockPlayerFieldControls();
+    searched = IsDexNavSearchButtonPressed(FALSE, 0, 0, TRUE);
+    UnlockPlayerFieldControls();
+    return searched;
+}
+
+static u32 Test_DexNavSearchFrame(char frame)
+{
+    switch (frame)
+    {
+    case 'R': return IsDexNavSearchButtonPressed(TRUE, R_BUTTON, R_BUTTON, TRUE);
+    case 'r': return IsDexNavSearchButtonPressed(FALSE, 0, R_BUTTON, TRUE);
+    case 'S': return IsDexNavSearchButtonPressed(FALSE, START_BUTTON, R_BUTTON | START_BUTTON, TRUE);
+    case 's': return IsDexNavSearchButtonPressed(FALSE, START_BUTTON, R_BUTTON | START_BUTTON, FALSE);
+    case 'm': return IsDexNavSearchButtonPressed(FALSE, 0, 0, FALSE);
+    case 'L': return Test_DexNavSearchLockedFrame();
+    default:  return IsDexNavSearchButtonPressed(FALSE, 0, 0, TRUE);
+    }
+}
+
+// The frames on which a search starts, as a bit mask
+static u32 Test_DexNavSearchFrames(const char *frames)
+{
+    u32 i, searched = 0;
+
+    for (i = 0; frames[i] != '\0'; i++)
+        searched |= Test_DexNavSearchFrame(frames[i]) << i;
+    return searched;
+}
+
 TEST("DexNav: R+Start doesn't start a search in the debug ROM")
 {
     bool32 onRelease = DEBUG_OVERWORLD_MENU && !DEBUG_OVERWORLD_IN_MENU && (DEBUG_OVERWORLD_HELD_KEYS & R_BUTTON);
+    u32 tap, startWhileHeld, startBetweenTiles, releaseBetweenTiles, releaseInScript;
 
-    // R alone
-    EXPECT_EQ(IsDexNavSearchButtonPressed(R_BUTTON, R_BUTTON), !onRelease);
-    EXPECT(!IsDexNavSearchButtonPressed(0, R_BUTTON));
-    EXPECT_EQ(IsDexNavSearchButtonPressed(0, 0), onRelease);
-    EXPECT(!IsDexNavSearchButtonPressed(0, 0));
+    tap = Test_DexNavSearchFrames("Rr--");
+    startWhileHeld = Test_DexNavSearchFrames("RrSr--");
+    startBetweenTiles = Test_DexNavSearchFrames("Rrsr--");
+    releaseBetweenTiles = Test_DexNavSearchFrames("Rrmm--");
+    releaseInScript = Test_DexNavSearchFrames("RrL--");
 
-    // R, then Start while R is held
-    EXPECT_EQ(IsDexNavSearchButtonPressed(R_BUTTON, R_BUTTON), !onRelease);
-    EXPECT(!IsDexNavSearchButtonPressed(START_BUTTON, R_BUTTON | START_BUTTON));
-    EXPECT(!IsDexNavSearchButtonPressed(0, 0));
+    if (onRelease)
+    {
+        EXPECT_EQ(tap, 1 << 2);
+        EXPECT_EQ(startWhileHeld, 0);
+        EXPECT_EQ(startBetweenTiles, 0);
+        EXPECT_EQ(releaseBetweenTiles, 1 << 4);
+        EXPECT_EQ(releaseInScript, 0);
+    }
+    else
+    {
+        EXPECT_EQ(tap, 1 << 0);
+        EXPECT_EQ(startWhileHeld, 1 << 0);
+        EXPECT_EQ(startBetweenTiles, 1 << 0);
+        EXPECT_EQ(releaseBetweenTiles, 1 << 0);
+        EXPECT_EQ(releaseInScript, 1 << 0);
+    }
 }

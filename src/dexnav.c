@@ -153,6 +153,7 @@ static u8 GetEncounterLevelFromMapData(enum Species species, enum EncounterType 
 static void CreateDexNavWildMon(enum Species species, u8 potential, u8 level, u8 abilityNum, enum Item item, enum Move *moves);
 static u8 GetPlayerDistance(s16 x, s16 y);
 static u8 DexNavPickTile(enum EncounterType environment, u8 xSize, u8 ySize, bool8 smallScan);
+static u8 GetMovementProximityBySearchLevel(void);
 static void DexNavProximityUpdate(void);
 static void DexNavDrawIcons(void);
 static void DexNavUpdateSearchWindow(u8 proximity, u8 searchLevel);
@@ -619,6 +620,9 @@ static bool8 DexNavPickTile(enum EncounterType environment, u8 areaX, u8 areaY, 
         startX = playerX - reach;
         topY = playerY - reach;
         areaX = areaY = 2 * reach + 1;
+        // the whole circle is near the player: keep out of the distance at
+        // which a cave or water Pokémon moves, or it would move at once
+        tileBuffer = max(tileBuffer, GetMovementProximityBySearchLevel() - 1);
     }
     topX = startX;
     botX = topX + areaX;
@@ -886,6 +890,7 @@ static bool8 InitDexNavSearch(enum Species species, u32 environment)
     sDexNavSearchDataPtr->environment = environment;  //updated in DexNavTryGenerateMonLevel if hidden mon
     sDexNavSearchDataPtr->isHiddenMon = (environment == ENCOUNTER_TYPE_HIDDEN) ? TRUE : FALSE;
     sDexNavSearchDataPtr->monLevel = DexNavTryGenerateMonLevel(species, environment);
+    sDexNavSearchDataPtr->searchLevel = GetSearchLevel(species); // for a pick in Flash's light (#210)
 
     if (IsDexNavSearchTooDark())
     {
@@ -983,22 +988,29 @@ static void RevealHiddenSearch(void)
 
 // Fork change (#210): in the debug ROM holding R and pressing Start opens the
 // debug menu, so R searches on its release, and not at all if Start was pressed
-// while it was held. Without the debug menu R searches when pressed, as upstream.
-bool32 IsDexNavSearchButtonPressed(u16 newKeys, u16 heldKeys)
+// while it was held (DEBUG_OVERWORLD_TRIGGER_EVENT is pressedStartButton). Called
+// every field frame with pressedR, R pressed where the field takes buttons;
+// canPress is FALSE between tiles, where it doesn't. A press the field stops
+// taking input for (a script, a battle) before R's release is dropped.
+bool32 IsDexNavSearchButtonPressed(bool32 pressedR, u16 newKeys, u16 heldKeys, bool32 canPress)
 {
-    static bool8 sSearchOnRelease;
+    enum { R_IDLE, R_HELD, R_RELEASED };
+    static u8 sRState = R_IDLE;
 
     if (!DEBUG_OVERWORLD_MENU || DEBUG_OVERWORLD_IN_MENU || !(DEBUG_OVERWORLD_HELD_KEYS & R_BUTTON))
-        return (newKeys & R_BUTTON) != 0;
+        return pressedR;
 
-    if (newKeys & R_BUTTON)
-        sSearchOnRelease = TRUE;
-    if (newKeys & START_BUTTON)
-        sSearchOnRelease = FALSE;
-    if (!sSearchOnRelease || (heldKeys & R_BUTTON))
+    if (ArePlayerFieldControlsLocked() || (newKeys & START_BUTTON))
+        sRState = R_IDLE;
+    else if (pressedR)
+        sRState = R_HELD;
+    else if (sRState == R_HELD && !(heldKeys & R_BUTTON))
+        sRState = R_RELEASED;
+
+    if (sRState != R_RELEASED || !canPress)
         return FALSE;
 
-    sSearchOnRelease = FALSE;
+    sRState = R_IDLE;
     return TRUE;
 }
 

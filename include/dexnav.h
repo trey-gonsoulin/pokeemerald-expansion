@@ -71,7 +71,7 @@ enum EncounterType
 
 void EndDexNavSearch(void);
 void Task_OpenDexNavFromStartMenu(u8 taskId);
-bool32 IsDexNavSearchButtonPressed(u16 newKeys, u16 heldKeys);
+bool32 IsDexNavSearchButtonPressed(bool32 pressedR, u16 newKeys, u16 heldKeys, bool32 canPress);
 bool32 TryStartDexNavSearch(void);
 bool32 IsDexNavSearchTooDark(void);
 bool32 IsDexNavTileLit(s32 dx, s32 dy);
