@@ -13,6 +13,7 @@ extern const struct CompressedSpriteSheet gSpriteSheet_CategoryIcons;
 extern const struct SpritePalette gSpritePal_CategoryIcons;
 extern const struct SpriteTemplate gSpriteTemplate_CategoryIcons;
 extern MainCallback gInitialSummaryScreenCallback;
+extern bool8 gSummarySendOutRequested;
 
 enum IncrDecrUpdateValues
 {
@@ -32,6 +33,7 @@ enum PokemonSummaryScreenMode
     SUMMARY_MODE_SELECT_MOVE,
     SUMMARY_MODE_RELEARNER_BATTLE, // returning from move relearner initiated from battle moves page
     SUMMARY_MODE_RELEARNER_CONTEST, // returning from move relearner initiated from contest moves page
+    SUMMARY_MODE_BATTLE_SWITCH, // SUMMARY_MODE_LOCK_MOVES that can send the Pokémon out (B_SWITCH_SUMMARY_FIRST, #200)
 };
 
 enum PokemonSummaryScreenPage

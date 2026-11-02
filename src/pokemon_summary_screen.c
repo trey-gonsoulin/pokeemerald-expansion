@@ -6,6 +6,7 @@
 #include "battle_message.h"
 #include "battle_tent.h"
 #include "battle_factory.h"
+#include "battle_switch_summary.h"
 #include "bg.h"
 #include "contest.h"
 #include "contest_effect.h"
@@ -194,6 +195,7 @@ EWRAM_DATA u8 gLastViewedMonIndex = 0;
 static EWRAM_DATA u8 sMoveSlotToReplace = 0;
 ALIGNED(4) static EWRAM_DATA u8 sAnimDelayTaskId = 0;
 EWRAM_DATA MainCallback gInitialSummaryScreenCallback = NULL; // stores callback from the first time the screen is opened from the party or PC menu
+EWRAM_DATA bool8 gSummarySendOutRequested = FALSE; // SUMMARY_MODE_BATTLE_SWITCH closed to send gLastViewedMonIndex out (#200)
 
 // forward declarations
 static bool8 LoadGraphics(void);
@@ -1226,6 +1228,7 @@ void ShowPokemonSummaryScreen(u8 mode, void *mons, u8 monIndex, u8 maxMonIndex, 
         sMonSummaryScreen->maxPageIndex = maxPageIndex;
         break;
     case SUMMARY_MODE_LOCK_MOVES:
+    case SUMMARY_MODE_BATTLE_SWITCH:
         sMonSummaryScreen->minPageIndex = 0;
         sMonSummaryScreen->maxPageIndex = maxPageIndex;
         sMonSummaryScreen->lockMovesFlag = TRUE;
@@ -1242,8 +1245,11 @@ void ShowPokemonSummaryScreen(u8 mode, void *mons, u8 monIndex, u8 maxMonIndex, 
         sMonSummaryScreen->currPageIndex = PSS_PAGE_BATTLE_MOVES;
     else if (mode == SUMMARY_MODE_RELEARNER_CONTEST)
         sMonSummaryScreen->currPageIndex = PSS_PAGE_CONTEST_MOVES;
+    else if (mode == SUMMARY_MODE_BATTLE_SWITCH && !GetMonData(&((struct Pokemon *)mons)[monIndex], MON_DATA_IS_EGG))
+        sMonSummaryScreen->currPageIndex = GetSwitchSummaryPage(); // An Egg has only the Info page
     else
         sMonSummaryScreen->currPageIndex = sMonSummaryScreen->minPageIndex;
+    gSummarySendOutRequested = FALSE;
 
     sMonSummaryScreen->categoryIconSpriteId = 0xFF;
     SummaryScreen_SetAnimDelayTaskId(TASK_NONE);
@@ -1576,9 +1582,13 @@ static bool8 ExtractMonDataToSummaryStruct(struct Pokemon *mon)
 
 static void SetDefaultTilemaps(void)
 {
+    // SUMMARY_MODE_BATTLE_SWITCH opens on the page last moved to, which looks like the relearner's return to a moves page (#200)
+    bool32 switchPage = (sMonSummaryScreen->mode == SUMMARY_MODE_BATTLE_SWITCH);
+
     if ((sMonSummaryScreen->currPageIndex != PSS_PAGE_BATTLE_MOVES && sMonSummaryScreen->currPageIndex != PSS_PAGE_CONTEST_MOVES)
         || sMonSummaryScreen->mode == SUMMARY_MODE_RELEARNER_BATTLE
-        || sMonSummaryScreen->mode == SUMMARY_MODE_RELEARNER_CONTEST)
+        || sMonSummaryScreen->mode == SUMMARY_MODE_RELEARNER_CONTEST
+        || switchPage)
     {
         PositionPowerAccSlidingWindow(0, 0xFF);
         PositionAppealJamSlidingWindow(0, 0xFF, 0);
@@ -1594,7 +1604,8 @@ static void SetDefaultTilemaps(void)
 
     // these blocks handle preparing the gfx to return straight to the respective move info screens
     // SUMMARY_MODE_SELECT_MOVE also opens on Battle Moves with Skills behind it, so Left slides in Skills (#199)
-    if (sMonSummaryScreen->mode == SUMMARY_MODE_RELEARNER_BATTLE || sMonSummaryScreen->mode == SUMMARY_MODE_SELECT_MOVE)
+    if (sMonSummaryScreen->mode == SUMMARY_MODE_RELEARNER_BATTLE || sMonSummaryScreen->mode == SUMMARY_MODE_SELECT_MOVE
+        || (switchPage && sMonSummaryScreen->currPageIndex == PSS_PAGE_BATTLE_MOVES))
     {
         SetBgTilemapBuffer(1, sMonSummaryScreen->bgTilemapBuffers[PSS_PAGE_SKILLS][0]);
         SetBgTilemapBuffer(2, sMonSummaryScreen->bgTilemapBuffers[PSS_PAGE_BATTLE_MOVES][0]);
@@ -1605,7 +1616,8 @@ static void SetDefaultTilemaps(void)
         ShowBg(1);
         ShowBg(2);
     }
-    else if (sMonSummaryScreen->mode == SUMMARY_MODE_RELEARNER_CONTEST)
+    else if (sMonSummaryScreen->mode == SUMMARY_MODE_RELEARNER_CONTEST
+        || (switchPage && sMonSummaryScreen->currPageIndex == PSS_PAGE_CONTEST_MOVES))
     {
         sMonSummaryScreen->bgDisplayOrder = 1;
         SetBgTilemapBuffer(1, sMonSummaryScreen->bgTilemapBuffers[PSS_PAGE_CONTEST_MOVES][0]);
@@ -1617,12 +1629,21 @@ static void SetDefaultTilemaps(void)
         ShowBg(1);
         ShowBg(2);
     }
+    else if (switchPage && sMonSummaryScreen->currPageIndex == PSS_PAGE_SKILLS)
+    {
+        // As after scrolling right from Info: Skills on top in BG 1, BG 2 free for the next page
+        sMonSummaryScreen->bgDisplayOrder = 1;
+        SetBgTilemapBuffer(1, sMonSummaryScreen->bgTilemapBuffers[PSS_PAGE_SKILLS][0]);
+        ChangeBgX(1, 0x10000, BG_COORD_SET);
+        TryDrawExperienceProgressBar();
+    }
 
     if (sMonSummaryScreen->summary.ailment == AILMENT_NONE)
         PositionStatusSlidingWindow(0, 0xFF);
     else if ((sMonSummaryScreen->currPageIndex != PSS_PAGE_BATTLE_MOVES && sMonSummaryScreen->currPageIndex != PSS_PAGE_CONTEST_MOVES)
             || sMonSummaryScreen->mode == SUMMARY_MODE_RELEARNER_BATTLE
-            || sMonSummaryScreen->mode == SUMMARY_MODE_RELEARNER_CONTEST)
+            || sMonSummaryScreen->mode == SUMMARY_MODE_RELEARNER_CONTEST
+            || switchPage)
         PutWindowTilemap(PSS_LABEL_WINDOW_POKEMON_SKILLS_STATUS);
 
     LimitEggSummaryPageDisplay();
@@ -1775,6 +1796,10 @@ static void Task_HandleInput(u8 taskId)
                         }
                         sMonSummaryScreen->callback = CB2_PssChangePokemonNickname;
                     }
+                    else if (sMonSummaryScreen->mode == SUMMARY_MODE_BATTLE_SWITCH)
+                    {
+                        gSummarySendOutRequested = TRUE;
+                    }
 
                     StopPokemonAnimations();
                     PlaySE(SE_SELECT);
@@ -1797,6 +1822,14 @@ static void Task_HandleInput(u8 taskId)
         }
         else if (JOY_NEW(B_BUTTON))
         {
+            StopPokemonAnimations();
+            PlaySE(SE_SELECT);
+            BeginCloseSummaryScreen(taskId);
+        }
+        else if (JOY_NEW(START_BUTTON) && sMonSummaryScreen->mode == SUMMARY_MODE_BATTLE_SWITCH)
+        {
+            // The party menu sends gLastViewedMonIndex out, or says why it can't (#200)
+            gSummarySendOutRequested = TRUE;
             StopPokemonAnimations();
             PlaySE(SE_SELECT);
             BeginCloseSummaryScreen(taskId);
@@ -2154,6 +2187,8 @@ static void ChangePage(u8 taskId, s8 delta)
     PlaySE(SE_SELECT);
     ClearPageWindowTilemaps(sMonSummaryScreen->currPageIndex);
     currPageIndex = sMonSummaryScreen->currPageIndex += delta;
+    if (sMonSummaryScreen->mode == SUMMARY_MODE_BATTLE_SWITCH)
+        RememberSwitchSummaryPage(currPageIndex);
     data[0] = 0;
     if (delta == 1)
         SetTaskFuncWithFollowupFunc(taskId, PssScrollRight, gTasks[taskId].func);
@@ -4809,6 +4844,8 @@ static inline void ShowUtilityPrompt(s16 mode)
     {
         if (ShouldShowRename())
             promptText = gText_Rename;
+        else if (sMonSummaryScreen->mode == SUMMARY_MODE_BATTLE_SWITCH)
+            promptText = gText_SummarySendOut;
         else
             promptText = gText_Cancel2;
     }
