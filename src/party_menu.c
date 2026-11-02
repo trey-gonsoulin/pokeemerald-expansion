@@ -3287,26 +3287,26 @@ void CB2_ReturnToPartyMenuFromSummaryScreen(void)
     if (gBattleTypeFlags & BATTLE_TYPE_MULTI && !AreMultiPartiesFullTeams() && gPartyMenu.menuType == PARTY_MENU_TYPE_IN_BATTLE)
         RestoreMultiPartyFromSummaryScreen();
     gPartyMenu.slotId = gLastViewedMonIndex;
+    u8 messageId = PARTY_MSG_DO_WHAT_WITH_MON;
+    TaskFunc task = Task_TryCreateSelectionWindow;
     if (IsSummaryToSwitch())
     {
+        bool32 sendOut = gSummarySendOutRequested;
+
+        gSummarySendOutRequested = FALSE;
         // Send out the Pokémon shown last as SHIFT would, straight back to the battle (#200)
-        if (gSummarySendOutRequested && TrySwitchInPokemon() == TRUE)
+        if (sendOut && TrySwitchInPokemon() == TRUE)
         {
-            gSummarySendOutRequested = FALSE;
             UpdatePartyToFieldOrder();
             SetMainCallback2(gPartyMenu.exitCallback);
             return;
         }
-        gPaletteFade.bufferTransferDisabled = TRUE;
-        if (gSummarySendOutRequested)
-            InitPartyMenu(gPartyMenu.menuType, KEEP_PARTY_LAYOUT, gPartyMenu.action, TRUE, PARTY_MSG_NONE, Task_SendOutChosenInSummary, gPartyMenu.exitCallback);
-        else
-            InitPartyMenu(gPartyMenu.menuType, KEEP_PARTY_LAYOUT, gPartyMenu.action, TRUE, PARTY_MSG_CHOOSE_MON, Task_HandleChooseMonInput, gPartyMenu.exitCallback);
-        gSummarySendOutRequested = FALSE;
-        return;
+        // B, or a Pokémon that can't go, goes back to the list
+        messageId = sendOut ? PARTY_MSG_NONE : PARTY_MSG_CHOOSE_MON;
+        task = sendOut ? Task_SendOutChosenInSummary : Task_HandleChooseMonInput;
     }
     gPaletteFade.bufferTransferDisabled = TRUE;
-    InitPartyMenu(gPartyMenu.menuType, KEEP_PARTY_LAYOUT, gPartyMenu.action, TRUE, PARTY_MSG_DO_WHAT_WITH_MON, Task_TryCreateSelectionWindow, gPartyMenu.exitCallback);
+    InitPartyMenu(gPartyMenu.menuType, KEEP_PARTY_LAYOUT, gPartyMenu.action, TRUE, messageId, task, gPartyMenu.exitCallback);
 }
 
 static bool32 IsSummaryToSwitch(void)
