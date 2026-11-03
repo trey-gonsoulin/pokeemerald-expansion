@@ -226,13 +226,11 @@ struct DebugNameSort
 
 static void Debug_SwapSortedNames(struct DebugNameSort *sort, u32 i, u32 j)
 {
-    u16 value = sort->values[i];
-    const u8 *name = sort->names[i];
+    u16 value;
+    const u8 *name;
 
-    sort->values[i] = sort->values[j];
-    sort->names[i] = sort->names[j];
-    sort->values[j] = value;
-    sort->names[j] = name;
+    SWAP(sort->values[i], sort->values[j], value);
+    SWAP(sort->names[i], sort->names[j], name);
 }
 
 // Whether position i sorts after name (value's), when both names start with the same depth
