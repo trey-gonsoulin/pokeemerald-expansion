@@ -172,13 +172,18 @@ void push_summary_result(struct SummaryResults *summaries, const struct Runner *
     }
 }
 
-// Prints a PASSING list entry, with ': <last output line>.' only for a test that printed one.
-static void print_passing_summary_result(const struct SummaryResult *result)
+// Prints an end-summary list entry: '<file:line>: ' in the list's color unless it's unknown (a runner
+// that hung between tests), the test name, then ': <last output line>' and the list's terminator
+// ('.' in the PASSING lists) only for a test that printed one.
+static void print_summary_result(const struct SummaryResult *result, const char *color, const char *terminator)
 {
+    fprintf(stdout, "  - ");
+    if (result->filename_line[0] != '\0')
+        fprintf(stdout, "\e[%sm%s\e[0m: ", color, result->filename_line);
+    fprintf(stdout, "%s", result->test_name);
     if (result->output_line[0] != '\0')
-        fprintf(stdout, "  - \e[32m%s\e[0m: %s: %s.\n", result->filename_line, result->test_name, result->output_line);
-    else
-        fprintf(stdout, "  - \e[32m%s\e[0m: %s\n", result->filename_line, result->test_name);
+        fprintf(stdout, ": %s%s", result->output_line, terminator);
+    fprintf(stdout, "\n");
 }
 
 struct Symbol {
@@ -980,7 +985,7 @@ int main(int argc, char *argv[])
         {
             fprintf(stdout, "\n  \e[31mFAILED\e[0m tests:\n");
             for (int i = 0; i < fails_summaries.count; i++)
-                fprintf(stdout, "  - \e[31m%s\e[0m: %s: %s\n", fails_summaries.results[i].filename_line, fails_summaries.results[i].test_name, fails_summaries.results[i].output_line);
+                print_summary_result(&fails_summaries.results[i], "31", "");
             if (fails > fails_summaries.count)
                 fprintf(stdout, "  - \e[31mand %d more...\e[0m\n", fails - fails_summaries.count);
         }
@@ -989,7 +994,7 @@ int main(int argc, char *argv[])
         {
             fprintf(stdout, "\n  Tests with \e[33mASSUMPTIONS_FAILED\e[0m:\n");
             for (int i = 0; i < assumption_fails_summaries.count; i++)
-                fprintf(stdout, "  - \e[33m%s\e[0m: %s: %s\n", assumption_fails_summaries.results[i].filename_line, assumption_fails_summaries.results[i].test_name, assumption_fails_summaries.results[i].output_line);
+                print_summary_result(&assumption_fails_summaries.results[i], "33", "");
             if (assumption_fails > assumption_fails_summaries.count)
                 fprintf(stdout, "  - \e[33mand %d more...\e[0m\n", assumption_fails - assumption_fails_summaries.count);
         }
@@ -998,7 +1003,7 @@ int main(int argc, char *argv[])
         {
             fprintf(stdout, "\n  \e[33mKNOWN_FAILING\e[0m tests \e[32mPASSING\e[0m:\n");
             for (int i = 0; i < known_fails_passing_summaries.count; i++)
-                print_passing_summary_result(&known_fails_passing_summaries.results[i]);
+                print_summary_result(&known_fails_passing_summaries.results[i], "32", ".");
             if (known_fails_passing > known_fails_passing_summaries.count)
                 fprintf(stdout, "  - \e[32mand %d more...\e[0m\n", known_fails_passing - known_fails_passing_summaries.count);
         }
@@ -1007,7 +1012,7 @@ int main(int argc, char *argv[])
         {
             fprintf(stdout, "\n  \e[31mEXPECT_FAIL\e[0m tests \e[32mPASSING\e[0m:\n");
             for (int i = 0; i < expected_failing_summaries.count; i++)
-                print_passing_summary_result(&expected_failing_summaries.results[i]);
+                print_summary_result(&expected_failing_summaries.results[i], "32", ".");
             if (expected_fails_passing > expected_failing_summaries.count)
                 fprintf(stdout, "  - \e[32mand %d more...\e[0m\n", expected_fails_passing - expected_failing_summaries.count);
         }

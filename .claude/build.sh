@@ -65,7 +65,7 @@ found=$(grep -acE "$compound" "$log")
 filtered=$(grep -aiE "$problems" "$log" | grep -cE "$expected")
 [ "$filtered" -gt 0 ] && echo "($filtered expected warning lines filtered)"
 # For check, also print mgba-rom-test-hydra's end-of-run summary without its colour codes: the
-# per-test lists ("  - file:line: test name: last output line", at most 15 per list here) under the
+# per-test lists ("  - file:line: test name[: last output line]", at most 15 per list here) under the
 # FAILED / ASSUMPTIONS_FAILED / KNOWN_FAILING-passing / EXPECT_FAIL-passing headings, then the
 # counts per result. Hydra leaves out the FAILED count when it's 0, so print it then too (not
 # after "No tests found.", which comes without counts, so it doesn't read as a pass).
