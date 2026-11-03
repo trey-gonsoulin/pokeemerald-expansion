@@ -189,6 +189,9 @@ void Debug_InputToHexString(u8 *dest, u8 taskId, u32 digits)
 // A sorted index, built once per range: scanning min..max on every press took about 4 frames
 // for the ~1,570 species, so holding Up/Down lagged. Sorting them takes a few frames once.
 
+// Ranges no longer than this are sorted by insertion
+#define DEBUG_NAME_SORT_RUN 8
+
 // Name order ignores case and the acute accent, so "Flabébé" sorts with the other Fs
 static u32 Debug_FoldNameChar(u32 c)
 {
@@ -199,19 +202,11 @@ static u32 Debug_FoldNameChar(u32 c)
     return c;
 }
 
-// Below, equal to or above 0 as a (named nameA) sorts before, with or after b. A name sorts before
-// the longer names it starts, and values with the same name sort by value.
-static s32 Debug_CompareNames(const u8 *nameA, u32 a, const u8 *nameB, u32 b)
+// A character's place in name order, which fits in a u8: the end of a name (EOS) comes first, so
+// a name sorts before the longer names it starts, then the folded characters
+static u32 Debug_NameCharKey(u32 c)
 {
-    for (; *nameA != EOS && *nameB != EOS; nameA++, nameB++)
-    {
-        s32 diff = (s32)Debug_FoldNameChar(*nameA) - (s32)Debug_FoldNameChar(*nameB);
-        if (diff != 0)
-            return diff;
-    }
-    if (*nameA != *nameB)
-        return *nameA == EOS ? -1 : 1;
-    return (s32)a - (s32)b;
+    return c == EOS ? 0 : Debug_FoldNameChar(c) + 1;
 }
 
 // The letter a name starts with, 0 for A to 25 for Z, or -1 when it doesn't start with a letter
@@ -221,27 +216,119 @@ static s32 Debug_NameInitial(const u8 *name)
     return (c >= CHAR_A && c <= CHAR_Z) ? (s32)(c - CHAR_A) : -1;
 }
 
-// Merges the sorted runs src[start..mid) and src[mid..end) into dest. names[v - first] is v's name.
-static void Debug_MergeByName(const u16 *src, u16 *dest, u32 start, u32 mid, u32 end, const u8 *const *names, u32 first)
+// The values being sorted, with their names alongside
+struct DebugNameSort
 {
-    u32 i = start, j = mid;
+    u16 *values;
+    const u8 **names; // names[i] is values[i]'s
+    u8 keys[256]; // Debug_NameCharKey of each character, looked up rather than worked out
+};
 
-    for (u32 k = start; k < end; k++)
+static void Debug_SwapSortedNames(struct DebugNameSort *sort, u32 i, u32 j)
+{
+    u16 value = sort->values[i];
+    const u8 *name = sort->names[i];
+
+    sort->values[i] = sort->values[j];
+    sort->names[i] = sort->names[j];
+    sort->values[j] = value;
+    sort->names[j] = name;
+}
+
+// Whether position i sorts after name (value's), when both names start with the same depth
+// characters. The same name sorts by value.
+static bool32 Debug_SortsAfter(const struct DebugNameSort *sort, u32 i, const u8 *name, u32 value, u32 depth)
+{
+    const u8 *other = sort->names[i];
+
+    for (;; depth++)
     {
-        if (i < mid && (j == end || Debug_CompareNames(names[src[i] - first], src[i], names[src[j] - first], src[j]) <= 0))
-            dest[k] = src[i++];
-        else
-            dest[k] = src[j++];
+        u32 otherKey = sort->keys[other[depth]], key = sort->keys[name[depth]];
+        if (otherKey != key)
+            return otherKey > key;
+        if (key == 0)
+            return sort->values[i] > value;
     }
+}
+
+// Sorts the count positions from start, whose names all start with the same depth characters,
+// by insertion
+static void Debug_InsertionSortByName(struct DebugNameSort *sort, u32 start, u32 count, u32 depth)
+{
+    for (u32 i = start + 1; i < start + count; i++)
+    {
+        u32 value = sort->values[i], j = i;
+        const u8 *name = sort->names[i];
+
+        for (; j > start && Debug_SortsAfter(sort, j - 1, name, value, depth); j--)
+        {
+            sort->values[j] = sort->values[j - 1];
+            sort->names[j] = sort->names[j - 1];
+        }
+        sort->values[j] = value;
+        sort->names[j] = name;
+    }
+}
+
+// Sorts like Debug_InsertionSortByName, by multikey quicksort (Bentley and Sedgewick): it splits
+// the names by the character at depth, then sorts the ones that share it from the next character
+// on. So it reads the long prefixes that flag names share (HIDE_, HIDDEN_ITEM_) once per split,
+// where a merge sort of whole names read them on every comparison: the 1,527 flag names took
+// about 42 frames that way. It recurses into the two smaller parts and goes on with the largest,
+// which keeps the recursion within log2(count) levels.
+static void Debug_SortByName(struct DebugNameSort *sort, u32 start, u32 count, u32 depth)
+{
+    while (count > DEBUG_NAME_SORT_RUN)
+    {
+        // The median of three characters, so that names already in order split in the middle
+        u32 a = sort->keys[sort->names[start][depth]];
+        u32 b = sort->keys[sort->names[start + count / 2][depth]];
+        u32 c = sort->keys[sort->names[start + count - 1][depth]];
+        u32 pivot = max(min(a, b), min(max(a, b), c));
+        u32 below = start, i = start, above = start + count;
+
+        // [start, below) sort before pivot, [below, i) have it and [above, start + count) sort after it
+        while (i < above)
+        {
+            u32 key = sort->keys[sort->names[i][depth]];
+            if (key < pivot)
+                Debug_SwapSortedNames(sort, below++, i++);
+            else if (key > pivot)
+                Debug_SwapSortedNames(sort, i, --above);
+            else
+                i++;
+        }
+
+        u32 starts[3] = {start, below, above};
+        u32 counts[3] = {below - start, above - below, start + count - above};
+        u32 depths[3] = {depth, depth + 1, depth};
+        // Names that all end at depth are the same name, which sort by value
+        if (pivot == 0)
+        {
+            Debug_InsertionSortByName(sort, below, above - below, depth);
+            counts[1] = 0;
+        }
+        u32 largest = (counts[0] >= counts[1] && counts[0] >= counts[2]) ? 0 : (counts[1] >= counts[2] ? 1 : 2);
+        for (u32 part = 0; part < ARRAY_COUNT(counts); part++)
+        {
+            if (part != largest)
+                Debug_SortByName(sort, starts[part], counts[part], depths[part]);
+        }
+        start = starts[largest];
+        count = counts[largest];
+        depth = depths[largest];
+    }
+    Debug_InsertionSortByName(sort, start, count, depth);
 }
 
 // Sorts the values in first..last that have a name (getName returns NULL for the ones name order
 // leaves out, such as disabled species) into order->values. Does nothing when order already
-// holds that range; Debug_FreeNameOrder frees it. On a failed Alloc the order stays empty, and
-// the next call tries again.
+// holds that range; Debug_FreeNameOrder frees it.
 void Debug_BuildNameOrder(struct DebugNameOrder *order, u32 first, u32 last, DebugNameFunc getName)
 {
-    u32 size = last - first + 1, count = 0;
+    u32 count = 0, builtSize = 0;
+    u8 buffer[DEBUG_NAME_BUFFER_SIZE];
+    struct DebugNameSort sort;
 
     if (order->values != NULL && order->getName == getName && order->first == first && order->last == last)
         return;
@@ -249,38 +336,36 @@ void Debug_BuildNameOrder(struct DebugNameOrder *order, u32 first, u32 last, Deb
     order->getName = getName;
     order->first = first;
     order->last = last;
-    order->values = Alloc(size * sizeof(u16));
-    // The names, looked up once, and a merge buffer: only while sorting
-    const u8 **names = Alloc(size * sizeof(*names));
-    u16 *buffer = Alloc(size * sizeof(u16));
-    if (order->values == NULL || names == NULL || buffer == NULL)
+    order->values = sort.values = Alloc((last - first + 1) * sizeof(u16));
+    // The names, looked up once, only while sorting. A name built in buffer (a trainer flag's)
+    // is marked with buffer's address at first, and copied once the space they take is known.
+    sort.names = Alloc((last - first + 1) * sizeof(*sort.names));
+    for (u32 i = first; i <= last; i++)
     {
-        Debug_FreeNameOrder(order);
+        const u8 *name = getName(buffer, i);
+        if (name == NULL)
+            continue;
+        if (name == buffer)
+            builtSize += StringLength(buffer) + 1;
+        sort.names[count] = name;
+        sort.values[count++] = i;
     }
-    else
+    u8 *builtNames = builtSize != 0 ? Alloc(builtSize) : NULL;
+    u8 *builtEnd = builtNames;
+    for (u32 i = 0; i < count; i++)
     {
-        for (u32 i = first; i <= last; i++)
+        if (sort.names[i] == buffer)
         {
-            names[i - first] = getName(i);
-            if (names[i - first] != NULL)
-                order->values[count++] = i;
+            sort.names[i] = builtEnd;
+            builtEnd = StringCopy(builtEnd, getName(buffer, sort.values[i])) + 1;
         }
-        // Bottom-up merge sort, swapping the source and destination after each pass
-        u16 *src = order->values, *dest = buffer;
-        for (u32 width = 1; width < count; width *= 2)
-        {
-            for (u32 start = 0; start < count; start += 2 * width)
-                Debug_MergeByName(src, dest, start, min(start + width, count), min(start + 2 * width, count), names, first);
-            u16 *sorted = dest;
-            dest = src;
-            src = sorted;
-        }
-        if (src != order->values)
-            memcpy(order->values, src, count * sizeof(u16));
-        order->count = count;
     }
-    TRY_FREE_AND_SET_NULL(names);
-    TRY_FREE_AND_SET_NULL(buffer);
+    for (u32 c = 0; c < ARRAY_COUNT(sort.keys); c++)
+        sort.keys[c] = Debug_NameCharKey(c);
+    Debug_SortByName(&sort, 0, count, 0);
+    order->count = count;
+    Free(sort.names);
+    TRY_FREE_AND_SET_NULL(builtNames);
 }
 
 void Debug_FreeNameOrder(struct DebugNameOrder *order)
@@ -298,6 +383,28 @@ static s32 Debug_FindInNameOrder(const struct DebugNameOrder *order, u32 value)
             return i;
     }
     return -1;
+}
+
+// The position of the first name in order that starts with letter (0 for A) or a later one, or
+// order->count when none does. Folded first characters only grow along the order, so it
+// looks up about log2(count) names, each of which may build a trainer flag's.
+static u32 Debug_FindNameInitial(const struct DebugNameOrder *order, u32 letter)
+{
+    u8 buffer[DEBUG_NAME_BUFFER_SIZE];
+    u32 low = 0, high = order->count;
+
+    while (low < high)
+    {
+        u32 mid = (low + high) / 2;
+        if (Debug_NameCharKey(order->getName(buffer, order->values[mid])[0]) < CHAR_A + letter + 1)
+            low = mid + 1;
+        else
+            high = mid;
+    }
+    // Past Z come the names that start with something other than a letter
+    if (low < order->count && Debug_NameInitial(order->getName(buffer, order->values[low])) < 0)
+        return order->count;
+    return low;
 }
 
 // The value after value in name order (with previous, the one before it). Past the last name it
@@ -321,21 +428,13 @@ u32 Debug_StepByName(const struct DebugNameOrder *order, u32 value, bool32 previ
 // Names that don't start with a letter are skipped. Returns value when no name starts with a letter.
 u32 Debug_NextNameInitial(const struct DebugNameOrder *order, u32 value)
 {
-    s32 pos = Debug_FindInNameOrder(order, value);
-    s32 initial = pos >= 0 ? Debug_NameInitial(order->getName(value)) : -1;
+    u8 buffer[DEBUG_NAME_BUFFER_SIZE];
+    s32 initial = Debug_FindInNameOrder(order, value) >= 0 ? Debug_NameInitial(order->getName(buffer, value)) : -1;
+    u32 pos = Debug_FindNameInitial(order, initial + 1);
 
-    // Folded initials only grow along the order, so the next letter is after pos
-    for (u32 i = pos + 1; i < order->count; i++)
-    {
-        if (Debug_NameInitial(order->getName(order->values[i])) > initial)
-            return order->values[i];
-    }
-    for (u32 i = 0; i < order->count; i++)
-    {
-        if (Debug_NameInitial(order->getName(order->values[i])) >= 0)
-            return order->values[i];
-    }
-    return value;
+    if (pos == order->count)
+        pos = Debug_FindNameInitial(order, 0);
+    return pos < order->count ? order->values[pos] : value;
 }
 
 // *******************************
@@ -379,6 +478,13 @@ bool32 Debug_CopyTrainerFlagName(u8 *dest, u32 flag)
     StringCopyN(dest, GetTrainerNameFromId(trainerId), TRAINER_NAME_LENGTH + 1);
     dest[TRAINER_NAME_LENGTH] = EOS;
     return TRUE;
+}
+
+// The name Set Flag shows, and orders by: a trainer flag's trainer, built in buffer (which holds
+// DEBUG_NAME_BUFFER_SIZE), or else Debug_GetFlagName's
+const u8 *Debug_GetFlagDisplayName(u8 *buffer, u32 flag)
+{
+    return Debug_CopyTrainerFlagName(buffer, flag) ? buffer : Debug_GetFlagName(flag);
 }
 
 // *******************************

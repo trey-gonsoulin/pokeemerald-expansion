@@ -1412,21 +1412,26 @@ static u32 DebugSelection_GetRange(u8 taskId, const struct DebugSelectionStep *s
 }
 
 // Name order leaves out disabled species: A can't give them, and they have no name to show
-static const u8 *Debug_GetEnabledSpeciesName(u32 species)
+static const u8 *Debug_GetEnabledSpeciesName(u8 *buffer, u32 species)
 {
     return IsSpeciesEnabled(species) ? GetSpeciesName(species) : NULL;
 }
 
-static const u8 *Debug_GetNamedItemName(u32 itemId)
+static const u8 *Debug_GetNamedItemName(u8 *buffer, u32 itemId)
 {
     const u8 *name = GetItemName(itemId);
     return name == gQuestionMarksItemName ? NULL : name;
 }
 
 // The Moves step's MOVES_COUNT is its "Default" choice
-static const u8 *Debug_GetMoveStepName(u32 moveId)
+static const u8 *Debug_GetMoveStepName(u8 *buffer, u32 moveId)
 {
     return moveId == MOVES_COUNT ? COMPOUND_STRING("Default") : GetMoveName(moveId);
+}
+
+static const u8 *Debug_GetVarStepName(u8 *buffer, u32 varId)
+{
+    return Debug_GetVarName(varId);
 }
 
 static const DebugNameFunc sDebugStepNameFuncs[] =
@@ -1434,8 +1439,8 @@ static const DebugNameFunc sDebugStepNameFuncs[] =
     [DEBUG_STEP_NAMES_SPECIES] = Debug_GetEnabledSpeciesName,
     [DEBUG_STEP_NAMES_ITEMS] = Debug_GetNamedItemName,
     [DEBUG_STEP_NAMES_MOVES] = Debug_GetMoveStepName,
-    [DEBUG_STEP_NAMES_FLAGS] = Debug_GetFlagName,
-    [DEBUG_STEP_NAMES_VARS] = Debug_GetVarName,
+    [DEBUG_STEP_NAMES_FLAGS] = Debug_GetFlagDisplayName,
+    [DEBUG_STEP_NAMES_VARS] = Debug_GetVarStepName,
 };
 
 // Name order is only for the overworld menu, which holds its state; the release ROM's native steps have no names
@@ -3161,7 +3166,7 @@ static void DebugSelectionStep_UpdateMoves(u8 taskId, u8 digits, u32 min, u32 ma
     ConvertIntToDecimalStringN(gStringVar2, gTasks[taskId].tSubstep + 1, STR_CONV_MODE_LEADING_ZEROS, 1);
     Debug_InputToDecimalString(gStringVar3, taskId, digits);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Move {STR_VAR_2}: {STR_VAR_3}"));
-    u8 *end = StringCopy(gStringVar2, Debug_GetMoveStepName(moveId));
+    u8 *end = StringCopy(gStringVar2, Debug_GetMoveStepName(NULL, moveId));
     WrapFontIdToFit(gStringVar2, end, DEBUG_MENU_FONT, WindowWidthPx(gTasks[taskId].tSubWindowId));
     DebugNativeStep_PrintNamedSelection(taskId);
 }
@@ -3457,7 +3462,7 @@ static void DebugSelectionStep_PrintFlagVarId(u8 taskId, const u8 *const *digitI
 static void DebugSelectionStep_UpdateFlag(u8 taskId, u8 digits, u32 min, u32 max)
 {
     u32 flag = DEBUG_TASK_INPUT(taskId);
-    u8 trainerName[DEBUG_TRAINER_FLAG_NAME_SIZE];
+    u8 nameBuffer[DEBUG_NAME_BUFFER_SIZE];
     u8 *end;
 
     Debug_InputToDecimalString(gStringVar1, taskId, digits);
@@ -3466,7 +3471,7 @@ static void DebugSelectionStep_UpdateFlag(u8 taskId, u8 digits, u32 min, u32 max
     end = StringCopy(end, COMPOUND_STRING("  "));
     StringCopy(end, FlagGet(flag) ? sDebugText_True : sDebugText_False);
     // A trainer flag has no constant name, so it shows its trainer
-    DebugSelectionStep_CopyFlagVarName(Debug_CopyTrainerFlagName(trainerName, flag) ? trainerName : Debug_GetFlagName(flag));
+    DebugSelectionStep_CopyFlagVarName(Debug_GetFlagDisplayName(nameBuffer, flag));
     DebugSelectionStep_PrintFlagVarId(taskId, gText_DigitIndicator);
 }
 
