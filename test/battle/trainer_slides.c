@@ -1,6 +1,21 @@
 #include "global.h"
 #include "test/battle.h"
 #include "battle_setup.h"
+#include "event_data.h"
+#include "trainer_slide.h"
+
+// The test slide table's rows and TRAINER_LEAF_TEST, as in src/trainer_slide.c.
+#define TEST_SLIDE_ROWS   (MAX_TRAINERS_COUNT_EMERALD + PARTNER_COUNT)
+#define TRAINER_LEAF_TEST 2
+
+TEST("Trainer Slide: an ID past the slide table has no message")
+{
+    FlagSet(TESTING_FLAG_TRAINER_SLIDES);
+    EXPECT(Test_GetTrainerSlideMessage(DIFFICULTY_EASY, TRAINER_LEAF_TEST, TRAINER_SLIDE_BEFORE_FIRST_TURN) != NULL);
+    // Easy's row past the end is Normal's Leaf row.
+    EXPECT(Test_GetTrainerSlideMessage(DIFFICULTY_EASY, TEST_SLIDE_ROWS + TRAINER_LEAF_TEST, TRAINER_SLIDE_BEFORE_FIRST_TURN) == NULL);
+    FlagClear(TESTING_FLAG_TRAINER_SLIDES);
+}
 
 // SINGLES TESTS START
 AI_SINGLE_BATTLE_TEST("Trainer Slide: Singles: Before First Turn")
