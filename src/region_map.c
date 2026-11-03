@@ -23,6 +23,7 @@
 #include "region_map.h"
 #include "decompress.h"
 #include "constants/region_map_sections.h"
+#include "debug.h"
 #include "heal_location.h"
 #include "constants/field_specials.h"
 #include "constants/heal_locations.h"
@@ -2481,6 +2482,8 @@ static void CB_ExitFlyMap(void)
         if (!UpdatePaletteFade())
         {
             FreeRegionMapIconResources();
+            if (DEBUG_OVERWORLD_MENU)
+                Debug_OnFlyMapExit(sFlyMap->choseFlyLocation);
             if (sFlyMap->choseFlyLocation)
             {
                 struct RegionMap* tempRegionMap = &sFlyMap->regionMap;
