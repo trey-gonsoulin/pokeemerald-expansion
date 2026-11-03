@@ -33,7 +33,7 @@ TEST("Switch summary first: SEND OUT fits the Info page prompt beside the A icon
     EXPECT_LE(GetStringWidth(FONT_NORMAL, gText_SummarySendOut, 0) + 16, 62);
 }
 
-TEST("Switch summary first: START SEND OUT fits the Skills page prompt and the move pages' strip")
+TEST("Switch summary first: START SEND OUT fits the Skills page prompt (and so the wider move pages' strip)")
 {
     // ShowUtilityPrompt right-aligns it in the 64 px header prompt window; UpdateRelearnPrompt in the 88 px strip
     EXPECT_LE(GetStringWidth(FONT_SMALL, gText_SummaryStartSendOut, 0), 64);
