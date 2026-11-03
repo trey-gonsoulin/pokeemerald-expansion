@@ -488,6 +488,40 @@ Iron Tail hits Gardevoir 2x and Azumarill and Mawile 1x. It is the only strong S
 
 **Flags now** (all / story): no_attack 6 / 6 (Magikarp, Silcoon and Cascoon), one_attack 0 / 0, lost_stab 0 / 0.
 
+## 14. Evolutions that aren't by level on boss and rival teams (#181)
+Raises evolved Pokémon only by level, so 42 Pokémon on the 92 boss and rival teams sat at level 37-92 one trade, stone or friendship evolution short. The owner's rules (2026-11-02): boss and rival teams only; evolve once the Pokémon is 3 levels (`EVOLVE_GRACE`) past the evolved form's earliest wild level (`min_level`: Crobat 35, Starmie, Ludicolo and Steelix 33, Machamp 41, Magnezone 43, Dusknoir 50); no Gen 3 signature kept; and still no species the team already has. `rebalance.py apply` now does this; 41 evolved:
+- Golbat -> Crobat: Tabitha (Mt Chimney, Magma Hideout, Mossdeep), Maxie at Mt Chimney, Matt.
+- Lombre -> Ludicolo: the five Route 119 rival teams that have it.
+- Roselia -> Roserade and Magneton -> Magnezone: Wally VR 1-5.
+- Onix -> Steelix (Roxanne 2-4), Nosepass -> Probopass (Roxanne 2-5).
+- Magneton -> Magnezone (Wattson 2-5), Pikachu -> Raichu (Wattson 3), Electabuzz -> Electivire (Wattson 5).
+- Growlithe -> Arcanine (Flannery 3-4), Chansey -> Blissey (Norman 2-3), Poliwhirl -> Politoed (Juan 2-4; the pure Water branch, `NONLEVEL_PREFER`).
+- Dusclops -> Dusknoir: Phoebe's ace (80). Of two copies the higher level evolves, so her lead Dusclops (77) stays beside it.
+
+Held back by the duplicate rule: Phoebe's lead Dusclops, Glacia's two Sealeo (beside Walrein) and Drake's Shelgon (beside Salamence). `Ability:` isn't set on any team, so each evolved Pokémon takes its new form's ability from its personality, as level evolutions do. Wattson 3's Raichu keeps Slam, the carried Gen 3 move already allowlisted on Wattson 4 and 5's Raichu.
+
+**Knock-on.** Crobat at Mt Chimney (37/38) and the stronger bosses after it give more exp, so the curve then asked for one more level from Maxie at Mt Chimney on. A second `apply` raised 601 teams:
+- the story bosses from there through Wallace by 1, except the ones already high enough: Tabitha at Mt Chimney and at the Magma Hideout, Flannery, Norman and Archie;
+- the stage trainers of Winona's stage through the Elite Four, and rematch rounds 3-4, by 1;
+- rematch round 5 by 3 and Steven at Meteor Falls by 2;
+- 252 ordinary rematch tiers by 1 or 2;
+- 147 wild tables by 1;
+- Steven's Mossdeep partner team to 73-75.
+
+Twelve raised Pokémon crossed a level evolution (Wailmer -> Wailord, Koffing -> Weezing and others). The raises moved 11 default slots onto a flag (7 one_attack, 6 lost_stab, some both), hand-written by #131's rule:
+- Grassy Terrain -> Giga Drain on Rose 5's and Catherine 1's Gloom.
+- Amnesia -> Brine on Wilton 4's Wailmer and Wilton 5's and Kyla's Wailord.
+- Life Dew -> Dazzling Gleam on Jerry 4's Gardevoir.
+- Metal Sound -> Steel Wing on Humberto's Skarmory.
+- Power Trick -> Zen Headbutt on Callie's Medicham.
+- Yawn -> Crunch on Pat's Mightyena.
+- Dual Chop -> Vital Throw on Cory 4's Machoke.
+- Supersonic -> Crunch on Cristin 2's Exploud.
+
+The flags are back to 0 / 0.
+
+Other trainers keep theirs: the report lists 215 Pokémon (Machoke 33, Roselia 26, Staryu 25, Graveler 20 and so on) for a later call. Not playtested.
+
 ## Proposed balance changes (owner to accept or reject; each can be its own issue)
 1. **Soft level cap at each gym ace** (config). Set `B_LEVEL_CAP_TYPE LEVEL_CAP_FLAG_LIST` and `B_EXP_CAP_TYPE EXP_CAP_SOFT`. `sLevelCapFlagMap` in `src/caps.c` already holds exactly the measured aces (15/19/24/29/31/33/42/46/58). Consider `B_RARE_CANDY_CAP` too.
 2. **Boss AI to `Smart Trainer`** (data) for the gym leaders, the Elite Four, Wallace, and optionally the rivals and team leaders. Done in #129 for all of them, without Omniscient and Smart Tera (see "Corrections").

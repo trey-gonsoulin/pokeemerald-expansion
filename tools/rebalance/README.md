@@ -146,10 +146,19 @@ the repo's own data with them, through `apply_plan`, and writes:
   Restock runs first, so a refused restock leaves nothing half written;
 - the post-game rounds' teams and Steven (as bosses: no duplicate
   evolutions), and the ordinary trainers' rematch ladders (#139), into
-  `src/data/trainers.party`.
+  `src/data/trainers.party`;
+- on every boss and rival team (`boss_teams`, raised or not), the
+  evolutions that aren't by level (#181, `nonlevel_evolve_party`): a stone or
+  other item, a trade, friendship, a map section, beauty or a move, once the
+  Pokemon is `EVOLVE_GRACE` levels past the evolved form's `min_level`
+  (`restock.SpeciesInfo.nonlevel_evolution`; `NONLEVEL_PREFER` picks a split's
+  target). The highest level goes first and none evolves into a species the
+  team has, so of two copies the ace evolves. The report's "Evolutions that
+  aren't by level" section lists the ones held back and the other trainers'.
 
 It only raises. On data it already wrote it asks for nothing, which
-`RealRepo.test_data_meets_the_curve_settings` checks. After a change to
+`RealRepo.test_data_meets_the_curve_settings` checks. A run that evolves boss
+Pokemon raises the exp curve, so run it again until it raises nothing. After a change to
 `trainers.party`, the wild tables or the exp formula, rerun `apply` and
 `rebalance.py` (or change the settings and do the same).
 `apply` doesn't touch trainers outside the stages and the rematch table.

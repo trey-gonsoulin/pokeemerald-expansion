@@ -131,6 +131,27 @@ class SpeciesInfoTests(unittest.TestCase):
         self.assertEqual(i.evolve('SPECIES_GOLBAT', 60), 'SPECIES_GOLBAT')
         self.assertEqual(i.evolve('SPECIES_KIRLIA', 40, gender='MON_MALE'), 'SPECIES_GARDEVOIR')
 
+    def test_nonlevel_evolution(self):
+        """#181: evolutions that aren't by level, EVOLVE_GRACE levels past the target's min_level."""
+        i = self.info
+        crobat = i.min_level('SPECIES_CROBAT') + R.EVOLVE_GRACE  # friendship
+        self.assertIsNone(i.nonlevel_evolution('SPECIES_GOLBAT', crobat - 1))
+        self.assertEqual(i.nonlevel_evolution('SPECIES_GOLBAT', crobat), 'SPECIES_CROBAT')
+        self.assertEqual(i.nonlevel_evolution('SPECIES_MACHOKE', 41), 'SPECIES_MACHAMP')  # trade
+        self.assertIsNone(i.nonlevel_evolution('SPECIES_MACHOKE', 40))
+        self.assertEqual(i.nonlevel_evolution('SPECIES_ONIX', 80), 'SPECIES_STEELIX')  # trade holding an item
+        self.assertEqual(i.nonlevel_evolution('SPECIES_STARYU', 50), 'SPECIES_STARMIE')  # stone
+        self.assertEqual(i.nonlevel_evolution('SPECIES_MAGNETON', 50), 'SPECIES_MAGNEZONE')  # stone or map section
+        self.assertEqual(i.nonlevel_evolution('SPECIES_POLIWHIRL', 80), 'SPECIES_POLITOED')  # NONLEVEL_PREFER
+        self.assertEqual(i.nonlevel_evolution('SPECIES_PIKACHU', 80), 'SPECIES_RAICHU')  # not Alola's
+        # Level evolutions are level_evolution's, and another region's never count.
+        self.assertIsNone(i.nonlevel_evolution('SPECIES_ARON', 60))
+        self.assertIsNone(i.nonlevel_evolution('SPECIES_KOFFING', 60))
+        # evolve takes them only with nonlevel, along the whole line.
+        self.assertEqual(i.evolve('SPECIES_ZUBAT', 40), 'SPECIES_GOLBAT')
+        self.assertEqual(i.evolve('SPECIES_ZUBAT', 40, nonlevel=True), 'SPECIES_CROBAT')
+        self.assertEqual(i.evolve('SPECIES_KOFFING', 50, nonlevel=True), 'SPECIES_WEEZING')
+
     def test_species_built_from_macros(self):
         i = self.info
         self.assertEqual(i.min_level('SPECIES_SPEWPA'), 9)  # SPEWPA_SPECIES_INFO(...)
