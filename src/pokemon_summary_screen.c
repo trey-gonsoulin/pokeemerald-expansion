@@ -206,6 +206,10 @@ static void CopyMonToSummaryStruct(struct Pokemon *);
 static bool8 ExtractMonDataToSummaryStruct(struct Pokemon *);
 static void SetDefaultTilemaps(void);
 static void CloseSummaryScreen(u8);
+static void SendOutFromSummary(u8 taskId);
+static bool32 IsBattleSwitchSummary(void);
+static bool32 ShouldShowSkillsPrompt(void);
+static bool32 ShouldShowRelearnWindow(void);
 static void Task_HandleInput(u8);
 static void ChangeSummaryPokemon(u8, s8);
 static void Task_ChangeSummaryMon(u8);
@@ -1245,8 +1249,6 @@ void ShowPokemonSummaryScreen(u8 mode, void *mons, u8 monIndex, u8 maxMonIndex, 
         sMonSummaryScreen->currPageIndex = PSS_PAGE_BATTLE_MOVES;
     else if (mode == SUMMARY_MODE_RELEARNER_CONTEST)
         sMonSummaryScreen->currPageIndex = PSS_PAGE_CONTEST_MOVES;
-    else if (mode == SUMMARY_MODE_BATTLE_SWITCH && !GetMonData(&((struct Pokemon *)mons)[monIndex], MON_DATA_IS_EGG))
-        sMonSummaryScreen->currPageIndex = GetSwitchSummaryPage(); // An Egg has only the Info page
     else
         sMonSummaryScreen->currPageIndex = sMonSummaryScreen->minPageIndex;
     gSummarySendOutRequested = FALSE;
@@ -1582,13 +1584,9 @@ static bool8 ExtractMonDataToSummaryStruct(struct Pokemon *mon)
 
 static void SetDefaultTilemaps(void)
 {
-    // SUMMARY_MODE_BATTLE_SWITCH opens on the page last moved to, which looks like the relearner's return to a moves page (#200)
-    bool32 switchPage = (sMonSummaryScreen->mode == SUMMARY_MODE_BATTLE_SWITCH);
-
     if ((sMonSummaryScreen->currPageIndex != PSS_PAGE_BATTLE_MOVES && sMonSummaryScreen->currPageIndex != PSS_PAGE_CONTEST_MOVES)
         || sMonSummaryScreen->mode == SUMMARY_MODE_RELEARNER_BATTLE
-        || sMonSummaryScreen->mode == SUMMARY_MODE_RELEARNER_CONTEST
-        || switchPage)
+        || sMonSummaryScreen->mode == SUMMARY_MODE_RELEARNER_CONTEST)
     {
         PositionPowerAccSlidingWindow(0, 0xFF);
         PositionAppealJamSlidingWindow(0, 0xFF, 0);
@@ -1604,8 +1602,7 @@ static void SetDefaultTilemaps(void)
 
     // these blocks handle preparing the gfx to return straight to the respective move info screens
     // SUMMARY_MODE_SELECT_MOVE also opens on Battle Moves with Skills behind it, so Left slides in Skills (#199)
-    if (sMonSummaryScreen->mode == SUMMARY_MODE_RELEARNER_BATTLE || sMonSummaryScreen->mode == SUMMARY_MODE_SELECT_MOVE
-        || (switchPage && sMonSummaryScreen->currPageIndex == PSS_PAGE_BATTLE_MOVES))
+    if (sMonSummaryScreen->mode == SUMMARY_MODE_RELEARNER_BATTLE || sMonSummaryScreen->mode == SUMMARY_MODE_SELECT_MOVE)
     {
         SetBgTilemapBuffer(1, sMonSummaryScreen->bgTilemapBuffers[PSS_PAGE_SKILLS][0]);
         SetBgTilemapBuffer(2, sMonSummaryScreen->bgTilemapBuffers[PSS_PAGE_BATTLE_MOVES][0]);
@@ -1616,8 +1613,7 @@ static void SetDefaultTilemaps(void)
         ShowBg(1);
         ShowBg(2);
     }
-    else if (sMonSummaryScreen->mode == SUMMARY_MODE_RELEARNER_CONTEST
-        || (switchPage && sMonSummaryScreen->currPageIndex == PSS_PAGE_CONTEST_MOVES))
+    else if (sMonSummaryScreen->mode == SUMMARY_MODE_RELEARNER_CONTEST)
     {
         sMonSummaryScreen->bgDisplayOrder = 1;
         SetBgTilemapBuffer(1, sMonSummaryScreen->bgTilemapBuffers[PSS_PAGE_CONTEST_MOVES][0]);
@@ -1629,26 +1625,12 @@ static void SetDefaultTilemaps(void)
         ShowBg(1);
         ShowBg(2);
     }
-    else if (switchPage && sMonSummaryScreen->currPageIndex == PSS_PAGE_SKILLS)
-    {
-        // As after scrolling right from Info: Skills on top in BG 1, BG 2 free for the next page
-        sMonSummaryScreen->bgDisplayOrder = 1;
-        SetBgTilemapBuffer(1, sMonSummaryScreen->bgTilemapBuffers[PSS_PAGE_SKILLS][0]);
-        SetBgAttribute(1, BG_ATTR_PRIORITY, 1);
-        SetBgAttribute(2, BG_ATTR_PRIORITY, 2);
-        ChangeBgX(1, 0x10000, BG_COORD_SET);
-        ChangeBgX(2, 0, BG_COORD_SET);
-        ShowBg(1);
-        ShowBg(2);
-        TryDrawExperienceProgressBar();
-    }
 
     if (sMonSummaryScreen->summary.ailment == AILMENT_NONE)
         PositionStatusSlidingWindow(0, 0xFF);
     else if ((sMonSummaryScreen->currPageIndex != PSS_PAGE_BATTLE_MOVES && sMonSummaryScreen->currPageIndex != PSS_PAGE_CONTEST_MOVES)
             || sMonSummaryScreen->mode == SUMMARY_MODE_RELEARNER_BATTLE
-            || sMonSummaryScreen->mode == SUMMARY_MODE_RELEARNER_CONTEST
-            || switchPage)
+            || sMonSummaryScreen->mode == SUMMARY_MODE_RELEARNER_CONTEST)
         PutWindowTilemap(PSS_LABEL_WINDOW_POKEMON_SKILLS_STATUS);
 
     LimitEggSummaryPageDisplay();
@@ -1665,6 +1647,15 @@ static void BeginCloseSummaryScreen(u8 taskId)
 {
     BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
     gTasks[taskId].func = CloseSummaryScreen;
+}
+
+static void SendOutFromSummary(u8 taskId)
+{
+    // The party menu sends gLastViewedMonIndex out, or says why it can't (#200)
+    gSummarySendOutRequested = TRUE;
+    StopPokemonAnimations();
+    PlaySE(SE_SELECT);
+    BeginCloseSummaryScreen(taskId);
 }
 
 static void CloseSummaryScreen(u8 taskId)
@@ -1831,13 +1822,9 @@ static void Task_HandleInput(u8 taskId)
             PlaySE(SE_SELECT);
             BeginCloseSummaryScreen(taskId);
         }
-        else if (JOY_NEW(START_BUTTON) && sMonSummaryScreen->mode == SUMMARY_MODE_BATTLE_SWITCH)
+        else if (JOY_NEW(START_BUTTON) && IsBattleSwitchSummary())
         {
-            // The party menu sends gLastViewedMonIndex out, or says why it can't (#200)
-            gSummarySendOutRequested = TRUE;
-            StopPokemonAnimations();
-            PlaySE(SE_SELECT);
-            BeginCloseSummaryScreen(taskId);
+            SendOutFromSummary(taskId);
         }
         else if (DEBUG_POKEMON_SPRITE_VISUALIZER && JOY_NEW(SELECT_BUTTON) && !gMain.inBattle)
         {
@@ -2192,8 +2179,6 @@ static void ChangePage(u8 taskId, s8 delta)
     PlaySE(SE_SELECT);
     ClearPageWindowTilemaps(sMonSummaryScreen->currPageIndex);
     currPageIndex = sMonSummaryScreen->currPageIndex += delta;
-    if (sMonSummaryScreen->mode == SUMMARY_MODE_BATTLE_SWITCH)
-        RememberSwitchSummaryPage(currPageIndex);
     data[0] = 0;
     if (delta == 1)
         SetTaskFuncWithFollowupFunc(taskId, PssScrollRight, gTasks[taskId].func);
@@ -2373,6 +2358,10 @@ static void Task_HandleInput_MoveSelect(u8 taskId)
             data[0] = 4;
             ChangeSelectedMove(data, 1, &sMonSummaryScreen->firstMoveIndex);
         }
+        else if (JOY_NEW(START_BUTTON) && IsBattleSwitchSummary())
+        {
+            SendOutFromSummary(taskId); // The move pages' START SEND OUT hint stays up in a move's details (#213)
+        }
         else if (JOY_NEW(A_BUTTON))
         {
             if (sMonSummaryScreen->lockMovesFlag == TRUE
@@ -2473,7 +2462,7 @@ static void ChangeSelectedMove(s16 *taskData, s8 direction, u8 *moveIndexPtr)
 static void CloseMoveSelectMode(u8 taskId)
 {
     DestroyMoveSelectorSprites(SPRITE_ARR_ID_MOVE_SELECTOR1);
-    if (ShouldShowMoveRelearner())
+    if (ShouldShowRelearnWindow())
         PutWindowTilemap(PSS_LABEL_WINDOW_PROMPT_RELEARN);
 
     ShowUtilityPrompt(SUMMARY_MODE_NORMAL);
@@ -3368,7 +3357,7 @@ static void PutPageWindowTilemaps(u8 page)
         PutWindowTilemap(PSS_LABEL_WINDOW_POKEMON_SKILLS_STATS_LEFT);
         PutWindowTilemap(PSS_LABEL_WINDOW_POKEMON_SKILLS_STATS_RIGHT);
         PutWindowTilemap(PSS_LABEL_WINDOW_POKEMON_SKILLS_EXP);
-        if (ShouldShowIvEvPrompt())
+        if (ShouldShowSkillsPrompt())
             PutWindowTilemap(PSS_LABEL_WINDOW_PROMPT_UTILITY);
         if (sMonSummaryScreen->mode == SUMMARY_MODE_SELECT_MOVE)
         {
@@ -3388,7 +3377,7 @@ static void PutPageWindowTilemaps(u8 page)
         }
         else
         {
-            if (ShouldShowMoveRelearner())
+            if (ShouldShowRelearnWindow())
                 PutWindowTilemap(PSS_LABEL_WINDOW_PROMPT_RELEARN);
         }
         break;
@@ -3402,7 +3391,7 @@ static void PutPageWindowTilemaps(u8 page)
         }
         else
         {
-            if (ShouldShowMoveRelearner())
+            if (ShouldShowRelearnWindow())
                 PutWindowTilemap(PSS_LABEL_WINDOW_PROMPT_RELEARN);
         }
         break;
@@ -3431,7 +3420,7 @@ static void ClearPageWindowTilemaps(u8 page)
         ClearWindowTilemap(PSS_LABEL_WINDOW_POKEMON_SKILLS_STATS_LEFT);
         ClearWindowTilemap(PSS_LABEL_WINDOW_POKEMON_SKILLS_STATS_RIGHT);
         ClearWindowTilemap(PSS_LABEL_WINDOW_POKEMON_SKILLS_EXP);
-        if (ShouldShowIvEvPrompt())
+        if (ShouldShowSkillsPrompt())
             ClearWindowTilemap(PSS_LABEL_WINDOW_PROMPT_UTILITY);
         ClearWindowTilemap(PSS_LABEL_WINDOW_PROMPT_RELEARN);
         // Unless the Move Deleter's Cancel row has the power/accuracy window slid away
@@ -3794,7 +3783,7 @@ static void PrintSkillsPageText(void)
 {
     PrintHeldItemName();
     PrintRibbonCount();
-    if (ShouldShowIvEvPrompt())
+    if (ShouldShowSkillsPrompt())
         ShowUtilityPrompt(SUMMARY_SKILLS_MODE_STATS);
     BufferLeftColumnStats();
     PrintLeftColumnStats();
@@ -4812,6 +4801,23 @@ static inline bool32 ShouldShowMoveRelearner(void)
          && !InSlateportBattleTent());
 }
 
+static bool32 IsBattleSwitchSummary(void)
+{
+    return sMonSummaryScreen->mode == SUMMARY_MODE_BATTLE_SWITCH;
+}
+
+// The Skills page's top-right prompt: A's IVs/EVs/STATS, or the switch summary's START SEND OUT (#213)
+static bool32 ShouldShowSkillsPrompt(void)
+{
+    return ShouldShowIvEvPrompt() || IsBattleSwitchSummary();
+}
+
+// The move pages' strip under the header: START RELEARN, or the switch summary's START SEND OUT (#213)
+static bool32 ShouldShowRelearnWindow(void)
+{
+    return ShouldShowMoveRelearner() || IsBattleSwitchSummary();
+}
+
 static inline bool32 ShouldShowRename(void)
 {
     return (P_SUMMARY_SCREEN_RENAME
@@ -4856,6 +4862,16 @@ static inline void ShowUtilityPrompt(s16 mode)
     }
     else if (sMonSummaryScreen->currPageIndex == PSS_PAGE_SKILLS)
     {
+        if (IsBattleSwitchSummary())
+        {
+            // No room for both: the switch summary's Skills header shows how to send in place of A's IVs/EVs/STATS (#213)
+            FillWindowPixelBuffer(PSS_LABEL_WINDOW_PROMPT_UTILITY, PIXEL_FILL(0));
+            PutWindowTilemap(PSS_LABEL_WINDOW_PROMPT_UTILITY);
+            PrintTextOnWindowWithFont(PSS_LABEL_WINDOW_PROMPT_UTILITY, gText_SummaryStartSendOut,
+                                      GetStringRightAlignXOffset(FONT_SMALL, gText_SummaryStartSendOut, TILE_WIDTH * sSummaryTemplate[PSS_LABEL_WINDOW_PROMPT_UTILITY].width),
+                                      2, 0, 0, FONT_SMALL);
+            return;
+        }
         if (ShouldShowIvEvPrompt())
         {
             if (mode == SUMMARY_SKILLS_MODE_STATS)
@@ -4909,11 +4925,14 @@ static inline void ShowUtilityPrompt(s16 mode)
 static void UpdateRelearnPrompt(void)
 {
     FillWindowPixelBuffer(PSS_LABEL_WINDOW_PROMPT_RELEARN, PIXEL_FILL(0));
-    if (!sMonSummaryScreen->hasRelearnableMoves)
-        return;
 
     const u8 *relearnText;
-    relearnText = sText_Relearn;
+    if (IsBattleSwitchSummary())
+        relearnText = gText_SummaryStartSendOut; // The switch summary's move pages have no relearner (#213)
+    else if (!sMonSummaryScreen->hasRelearnableMoves)
+        return;
+    else
+        relearnText = sText_Relearn;
 
     s32 relearnTextXPos = GetStringRightAlignXOffset(FONT_SMALL, relearnText, TILE_WIDTH * sSummaryTemplate[PSS_LABEL_WINDOW_PROMPT_RELEARN].width);
     PrintTextOnWindowWithFont(PSS_LABEL_WINDOW_PROMPT_RELEARN, relearnText, relearnTextXPos, 4, 0, 0, FONT_SMALL);

@@ -624,7 +624,6 @@ struct BattleStruct
     u8 chosenMovePositions[MAX_BATTLERS_COUNT];
     u8 stateIdAfterSelScript[MAX_BATTLERS_COUNT];
     u8 prevSelectedPartySlot;
-    u8 switchSummaryPage; // B_SWITCH_SUMMARY_FIRST (#200): the summary page last moved to + 1, 0 opens on Skills
     u8 stringMoveType;
     u8 palaceFlags; // First 4 bits are "is <= 50% HP and not asleep" for each battler, last 4 bits are selected moves to pass to AI
     u8 recordedActionSet; // related to choosing Pokémon?
