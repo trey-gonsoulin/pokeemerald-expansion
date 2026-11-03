@@ -22,5 +22,6 @@ bool32 IsTrainerSlidePlayed(enum BattlerId battler, enum TrainerSlideType slideI
 void InitalizeTrainerSlide(enum BattlerId battler, enum TrainerSlideType slideId);
 void MarkTrainerSlideAsPlayed(enum BattlerId battler, enum TrainerSlideType slideId);
 void MarkInitializedTrainerSlidesAsPlayed(enum BattlerId battler, enum TrainerSlideType slideId);
+const u8 *Test_GetTrainerSlideMessage(enum DifficultyLevel difficulty, u32 trainerId, u32 slideId);
 
 #endif // GUARD_TRAINER_SLIDE_H
