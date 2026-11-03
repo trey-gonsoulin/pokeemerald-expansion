@@ -337,9 +337,8 @@ static void SetTrainerSlideParameters(enum BattlerId battler, u32* lastId, u32* 
     {
         if (!AreMultiPartiesFullTeams())
             *lastId = MULTI_PARTY_SIZE;
-        // The table of the battle fits the partner too: a story partner is TRAINER_PARTNER(x), which sTrainerSlides covers,
-        // and a Frontier multi partner is the Frontier ID picked in the lobby (frontier.trainerIds[17]), a row of sFrontierTrainerSlides
-        // unless it is a record-mixed friend or Apprentice (FRONTIER_TRAINERS_COUNT on), which has none
+        // A Frontier multi partner is a Frontier ID (trainerIds[17]), not TRAINER_PARTNER(x),
+        // so it reads its own row of sFrontierTrainerSlides, the one it has as an opponent.
         *trainerId = gPartnerTrainerId;
         *retValue = TRAINER_SLIDE_TARGET_TRAINER_PARTNER;
     }
