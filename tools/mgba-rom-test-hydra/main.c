@@ -172,14 +172,18 @@ void push_summary_result(struct SummaryResults *summaries, const struct Runner *
     }
 }
 
-// Prints an end-summary list entry in the list's color, with ': <last output line>' (and the
-// list's terminator: '.' in the PASSING lists) only for a test that printed one.
+// Prints an end-summary list entry: '<file:line>: ' in the list's color unless it's unknown (a runner
+// that hung between tests), the test name, then ': <last output line>' and the list's terminator
+// ('.' in the PASSING lists) only for a test that printed one.
 static void print_summary_result(const struct SummaryResult *result, const char *color, const char *terminator)
 {
+    fprintf(stdout, "  - ");
+    if (result->filename_line[0] != '\0')
+        fprintf(stdout, "\e[%sm%s\e[0m: ", color, result->filename_line);
+    fprintf(stdout, "%s", result->test_name);
     if (result->output_line[0] != '\0')
-        fprintf(stdout, "  - \e[%sm%s\e[0m: %s: %s%s\n", color, result->filename_line, result->test_name, result->output_line, terminator);
-    else
-        fprintf(stdout, "  - \e[%sm%s\e[0m: %s\n", color, result->filename_line, result->test_name);
+        fprintf(stdout, ": %s%s", result->output_line, terminator);
+    fprintf(stdout, "\n");
 }
 
 struct Symbol {
