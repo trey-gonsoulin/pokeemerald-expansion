@@ -120,7 +120,7 @@ static u32 GetPartyMonCount(u32 lastId, struct Pokemon *party, bool32 onlyAlive)
     return count;
 }
 
-// NULL for an ID past the table: the Frontier Brain, Apprentices and record-mixed trainers come after FRONTIER_TRAINERS_COUNT
+// NULL for an ID past the table, such as the Frontier Brain, an Apprentice or a record-mixed trainer (FRONTIER_TRAINERS_COUNT on)
 #define TRAINER_SLIDE_ROW(table, difficulty, trainerId) \
     ((trainerId) < ARRAY_COUNT((table)[0]) ? (table)[difficulty][trainerId] : NULL)
 
