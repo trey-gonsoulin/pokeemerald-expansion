@@ -1396,6 +1396,13 @@ static void DynamaxModifyHPLevelUp(struct Pokemon *mon, enum BattlerId battler, 
     SetMonData(mon, MON_DATA_HP, &gBattleMons[battler].hp);
 }
 
+// Whether monId is the Pokemon on screen at battler. An absent battler (fainted with no
+// replacement) keeps its last party index, which no longer says who is there.
+static bool32 IsMonOnBattler(enum BattlerId battler, u32 monId)
+{
+    return !(gAbsentBattlerFlags & (1u << battler)) && monId == gBattlerPartyIndexes[battler];
+}
+
 // Whether monId is the player's Pokemon on battler's partner position. In a multi battle that
 // position holds the partner's own party, whose party indexes say nothing about the player's.
 static bool32 IsMonOnPartnerBattler(enum BattlerId battler, u32 monId)
@@ -1403,7 +1410,7 @@ static bool32 IsMonOnPartnerBattler(enum BattlerId battler, u32 monId)
     enum BattlerId partner = GetPartnerBattler(battler);
     return IsDoubleBattle() == TRUE
         && GetBattlerTrainer(partner) == B_TRAINER_PLAYER
-        && monId == gBattlerPartyIndexes[partner];
+        && IsMonOnBattler(partner, monId);
 }
 
 static s32 GetTaskExpValue(u8 taskId)
@@ -1441,7 +1448,7 @@ static void Task_GiveExpToMon(u8 taskId)
             BtlController_EmitTwoReturnValues(battler, B_COMM_TO_ENGINE, RET_VALUE_LEVELED_UP, (B_LEVEL_UP_NOTIFICATION >= GEN_9) ? 0 : gainedExp);
 
             if (IsDoubleBattle() == TRUE
-             && (monId == gBattlerPartyIndexes[battler] || IsMonOnPartnerBattler(battler, monId)))
+             && (IsMonOnBattler(battler, monId) || IsMonOnPartnerBattler(battler, monId)))
                 gTasks[taskId].func = Task_LaunchLvlUpAnim;
             else
                 gTasks[taskId].func = Task_SetControllerToWaitForString;
