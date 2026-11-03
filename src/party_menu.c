@@ -299,9 +299,9 @@ static void CreatePartyMonStatusSprite(struct Pokemon *, struct PartyMenuBox *);
 static void CreatePartyMonEvolutionMarker(struct Pokemon *, struct PartyMenuBox *);
 static void UpdatePartyEvolutionMarkers(void);
 static void SpriteCB_EvolutionReadyMarker(struct Sprite *);
+static void UpdateEvolutionMarkerPositions(void);
 static void StopEvolutionMarkers(void);
 static void AttachEvolutionMarkerToSlot(u8, u32);
-static void KeepEvolutionMarkerAboveIcon(struct PartyMenuBox *);
 static void GetPartyMonIconRestOffset(const struct Sprite *, s16 *, s16 *);
 static u8 CreateSmallPokeballButtonSprite(u8, u8);
 static void DrawCancelConfirmButtons(void);
@@ -627,6 +627,7 @@ static void CB2_UpdatePartyMenu(void)
 {
     RunTasks();
     AnimateSprites();
+    UpdateEvolutionMarkerPositions();
     BuildOamBuffer();
     DoScheduledBgTilemapCopiesToVram();
     UpdatePaletteFade();
@@ -4644,7 +4645,6 @@ static void CreatePartyMonIconSpriteParameterized(enum Species species, u32 pid,
     {
         menuBox->monSpriteId = CreateMonIconIsEgg(species, SpriteCB_MonIcon, menuBox->spriteCoords[0], menuBox->spriteCoords[1], 4, pid, isEgg);
         gSprites[menuBox->monSpriteId].oam.priority = priority;
-        KeepEvolutionMarkerAboveIcon(menuBox);
     }
 }
 
@@ -4784,29 +4784,6 @@ static void AttachEvolutionMarkerToSlot(u8 spriteId, u32 slot)
     gSprites[spriteId].callback = SpriteCB_EvolutionReadyMarker;
 }
 
-// AnimateSprites runs the callbacks in sprite order, so a marker below its icon would read the
-// icon's hop a frame late. A form change recreates the icon (TryItemHoldFormChange,
-// Task_TryItemUseFormChange), which can put it above the marker: the marker is then recreated
-// before the old one is destroyed, so it takes a free sprite above the icon, which took the
-// first free one.
-static void KeepEvolutionMarkerAboveIcon(struct PartyMenuBox *menuBox)
-{
-    u8 oldSpriteId = menuBox->evoSpriteId;
-    u8 newSpriteId;
-
-    if (oldSpriteId == SPRITE_NONE || oldSpriteId > menuBox->monSpriteId)
-        return;
-
-    newSpriteId = CreateEvolutionReadyMarkerSprite(gSprites[oldSpriteId].x, gSprites[oldSpriteId].y);
-    if (newSpriteId == SPRITE_NONE)
-        return;
-
-    AttachEvolutionMarkerToSlot(newSpriteId, gSprites[oldSpriteId].sEvoMarkerSlot);
-    gSprites[newSpriteId].invisible = gSprites[oldSpriteId].invisible;
-    DestroySprite(&gSprites[oldSpriteId]);
-    menuBox->evoSpriteId = newSpriteId;
-}
-
 // The marker moves as its slot's icon moves from rest: the selected icon's shift and hop, and
 // the switch slide. It reads the slot's icon each frame, since a switch swaps the icons.
 static void SpriteCB_EvolutionReadyMarker(struct Sprite *sprite)
@@ -4821,6 +4798,25 @@ static void SpriteCB_EvolutionReadyMarker(struct Sprite *sprite)
     GetPartyMonIconRestOffset(icon, &restX2, &restY2);
     sprite->x2 = icon->x2 - restX2;
     sprite->y2 = icon->y2 - restY2;
+}
+
+// AnimateSprites runs the callbacks in sprite order, so a marker below its slot's icon (after a
+// switch swaps the icons, or a form change recreates one) read the icon's hop a frame late:
+// run the markers again once every icon has moved
+static void UpdateEvolutionMarkerPositions(void)
+{
+    u32 i;
+
+    if (sPartyMenuBoxes == NULL)
+        return;
+
+    for (i = 0; i < PARTY_SIZE; i++)
+    {
+        u8 spriteId = sPartyMenuBoxes[i].evoSpriteId;
+
+        if (spriteId != SPRITE_NONE && gSprites[spriteId].callback == SpriteCB_EvolutionReadyMarker)
+            SpriteCB_EvolutionReadyMarker(&gSprites[spriteId]);
+    }
 }
 
 // Before sPartyMenuBoxes is freed: the markers can outlive it until the next screen resets the
@@ -9003,15 +8999,24 @@ void Test_UpdateEvolutionReadyMarker(u8 markerSpriteId, u8 slot, u8 iconSpriteId
     sPartyMenuBoxes = savedBoxes;
 }
 
-// What a recreated icon does to its slot's marker: returns the marker's sprite ID after it
-u8 Test_KeepEvolutionMarkerAboveIcon(u8 markerSpriteId, u8 slot, u8 iconSpriteId)
+// One frame of the party menu's sprites, with the marker and the icon in a slot
+void Test_AnimatePartyMenuSprites(u8 markerSpriteId, u8 slot, u8 iconSpriteId)
 {
-    struct PartyMenuBox box = {0};
+    struct PartyMenuBox boxes[PARTY_SIZE];
+    struct PartyMenuBox *savedBoxes = sPartyMenuBoxes;
+    u32 i;
 
-    box.monSpriteId = iconSpriteId;
-    box.evoSpriteId = markerSpriteId;
+    for (i = 0; i < PARTY_SIZE; i++)
+    {
+        boxes[i].monSpriteId = SPRITE_NONE;
+        boxes[i].evoSpriteId = SPRITE_NONE;
+    }
+    boxes[slot].monSpriteId = iconSpriteId;
+    boxes[slot].evoSpriteId = markerSpriteId;
+    sPartyMenuBoxes = boxes;
     AttachEvolutionMarkerToSlot(markerSpriteId, slot);
-    KeepEvolutionMarkerAboveIcon(&box);
-    return box.evoSpriteId;
+    AnimateSprites();
+    UpdateEvolutionMarkerPositions();
+    sPartyMenuBoxes = savedBoxes;
 }
 #endif
