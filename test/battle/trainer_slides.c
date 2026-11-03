@@ -17,6 +17,28 @@ TEST("Trainer Slide: an ID past the slide table has no message")
     FlagClear(TESTING_FLAG_TRAINER_SLIDES);
 }
 
+TEST("Trainer Slide: e-Reader, Trainer Hill and Battle Tent opponents have no message")
+{
+    u32 battleTypeFlags = gBattleTypeFlags;
+    u8 lvlMode = gSaveBlock2Ptr->frontier.lvlMode;
+
+    FlagSet(TESTING_FLAG_TRAINER_SLIDES);
+    gSaveBlock2Ptr->frontier.lvlMode = FRONTIER_LVL_50;
+    gBattleTypeFlags = BATTLE_TYPE_TRAINER;
+    EXPECT(Test_GetTrainerSlideMessage(DIFFICULTY_NORMAL, TRAINER_LEAF_TEST, TRAINER_SLIDE_BEFORE_FIRST_TURN) != NULL);
+    gBattleTypeFlags = BATTLE_TYPE_TRAINER | BATTLE_TYPE_EREADER_TRAINER;
+    EXPECT(Test_GetTrainerSlideMessage(DIFFICULTY_NORMAL, TRAINER_LEAF_TEST, TRAINER_SLIDE_BEFORE_FIRST_TURN) == NULL);
+    gBattleTypeFlags = BATTLE_TYPE_TRAINER | BATTLE_TYPE_TRAINER_HILL;
+    EXPECT(Test_GetTrainerSlideMessage(DIFFICULTY_NORMAL, TRAINER_LEAF_TEST, TRAINER_SLIDE_BEFORE_FIRST_TURN) == NULL);
+    gBattleTypeFlags = BATTLE_TYPE_TRAINER | BATTLE_TYPE_FACTORY;
+    EXPECT(Test_GetTrainerSlideMessage(DIFFICULTY_NORMAL, TRAINER_LEAF_TEST, TRAINER_SLIDE_BEFORE_FIRST_TURN) != NULL);
+    gSaveBlock2Ptr->frontier.lvlMode = FRONTIER_LVL_TENT;
+    EXPECT(Test_GetTrainerSlideMessage(DIFFICULTY_NORMAL, TRAINER_LEAF_TEST, TRAINER_SLIDE_BEFORE_FIRST_TURN) == NULL);
+    FlagClear(TESTING_FLAG_TRAINER_SLIDES);
+    gSaveBlock2Ptr->frontier.lvlMode = lvlMode;
+    gBattleTypeFlags = battleTypeFlags;
+}
+
 // SINGLES TESTS START
 AI_SINGLE_BATTLE_TEST("Trainer Slide: Singles: Before First Turn")
 {
