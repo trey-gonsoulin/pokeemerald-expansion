@@ -2,6 +2,7 @@
 #include "event_data.h"
 #include "event_object_movement.h"
 #include "wild_encounter_ow.h"
+#include "constants/event_objects.h"
 #include "test/test.h"
 
 // After a step, fishing or Sweet Scent battle the last talked-to local ID matches no
@@ -17,4 +18,5 @@ TEST("OWE battle start: an unspawned last talked-to object despawns nothing")
     DespawnOWEOnBattleStart();
 
     EXPECT_EQ(gSpecialVar_LastTalked, 1);
+    gSpecialVar_LastTalked = LOCALID_NONE;
 }

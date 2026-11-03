@@ -240,8 +240,7 @@ void UpdateOverworldWildEncounter(void)
     if (ArePlayerFieldControlsLocked() || FlagGet(DN_FLAG_SEARCHING) || !CheckCurrentWildMonHeaderForOWE(shouldSpawnWaterMons))
         return;
 
-    if (!WE_OW_ENCOUNTERS
-     || FlagGet(WE_OWE_FLAG_DISABLED)
+    if (FlagGet(WE_OWE_FLAG_DISABLED)
      || FlagGet(WE_FLAG_NO_ENCOUNTER)
      || FlagGet(DN_FLAG_SEARCHING)
      || (gMapHeader.mapLayoutId == LAYOUT_BATTLE_FRONTIER_BATTLE_PIKE_ROOM_WILD_MONS && !WE_OWE_BATTLE_PIKE)
@@ -1108,7 +1107,7 @@ void DespawnOWEOnBattleStart(void)
         return;
 
     u32 objectEventId = GetObjectEventIdByLocalId(gSpecialVar_LastTalked);
-    if (objectEventId == OBJECT_EVENTS_COUNT)
+    if (objectEventId >= OBJECT_EVENTS_COUNT)
         return;
 
     struct ObjectEvent *owe = &gObjectEvents[objectEventId];
