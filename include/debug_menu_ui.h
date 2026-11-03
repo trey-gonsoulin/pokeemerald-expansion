@@ -48,8 +48,10 @@ void Debug_InputToHexString(u8 *dest, u8 taskId, u32 digits);
 
 // Name order, for numeric inputs whose values have names (species, items, moves): the value
 // before or after one in A-Z order, or the first one with the next initial letter.
-// getName returns NULL for a value to leave out. The range must fit in a u16.
-typedef const u8 *(*DebugNameFunc)(u32 value);
+// getName returns NULL for a value to leave out. It can build a name in buffer, which holds
+// DEBUG_NAME_BUFFER_SIZE, and return buffer. The range must fit in a u16.
+#define DEBUG_NAME_BUFFER_SIZE 32
+typedef const u8 *(*DebugNameFunc)(u8 *buffer, u32 value);
 struct DebugNameOrder
 {
     u16 *values; // the named values in first..last, sorted by name; Alloc'd, freed by Debug_FreeNameOrder
@@ -67,8 +69,9 @@ u32 Debug_NextNameInitial(const struct DebugNameOrder *order, u32 value);
 const u8 *Debug_GetFlagName(u32 flag);
 const u8 *Debug_GetVarName(u32 varId);
 // Trainer flags have no constant name: this gives the trainer's class and name instead
-#define DEBUG_TRAINER_FLAG_NAME_SIZE 32
+#define DEBUG_TRAINER_FLAG_NAME_SIZE DEBUG_NAME_BUFFER_SIZE
 bool32 Debug_CopyTrainerFlagName(u8 *dest, u32 flag);
+const u8 *Debug_GetFlagDisplayName(u8 *buffer, u32 flag);
 
 // List menus
 s32 Debug_ListMenu_ProcessInput(u8 listTaskId);

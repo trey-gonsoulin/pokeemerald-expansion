@@ -19,14 +19,64 @@ static const u8 *const sTestNames[] =
     COMPOUND_STRING("Abras"),
 };
 
-static const u8 *GetTestName(u32 value)
+static const u8 *GetTestName(u8 *buffer, u32 value)
 {
     return sTestNames[value];
+}
+
+// The same names, the odd values' built in the buffer as a trainer flag's are
+static const u8 *GetBuiltTestName(u8 *buffer, u32 value)
+{
+    if (value % 2 == 0 || sTestNames[value] == NULL)
+        return sTestNames[value];
+    StringCopy(buffer, sTestNames[value]);
+    return buffer;
 }
 
 #define TEST_NAMES_MAX (ARRAY_COUNT(sTestNames) - 1)
 
 static struct DebugNameOrder sTestOrder;
+
+// Name order's rules, written out plainly: case and the acute accent fold, a name sorts before
+// the longer names it starts, and the same name sorts by value
+static u32 FoldTestChar(u32 c)
+{
+    if (c >= CHAR_a && c <= CHAR_z)
+        return c - CHAR_a + CHAR_A;
+    return (c == CHAR_e_ACUTE || c == CHAR_E_ACUTE) ? CHAR_E : c;
+}
+
+static bool32 SortsBefore(DebugNameFunc getName, u32 a, u32 b)
+{
+    u8 bufferA[DEBUG_NAME_BUFFER_SIZE], bufferB[DEBUG_NAME_BUFFER_SIZE];
+    const u8 *nameA = getName(bufferA, a), *nameB = getName(bufferB, b);
+
+    for (u32 i = 0; ; i++)
+    {
+        if (nameA[i] == EOS || nameB[i] == EOS)
+            return nameA[i] != nameB[i] ? nameA[i] == EOS : a < b;
+        if (FoldTestChar(nameA[i]) != FoldTestChar(nameB[i]))
+            return FoldTestChar(nameA[i]) < FoldTestChar(nameB[i]);
+    }
+}
+
+// Every named value in first..last is in order, once, and each sorts before the next
+static void ExpectNameOrder(const struct DebugNameOrder *order, u32 first, u32 last, DebugNameFunc getName)
+{
+    u8 buffer[DEBUG_NAME_BUFFER_SIZE];
+    u32 named = 0;
+
+    for (u32 i = first; i <= last; i++)
+        named += getName(buffer, i) != NULL;
+    EXPECT_EQ(order->count, named);
+    for (u32 i = 1; i < order->count; i++)
+    {
+        bool32 sorted = SortsBefore(getName, order->values[i - 1], order->values[i]);
+        if (!sorted)
+            Test_MgbaPrintf("values %d and %d at %d are out of order", order->values[i - 1], order->values[i], i);
+        EXPECT(sorted);
+    }
+}
 
 static const struct DebugNameOrder *BuildTestOrder(u32 min, u32 max)
 {
@@ -53,6 +103,52 @@ TEST("Name order sorts an odd number of named values")
     EXPECT_EQ(order->count, ARRAY_COUNT(sorted));
     for (u32 i = 0; i < ARRAY_COUNT(sorted); i++)
         EXPECT_EQ(order->values[i], sorted[i]);
+    Debug_FreeNameOrder(&sTestOrder);
+}
+
+TEST("Name order sorts names built in the buffer")
+{
+    static const u16 sorted[] = {5, 1, 2, 8, 7, 3, 4, 0};
+    Debug_FreeNameOrder(&sTestOrder);
+    Debug_BuildNameOrder(&sTestOrder, 0, TEST_NAMES_MAX, GetBuiltTestName);
+    EXPECT_EQ(sTestOrder.count, ARRAY_COUNT(sorted));
+    for (u32 i = 0; i < ARRAY_COUNT(sorted); i++)
+        EXPECT_EQ(sTestOrder.values[i], sorted[i]);
+    // The order looks names up again later, through the buffer
+    EXPECT_EQ(Debug_NextNameInitial(&sTestOrder, 1), 7);
+    EXPECT_EQ(Debug_NextNameInitial(&sTestOrder, 7), 3);
+    Debug_FreeNameOrder(&sTestOrder);
+}
+
+// Long shared prefixes, names that start others and repeated names, as the flag names have
+static const u8 *const sPrefixNames[] =
+{
+    COMPOUND_STRING("HIDE_ROUTE_101_BOY"),
+    COMPOUND_STRING("HIDE_ROUTE_10"),
+    COMPOUND_STRING("hide_route_101"),
+    COMPOUND_STRING("HIDDEN_ITEM_ROUTE_101"),
+    COMPOUND_STRING("HIDE_ROUTE_101"),
+    COMPOUND_STRING("HIDE_ROUTE_1"),
+    COMPOUND_STRING("HIDE_ROUTE_101_GIRL"),
+    COMPOUND_STRING("Flabébé"),
+    COMPOUND_STRING("FLABEBE"),
+    COMPOUND_STRING("HIDE"),
+    COMPOUND_STRING("_UNDERSCORE"),
+};
+
+static const u8 *GetPrefixName(u8 *buffer, u32 value)
+{
+    return value % 7 == 3 ? NULL : sPrefixNames[(value * 5) % ARRAY_COUNT(sPrefixNames)];
+}
+
+TEST("Name order sorts many names that share long prefixes")
+{
+    Debug_FreeNameOrder(&sTestOrder);
+    Debug_BuildNameOrder(&sTestOrder, 0, 199, GetPrefixName);
+    ExpectNameOrder(&sTestOrder, 0, 199, GetPrefixName);
+    // The same name sorts by value: 7 is hide_route_101 and 14 HIDE_ROUTE_101, the next one
+    // (3 has no name)
+    EXPECT_EQ(Debug_StepByName(&sTestOrder, 7, FALSE), 14);
     Debug_FreeNameOrder(&sTestOrder);
 }
 
@@ -205,24 +301,29 @@ TEST("Flag and var names: vars show the constant name without VAR_, NULL outside
     EXPECT(Debug_GetVarName(VAR_RESULT) == NULL);
 }
 
-TEST("Flag and var names: name order sorts them")
+static const u8 *GetTestVarName(u8 *buffer, u32 varId)
+{
+    return Debug_GetVarName(varId);
+}
+
+TEST("Flag and var names: name order sorts them, trainer flags included")
 {
     struct DebugNameOrder order = {0};
-    u32 named = 0;
 
-    for (u32 i = FLAG_TEMP_1; i < FLAGS_COUNT; i++)
-        named += Debug_GetFlagName(i) != NULL;
-    Debug_BuildNameOrder(&order, FLAG_TEMP_1, FLAGS_COUNT - 1, Debug_GetFlagName);
-    EXPECT_EQ(order.count, named);
+    Debug_BuildNameOrder(&order, FLAG_TEMP_1, FLAGS_COUNT - 1, Debug_GetFlagDisplayName);
+    ExpectNameOrder(&order, FLAG_TEMP_1, FLAGS_COUNT - 1, Debug_GetFlagDisplayName);
     EXPECT_GT(order.count, 1000);
     EXPECT_EQ(Debug_StepByName(&order, FLAG_BADGE01_GET, FALSE), FLAG_BADGE02_GET);
     EXPECT_EQ(Debug_StepByName(&order, FLAG_BADGE02_GET, TRUE), FLAG_BADGE01_GET);
-    // The names all start with a capital letter, so their initials can't go down along the order
-    for (u32 i = 1; i < order.count; i++)
-        EXPECT_LE(Debug_GetFlagName(order.values[i - 1])[0], Debug_GetFlagName(order.values[i])[0]);
+    // The test trainers 3 and 10 are both "{PKMN} TRAINER Test1", and LEAF (2) sorts before RED (1)
+    EXPECT_EQ(Debug_StepByName(&order, TRAINER_FLAGS_START + 3, FALSE), TRAINER_FLAGS_START + 10);
+    EXPECT_EQ(Debug_StepByName(&order, TRAINER_FLAGS_START + 2, FALSE), TRAINER_FLAGS_START + 1);
+    // {PKMN} isn't a letter, so the letter jump goes from a trainer to the first A name
+    EXPECT_EQ(Debug_NextNameInitial(&order, TRAINER_FLAGS_START + 1), Debug_NextNameInitial(&order, 0));
     Debug_FreeNameOrder(&order);
 
-    Debug_BuildNameOrder(&order, VARS_START, VARS_END, Debug_GetVarName);
+    Debug_BuildNameOrder(&order, VARS_START, VARS_END, GetTestVarName);
+    ExpectNameOrder(&order, VARS_START, VARS_END, GetTestVarName);
     EXPECT_GT(order.count, 200);
     Debug_FreeNameOrder(&order);
 }
