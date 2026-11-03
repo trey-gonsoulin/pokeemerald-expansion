@@ -2220,7 +2220,6 @@ static void Debug_WarpTo(u8 taskId, struct DebugWarp warp)
 static void DebugAction_Util_WarpBack(u8 taskId)
 {
     struct WarpData back = sDebugWarpBack;
-    struct WarpData dynamicWarp = gSaveBlock1Ptr->dynamicWarp;
 
     if (back.warpId != WARP_ID_NONE)
     {
@@ -2228,11 +2227,7 @@ static void DebugAction_Util_WarpBack(u8 taskId)
         return;
     }
     Debug_SaveWarpBack();
-    // SetWarpDestination takes s8 coordinates, which cut off Route 111's and 119's rows past 127 and the
-    // Route 123 and Desert Underpass columns, so the warp goes through the dynamic warp, which is copied whole.
-    gSaveBlock1Ptr->dynamicWarp = back;
-    SetWarpDestinationToDynamicWarp(0);
-    gSaveBlock1Ptr->dynamicWarp = dynamicWarp;
+    SetWarpDestination(back.mapGroup, back.mapNum, WARP_ID_NONE, back.x, back.y);
     Debug_DoWarp(taskId);
 }
 
