@@ -1538,13 +1538,19 @@ static void Task_GiveExpWithExpBar(u8 taskId)
     }
 }
 
-static void Task_LaunchLvlUpAnim(u8 taskId)
+// The battler on screen with the levelling mon: the exp controller (battler 0) or its partner.
+static enum BattlerId GetLvlUpAnimBattler(u8 taskId)
 {
     enum BattlerId battler = gTasks[taskId].tExpTask_battler;
-    u8 monIndex = gTasks[taskId].tExpTask_monId;
 
-    if (IsMonOnPartnerBattler(battler, monIndex))
-        battler ^= BIT_FLANK;
+    if (IsMonOnPartnerBattler(battler, gTasks[taskId].tExpTask_monId))
+        return GetPartnerBattler(battler);
+    return battler;
+}
+
+static void Task_LaunchLvlUpAnim(u8 taskId)
+{
+    enum BattlerId battler = GetLvlUpAnimBattler(taskId);
 
     InitAndLaunchSpecialAnimation(battler, battler, battler, B_ANIM_LVL_UP);
     gTasks[taskId].func = Task_UpdateLvlInHealthbox;
@@ -1552,17 +1558,13 @@ static void Task_LaunchLvlUpAnim(u8 taskId)
 
 static void Task_UpdateLvlInHealthbox(u8 taskId)
 {
-    enum BattlerId battler = gTasks[taskId].tExpTask_battler;
+    enum BattlerId battler = GetLvlUpAnimBattler(taskId);
 
     if (!gBattleSpritesDataPtr->healthBoxesData[battler].specialAnimActive)
     {
         u8 monIndex = gTasks[taskId].tExpTask_monId;
 
-        if (IsMonOnPartnerBattler(battler, monIndex))
-            UpdateHealthboxAttribute(gHealthboxSpriteIds[GetPartnerBattler(battler)], &gParties[B_TRAINER_PLAYER][monIndex], HEALTHBOX_ALL);
-        else
-            UpdateHealthboxAttribute(gHealthboxSpriteIds[battler], &gParties[B_TRAINER_PLAYER][monIndex], HEALTHBOX_ALL);
-
+        UpdateHealthboxAttribute(gHealthboxSpriteIds[battler], &gParties[B_TRAINER_PLAYER][monIndex], HEALTHBOX_ALL);
         gTasks[taskId].func = Task_SetControllerToWaitForString;
     }
 }
