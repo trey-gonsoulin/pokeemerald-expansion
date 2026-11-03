@@ -1792,7 +1792,7 @@ static void Task_HandleInput(u8 taskId)
                         }
                         sMonSummaryScreen->callback = CB2_PssChangePokemonNickname;
                     }
-                    else if (sMonSummaryScreen->mode == SUMMARY_MODE_BATTLE_SWITCH)
+                    else if (IsBattleSwitchSummary())
                     {
                         gSummarySendOutRequested = TRUE;
                     }
@@ -4855,7 +4855,7 @@ static inline void ShowUtilityPrompt(s16 mode)
     {
         if (ShouldShowRename())
             promptText = gText_Rename;
-        else if (sMonSummaryScreen->mode == SUMMARY_MODE_BATTLE_SWITCH)
+        else if (IsBattleSwitchSummary())
             promptText = gText_SummarySendOut;
         else
             promptText = gText_Cancel2;
