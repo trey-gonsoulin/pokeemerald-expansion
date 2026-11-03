@@ -1,7 +1,9 @@
 #include "global.h"
 #include "evolution_ready.h"
 #include "item.h"
+#include "party_menu.h"
 #include "pokemon.h"
+#include "sprite.h"
 #include "test/test.h"
 
 // P_PARTY_EVOLUTION_MARKER's check (#204): the next level-up, or an evolution item in the bag
@@ -108,4 +110,65 @@ TEST("Evolution ready: the check leaves a started evolution's items alone")
 
     ConsumeEvolutionItems(onix);
     EXPECT_EQ(GetMonData(onix, MON_DATA_HELD_ITEM), ITEM_NONE);
+}
+
+// The marker sprite (#211): it moves as its slot's icon moves from rest, so it stays on the
+// icon's corner through the selected icon's shift and hop and the switch slide
+static void ExpectMarkerOffset(u32 markerSpriteId, u32 slot, u32 iconSpriteId, s32 x2, s32 y2)
+{
+    Test_UpdateEvolutionReadyMarker(markerSpriteId, slot, iconSpriteId);
+    EXPECT_EQ(gSprites[markerSpriteId].x2, x2);
+    EXPECT_EQ(gSprites[markerSpriteId].y2, y2);
+}
+
+TEST("Evolution ready: the marker follows the selected icon in a small box")
+{
+    u32 icon, marker;
+
+    ResetSpriteData();
+    icon = CreateSprite(&gDummySpriteTemplate, 104, 34, 0);
+    marker = CreateSprite(&gDummySpriteTemplate, 114, 26, 0);
+
+    Test_AnimateSelectedPartyIcon(icon, 0);
+    ExpectMarkerOffset(marker, 1, icon, 0, 0);
+    Test_AnimateSelectedPartyIcon(icon, 1);
+    ExpectMarkerOffset(marker, 1, icon, 4, 0);
+    gSprites[icon].y2 = -3; // SpriteCB_BouncePartyMonIcon's hop
+    ExpectMarkerOffset(marker, 1, icon, 4, -3);
+    Test_AnimateSelectedPartyIcon(icon, 0);
+    ExpectMarkerOffset(marker, 1, icon, 0, 0);
+    ResetSpriteData();
+}
+
+TEST("Evolution ready: the marker follows the selected icon in the first slot's box")
+{
+    u32 icon, marker;
+
+    ResetSpriteData();
+    icon = CreateSprite(&gDummySpriteTemplate, 16, 40, 0);
+    marker = CreateSprite(&gDummySpriteTemplate, 26, 32, 0);
+
+    Test_AnimateSelectedPartyIcon(icon, 0);
+    ExpectMarkerOffset(marker, 0, icon, 0, 0);
+    Test_AnimateSelectedPartyIcon(icon, 1);
+    ExpectMarkerOffset(marker, 0, icon, 0, 4);
+    gSprites[icon].y2 = 1;
+    ExpectMarkerOffset(marker, 0, icon, 0, 5);
+    ResetSpriteData();
+}
+
+TEST("Evolution ready: the marker slides with the icon in a switch")
+{
+    u32 icon, marker;
+
+    ResetSpriteData();
+    icon = CreateSprite(&gDummySpriteTemplate, 104, 34, 0);
+    marker = CreateSprite(&gDummySpriteTemplate, 114, 26, 0);
+
+    Test_AnimateSelectedPartyIcon(icon, 0);
+    gSprites[icon].x2 += 3 * 8; // MovePartyMenuBoxSprites, three steps out
+    ExpectMarkerOffset(marker, 2, icon, 24, 0);
+    // A slot without an icon leaves the marker where it is
+    ExpectMarkerOffset(marker, 2, SPRITE_NONE, 24, 0);
+    ResetSpriteData();
 }
