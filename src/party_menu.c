@@ -215,6 +215,8 @@ struct PartyMenuBox
 #define EVO_MARKER_X_OFFSET 10
 #define EVO_MARKER_Y_OFFSET -8
 
+#define sEvoMarkerSlot data[0]
+
 // EWRAM vars
 static EWRAM_DATA struct PartyMenuInternal *sPartyMenuInternal = NULL;
 EWRAM_DATA struct PartyMenu gPartyMenu = {0};
@@ -296,6 +298,10 @@ static void CreatePartyMonIconSprite(struct Pokemon *, struct PartyMenuBox *);
 static void CreatePartyMonStatusSprite(struct Pokemon *, struct PartyMenuBox *);
 static void CreatePartyMonEvolutionMarker(struct Pokemon *, struct PartyMenuBox *);
 static void UpdatePartyEvolutionMarkers(void);
+static void SpriteCB_EvolutionReadyMarker(struct Sprite *);
+static void StopEvolutionMarkers(void);
+static void AttachEvolutionMarkerToSlot(u8, u32);
+static void GetPartyMonIconRestOffset(const struct Sprite *, s16 *, s16 *);
 static u8 CreateSmallPokeballButtonSprite(u8, u8);
 static void DrawCancelConfirmButtons(void);
 static u8 CreatePokeballButtonSprite(u8, u8);
@@ -983,7 +989,10 @@ static void FreePartyPointers(void)
     if (sPartyBgGfxTilemap)
         Free(sPartyBgGfxTilemap);
     if (sPartyMenuBoxes)
+    {
+        StopEvolutionMarkers();
         Free(sPartyMenuBoxes);
+    }
     FreeAllWindowBuffers();
 }
 
@@ -3438,8 +3447,7 @@ static void MovePartyMenuBoxSprites(struct PartyMenuBox *menuBox, s16 offset)
     gSprites[menuBox->itemSpriteId].x2 += offset * 8;
     gSprites[menuBox->monSpriteId].x2 += offset * 8;
     gSprites[menuBox->statusSpriteId].x2 += offset * 8;
-    if (menuBox->evoSpriteId != SPRITE_NONE)
-        gSprites[menuBox->evoSpriteId].x2 += offset * 8;
+    // The evolution marker slides with the icon (SpriteCB_EvolutionReadyMarker)
 }
 
 static void SlidePartyMenuBoxSpritesOneStep(u8 taskId)
@@ -4670,16 +4678,7 @@ static void AnimateSelectedPartyIcon(u8 spriteId, u8 animNum)
     gSprites[spriteId].data[0] = 0;
     if (animNum == 0)
     {
-        if (gSprites[spriteId].x == 16)
-        {
-            gSprites[spriteId].x2 = 0;
-            gSprites[spriteId].y2 = -4;
-        }
-        else
-        {
-            gSprites[spriteId].x2 = -4;
-            gSprites[spriteId].y2 = 0;
-        }
+        GetPartyMonIconRestOffset(&gSprites[spriteId], &gSprites[spriteId].x2, &gSprites[spriteId].y2);
         gSprites[spriteId].callback = SpriteCB_UpdatePartyMonIcon;
     }
     else
@@ -4687,6 +4686,21 @@ static void AnimateSelectedPartyIcon(u8 spriteId, u8 animNum)
         gSprites[spriteId].x2 = 0;
         gSprites[spriteId].y2 = 0;
         gSprites[spriteId].callback = SpriteCB_BouncePartyMonIcon;
+    }
+}
+
+// An unselected icon's offset: up in the first slot's big box, left in the others
+static void GetPartyMonIconRestOffset(const struct Sprite *icon, s16 *x2, s16 *y2)
+{
+    if (icon->x == 16)
+    {
+        *x2 = 0;
+        *y2 = -4;
+    }
+    else
+    {
+        *x2 = -4;
+        *y2 = 0;
     }
 }
 
@@ -4756,7 +4770,47 @@ static void CreatePartyMonEvolutionMarker(struct Pokemon *mon, struct PartyMenuB
 
     menuBox->evoSpriteId = CreateEvolutionReadyMarkerSprite(menuBox->spriteCoords[0] + EVO_MARKER_X_OFFSET, menuBox->spriteCoords[1] + EVO_MARKER_Y_OFFSET);
     if (menuBox->evoSpriteId != SPRITE_NONE)
+    {
+        AttachEvolutionMarkerToSlot(menuBox->evoSpriteId, menuBox - sPartyMenuBoxes);
         gSprites[menuBox->evoSpriteId].invisible = !CanPartyMonEvolveNow(mon);
+    }
+}
+
+static void AttachEvolutionMarkerToSlot(u8 spriteId, u32 slot)
+{
+    gSprites[spriteId].sEvoMarkerSlot = slot;
+    gSprites[spriteId].callback = SpriteCB_EvolutionReadyMarker;
+}
+
+// The marker moves as its slot's icon moves from rest: the selected icon's shift and hop, and
+// the switch slide. It reads the slot's icon each frame, since a switch swaps the icons.
+static void SpriteCB_EvolutionReadyMarker(struct Sprite *sprite)
+{
+    struct Sprite *icon;
+    s16 restX2, restY2;
+
+    if (sPartyMenuBoxes == NULL || sPartyMenuBoxes[sprite->sEvoMarkerSlot].monSpriteId == SPRITE_NONE)
+        return;
+
+    icon = &gSprites[sPartyMenuBoxes[sprite->sEvoMarkerSlot].monSpriteId];
+    GetPartyMonIconRestOffset(icon, &restX2, &restY2);
+    sprite->x2 = icon->x2 - restX2;
+    sprite->y2 = icon->y2 - restY2;
+}
+
+// Before sPartyMenuBoxes is freed: the markers can outlive it until the next screen resets the
+// sprites, and a sprite in a marker's old slot may already be another one
+static void StopEvolutionMarkers(void)
+{
+    u32 i;
+
+    for (i = 0; i < PARTY_SIZE; i++)
+    {
+        u8 spriteId = sPartyMenuBoxes[i].evoSpriteId;
+
+        if (spriteId != SPRITE_NONE && gSprites[spriteId].callback == SpriteCB_EvolutionReadyMarker)
+            gSprites[spriteId].callback = SpriteCallbackDummy;
+    }
 }
 
 // Rechecks every slot: an item given to or used on one Pokémon (the last Fire Stone) can change another's
@@ -8904,5 +8958,23 @@ s8 Test_UpdatePartySelectionSingleLayout(s8 slotId, s8 movementDir, bool8 choose
 void Test_SwapPlayerPartySlots(u8 slot1, u8 slot2)
 {
     SwapPlayerPartySlots(slot1, slot2);
+}
+
+void Test_AnimateSelectedPartyIcon(u8 spriteId, u8 animNum)
+{
+    AnimateSelectedPartyIcon(spriteId, animNum);
+}
+
+// Runs the evolution marker's callback with the icon in its slot
+void Test_UpdateEvolutionReadyMarker(u8 markerSpriteId, u8 slot, u8 iconSpriteId)
+{
+    struct PartyMenuBox boxes[PARTY_SIZE] = {0};
+    struct PartyMenuBox *savedBoxes = sPartyMenuBoxes;
+
+    boxes[slot].monSpriteId = iconSpriteId;
+    sPartyMenuBoxes = boxes;
+    AttachEvolutionMarkerToSlot(markerSpriteId, slot);
+    gSprites[markerSpriteId].callback(&gSprites[markerSpriteId]);
+    sPartyMenuBoxes = savedBoxes;
 }
 #endif

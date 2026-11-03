@@ -155,6 +155,8 @@ bool32 SetUpFieldMove_RockClimb(void);
 #if TESTING
 s8 Test_UpdatePartySelectionSingleLayout(s8 slotId, s8 movementDir, bool8 chooseHalf, u8 lastSelectedSlot);
 void Test_SwapPlayerPartySlots(u8 slot1, u8 slot2);
+void Test_AnimateSelectedPartyIcon(u8 spriteId, u8 animNum);
+void Test_UpdateEvolutionReadyMarker(u8 markerSpriteId, u8 slot, u8 iconSpriteId);
 #endif
 
 #endif // GUARD_PARTY_MENU_H
