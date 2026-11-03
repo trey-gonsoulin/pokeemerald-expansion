@@ -1556,7 +1556,7 @@ def nonlevel_report(rows):
             table(['trainer', 'slot', 'species', 'lv', 'would be'],
                   [[short(r['trainer']), r['slot'], short(r['species']), r['level'], short(r['to'])]
                    for r in held]), '',
-            f'Other trainers keep theirs: {sum(map(len, regular.values()))} Pokemon.', '',
+            f'Other trainers keep theirs: {len(rows) - len(held)} Pokemon.', '',
             table(['species', 'would be', 'count', 'levels'],
                   [[short(sp), short(to), len(lv), f'{min(lv)}-{max(lv)}']
                    for (sp, to), lv in sorted(regular.items(), key=lambda kv: (-len(kv[1]), kv[0]))]), '']
@@ -1904,6 +1904,11 @@ def party_teams(lines):
     return teams
 
 
+def may_evolve(tid):
+    """Whether team ``tid``'s Pokemon may evolve: not EVOLVE_EXEMPT's, nor a partner's."""
+    return tid not in EVOLVE_EXEMPT and not tid.startswith('PARTNER_')
+
+
 def mon_level(lines, first, last):
     """(index of the Level: line or None, level) of the Pokemon on ``lines[first:last]``."""
     level_at = next((n for n in range(first, last) if lines[n].lstrip().startswith('Level:')), None)
@@ -1928,7 +1933,7 @@ def raise_party(text, raises, evolve=None, unique=()):
             if level_at is not None:
                 lines[level_at] = lines[level_at].replace(str(level), str(min(level + delta, 100)), 1)
             mons.append((first, level, species_line(lines[first])))
-        allowed = None if tid in EVOLVE_EXEMPT or tid.startswith('PARTNER_') else evolve
+        allowed = evolve if may_evolve(tid) else None
         after = evolve_team([(sp, level, gender) for _, level, (sp, gender, _) in mons], delta, allowed,
                             tid in unique)
         for (first, level, (sp, _, replace)), out in zip(mons, after):
@@ -1950,7 +1955,7 @@ def nonlevel_evolve_party(text, teams, evolve):
     lines = text.split('\n')
     evolved = []
     for tid, paras in party_teams(lines):
-        if tid not in teams or tid in EVOLVE_EXEMPT or tid.startswith('PARTNER_'):
+        if tid not in teams or not may_evolve(tid):
             continue
         mons = [(first, mon_level(lines, first, last)[1], species_line(lines[first])) for first, last in paras]
         species = [sp for _, _, (sp, _, _) in mons]
@@ -1986,10 +1991,11 @@ def apply_main(argv):
     # Raise the teams in memory, then restock (which may refuse: a hand edit, nothing to
     # draw), and only then write anything else, so a failure leaves the data as it was.
     raised = {}
+    unique = set(plan['unique'])
     for name, file in files.items():
         with open(file, encoding='utf-8') as f:
-            text, evolved = raise_party(f.read(), plan['raises'], inputs['evolve'], set(plan['unique']))
-        text, boss_evolved = nonlevel_evolve_party(text, set(plan['unique']), inputs['evolve_nonlevel'])
+            text, evolved = raise_party(f.read(), plan['raises'], inputs['evolve'], unique)
+        text, boss_evolved = nonlevel_evolve_party(text, unique, inputs['evolve_nonlevel'])
         raised[name] = text, evolved, boss_evolved
     with tempfile.TemporaryDirectory() as tmp:
         staged = os.path.join(tmp, 'level_offsets.json')
