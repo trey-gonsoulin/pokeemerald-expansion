@@ -337,6 +337,8 @@ static void SetTrainerSlideParameters(enum BattlerId battler, u32* lastId, u32* 
     {
         if (!AreMultiPartiesFullTeams())
             *lastId = MULTI_PARTY_SIZE;
+        // A Frontier multi partner is a Frontier ID (trainerIds[17]), not TRAINER_PARTNER(x),
+        // so it reads its own row of sFrontierTrainerSlides, the one it has as an opponent.
         *trainerId = gPartnerTrainerId;
         *retValue = TRAINER_SLIDE_TARGET_TRAINER_PARTNER;
     }
