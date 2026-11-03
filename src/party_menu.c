@@ -8972,7 +8972,6 @@ void Test_UpdateEvolutionReadyMarker(u8 markerSpriteId, u8 slot, u8 iconSpriteId
     struct PartyMenuBox *savedBoxes = sPartyMenuBoxes;
 
     boxes[slot].monSpriteId = iconSpriteId;
-    boxes[slot].evoSpriteId = markerSpriteId;
     sPartyMenuBoxes = boxes;
     AttachEvolutionMarkerToSlot(markerSpriteId, slot);
     gSprites[markerSpriteId].callback(&gSprites[markerSpriteId]);
