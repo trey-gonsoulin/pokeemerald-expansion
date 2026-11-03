@@ -151,6 +151,13 @@ class SpeciesInfoTests(unittest.TestCase):
         self.assertEqual(i.evolve('SPECIES_ZUBAT', 40), 'SPECIES_GOLBAT')
         self.assertEqual(i.evolve('SPECIES_ZUBAT', 40, nonlevel=True), 'SPECIES_CROBAT')
         self.assertEqual(i.evolve('SPECIES_KOFFING', 50, nonlevel=True), 'SPECIES_WEEZING')
+        # A species with a level evolution waits for it: no Slowking or Froslass on the way.
+        self.assertIsNone(i.nonlevel_evolution('SPECIES_SLOWPOKE', 39))
+        self.assertEqual(i.evolve('SPECIES_SLOWPOKE', 39, nonlevel=True), 'SPECIES_SLOWPOKE')
+        self.assertEqual(i.evolve('SPECIES_SLOWPOKE', 40, nonlevel=True), 'SPECIES_SLOWBRO')
+        self.assertEqual(i.evolve('SPECIES_SNORUNT', 40, gender='MON_FEMALE', nonlevel=True), 'SPECIES_SNORUNT')
+        # Kirlia's male-only Dawn Stone Gallade gives way to its level route to Gardevoir too.
+        self.assertIsNone(i.nonlevel_evolution('SPECIES_KIRLIA', 60, gender='MON_MALE'))
 
     def test_species_built_from_macros(self):
         i = self.info

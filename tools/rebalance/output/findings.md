@@ -500,7 +500,7 @@ Raises evolved Pokémon only by level, so 42 Pokémon on the 92 boss and rival t
 
 Held back by the duplicate rule: Phoebe's lead Dusclops, Glacia's two Sealeo (beside Walrein) and Drake's Shelgon (beside Salamence). `Ability:` isn't set on any team, so each evolved Pokémon takes its new form's ability from its personality, as level evolutions do. Wattson 3's Raichu keeps Slam, the carried Gen 3 move already allowlisted on Wattson 4 and 5's Raichu.
 
-**Knock-on.** Crobat at Mt Chimney (37/38) and the stronger bosses after it give more exp, so the curve then asked for one more level from Maxie at Mt Chimney on. A second `apply` raised 601 teams:
+**Knock-on.** Crobat at Mt Chimney (37/38) and the stronger bosses after it give more exp, so the curve then asked for one more level from Maxie at Mt Chimney on. `apply`'s second round (it goes again after a round that evolves bosses) raised 601 teams:
 - the story bosses from there through Wallace by 1, except the ones already high enough: Tabitha at Mt Chimney and at the Magma Hideout, Flannery, Norman and Archie;
 - the stage trainers of Winona's stage through the Elite Four, and rematch rounds 3-4, by 1;
 - rematch round 5 by 3 and Steven at Meteor Falls by 2;

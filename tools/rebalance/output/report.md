@@ -536,7 +536,7 @@ Changed attacking moves (set-move slots; weaker/similar/stronger: the category f
 
 ## Evolutions that aren't by level (#181)
 
-Boss and rival teams take a trade, stone, friendship or other evolution that isn't by level once the Pokemon is 3 levels past the evolved form's earliest wild level (`rebalance.py apply`), unless the team already has that species. Held back on those teams:
+Boss and rival teams take a trade, stone, friendship or other evolution that isn't by level once the Pokemon is 3 levels past the evolved form's earliest wild level (`rebalance.py apply`), unless the team already has that species. Held back on those teams by that rule, level evolutions included:
 
 | trainer | slot | species | lv | would be |
 |---|---|---|---|---|
