@@ -302,6 +302,8 @@ static EWRAM_DATA struct DebugWarp sDebugRecentWarps[DEBUG_RECENT_WARPS_COUNT] =
 static EWRAM_DATA u8 sDebugRecentWarpsCount = 0;
 // Where the player stood before the last debug warp: map and coordinates, with warpId WARP_ID_NONE once set
 static EWRAM_DATA struct WarpData sDebugWarpBack = {0};
+// Set while the fly map that Fly to map… opened is up, so the real Fly's map records no warp back
+static EWRAM_DATA bool8 sDebugFlyMapOpen = FALSE;
 EWRAM_DATA bool8 gIsDebugBattle = FALSE;
 EWRAM_DATA u64 gDebugAIFlags = 0;
 
@@ -2046,6 +2048,7 @@ static void DebugAction_OpenSubMenuCreateFollowerNPC(u8 taskId, const struct Deb
 
 static void DebugAction_Util_Fly(u8 taskId)
 {
+    sDebugFlyMapOpen = TRUE;
     Debug_DestroyMenu_Leave(taskId);
     SetMainCallback2(CB2_OpenFlyMap);
 }
@@ -2185,6 +2188,15 @@ static void Debug_SaveWarpBack(void)
     sDebugWarpBack.warpId = WARP_ID_NONE;
     sDebugWarpBack.x = gSaveBlock1Ptr->pos.x;
     sDebugWarpBack.y = gSaveBlock1Ptr->pos.y;
+}
+
+// Called by the fly map as it closes. A fly that Fly to map… started records the warp back
+// once its destination is chosen, not when the map opens, since B cancels it.
+void Debug_OnFlyMapExit(bool32 choseDestination)
+{
+    if (sDebugFlyMapOpen && choseDestination)
+        Debug_SaveWarpBack();
+    sDebugFlyMapOpen = FALSE;
 }
 
 static void Debug_DoWarp(u8 taskId)
