@@ -172,3 +172,27 @@ TEST("Evolution ready: the marker slides with the icon in a switch")
     ExpectMarkerOffset(marker, 2, SPRITE_NONE, 24, 0);
     ResetSpriteData();
 }
+
+// #216: AnimateSprites runs the callbacks in sprite order, and a switch or a form change can
+// leave the marker below its slot's icon: it still follows the hop in the same frame
+static void SpriteCB_TestHop(struct Sprite *sprite)
+{
+    sprite->y2 = -3;
+}
+
+TEST("Evolution ready: the marker follows the hop of an icon above it in the same frame")
+{
+    u32 marker, icon;
+
+    ResetSpriteData();
+    marker = CreateSprite(&gDummySpriteTemplate, 114, 26, 0);
+    icon = CreateSprite(&gDummySpriteTemplate, 104, 34, 0);
+    EXPECT_LT(marker, icon);
+    Test_AnimateSelectedPartyIcon(icon, 1);
+    gSprites[icon].callback = SpriteCB_TestHop;
+
+    Test_AnimatePartyMenuSprites(marker, 1, icon);
+    EXPECT_EQ(gSprites[marker].x2, 4);
+    EXPECT_EQ(gSprites[marker].y2, -3);
+    ResetSpriteData();
+}
