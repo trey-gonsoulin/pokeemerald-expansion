@@ -45,9 +45,12 @@ TEST("Warp coordinates: the dynamic and escape warps keep coordinates past 127")
     EXPECT_EQ(gSaveBlock1Ptr->escapeWarp.y, 135);
 }
 
-TEST("Warp coordinates: the dummy coordinates stay -1")
+// The warp script commands read a map warp's placeholder coordinates (.2byte -1) as u16
+TEST("Warp coordinates: the scripts' placeholder coordinates stay -1")
 {
-    SetWarpDestinationToMapWarp(MAP_GROUP(MAP_ROUTE119), MAP_NUM(MAP_ROUTE119), 0);
+    u16 x = 0xFFFF, y = 0xFFFF;
+
+    SetWarpDestination(MAP_GROUP(MAP_ROUTE119), MAP_NUM(MAP_ROUTE119), 0, x, y);
     ApplyCurrentWarp();
     EXPECT_EQ(gSaveBlock1Ptr->location.x, -1);
     EXPECT_EQ(gSaveBlock1Ptr->location.y, -1);
