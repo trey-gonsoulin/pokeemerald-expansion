@@ -1981,7 +1981,7 @@ def apply_main(argv):
         if not apply_round(argv):
             return 0
         print('The evolved Pokemon give more exp: applying again.')
-    raise SystemExit(f'apply: still evolving after {APPLY_ROUNDS} rounds')
+    raise SystemExit(f'apply: still evolving after {APPLY_ROUNDS} rounds, whose data is written: check git diff')
 
 
 # Rounds of apply_round before apply gives up (#181: one evolves the bosses, one raises the curve).
