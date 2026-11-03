@@ -629,8 +629,8 @@ static bool8 DexNavPickTile(enum EncounterType environment, u8 areaX, u8 areaY, 
     topX = startX;
     botX = topX + areaX;
     botY = topY + areaY;
-    xPos = AllocZeroed(areaX * areaY * sizeof(s16));
-    yPos = AllocZeroed(areaX * areaY * sizeof(s16));
+    xPos = AllocZeroed(areaX * areaY * sizeof(*xPos));
+    yPos = AllocZeroed(areaX * areaY * sizeof(*yPos));
 
     // loop through every tile in area and evaluate
     while (topY < botY)
