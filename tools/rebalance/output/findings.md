@@ -489,7 +489,7 @@ Iron Tail hits Gardevoir 2x and Azumarill and Mawile 1x. It is the only strong S
 **Flags now** (all / story): no_attack 6 / 6 (Magikarp, Silcoon and Cascoon), one_attack 0 / 0, lost_stab 0 / 0.
 
 ## 14. Evolutions that aren't by level on boss and rival teams (#181)
-Raises evolved Pokémon only by level, so 42 Pokémon on the 92 boss and rival teams sat at level 37-92 one trade, stone or friendship evolution short. The owner's rules (2026-11-02): boss and rival teams only; evolve once the Pokémon is 3 levels (`EVOLVE_GRACE`) past the evolved form's earliest wild level (`min_level`: Crobat 35, Starmie, Ludicolo and Steelix 33, Machamp 41, Magnezone 43, Dusknoir 50); no Gen 3 signature kept; and still no species the team already has. `rebalance.py apply` now does this; 41 evolved:
+Raises evolved Pokémon only by level, so 42 Pokémon on the 92 boss and rival teams sat at level 37-92 one trade, stone or friendship evolution short. The owner's rules (2026-11-02): boss and rival teams only; evolve once the Pokémon is 3 levels (`EVOLVE_GRACE`) past the evolved form's earliest wild level (`min_level`), which puts the thresholds at Crobat 35, Starmie, Ludicolo and Steelix 33, Machamp 41, Magnezone 43 and Dusknoir 50; no Gen 3 signature kept; and still no species the team already has. `rebalance.py apply` now does this; 41 evolved:
 - Golbat -> Crobat: Tabitha (Mt Chimney, Magma Hideout, Mossdeep), Maxie at Mt Chimney, Matt.
 - Lombre -> Ludicolo: the five Route 119 rival teams that have it.
 - Roselia -> Roserade and Magneton -> Magnezone: Wally VR 1-5.

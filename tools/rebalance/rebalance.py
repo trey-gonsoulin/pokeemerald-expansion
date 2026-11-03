@@ -1844,8 +1844,8 @@ def boss_teams(stages, postgame):
 
 def nonlevel_candidates(trainers, teams, evolve, evolve_nonlevel):
     """The trainer Pokemon an evolution that isn't by level would still
-    evolve (``evolve_nonlevel``'s species for their level, where ``evolve``,
-    by level only, keeps them), and on ``teams`` the ones either holds back
+    evolve (``evolve_nonlevel``'s species for their level, past where
+    ``evolve``, by level only, takes them), and on ``teams`` the ones either holds back
     because the team has the species: [{trainer, boss, slot, species,
     level, to}], EVOLVE_EXEMPT's teams left out."""
     rows = []
@@ -1855,7 +1855,7 @@ def nonlevel_candidates(trainers, teams, evolve, evolve_nonlevel):
         boss = tid in teams
         for i, mon in enumerate(t.mons):
             to = evolve_nonlevel(mon.species, mon.level, mon.gender)
-            if to != mon.species and (boss or evolve(mon.species, mon.level, mon.gender) == mon.species):
+            if to != mon.species and (boss or evolve(mon.species, mon.level, mon.gender) != to):
                 rows.append({'trainer': tid, 'boss': boss, 'slot': i + 1, 'species': mon.species,
                              'level': mon.level, 'to': to})
     return rows
