@@ -81,6 +81,9 @@ bool32 TryFindHiddenPokemon(void);
 u32 CalculateDexNavShinyRolls(void);
 void IncrementDexNavChain(void);
 bool32 OnStep_DexNavSearch(void);
+#if TESTING
+bool32 Test_DexNavPickLandTile(s16 *x, s16 *y);
+#endif
 
 extern enum Species gDexNavSpecies;
 
