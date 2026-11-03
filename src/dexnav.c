@@ -609,7 +609,9 @@ static bool8 DexNavPickTile(enum EncounterType environment, u8 areaX, u8 areaY, 
     enum MapType currMapType = GetCurrentMapType();
     u8 tileBehaviour;
     u8 tileBuffer = 2;
-    u8 *xPos, *yPos;
+    // Fork fix (#214): map coordinates, as s16 like the player's; upstream's u8
+    // wrapped past 255
+    s16 *xPos, *yPos;
     u32 iter = 0;
     bool32 ret = FALSE;
 
@@ -627,8 +629,8 @@ static bool8 DexNavPickTile(enum EncounterType environment, u8 areaX, u8 areaY, 
     topX = startX;
     botX = topX + areaX;
     botY = topY + areaY;
-    xPos = AllocZeroed(areaX * areaY * sizeof(u8));
-    yPos = AllocZeroed(areaX * areaY * sizeof(u8));
+    xPos = AllocZeroed(areaX * areaY * sizeof(s16));
+    yPos = AllocZeroed(areaX * areaY * sizeof(s16));
 
     // loop through every tile in area and evaluate
     while (topY < botY)
@@ -731,6 +733,21 @@ static bool8 DexNavPickTile(enum EncounterType environment, u8 areaX, u8 areaY, 
 
     return ret;
 }
+
+#if TESTING
+// Runs the start-of-search pick on the current map grid and returns the tile
+bool32 Test_DexNavPickLandTile(s16 *x, s16 *y)
+{
+    bool32 picked;
+
+    sDexNavSearchDataPtr = AllocZeroed(sizeof(struct DexNavSearch));
+    picked = DexNavPickTile(ENCOUNTER_TYPE_LAND, SCANSIZE_X, SCANSIZE_Y, FALSE);
+    *x = sDexNavSearchDataPtr->tileX;
+    *y = sDexNavSearchDataPtr->tileY;
+    TRY_FREE_AND_SET_NULL(sDexNavSearchDataPtr);
+    return picked;
+}
+#endif
 
 
 static bool8 TryStartHiddenMonFieldEffect(enum EncounterType environment, u8 xSize, u8 ySize, bool8 smallScan)

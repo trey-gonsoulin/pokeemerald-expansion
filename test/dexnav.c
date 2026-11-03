@@ -2,8 +2,12 @@
 #include "dexnav.h"
 #include "event_data.h"
 #include "field_screen_effect.h"
+#include "fieldmap.h"
+#include "malloc.h"
 #include "overworld.h"
 #include "script.h"
+#include "constants/map_types.h"
+#include "constants/metatile_behaviors.h"
 #include "constants/region_map_sections.h"
 #include "test/test.h"
 
@@ -89,6 +93,48 @@ TEST("DexNav: in Flash's light the patch tiles are the 45 wholly inside the circ
     EXPECT(!IsDexNavTileLit(0, 4));
     EXPECT(!IsDexNavTileLit(-4, 0));
     SetFlashLevel(0);
+}
+
+// A cave of tall grass, lit by Flash, with the player at map grid (x, y)
+// (MAP_OFFSET included): the patch must land in the lit circle around them.
+static void Test_DexNavPickTileOnMap(s32 width, s32 height, s16 playerX, s16 playerY)
+{
+    static const u16 grass[] = {MB_TALL_GRASS};
+    static const u16 border[] = {0, 0, 0, 0};
+    const struct Tileset tileset = {.metatileAttributes = grass};
+    const struct MapLayout layout = {.width = width, .height = height, .border = border, .primaryTileset = &tileset};
+    const struct MapLayout *savedLayout = gMapHeader.mapLayout;
+    u8 savedMapType = gMapHeader.mapType;
+    struct BackupMapLayout savedGrid = gBackupMapLayout;
+    struct Coords16 savedPos = gSaveBlock1Ptr->pos;
+    s16 x, y;
+
+    gMapHeader.mapLayout = &layout;
+    gMapHeader.mapType = MAP_TYPE_UNDERGROUND;
+    gBackupMapLayout.width = width;
+    gBackupMapLayout.height = height;
+    gBackupMapLayout.map = AllocZeroed(width * height * sizeof(u16));
+    gSaveBlock1Ptr->pos.x = playerX - MAP_OFFSET;
+    gSaveBlock1Ptr->pos.y = playerY - MAP_OFFSET;
+    SetFlashLevel(1);
+
+    EXPECT(Test_DexNavPickLandTile(&x, &y));
+    EXPECT(IsDexNavTileLit(x - playerX, y - playerY));
+
+    SetFlashLevel(0);
+    Free(gBackupMapLayout.map);
+    gBackupMapLayout = savedGrid;
+    gSaveBlock1Ptr->pos = savedPos;
+    gMapHeader.mapType = savedMapType;
+    gMapHeader.mapLayout = savedLayout;
+}
+
+// Upstream kept the candidate tiles in u8, so past x or y 255 the patch went
+// 256 tiles back (#214).
+TEST("DexNav: the patch lands by the player past map x or y 255")
+{
+    Test_DexNavPickTileOnMap(264, 16, 260, 8);
+    Test_DexNavPickTileOnMap(16, 264, 8, 260);
 }
 
 // In the debug ROM R+Start opens the debug menu, so R searches on its release,
