@@ -299,6 +299,8 @@ static void CreatePartyMonStatusSprite(struct Pokemon *, struct PartyMenuBox *);
 static void CreatePartyMonEvolutionMarker(struct Pokemon *, struct PartyMenuBox *);
 static void UpdatePartyEvolutionMarkers(void);
 static void SpriteCB_EvolutionReadyMarker(struct Sprite *);
+static void StopEvolutionMarkers(void);
+static void AttachEvolutionMarkerToSlot(u8, u32);
 static void GetPartyMonIconRestOffset(const struct Sprite *, s16 *, s16 *);
 static u8 CreateSmallPokeballButtonSprite(u8, u8);
 static void DrawCancelConfirmButtons(void);
@@ -987,7 +989,10 @@ static void FreePartyPointers(void)
     if (sPartyBgGfxTilemap)
         Free(sPartyBgGfxTilemap);
     if (sPartyMenuBoxes)
+    {
+        StopEvolutionMarkers();
         Free(sPartyMenuBoxes);
+    }
     FreeAllWindowBuffers();
 }
 
@@ -4766,10 +4771,15 @@ static void CreatePartyMonEvolutionMarker(struct Pokemon *mon, struct PartyMenuB
     menuBox->evoSpriteId = CreateEvolutionReadyMarkerSprite(menuBox->spriteCoords[0] + EVO_MARKER_X_OFFSET, menuBox->spriteCoords[1] + EVO_MARKER_Y_OFFSET);
     if (menuBox->evoSpriteId != SPRITE_NONE)
     {
-        gSprites[menuBox->evoSpriteId].sEvoMarkerSlot = menuBox - sPartyMenuBoxes;
-        gSprites[menuBox->evoSpriteId].callback = SpriteCB_EvolutionReadyMarker;
+        AttachEvolutionMarkerToSlot(menuBox->evoSpriteId, menuBox - sPartyMenuBoxes);
         gSprites[menuBox->evoSpriteId].invisible = !CanPartyMonEvolveNow(mon);
     }
+}
+
+static void AttachEvolutionMarkerToSlot(u8 spriteId, u32 slot)
+{
+    gSprites[spriteId].sEvoMarkerSlot = slot;
+    gSprites[spriteId].callback = SpriteCB_EvolutionReadyMarker;
 }
 
 // The marker moves as its slot's icon moves from rest: the selected icon's shift and hop, and
@@ -4786,6 +4796,21 @@ static void SpriteCB_EvolutionReadyMarker(struct Sprite *sprite)
     GetPartyMonIconRestOffset(icon, &restX2, &restY2);
     sprite->x2 = icon->x2 - restX2;
     sprite->y2 = icon->y2 - restY2;
+}
+
+// Before sPartyMenuBoxes is freed: the markers can outlive it until the next screen resets the
+// sprites, and a sprite in a marker's old slot may already be another one
+static void StopEvolutionMarkers(void)
+{
+    u32 i;
+
+    for (i = 0; i < PARTY_SIZE; i++)
+    {
+        u8 spriteId = sPartyMenuBoxes[i].evoSpriteId;
+
+        if (spriteId != SPRITE_NONE && gSprites[spriteId].callback == SpriteCB_EvolutionReadyMarker)
+            gSprites[spriteId].callback = SpriteCallbackDummy;
+    }
 }
 
 // Rechecks every slot: an item given to or used on one Pokémon (the last Fire Stone) can change another's
@@ -8949,8 +8974,7 @@ void Test_UpdateEvolutionReadyMarker(u8 markerSpriteId, u8 slot, u8 iconSpriteId
     boxes[slot].monSpriteId = iconSpriteId;
     boxes[slot].evoSpriteId = markerSpriteId;
     sPartyMenuBoxes = boxes;
-    gSprites[markerSpriteId].sEvoMarkerSlot = slot;
-    gSprites[markerSpriteId].callback = SpriteCB_EvolutionReadyMarker;
+    AttachEvolutionMarkerToSlot(markerSpriteId, slot);
     gSprites[markerSpriteId].callback(&gSprites[markerSpriteId]);
     sPartyMenuBoxes = savedBoxes;
 }
