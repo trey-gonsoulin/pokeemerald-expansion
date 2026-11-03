@@ -86,8 +86,18 @@ NONLEVEL_METHODS = frozenset(('EVO_ITEM', 'EVO_TRADE', 'EVO_LEVEL'))
 NONLEVEL_CONDITIONS = EVOLVE_CONDITIONS | {'IF_HOLD_ITEM', 'IF_MIN_FRIENDSHIP', 'IF_IN_MAPSEC',
                                            'IF_MIN_BEAUTY', 'IF_KNOWS_MOVE'}
 # The target a split non-level evolution takes where the first listed isn't
-# wanted: Juan's Poliwhirl becomes the pure Water Politoed.
+# wanted: a boss team's Poliwhirl (Juan's) becomes the pure Water Politoed.
 NONLEVEL_PREFER = {'SPECIES_POLIWHIRL': 'SPECIES_POLITOED'}
+
+
+def conditions_met(conds, allowed, gender=None):
+    """Whether an evolution's conditions ([(condition, value)]) are all in
+    ``allowed``, IF_NOT_REGION doesn't name Hoenn and IF_GENDER doesn't name
+    the other gender than ``gender`` (MON_MALE or MON_FEMALE, if known)."""
+    return not any(c not in allowed or (c == 'IF_NOT_REGION' and v == 'REGION_HOENN')
+                   or (c == 'IF_GENDER' and gender and v != gender) for c, v in conds)
+
+
 # Config headers that aren't part of a normal build.
 SKIPPED_CONFIGS = ('test.h',)
 
@@ -373,8 +383,7 @@ class SpeciesInfo:
         for method, param, target, conds in self.evos.get(self.canon(species), ()):
             if method != 'EVO_LEVEL' or not param.isdigit() or not 0 < int(param) <= level - grace:
                 continue
-            if any(c not in EVOLVE_CONDITIONS or (c == 'IF_NOT_REGION' and v == 'REGION_HOENN')
-                   or (c == 'IF_GENDER' and gender and v != gender) for c, v in conds):
+            if not conditions_met(conds, EVOLVE_CONDITIONS, gender):
                 continue
             options.append((bool(conds), target))
         return min(options, key=lambda o: o[0])[1] if options else None
@@ -386,23 +395,20 @@ class SpeciesInfo:
         target, else the first listed (Pikachu's Raichu, not Alola's)."""
         options = []
         for method, _, target, conds in self.evos.get(self.canon(species), ()):
-            if method not in NONLEVEL_METHODS or method == 'EVO_LEVEL' and all(
-                    c in EVOLVE_CONDITIONS for c, _ in conds):
+            by_level = method == 'EVO_LEVEL' and all(c in EVOLVE_CONDITIONS for c, _ in conds)
+            if method not in NONLEVEL_METHODS or by_level or not conditions_met(conds, NONLEVEL_CONDITIONS, gender):
                 continue
-            if any(c not in NONLEVEL_CONDITIONS or (c == 'IF_NOT_REGION' and v == 'REGION_HOENN')
-                   or (c == 'IF_GENDER' and gender and v != gender) for c, v in conds):
-                continue
-            if self.min_level(target) + grace <= level and target not in options:
+            if self.min_level(target) + grace <= level:
                 options.append(target)
         preferred = NONLEVEL_PREFER.get(self.canon(species))
-        return preferred if preferred in options else next(iter(options), None)
+        return preferred if preferred in options else options[0] if options else None
 
     def evolve(self, species, level, grace=EVOLVE_GRACE, gender=None, nonlevel=False):
         """Walk up the evolution line through level_evolution (Aron at 45 ->
         Aggron), and with ``nonlevel`` nonlevel_evolution too (#181)."""
         def step(sp):
             return self.level_evolution(sp, level, grace, gender) or (
-                nonlevel and self.nonlevel_evolution(sp, level, grace, gender)) or None
+                nonlevel and self.nonlevel_evolution(sp, level, grace, gender))
         seen = {self.canon(species)}
         while (nxt := step(species)) and self.canon(nxt) not in seen:
             species = nxt
