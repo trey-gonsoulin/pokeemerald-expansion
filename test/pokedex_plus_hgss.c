@@ -73,6 +73,42 @@ TEST("HGSS forms page scrolls its rows to the cursor")
     DestroyTask(taskId);
 }
 
+// The rows scroll once there are more than 13 forms besides the current one.
+// Pikachu's 16 fill 3 rows, so the top row goes from 0 to 1, and Unown's 27
+// fill 4, from 0 to 2. Each arrow shows only while there are rows that way.
+TEST("HGSS forms page shows scroll arrows only when there are more rows that way")
+{
+    enum Species species = SPECIES_NONE;
+    u8 menuPos = 0;
+    bool8 expectArrows = FALSE, expectUp = FALSE, expectDown = FALSE;
+    bool8 hasArrows, tagsFreed;
+    bool8 upShown[2], downShown[2];
+    u64 spritesInUse;
+    u8 taskId;
+
+    PARAMETRIZE { species = SPECIES_CHARIZARD; menuPos = 1; }
+    PARAMETRIZE { species = SPECIES_PIKACHU; menuPos = 16; expectArrows = TRUE; expectUp = TRUE; expectDown = FALSE; }
+    PARAMETRIZE { species = SPECIES_UNOWN; menuPos = 14; expectArrows = TRUE; expectUp = TRUE; expectDown = TRUE; }
+    PARAMETRIZE { species = SPECIES_UNOWN; menuPos = 27; expectArrows = TRUE; expectUp = TRUE; expectDown = FALSE; }
+
+    taskId = CreateTask(TaskDummy, 0);
+    spritesInUse = GetSpritesInUse();
+
+    Test_FormScrollArrows(taskId, species, menuPos, &hasArrows, upShown, downShown, &tagsFreed);
+
+    EXPECT_EQ(hasArrows, expectArrows);
+    if (expectArrows)
+    {
+        EXPECT(!upShown[0]);
+        EXPECT(downShown[0]);
+        EXPECT_EQ(upShown[1], expectUp);
+        EXPECT_EQ(downShown[1], expectDown);
+    }
+    EXPECT(tagsFreed);
+    EXPECT(GetSpritesInUse() == spritesInUse);
+    DestroyTask(taskId);
+}
+
 // Eevee's page has 10 rows and Milcery's 9: the most of any species, and
 // more than arrowSpriteDist[10] fits, whose overflow lands in targetSpecies.
 TEST("HGSS evolution page keeps its first rows' species")
