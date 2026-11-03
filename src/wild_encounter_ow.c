@@ -232,6 +232,8 @@ const struct FieldEffectInfoOWE gOverworldWildEncounterFieldEffectInfo[] =
 void UpdateOverworldWildEncounter(void)
 {
     //Check if possible to spawn.
+    if (!WE_OW_ENCOUNTERS)
+        return;
 
     bool32 shouldSpawnWaterMons = ShouldSpawnWaterOWE();
     
@@ -1102,7 +1104,14 @@ u32 TryAndDespawnOldestGeneratedOWE_ToFreeObject(void)
 
 void DespawnOWEOnBattleStart(void)
 {
-    struct ObjectEvent *owe = &gObjectEvents[GetObjectEventIdByLocalId(gSpecialVar_LastTalked)];
+    if (!WE_OW_ENCOUNTERS)
+        return;
+
+    u32 objectEventId = GetObjectEventIdByLocalId(gSpecialVar_LastTalked);
+    if (objectEventId == OBJECT_EVENTS_COUNT)
+        return;
+
+    struct ObjectEvent *owe = &gObjectEvents[objectEventId];
     if (!IsOverworldWildEncounter(owe, OWE_ANY))
         return;
 
@@ -1116,7 +1125,7 @@ void DespawnOWEOnBattleStart(void)
 
 void TryDespawnOWEsCrossingMapConnection(void)
 {
-    if (!WE_OWE_DESPAWN_ON_ENTER_TOWN)
+    if (!WE_OW_ENCOUNTERS || !WE_OWE_DESPAWN_ON_ENTER_TOWN)
         return;
 
     if (gMapHeader.mapType != MAP_TYPE_CITY && gMapHeader.mapType != MAP_TYPE_TOWN)
