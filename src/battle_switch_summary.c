@@ -1,13 +1,14 @@
 #include "global.h"
 #include "battle.h"
 #include "battle_switch_summary.h"
-#include "pokemon_summary_screen.h"
 
 // Emerald Plus (#200, B_SWITCH_SUMMARY_FIRST): A on a Pokémon in the battle party menu opens its summary
-// (SUMMARY_MODE_BATTLE_SWITCH) instead of the SHIFT / SUMMARY / CANCEL window. Start, or A on the Info page,
-// closes it with gSummarySendOutRequested set, and CB2_ReturnToPartyMenuFromSummaryScreen sends that Pokémon out.
+// (SUMMARY_MODE_BATTLE_SWITCH) instead of the SHIFT / SUMMARY / CANCEL window. It opens on the Info page, where A
+// sends (#213). Start, on any page, closes it with gSummarySendOutRequested set too, and
+// CB2_ReturnToPartyMenuFromSummaryScreen sends that Pokémon out.
 
 const u8 gText_SummarySendOut[] = _("SEND OUT");
+const u8 gText_SummaryStartSendOut[] = _("{START_BUTTON} SEND OUT"); // FONT_SMALL, as the summary's START RELEARN
 
 bool32 ShouldOpenSummaryToSwitch(enum PartyMenuType menuType, u32 action, enum PartyMenuLayout layout, u32 battleTypeFlags)
 {
@@ -28,17 +29,4 @@ bool32 ShouldOpenSummaryToSwitch(enum PartyMenuType menuType, u32 action, enum P
     default:
         return FALSE;
     }
-}
-
-// The page the summary last moved to with Left/Right this battle, Skills until then
-u32 GetSwitchSummaryPage(void)
-{
-    if (gBattleStruct->switchSummaryPage == 0)
-        return PSS_PAGE_SKILLS;
-    return gBattleStruct->switchSummaryPage - 1;
-}
-
-void RememberSwitchSummaryPage(u32 page)
-{
-    gBattleStruct->switchSummaryPage = page + 1;
 }
