@@ -584,7 +584,7 @@ class Analysis(unittest.TestCase):
         down = RB.shifted_slots(slots, -5, lambda sp, lvl: 'SPECIES_KIRLIA')
         self.assertEqual(down[0][1], {'species': 'SPECIES_RALTS', 'min_level': 1, 'max_level': 93})
         # evolver keeps a species the regime doesn't have from replacing one it has.
-        info = types.SimpleNamespace(evolve=lambda sp, lvl, gender=None: 'SPECIES_NOT_THERE' if lvl > 50 else sp)
+        info = types.SimpleNamespace(evolve=lambda sp, lvl, gender=None, nonlevel=False: 'SPECIES_NOT_THERE' if lvl > 50 else sp)
         gd = G.load(FIXTURE)['modern']
         self.assertEqual(RB.evolver(info, gd)('SPECIES_RALTS', 60), 'SPECIES_RALTS')
 
@@ -823,6 +823,24 @@ Aron
         self.assertEqual(RB.raise_party(self.PARTY, {'TRAINER_B': 3}, evolver)[0], self.PARTY)
         self.assertEqual(RB.raise_party(self.PARTY, {'TRAINER_A': 0}, evolver), (self.PARTY, []))
 
+    def test_nonlevel_evolve_party(self):
+        party = ('=== TRAINER_C ===\nName: C\n\nDusclops\nLevel: 77\n\nBanette\nLevel: 78\n\n'
+                 'Ghost (Dusclops) (F) @ Sitrus Berry\nLevel: 80\n\n'
+                 '=== TRAINER_D ===\nName: D\n\nGolbat\nLevel: 60\n\n' + self.PARTY.split('*/\n', 1)[1])
+        evolve = {('SPECIES_DUSCLOPS', 77): 'SPECIES_DUSKNOIR', ('SPECIES_DUSCLOPS', 80): 'SPECIES_DUSKNOIR',
+                  ('SPECIES_GOLBAT', 60): 'SPECIES_CROBAT', ('SPECIES_RALTS', 16): 'SPECIES_KIRLIA',
+                  ('SPECIES_MR_MIME', 40): 'SPECIES_MR_RIME'}
+
+        def evolver(species, level, gender=None):
+            return evolve.get((species, level), species)
+        teams = {'TRAINER_C', 'TRAINER_WALLY_MAUVILLE', 'PARTNER_B'}
+        text, evolved = RB.nonlevel_evolve_party(party, teams, evolver)
+        # Of two copies the higher level evolves, keeping its nickname, gender and item; teams
+        # outside ``teams``, EVOLVE_EXEMPT's and the partners keep theirs; levels never move.
+        self.assertEqual(text, party.replace('Ghost (Dusclops) (F)', 'Ghost (Dusknoir) (F)'))
+        self.assertEqual(evolved, [('TRAINER_C', 'SPECIES_DUSCLOPS', 'SPECIES_DUSKNOIR', 80)])
+        self.assertEqual(RB.nonlevel_evolve_party(text, teams, evolver), (text, []))  # idempotent
+
     def test_party_species_name(self):
         self.assertEqual(RB.party_species_name('SPECIES_KIRLIA'), 'Kirlia')
         self.assertEqual(RB.party_species_name('SPECIES_MR_MIME'), 'Mr Mime')
@@ -956,6 +974,23 @@ class RealRepo(unittest.TestCase):
                          ('TRAINER_SHELLY_WEATHER_INSTITUTE', 'SPECIES_SHARPEDO'),
                          ('TRAINER_SHELLY_SEAFLOOR_CAVERN', 'SPECIES_SHARPEDO')]:
             self.assertEqual(trainers[tid].mons[-1].species, ace, tid)
+
+    def test_boss_teams_take_nonlevel_evolutions(self):
+        """Every boss and rival team has taken the evolutions that aren't by level (#181), except
+        where the team already has the species: Phoebe's lead Dusclops beside her Dusknoir ace,
+        Glacia's Sealeo beside her Walrein, Drake's Shelgon beside his Salamence."""
+        trainers = G.parse_trainers(os.path.join(G.REPO, 'src', 'data', 'trainers.party'))
+        stages = RB.load_stages(RB.DEFAULT_STAGES, trainers, G.REPO)
+        teams = set(RB.boss_teams(stages, RB.rematch_ladders(G.parse_rematches(G.REPO), stages, trainers)))
+        info, gd = G.R.SpeciesInfo(G.REPO), G.load(G.REPO)['modern']
+        rows = RB.nonlevel_candidates(trainers, teams, RB.evolver(info, gd), RB.evolver(info, gd, nonlevel=True))
+        held = [r for r in rows if r['boss']]
+        for r in held:
+            self.assertIn(r['to'], [mon.species for mon in trainers[r['trainer']].mons], r)
+        self.assertEqual(sorted((r['trainer'], r['species']) for r in held), [
+            ('TRAINER_DRAKE', 'SPECIES_SHELGON'), ('TRAINER_GLACIA', 'SPECIES_SEALEO'),
+            ('TRAINER_GLACIA', 'SPECIES_SEALEO'), ('TRAINER_PHOEBE', 'SPECIES_DUSCLOPS')])
+        self.assertEqual(trainers['TRAINER_PHOEBE'].mons[-1].species, 'SPECIES_DUSKNOIR')
 
     def test_every_map_with_trainers_tms_or_wild_has_a_stage(self):
         with open(RB.DEFAULT_STAGES, encoding='utf-8') as f:

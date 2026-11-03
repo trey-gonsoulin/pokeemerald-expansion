@@ -884,12 +884,13 @@ def with_configs(gd, **values):
     return out
 
 
-def evolver(info, gd):
+def evolver(info, gd, nonlevel=False):
     """restock.SpeciesInfo.evolve as ``evolve(species, level, gender)``,
-    kept to the species ``gd`` has."""
+    kept to the species ``gd`` has (``nonlevel``: through the evolutions
+    that aren't by level too, #181)."""
     @functools.lru_cache(maxsize=None)
     def evolve(species, level, gender=None):
-        out = info.evolve(species, level, gender=gender)
+        out = info.evolve(species, level, gender=gender, nonlevel=nonlevel)
         return out if out in gd.species else species
     return evolve
 
@@ -1541,6 +1542,27 @@ def share_report(share, raised_defaults, stage_trainers):
     return out
 
 
+def nonlevel_report(rows):
+    """report.md's section on the evolutions that aren't by level (#181)."""
+    held = [r for r in rows if r['boss']]
+    regular = collections.defaultdict(list)
+    for r in rows:
+        if not r['boss']:
+            regular[(r['species'], r['to'])].append(r['level'])
+    return ['## Evolutions that aren\'t by level (#181)', '',
+            'Boss and rival teams take a trade, stone, friendship or other evolution that isn\'t by level '
+            f'once the Pokemon is {G.R.EVOLVE_GRACE} levels past the evolved form\'s earliest wild level '
+            '(`rebalance.py apply`), unless the team already has that species. Held back on those teams by '
+            'that rule, level evolutions included:', '',
+            table(['trainer', 'slot', 'species', 'lv', 'would be'],
+                  [[short(r['trainer']), r['slot'], short(r['species']), r['level'], short(r['to'])]
+                   for r in held]), '',
+            f'Other trainers keep theirs: {len(rows) - len(held)} Pokemon.', '',
+            table(['species', 'would be', 'count', 'levels'],
+                  [[short(sp), short(to), len(lv), f'{min(lv)}-{max(lv)}']
+                   for (sp, to), lv in sorted(regular.items(), key=lambda kv: (-len(kv[1]), kv[0]))]), '']
+
+
 def write_report(path, res):
     c, d, h, curve = res['census'], res['defaults'], res['handwritten'], res['level_curve']
     out = ['# Rebalance measurements (#113)', '',
@@ -1626,6 +1648,8 @@ def write_report(path, res):
                   [[short(x['trainer']), short(x['species']), x['level'], short(x['move']),
                     ' -> '.join(short(cat).replace('Category ', '') for cat in x['category']),
                     ' -> '.join(map(str, x['stat'])), x['stat_shift']] for x in boss_flips]), '']
+
+    out += nonlevel_report(res['nonlevel'])
 
     out += ['## Physical/special split: who fits their STAB now', '',
             'Better stat: Attack or Sp. Atk when one beats the other by 15%. Gen 3 STAB: the category each '
@@ -1722,6 +1746,8 @@ def analyze(repo, stages_path):
     rows = default_movesets(trainers, gd, story)
     changes = handwritten_changes(trainers, gd, set(boss_ids))
     share = share_curves(stages, trainers, gd['modern'], scaling, wilds['modern'])
+    info = G.R.SpeciesInfo(repo)
+    ladders = rematch_ladders(G.parse_rematches(repo), stages, trainers)
     return {
         'census': census(trainers),
         'story_trainers': len(story),
@@ -1740,8 +1766,9 @@ def analyze(repo, stages_path):
         'tms': tm_availability(repo, stages, gd),
         'wild': wild_availability(wilds, stages, gd),
         'economy': economy(stages, trainers, gd, G.parse_class_money(repo)),
-        'curve_data': curve_snapshot(stages, trainers, gd['modern'], base_scaling, wilds, G.R.SpeciesInfo(repo),
-                                     rematch_ladders(G.parse_rematches(repo), stages, trainers)),
+        'curve_data': curve_snapshot(stages, trainers, gd['modern'], base_scaling, wilds, info, ladders),
+        'nonlevel': nonlevel_candidates(trainers, set(boss_teams(stages, ladders)), evolver(info, gd['modern']),
+                                        evolver(info, gd['modern'], nonlevel=True)),
     }
 
 
@@ -1771,6 +1798,7 @@ def repo_inputs(repo, stages_path=DEFAULT_STAGES, info=None):
     stages = load_stages(stages_path, trainers, repo)
     return {'stages': stages, 'trainers': trainers, 'gd': gd, 'scaling': G.parse_scaling_factors(repo),
             'wilds': load_wilds(repo, stages), 'evolve': evolver(info, gd) if info else None,
+            'evolve_nonlevel': evolver(info, gd, nonlevel=True) if info else None,
             'postgame': rematch_ladders(G.parse_rematches(repo), stages, trainers)}
 
 
@@ -1800,10 +1828,38 @@ def apply_plan(inputs, knobs, partners, wild, folders):
     for _, enc, field, i in stage_tables(wild, stages, folders):
         if res['stages'][i]['wild_offset']:
             offsets[enc['map']][field] = res['stages'][i]['wild_offset']
-    bosses = {r['boss'] for r in res['bosses']}
     return {'raises': {t: d for t, d in sorted(raises.items()) if d},
             'wild': {m: dict(sorted(f.items())) for m, f in sorted(offsets.items())},
-            'unique': sorted(bosses | {v for st in stages for ids in st['variants'].values() for v in ids})}
+            'unique': boss_teams(stages, inputs['postgame'])}
+
+
+def boss_teams(stages, postgame):
+    """The boss and rival teams (rematch_ladders' ``postgame``), which keep
+    their species distinct (#150) and take evolutions that aren't by level
+    (#181): every staged boss and its rival variants, the post-game boss
+    ladders and POSTGAME_FINAL."""
+    return sorted({b for st in stages for b in st['bosses']}
+                  | {v for st in stages for ids in st['variants'].values() for v in ids}
+                  | {t for ladder in postgame['boss'] for t in ladder} | set(postgame['final']))
+
+
+def nonlevel_candidates(trainers, teams, evolve, evolve_nonlevel):
+    """The trainer Pokemon an evolution that isn't by level would still
+    evolve (``evolve_nonlevel``'s species for their level, past where
+    ``evolve``, by level only, takes them), and on ``teams`` the ones either holds back
+    because the team has the species: [{trainer, boss, slot, species,
+    level, to}], EVOLVE_EXEMPT's teams left out."""
+    rows = []
+    for tid, t in trainers.items():
+        if tid in EVOLVE_EXEMPT:
+            continue
+        boss = tid in teams
+        for i, mon in enumerate(t.mons):
+            to = evolve_nonlevel(mon.species, mon.level, mon.gender)
+            if to != mon.species and (boss or evolve(mon.species, mon.level, mon.gender) != to):
+                rows.append({'trainer': tid, 'boss': boss, 'slot': i + 1, 'species': mon.species,
+                             'level': mon.level, 'to': to})
+    return rows
 
 
 def party_species_name(species):
@@ -1829,14 +1885,10 @@ def species_line(line):
     return G.species_constant(name), gender and {'M': 'MON_MALE', 'F': 'MON_FEMALE'}[gender[1]], replace
 
 
-def raise_party(text, raises, evolve=None, unique=()):
-    """.party ``text`` with every Pokemon of each team in ``raises`` (id ->
-    levels) that many levels higher, capped at 100. Its species follow
-    evolve_team (``unique``: the teams that keep their species distinct);
-    EVOLVE_EXEMPT's and the partners' teams never evolve. Every other byte
-    is kept. Returns (text, [(team, species before, after, level)])."""
-    lines = text.split('\n')
-    teams = [(None, [])]  # (id, [(first line, end) of each Pokemon]); None: the text before the first team
+def party_teams(lines):
+    """A .party file's teams as [(id, [(first line, end) of each Pokemon])],
+    the first entry (id None) being the text before the first team."""
+    teams = [(None, [])]
     para, start = -1, None
     for n, line in enumerate(lines + ['']):
         header = re.match(r'=== ((?:TRAINER|PARTNER)_\w+) ===', line)
@@ -1850,19 +1902,39 @@ def raise_party(text, raises, evolve=None, unique=()):
             continue
         if start is None:
             start, para = n, para + 1
+    return teams
+
+
+def may_evolve(tid):
+    """Whether team ``tid``'s Pokemon may evolve: not EVOLVE_EXEMPT's, nor a partner's."""
+    return tid not in EVOLVE_EXEMPT and not tid.startswith('PARTNER_')
+
+
+def mon_level(lines, first, last):
+    """(index of the Level: line or None, level) of the Pokemon on ``lines[first:last]``."""
+    level_at = next((n for n in range(first, last) if lines[n].lstrip().startswith('Level:')), None)
+    return level_at, int(lines[level_at].split(':', 1)[1]) if level_at is not None else 100  # trainerproc's default
+
+
+def raise_party(text, raises, evolve=None, unique=()):
+    """.party ``text`` with every Pokemon of each team in ``raises`` (id ->
+    levels) that many levels higher, capped at 100. Its species follow
+    evolve_team (``unique``: the teams that keep their species distinct);
+    EVOLVE_EXEMPT's and the partners' teams never evolve. Every other byte
+    is kept. Returns (text, [(team, species before, after, level)])."""
+    lines = text.split('\n')
     evolved = []
-    for tid, paras in teams:
+    for tid, paras in party_teams(lines):
         delta = raises.get(tid, 0)
         if not delta:
             continue
         mons = []
         for first, last in paras:
-            level_at = next((n for n in range(first, last) if lines[n].lstrip().startswith('Level:')), None)
-            level = int(lines[level_at].split(':', 1)[1]) if level_at is not None else 100  # trainerproc's default
+            level_at, level = mon_level(lines, first, last)
             if level_at is not None:
                 lines[level_at] = lines[level_at].replace(str(level), str(min(level + delta, 100)), 1)
             mons.append((first, level, species_line(lines[first])))
-        allowed = None if tid in EVOLVE_EXEMPT or tid.startswith('PARTNER_') else evolve
+        allowed = evolve if may_evolve(tid) else None
         after = evolve_team([(sp, level, gender) for _, level, (sp, gender, _) in mons], delta, allowed,
                             tid in unique)
         for (first, level, (sp, _, replace)), out in zip(mons, after):
@@ -1872,10 +1944,53 @@ def raise_party(text, raises, evolve=None, unique=()):
     return '\n'.join(lines), evolved
 
 
+def nonlevel_evolve_party(text, teams, evolve):
+    """.party ``text`` with the Pokemon of each team in ``teams`` evolved for
+    their level by ``evolve`` (evolver's ``nonlevel``: through the
+    evolutions that aren't by level too, #181), never into a species the
+    team already has, as evolve_team's ``unique``. The highest level goes
+    first (the last slot on a tie), so of two copies the ace evolves:
+    Phoebe's Dusclops 80, not her Dusclops 77. EVOLVE_EXEMPT's and the
+    partners' teams never evolve. Returns (text, [(team, species before,
+    after, level)])."""
+    lines = text.split('\n')
+    evolved = []
+    for tid, paras in party_teams(lines):
+        if tid not in teams or not may_evolve(tid):
+            continue
+        mons = [(first, mon_level(lines, first, last)[1], species_line(lines[first])) for first, last in paras]
+        species = [sp for _, _, (sp, _, _) in mons]
+        for i in sorted(range(len(mons)), key=lambda i: (-mons[i][1], -i)):
+            first, level, (sp, gender, replace) = mons[i]
+            out = evolve(sp, level, gender)
+            if out != sp and out not in species:
+                species[i] = out
+                lines[first] = replace(out)
+                evolved.append((tid, sp, out, level))
+    return '\n'.join(lines), evolved
+
+
 def apply_main(argv):
     """``apply``: write the levels the curve settings (CURVE_SETTINGS) ask
     for into trainers.party, battle_partners.party and restock's level
-    offsets, then rerun restock (#150)."""
+    offsets, then rerun restock (#150), and evolve the boss and rival teams
+    through the evolutions that aren't by level (#181). Those give more exp
+    than the curve planned with, so it goes again, from the data it wrote,
+    until a round evolves none (at most APPLY_ROUNDS)."""
+    for _ in range(APPLY_ROUNDS):
+        if not apply_round(argv):
+            return 0
+        print('The evolved Pokemon give more exp: applying again.')
+    raise SystemExit(f'apply: still evolving after {APPLY_ROUNDS} rounds, whose data is written: check git diff')
+
+
+# Rounds of apply_round before apply gives up (#181: one evolves the bosses, one raises the curve).
+APPLY_ROUNDS = 5
+
+
+def apply_round(argv):
+    """One round of ``apply``: whether it evolved any boss or rival Pokemon
+    through an evolution that isn't by level."""
     p = argparse.ArgumentParser(prog='rebalance.py apply', description=apply_main.__doc__.split('\n')[0])
     p.add_argument('--settings', default=CURVE_SETTINGS, help='explorer settings JSON (default: curve_settings.json)')
     p.add_argument('--repo', default=G.REPO, help=argparse.SUPPRESS)
@@ -1893,9 +2008,12 @@ def apply_main(argv):
     # Raise the teams in memory, then restock (which may refuse: a hand edit, nothing to
     # draw), and only then write anything else, so a failure leaves the data as it was.
     raised = {}
+    unique = set(plan['unique'])
     for name, file in files.items():
         with open(file, encoding='utf-8') as f:
-            raised[name] = raise_party(f.read(), plan['raises'], inputs['evolve'], set(plan['unique']))
+            text, evolved = raise_party(f.read(), plan['raises'], inputs['evolve'], unique)
+        text, boss_evolved = nonlevel_evolve_party(text, unique, inputs['evolve_nonlevel'])
+        raised[name] = text, evolved, boss_evolved
     with tempfile.TemporaryDirectory() as tmp:
         staged = os.path.join(tmp, 'level_offsets.json')
         with open(staged, 'w', encoding='utf-8') as f:
@@ -1904,12 +2022,13 @@ def apply_main(argv):
         G.R.main(['--write', '--repo', args.repo, '--levels', staged])
         shutil.copy(staged, os.path.join(args.repo, LEVEL_OFFSETS))
     print(f'{LEVEL_OFFSETS}: {sum(map(len, plan["wild"].values()))} tables on {len(plan["wild"])} maps')
-    for name, (text, evolved) in raised.items():
+    for name, (text, evolved, boss_evolved) in raised.items():
         with open(files[name], 'w', encoding='utf-8') as f:
             f.write(text)
         teams = len(set(plan['raises']) & set(G.parse_trainers_text(text)))
-        print(f'{name}: {teams} teams raised, {len(evolved)} Pokemon evolved')
-    return 0
+        print(f'{name}: {teams} teams raised, {len(evolved)} Pokemon evolved, '
+              f'{len(boss_evolved)} more on boss and rival teams by evolutions that aren\'t by level (#181)')
+    return any(boss_evolved for _, _, boss_evolved in raised.values())
 
 
 def curve_main(argv):
