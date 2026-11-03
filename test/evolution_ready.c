@@ -173,43 +173,26 @@ TEST("Evolution ready: the marker slides with the icon in a switch")
     ResetSpriteData();
 }
 
-// #216: AnimateSprites runs the callbacks in sprite order, so a marker below its icon reads the
-// hop a frame late. A form change recreates the icon, which can land above the marker.
-TEST("Evolution ready: a recreated icon above its marker moves the marker above it")
+// #216: AnimateSprites runs the callbacks in sprite order, and a switch or a form change can
+// leave the marker below its slot's icon: it still follows the hop in the same frame
+static void SpriteCB_TestHop(struct Sprite *sprite)
 {
-    u32 marker, filler, icon, newMarker;
-
-    ResetSpriteData();
-    FreeAllSpritePalettes();
-    marker = CreateEvolutionReadyMarkerSprite(114, 26);
-    filler = CreateSprite(&gDummySpriteTemplate, 0, 0, 0);
-    icon = CreateSprite(&gDummySpriteTemplate, 104, 34, 0);
-    gSprites[marker].invisible = TRUE;
-    EXPECT_LT(marker, icon);
-
-    newMarker = Test_KeepEvolutionMarkerAboveIcon(marker, 3, icon);
-    EXPECT_GT(newMarker, icon);
-    EXPECT(!gSprites[marker].inUse);
-    EXPECT(gSprites[filler].inUse);
-    EXPECT_EQ(gSprites[newMarker].x, 114);
-    EXPECT_EQ(gSprites[newMarker].y, 26);
-    EXPECT(gSprites[newMarker].invisible);
-    EXPECT_EQ(gSprites[newMarker].data[0], 3);
-    ResetSpriteData();
-    FreeAllSpritePalettes();
+    sprite->y2 = -3;
 }
 
-TEST("Evolution ready: a recreated icon below its marker leaves the marker alone")
+TEST("Evolution ready: the marker follows the hop of an icon above it in the same frame")
 {
-    u32 icon, marker;
+    u32 marker, icon;
 
     ResetSpriteData();
-    FreeAllSpritePalettes();
+    marker = CreateSprite(&gDummySpriteTemplate, 114, 26, 0);
     icon = CreateSprite(&gDummySpriteTemplate, 104, 34, 0);
-    marker = CreateEvolutionReadyMarkerSprite(114, 26);
+    EXPECT_LT(marker, icon);
+    Test_AnimateSelectedPartyIcon(icon, 1);
+    gSprites[icon].callback = SpriteCB_TestHop;
 
-    EXPECT_EQ(Test_KeepEvolutionMarkerAboveIcon(marker, 1, icon), marker);
-    EXPECT(gSprites[marker].inUse);
+    Test_AnimatePartyMenuSprites(marker, 1, icon);
+    EXPECT_EQ(gSprites[marker].x2, 4);
+    EXPECT_EQ(gSprites[marker].y2, -3);
     ResetSpriteData();
-    FreeAllSpritePalettes();
 }
