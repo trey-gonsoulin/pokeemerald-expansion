@@ -265,7 +265,7 @@ TEST("Flag and var names: NULL outside the flags and for trainer flags")
 // are zero-filled: no party, and no EOS in the name
 TEST("Flag and var names: trainer flags show the trainer's class and name")
 {
-    u8 name[DEBUG_TRAINER_FLAG_NAME_SIZE];
+    u8 name[DEBUG_NAME_BUFFER_SIZE];
 
     EXPECT(Debug_CopyTrainerFlagName(name, TRAINER_FLAGS_START + 1));
     EXPECT(NameIs(name, COMPOUND_STRING("{PKMN} TRAINER RED")));
@@ -275,7 +275,7 @@ TEST("Flag and var names: trainer flags show the trainer's class and name")
 
 TEST("Flag and var names: no trainer for TRAINER_NONE, trainers without a party, unused trainer IDs and other flags")
 {
-    u8 name[DEBUG_TRAINER_FLAG_NAME_SIZE];
+    u8 name[DEBUG_NAME_BUFFER_SIZE];
 
     name[0] = EOS;
     EXPECT(!Debug_CopyTrainerFlagName(name, TRAINER_FLAGS_START + TRAINER_NONE));
@@ -301,11 +301,6 @@ TEST("Flag and var names: vars show the constant name without VAR_, NULL outside
     EXPECT(Debug_GetVarName(VAR_RESULT) == NULL);
 }
 
-static const u8 *GetTestVarName(u8 *buffer, u32 varId)
-{
-    return Debug_GetVarName(varId);
-}
-
 TEST("Flag and var names: name order sorts them, trainer flags included")
 {
     struct DebugNameOrder order = {0};
@@ -322,8 +317,8 @@ TEST("Flag and var names: name order sorts them, trainer flags included")
     EXPECT_EQ(Debug_NextNameInitial(&order, TRAINER_FLAGS_START + 1), Debug_NextNameInitial(&order, 0));
     Debug_FreeNameOrder(&order);
 
-    Debug_BuildNameOrder(&order, VARS_START, VARS_END, GetTestVarName);
-    ExpectNameOrder(&order, VARS_START, VARS_END, GetTestVarName);
+    Debug_BuildNameOrder(&order, VARS_START, VARS_END, Debug_GetVarDisplayName);
+    ExpectNameOrder(&order, VARS_START, VARS_END, Debug_GetVarDisplayName);
     EXPECT_GT(order.count, 200);
     Debug_FreeNameOrder(&order);
 }

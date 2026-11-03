@@ -1429,18 +1429,13 @@ static const u8 *Debug_GetMoveStepName(u8 *buffer, u32 moveId)
     return moveId == MOVES_COUNT ? COMPOUND_STRING("Default") : GetMoveName(moveId);
 }
 
-static const u8 *Debug_GetVarStepName(u8 *buffer, u32 varId)
-{
-    return Debug_GetVarName(varId);
-}
-
 static const DebugNameFunc sDebugStepNameFuncs[] =
 {
     [DEBUG_STEP_NAMES_SPECIES] = Debug_GetEnabledSpeciesName,
     [DEBUG_STEP_NAMES_ITEMS] = Debug_GetNamedItemName,
     [DEBUG_STEP_NAMES_MOVES] = Debug_GetMoveStepName,
     [DEBUG_STEP_NAMES_FLAGS] = Debug_GetFlagDisplayName,
-    [DEBUG_STEP_NAMES_VARS] = Debug_GetVarStepName,
+    [DEBUG_STEP_NAMES_VARS] = Debug_GetVarDisplayName,
 };
 
 // Name order is only for the overworld menu, which holds its state; the release ROM's native steps have no names

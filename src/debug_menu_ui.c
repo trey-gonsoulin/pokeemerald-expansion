@@ -323,7 +323,7 @@ static void Debug_SortByName(struct DebugNameSort *sort, u32 start, u32 count, u
 
 // Sorts the values in first..last that have a name (getName returns NULL for the ones name order
 // leaves out, such as disabled species) into order->values. Does nothing when order already
-// holds that range; Debug_FreeNameOrder frees it.
+// holds that range; Debug_FreeNameOrder frees it. Alloc never returns NULL (it stops the game).
 void Debug_BuildNameOrder(struct DebugNameOrder *order, u32 first, u32 last, DebugNameFunc getName)
 {
     u32 count = 0, builtSize = 0;
@@ -460,10 +460,10 @@ const u8 *Debug_GetVarName(u32 varId)
     return sDebugVarNames[varId - VARS_START];
 }
 
-STATIC_ASSERT(DEBUG_TRAINER_FLAG_NAME_SIZE >= sizeof(gTrainerClasses[0].name) + 1 + TRAINER_NAME_LENGTH + 1, DebugTrainerFlagNameSize);
+STATIC_ASSERT(DEBUG_NAME_BUFFER_SIZE >= sizeof(gTrainerClasses[0].name) + 1 + TRAINER_NAME_LENGTH + 1, DebugTrainerFlagNameSize);
 
 // For a trainer flag, copies the trainer's class and name ("LEADER ROXANNE") into dest, which holds
-// DEBUG_TRAINER_FLAG_NAME_SIZE, and returns TRUE. Returns FALSE and leaves dest alone with
+// DEBUG_NAME_BUFFER_SIZE, and returns TRUE. Returns FALSE and leaves dest alone with
 // DEBUG_FLAG_VAR_NAMES off, for any other flag, and for a trainer without a party: TRAINER_NONE, and
 // IDs left out of the table (zero-filled, so the name has no EOS). IDs from TRAINERS_COUNT are unused.
 bool32 Debug_CopyTrainerFlagName(u8 *dest, u32 flag)
@@ -485,6 +485,12 @@ bool32 Debug_CopyTrainerFlagName(u8 *dest, u32 flag)
 const u8 *Debug_GetFlagDisplayName(u8 *buffer, u32 flag)
 {
     return Debug_CopyTrainerFlagName(buffer, flag) ? buffer : Debug_GetFlagName(flag);
+}
+
+// The name Set Var shows, and orders by: Debug_GetVarName's (buffer is unused)
+const u8 *Debug_GetVarDisplayName(u8 *buffer, u32 varId)
+{
+    return Debug_GetVarName(varId);
 }
 
 // *******************************
