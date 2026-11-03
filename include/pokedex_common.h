@@ -160,7 +160,8 @@ struct EvoScreenData
 // The forms page shows two rows of 7 cells. The first cell is the current form's,
 // and the rows scroll when there are more forms.
 #define FORMS_SCREEN_COLUMNS    7
-#define FORMS_SCREEN_ICON_COUNT (2 * FORMS_SCREEN_COLUMNS)
+#define FORMS_SCREEN_ROWS       2
+#define FORMS_SCREEN_ICON_COUNT (FORMS_SCREEN_ROWS * FORMS_SCREEN_COLUMNS)
 
 struct FromScreenData
 {

@@ -4291,7 +4291,7 @@ static void Task_HandleFormsScreenInput(u8 taskId)
 #define FORM_SPECIES_END (0xffff)
 
 // The scroll arrows' sheet and palette, after the stat bars' tags.
-#define TAG_FORMS_SCROLL_ARROWS 4099
+#define TAG_FORMS_SCROLL_ARROWS (TAG_STAT_BAR_BG + 1)
 #define FORMS_SCROLL_ARROWS_X       120
 #define FORMS_SCROLL_ARROW_UP_Y     96
 #define FORMS_SCROLL_ARROW_DOWN_Y   112
@@ -4317,9 +4317,9 @@ static void CreateFormScrollArrows(void)
     u32 lastRow = sPokedexView->sFormScreenData.numForms / FORMS_SCREEN_COLUMNS;
 
     sPokedexView->sFormScreenData.scrollArrowsTaskId = TASK_NONE;
-    if (lastRow < 2)
+    if (lastRow < FORMS_SCREEN_ROWS)
         return;
-    template.fullyDownThreshold = lastRow - 1;
+    template.fullyDownThreshold = lastRow - (FORMS_SCREEN_ROWS - 1);
     sPokedexView->sFormScreenData.scrollArrowsTaskId = AddScrollIndicatorArrowPair(&template, &sPokedexView->sFormScreenData.topRow);
 }
 
@@ -4481,30 +4481,44 @@ void Test_PrintAndDestroyFormIcons(u8 taskId, enum Species species)
     sPokedexView = savedView;
 }
 
-// Draws species's forms page, moves its cursor to menuPos and back to the first
-// form, and reports each time how many form icons are drawn and whether the
-// current form's icon is hidden. Then frees the sprites as the page's exits do.
-void Test_ScrollFormIcons(u8 taskId, enum Species species, u8 menuPos, u8 numIcons[2], bool8 currentIconHidden[2])
-{
-    struct PokedexView *savedView = sPokedexView;
+static struct PokedexView *sTestSavedPokedexView;
 
+// Draws species's forms page with the current form's icon and the cursor arrow,
+// as Task_LoadFormsScreen and A do.
+static void Test_OpenFormsPage(u8 taskId, enum Species species)
+{
+    sTestSavedPokedexView = sPokedexView;
     sPokedexView = AllocZeroed(sizeof(struct PokedexView));
     gTasks[taskId].data[4] = CreateMonIcon(species, SpriteCB_MonIcon, 18, 31, 4, GetPokedexMonPersonality(species));
     sPokedexView->sFormScreenData.arrowSpriteId = CreateSprite(&gSpriteTemplate_Arrow, 0, 0, 0);
     PrintForms(taskId, species);
-    UpdateFormsCursor(taskId, menuPos);
-    numIcons[0] = sPokedexView->sFormScreenData.numIcons;
-    currentIconHidden[0] = gSprites[gTasks[taskId].data[4]].invisible;
-    UpdateFormsCursor(taskId, 1);
-    numIcons[1] = sPokedexView->sFormScreenData.numIcons;
-    currentIconHidden[1] = gSprites[gTasks[taskId].data[4]].invisible;
+}
+
+// Frees the page's sprites as its exits do.
+static void Test_CloseFormsPage(u8 taskId)
+{
     DestroySprite(&gSprites[sPokedexView->sFormScreenData.arrowSpriteId]);
     FreeAndDestroyMonIconSprite(&gSprites[gTasks[taskId].data[4]]);
     DestroyFormIcons();
     DestroyFormScrollArrows();
     FreeMonIconPalettes();
     Free(sPokedexView);
-    sPokedexView = savedView;
+    sPokedexView = sTestSavedPokedexView;
+}
+
+// Draws species's forms page, moves its cursor to menuPos and back to the first
+// form, and reports each time how many form icons are drawn and whether the
+// current form's icon is hidden. Then frees the sprites as the page's exits do.
+void Test_ScrollFormIcons(u8 taskId, enum Species species, u8 menuPos, u8 numIcons[2], bool8 currentIconHidden[2])
+{
+    Test_OpenFormsPage(taskId, species);
+    UpdateFormsCursor(taskId, menuPos);
+    numIcons[0] = sPokedexView->sFormScreenData.numIcons;
+    currentIconHidden[0] = gSprites[gTasks[taskId].data[4]].invisible;
+    UpdateFormsCursor(taskId, 1);
+    numIcons[1] = sPokedexView->sFormScreenData.numIcons;
+    currentIconHidden[1] = gSprites[gTasks[taskId].data[4]].invisible;
+    Test_CloseFormsPage(taskId);
 }
 
 // Runs the scroll arrows' task for a frame, then reports which arrows show.
@@ -4533,12 +4547,7 @@ static void Test_GetFormScrollArrowsShown(bool8 *upShown, bool8 *downShown)
 // palette went with them.
 void Test_FormScrollArrows(u8 taskId, enum Species species, u8 menuPos, bool8 *hasArrows, bool8 upShown[2], bool8 downShown[2], bool8 *tagsFreed)
 {
-    struct PokedexView *savedView = sPokedexView;
-
-    sPokedexView = AllocZeroed(sizeof(struct PokedexView));
-    gTasks[taskId].data[4] = CreateMonIcon(species, SpriteCB_MonIcon, 18, 31, 4, GetPokedexMonPersonality(species));
-    sPokedexView->sFormScreenData.arrowSpriteId = CreateSprite(&gSpriteTemplate_Arrow, 0, 0, 0);
-    PrintForms(taskId, species);
+    Test_OpenFormsPage(taskId, species);
     *hasArrows = (sPokedexView->sFormScreenData.scrollArrowsTaskId != TASK_NONE);
     if (*hasArrows)
     {
@@ -4546,15 +4555,9 @@ void Test_FormScrollArrows(u8 taskId, enum Species species, u8 menuPos, bool8 *h
         UpdateFormsCursor(taskId, menuPos);
         Test_GetFormScrollArrowsShown(&upShown[1], &downShown[1]);
     }
-    DestroySprite(&gSprites[sPokedexView->sFormScreenData.arrowSpriteId]);
-    FreeAndDestroyMonIconSprite(&gSprites[gTasks[taskId].data[4]]);
-    DestroyFormIcons();
-    DestroyFormScrollArrows();
-    FreeMonIconPalettes();
+    Test_CloseFormsPage(taskId);
     *tagsFreed = (GetSpriteTileStartByTag(TAG_FORMS_SCROLL_ARROWS) == 0xFFFF
                && IndexOfSpritePaletteTag(TAG_FORMS_SCROLL_ARROWS) == 0xFF);
-    Free(sPokedexView);
-    sPokedexView = savedView;
 }
 #endif
 

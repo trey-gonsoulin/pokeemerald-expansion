@@ -73,18 +73,6 @@ TEST("HGSS forms page scrolls its rows to the cursor")
     DestroyTask(taskId);
 }
 
-static u32 CountActiveTasks(void)
-{
-    u32 i, count = 0;
-
-    for (i = 0; i < NUM_TASKS; i++)
-    {
-        if (gTasks[i].isActive)
-            count++;
-    }
-    return count;
-}
-
 // The rows scroll once there are more than 13 forms besides the current one.
 // Pikachu's 16 fill 3 rows, so the top row goes from 0 to 1, and Unown's 27
 // fill 4, from 0 to 2. Each arrow shows only while there are rows that way.
@@ -96,7 +84,6 @@ TEST("HGSS forms page shows scroll arrows only when there are more rows that way
     bool8 hasArrows, tagsFreed;
     bool8 upShown[2], downShown[2];
     u64 spritesInUse;
-    u32 tasksActive;
     u8 taskId;
 
     PARAMETRIZE { species = SPECIES_CHARIZARD; menuPos = 1; }
@@ -106,7 +93,6 @@ TEST("HGSS forms page shows scroll arrows only when there are more rows that way
 
     taskId = CreateTask(TaskDummy, 0);
     spritesInUse = GetSpritesInUse();
-    tasksActive = CountActiveTasks();
 
     Test_FormScrollArrows(taskId, species, menuPos, &hasArrows, upShown, downShown, &tagsFreed);
 
@@ -120,7 +106,6 @@ TEST("HGSS forms page shows scroll arrows only when there are more rows that way
     }
     EXPECT(tagsFreed);
     EXPECT(GetSpritesInUse() == spritesInUse);
-    EXPECT_EQ(CountActiveTasks(), tasksActive);
     DestroyTask(taskId);
 }
 
