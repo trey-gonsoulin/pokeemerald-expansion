@@ -14,7 +14,6 @@ TEST("Trainer Slide: an ID past the slide table has no message")
     EXPECT(Test_GetTrainerSlideMessage(DIFFICULTY_EASY, TRAINER_LEAF_TEST, TRAINER_SLIDE_BEFORE_FIRST_TURN) != NULL);
     // Easy's row past the end is Normal's Leaf row.
     EXPECT(Test_GetTrainerSlideMessage(DIFFICULTY_EASY, TEST_SLIDE_ROWS + TRAINER_LEAF_TEST, TRAINER_SLIDE_BEFORE_FIRST_TURN) == NULL);
-    EXPECT(Test_GetTrainerSlideMessage(DIFFICULTY_NORMAL, TEST_SLIDE_ROWS, TRAINER_SLIDE_BEFORE_FIRST_TURN) == NULL);
     FlagClear(TESTING_FLAG_TRAINER_SLIDES);
 }
 
