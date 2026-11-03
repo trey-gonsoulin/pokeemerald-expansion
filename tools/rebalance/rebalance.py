@@ -1552,7 +1552,8 @@ def nonlevel_report(rows):
     return ['## Evolutions that aren\'t by level (#181)', '',
             'Boss and rival teams take a trade, stone, friendship or other evolution that isn\'t by level '
             f'once the Pokemon is {G.R.EVOLVE_GRACE} levels past the evolved form\'s earliest wild level '
-            '(`rebalance.py apply`), unless the team already has that species. Held back on those teams:', '',
+            '(`rebalance.py apply`), unless the team already has that species. Held back on those teams by '
+            'that rule, level evolutions included:', '',
             table(['trainer', 'slot', 'species', 'lv', 'would be'],
                   [[short(r['trainer']), r['slot'], short(r['species']), r['level'], short(r['to'])]
                    for r in held]), '',
@@ -1973,7 +1974,23 @@ def apply_main(argv):
     """``apply``: write the levels the curve settings (CURVE_SETTINGS) ask
     for into trainers.party, battle_partners.party and restock's level
     offsets, then rerun restock (#150), and evolve the boss and rival teams
-    through the evolutions that aren't by level (#181)."""
+    through the evolutions that aren't by level (#181). Those give more exp
+    than the curve planned with, so it goes again, from the data it wrote,
+    until a round evolves none (at most APPLY_ROUNDS)."""
+    for _ in range(APPLY_ROUNDS):
+        if not apply_round(argv):
+            return 0
+        print('The evolved Pokemon give more exp: applying again.')
+    raise SystemExit(f'apply: still evolving after {APPLY_ROUNDS} rounds')
+
+
+# Rounds of apply_round before apply gives up (#181: one evolves the bosses, one raises the curve).
+APPLY_ROUNDS = 5
+
+
+def apply_round(argv):
+    """One round of ``apply``: whether it evolved any boss or rival Pokemon
+    through an evolution that isn't by level."""
     p = argparse.ArgumentParser(prog='rebalance.py apply', description=apply_main.__doc__.split('\n')[0])
     p.add_argument('--settings', default=CURVE_SETTINGS, help='explorer settings JSON (default: curve_settings.json)')
     p.add_argument('--repo', default=G.REPO, help=argparse.SUPPRESS)
@@ -2011,9 +2028,7 @@ def apply_main(argv):
         teams = len(set(plan['raises']) & set(G.parse_trainers_text(text)))
         print(f'{name}: {teams} teams raised, {len(evolved)} Pokemon evolved, '
               f'{len(boss_evolved)} more on boss and rival teams by evolutions that aren\'t by level (#181)')
-    if any(boss_evolved for _, _, boss_evolved in raised.values()):
-        print('The evolved Pokemon give more exp: run apply again until it raises nothing.')
-    return 0
+    return any(boss_evolved for _, _, boss_evolved in raised.values())
 
 
 def curve_main(argv):

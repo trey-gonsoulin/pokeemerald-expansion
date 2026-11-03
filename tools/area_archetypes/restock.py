@@ -392,11 +392,18 @@ class SpeciesInfo:
         """The evolution of ``species`` that isn't by level (NONLEVEL_METHODS
         and NONLEVEL_CONDITIONS) a Pokemon at ``level`` takes, ``grace``
         levels past the target's min_level, or None: NONLEVEL_PREFER's
-        target, else the first listed (Pikachu's Raichu, not Alola's)."""
+        target, else the first listed of those past their threshold
+        (Pikachu's Raichu, not Alola's). A species with a level evolution
+        it can take (level_evolution at any level) only evolves by level,
+        so Slowpoke becomes Slowbro and Snorunt Glalie, never Slowking or
+        Froslass; an IF_GENDER one needs the Pokemon's ``gender``."""
+        if self.level_evolution(species, 100, 0, gender):
+            return None
         options = []
         for method, _, target, conds in self.evos.get(self.canon(species), ()):
             by_level = method == 'EVO_LEVEL' and all(c in EVOLVE_CONDITIONS for c, _ in conds)
-            if method not in NONLEVEL_METHODS or by_level or not conditions_met(conds, NONLEVEL_CONDITIONS, gender):
+            if (method not in NONLEVEL_METHODS or by_level or not conditions_met(conds, NONLEVEL_CONDITIONS, gender)
+                    or any(c == 'IF_GENDER' and v != gender for c, v in conds)):
                 continue
             if self.min_level(target) + grace <= level:
                 options.append(target)

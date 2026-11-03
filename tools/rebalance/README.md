@@ -157,8 +157,9 @@ the repo's own data with them, through `apply_plan`, and writes:
   aren't by level" section lists the ones held back and the other trainers'.
 
 It only raises. On data it already wrote it asks for nothing, which
-`RealRepo.test_data_meets_the_curve_settings` checks. A run that evolves boss
-Pokemon raises the exp curve, so run it again until it raises nothing. After a change to
+`RealRepo.test_data_meets_the_curve_settings` checks. A round that evolves boss
+Pokemon raises the exp curve, so `apply` goes again from the data it wrote
+until a round evolves none (`APPLY_ROUNDS`). After a change to
 `trainers.party`, the wild tables or the exp formula, rerun `apply` and
 `rebalance.py` (or change the settings and do the same).
 `apply` doesn't touch trainers outside the stages and the rematch table.
