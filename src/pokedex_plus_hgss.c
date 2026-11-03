@@ -4301,26 +4301,15 @@ static void Task_HandleFormsScreenInput(u8 taskId)
 // the rows (which end by y 86), centred on the page, above the navigation bar.
 static void CreateFormScrollArrows(void)
 {
-    struct ScrollArrowsTemplate template =
-    {
-        .firstArrowType = SCROLL_ARROW_UP,
-        .firstX = FORMS_SCROLL_ARROWS_X,
-        .firstY = FORMS_SCROLL_ARROW_UP_Y,
-        .secondArrowType = SCROLL_ARROW_DOWN,
-        .secondX = FORMS_SCROLL_ARROWS_X,
-        .secondY = FORMS_SCROLL_ARROW_DOWN_Y,
-        .fullyUpThreshold = 0,
-        .tileTag = TAG_FORMS_SCROLL_ARROWS,
-        .palTag = TAG_FORMS_SCROLL_ARROWS,
-    };
     // The cells run from 0 to numForms, and the rows are fully down once they show the last one.
     u32 lastRow = sPokedexView->sFormScreenData.numForms / FORMS_SCREEN_COLUMNS;
 
     sPokedexView->sFormScreenData.scrollArrowsTaskId = TASK_NONE;
     if (lastRow < FORMS_SCREEN_ROWS)
         return;
-    template.fullyDownThreshold = lastRow - (FORMS_SCREEN_ROWS - 1);
-    sPokedexView->sFormScreenData.scrollArrowsTaskId = AddScrollIndicatorArrowPair(&template, &sPokedexView->sFormScreenData.topRow);
+    sPokedexView->sFormScreenData.scrollArrowsTaskId = AddScrollIndicatorArrowPairParameterized(SCROLL_ARROW_UP,
+        FORMS_SCROLL_ARROWS_X, FORMS_SCROLL_ARROW_UP_Y, FORMS_SCROLL_ARROW_DOWN_Y, lastRow - (FORMS_SCREEN_ROWS - 1),
+        TAG_FORMS_SCROLL_ARROWS, TAG_FORMS_SCROLL_ARROWS, &sPokedexView->sFormScreenData.topRow);
 }
 
 static void DestroyFormScrollArrows(void)
