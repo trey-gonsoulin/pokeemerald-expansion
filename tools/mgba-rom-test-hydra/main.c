@@ -172,6 +172,15 @@ void push_summary_result(struct SummaryResults *summaries, const struct Runner *
     }
 }
 
+// Prints a PASSING list entry, with ': <last output line>.' only for a test that printed one.
+static void print_passing_summary_result(const struct SummaryResult *result)
+{
+    if (result->output_line[0] != '\0')
+        fprintf(stdout, "  - \e[32m%s\e[0m: %s: %s.\n", result->filename_line, result->test_name, result->output_line);
+    else
+        fprintf(stdout, "  - \e[32m%s\e[0m: %s\n", result->filename_line, result->test_name);
+}
+
 struct Symbol {
     const char *name;
     uint32_t address;
@@ -989,7 +998,7 @@ int main(int argc, char *argv[])
         {
             fprintf(stdout, "\n  \e[33mKNOWN_FAILING\e[0m tests \e[32mPASSING\e[0m:\n");
             for (int i = 0; i < known_fails_passing_summaries.count; i++)
-                fprintf(stdout, "  - \e[32m%s\e[0m: %s: %s.\n", known_fails_passing_summaries.results[i].filename_line, known_fails_passing_summaries.results[i].test_name, known_fails_passing_summaries.results[i].output_line);
+                print_passing_summary_result(&known_fails_passing_summaries.results[i]);
             if (known_fails_passing > known_fails_passing_summaries.count)
                 fprintf(stdout, "  - \e[32mand %d more...\e[0m\n", known_fails_passing - known_fails_passing_summaries.count);
         }
@@ -998,7 +1007,7 @@ int main(int argc, char *argv[])
         {
             fprintf(stdout, "\n  \e[31mEXPECT_FAIL\e[0m tests \e[32mPASSING\e[0m:\n");
             for (int i = 0; i < expected_failing_summaries.count; i++)
-                fprintf(stdout, "  - \e[32m%s\e[0m: %s: %s.\n", expected_failing_summaries.results[i].filename_line, expected_failing_summaries.results[i].test_name, expected_failing_summaries.results[i].output_line);
+                print_passing_summary_result(&expected_failing_summaries.results[i]);
             if (expected_fails_passing > expected_failing_summaries.count)
                 fprintf(stdout, "  - \e[32mand %d more...\e[0m\n", expected_fails_passing - expected_failing_summaries.count);
         }
