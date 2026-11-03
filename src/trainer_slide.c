@@ -136,8 +136,6 @@ static bool32 AreOpponentsInTrainerSlideTables(void)
 
 static const u8* const *GetTrainerSlideArray(enum DifficultyLevel difficulty, u32 trainerId, u32 slideId)
 {
-    if (!AreOpponentsInTrainerSlideTables())
-        return NULL;
 #if TESTING
     return (FlagGet(TESTING_FLAG_TRAINER_SLIDES) ? TRAINER_SLIDE_ROW(sTestTrainerSlides, difficulty, trainerId) : NULL);
 #else
@@ -150,6 +148,9 @@ static const u8* const *GetTrainerSlideArray(enum DifficultyLevel difficulty, u3
 
 static const u8 *GetTrainerSlideMessage(enum DifficultyLevel difficulty, u32 trainerId, u32 slideId)
 {
+    if (!AreOpponentsInTrainerSlideTables())
+        return NULL;
+
     const u8* const *trainerSlides = GetTrainerSlideArray(difficulty, trainerId, slideId);
     const u8* const *trainerSlidesNormal = GetTrainerSlideArray(DIFFICULTY_NORMAL, trainerId, slideId);
 

@@ -20,23 +20,31 @@ TEST("Trainer Slide: an ID past the slide table has no message")
 TEST("Trainer Slide: e-Reader, Trainer Hill and Battle Tent opponents have no message")
 {
     u32 battleTypeFlags = gBattleTypeFlags;
-    u8 lvlMode = gSaveBlock2Ptr->frontier.lvlMode;
+    u32 lvlMode = gSaveBlock2Ptr->frontier.lvlMode;
+    const u8 *story, *eReader, *trainerHill, *frontier, *tent;
 
+    // Restore the state before any EXPECT, which ends the test on failure.
     FlagSet(TESTING_FLAG_TRAINER_SLIDES);
     gSaveBlock2Ptr->frontier.lvlMode = FRONTIER_LVL_50;
     gBattleTypeFlags = BATTLE_TYPE_TRAINER;
-    EXPECT(Test_GetTrainerSlideMessage(DIFFICULTY_NORMAL, TRAINER_LEAF_TEST, TRAINER_SLIDE_BEFORE_FIRST_TURN) != NULL);
+    story = Test_GetTrainerSlideMessage(DIFFICULTY_NORMAL, TRAINER_LEAF_TEST, TRAINER_SLIDE_BEFORE_FIRST_TURN);
     gBattleTypeFlags = BATTLE_TYPE_TRAINER | BATTLE_TYPE_EREADER_TRAINER;
-    EXPECT(Test_GetTrainerSlideMessage(DIFFICULTY_NORMAL, TRAINER_LEAF_TEST, TRAINER_SLIDE_BEFORE_FIRST_TURN) == NULL);
+    eReader = Test_GetTrainerSlideMessage(DIFFICULTY_NORMAL, TRAINER_LEAF_TEST, TRAINER_SLIDE_BEFORE_FIRST_TURN);
     gBattleTypeFlags = BATTLE_TYPE_TRAINER | BATTLE_TYPE_TRAINER_HILL;
-    EXPECT(Test_GetTrainerSlideMessage(DIFFICULTY_NORMAL, TRAINER_LEAF_TEST, TRAINER_SLIDE_BEFORE_FIRST_TURN) == NULL);
+    trainerHill = Test_GetTrainerSlideMessage(DIFFICULTY_NORMAL, TRAINER_LEAF_TEST, TRAINER_SLIDE_BEFORE_FIRST_TURN);
     gBattleTypeFlags = BATTLE_TYPE_TRAINER | BATTLE_TYPE_FACTORY;
-    EXPECT(Test_GetTrainerSlideMessage(DIFFICULTY_NORMAL, TRAINER_LEAF_TEST, TRAINER_SLIDE_BEFORE_FIRST_TURN) != NULL);
+    frontier = Test_GetTrainerSlideMessage(DIFFICULTY_NORMAL, TRAINER_LEAF_TEST, TRAINER_SLIDE_BEFORE_FIRST_TURN);
     gSaveBlock2Ptr->frontier.lvlMode = FRONTIER_LVL_TENT;
-    EXPECT(Test_GetTrainerSlideMessage(DIFFICULTY_NORMAL, TRAINER_LEAF_TEST, TRAINER_SLIDE_BEFORE_FIRST_TURN) == NULL);
+    tent = Test_GetTrainerSlideMessage(DIFFICULTY_NORMAL, TRAINER_LEAF_TEST, TRAINER_SLIDE_BEFORE_FIRST_TURN);
     FlagClear(TESTING_FLAG_TRAINER_SLIDES);
     gSaveBlock2Ptr->frontier.lvlMode = lvlMode;
     gBattleTypeFlags = battleTypeFlags;
+
+    EXPECT(story != NULL);
+    EXPECT(eReader == NULL);
+    EXPECT(trainerHill == NULL);
+    EXPECT(frontier != NULL);
+    EXPECT(tent == NULL);
 }
 
 // SINGLES TESTS START
