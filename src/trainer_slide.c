@@ -124,6 +124,16 @@ static u32 GetPartyMonCount(u32 lastId, struct Pokemon *party, bool32 onlyAlive)
 #define TRAINER_SLIDE_ROW(table, difficulty, trainerId) \
     ((trainerId) < ARRAY_COUNT((table)[0]) ? (table)[difficulty][trainerId] : NULL)
 
+// The e-Reader trainer (ID 0), Trainer Hill's and the Battle Tents' (Frontier battle types) have IDs of their own, not story or Frontier trainers'
+static bool32 AreOpponentsInTrainerSlideTables(void)
+{
+    if (gBattleTypeFlags & (BATTLE_TYPE_EREADER_TRAINER | BATTLE_TYPE_TRAINER_HILL))
+        return FALSE;
+    if (gBattleTypeFlags & BATTLE_TYPE_FRONTIER)
+        return gSaveBlock2Ptr->frontier.lvlMode != FRONTIER_LVL_TENT;
+    return TRUE;
+}
+
 static const u8* const *GetTrainerSlideArray(enum DifficultyLevel difficulty, u32 trainerId, u32 slideId)
 {
 #if TESTING
@@ -138,6 +148,9 @@ static const u8* const *GetTrainerSlideArray(enum DifficultyLevel difficulty, u3
 
 static const u8 *GetTrainerSlideMessage(enum DifficultyLevel difficulty, u32 trainerId, u32 slideId)
 {
+    if (!AreOpponentsInTrainerSlideTables())
+        return NULL;
+
     const u8* const *trainerSlides = GetTrainerSlideArray(difficulty, trainerId, slideId);
     const u8* const *trainerSlidesNormal = GetTrainerSlideArray(DIFFICULTY_NORMAL, trainerId, slideId);
 
