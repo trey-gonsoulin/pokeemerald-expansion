@@ -26,6 +26,7 @@ bool32 TryHandleCaughtMonPageFlicker_HGSS(u8 taskId);
 #if TESTING
 void Test_PrintAndDestroyFormIcons(u8 taskId, enum Species species);
 void Test_ScrollFormIcons(u8 taskId, enum Species species, u8 menuPos, u8 numIcons[2], bool8 currentIconHidden[2]);
+void Test_FormScrollArrows(u8 taskId, enum Species species, u8 menuPos, bool8 *hasArrows, bool8 upShown[2], bool8 downShown[2], bool8 *tagsFreed);
 u32 Test_PrintAndDestroyEvolutionPage(u8 taskId, enum Species species, enum Species *targetSpecies, u32 count);
 u32 Test_StartInfoScreenCry(u8 taskId, enum NationalDexOrder dexNum, bool32 skipCry);
 #endif

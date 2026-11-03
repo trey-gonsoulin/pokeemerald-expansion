@@ -170,8 +170,9 @@ struct FromScreenData
     u8 numForms;
     u8 menuPos;
     u8 arrowSpriteId;
-    u8 topRow;
     u8 numIcons;
+    u8 scrollArrowsTaskId; // TASK_NONE unless the rows scroll
+    u16 topRow; // u16 for the scroll arrows, which read it through a u16 *
     u8 iconSpriteIds[FORMS_SCREEN_ICON_COUNT];
 };
 
