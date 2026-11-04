@@ -12,8 +12,7 @@ TEST("Storyteller: a new tale is the one game stat that qualifies")
     PARAMETRIZE { stat = GAME_STAT_ENTERED_HOT_SPRINGS; }
 
     memset(&gSaveBlock1Ptr->oldMan.storyteller, 0, sizeof(gSaveBlock1Ptr->oldMan.storyteller));
-    for (i = 0; i < NUM_GAME_STATS; i++)
-        SetGameStat(i, 0);
+    ResetGameStats();
     SetGameStat(stat, 5);
 
     EXPECT(Script_StorytellerInitializeRandomStat());
