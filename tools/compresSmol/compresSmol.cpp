@@ -130,15 +130,22 @@ int main(int argc, char *argv[])
                 std::ofstream fileOut(output.c_str(), std::ios::out | std::ios::binary);
                 fileOut.write(reinterpret_cast<const char *>(image.writeVec.data()), image.writeVec.size()*4);
                 fileOut.close();
+                if (!fileOut)
+                {
+                    fprintf(stderr, "Failed to write %s\n", output.c_str());
+                    return 1;
+                }
             }
             else
             {
                 fprintf(stderr, "Failed to compress image %s\n", image.fileName.c_str());
+                return 1;
             }
         }
         else
         {
             fprintf(stderr, "Input file %s doesn't exist\n", input.c_str());
+            return 1;
         }
     }
     if (option == DECODE)
@@ -148,7 +155,7 @@ int main(int argc, char *argv[])
             std::vector<unsigned int> inData;
             if (!readFileAsUInt(input, &inData))
             {
-                return 0;
+                return 1;
             }
             std::vector<unsigned short> image4bpp;
             readRawDataVecs(&inData, &image4bpp);
@@ -161,10 +168,16 @@ int main(int argc, char *argv[])
             std::ofstream fileOut(output.c_str(), std::ios::out | std::ios::binary);
             std::copy(charVec.begin(), charVec.end(), std::ostreambuf_iterator<char>(fileOut));
             fileOut.close();
+            if (!fileOut)
+            {
+                fprintf(stderr, "Failed to write %s\n", output.c_str());
+                return 1;
+            }
         }
         else
         {
             fprintf(stderr, "Input file %s doesn't exist\n", input.c_str());
+            return 1;
         }
     }
 
