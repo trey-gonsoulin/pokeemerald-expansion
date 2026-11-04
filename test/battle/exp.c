@@ -518,6 +518,52 @@ AI_DOUBLE_BATTLE_TEST("Exp award: A foe's partner revived onto the field by Revi
     }
 }
 
+// The same bit stayed set after the trainer AI's Revive or Max Revive (BS_ItemRestoreHP).
+AI_SINGLE_BATTLE_TEST("Exp award: A foe revived by the trainer's Revive gives experience again when it faints again")
+{
+    GIVEN {
+        WITH_EXP_AWARD_CONFIGS();
+        VAR_SET(TESTING_VAR_AI_TRAINER_ITEM, ITEM_REVIVE);
+        PLAYER(SPECIES_WOBBUFFET) { Level(20); Speed(100); }
+        OPPONENT(SPECIES_WYNAUT) { Level(10); HP(1); Speed(50); Moves(MOVE_CELEBRATE); }
+        OPPONENT(SPECIES_PICHU) { Level(10); HP(1); Speed(50); Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_DRAGON_RAGE); }
+        TURN { MOVE(player, MOVE_CELEBRATE); }
+        TURN { MOVE(player, MOVE_DRAGON_RAGE); }
+        TURN { MOVE(player, MOVE_DRAGON_RAGE); }
+    } SCENE {
+        MESSAGE("Wynaut had its HP restored.");
+    } THEN {
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WOBBUFFET, 20) + EXP_YIELD(SPECIES_WYNAUT, 10) * 2 + EXP_YIELD(SPECIES_PICHU, 10));
+    }
+}
+
+// Opponent B's Pokemon use the trainer's items too, and the revive has to clear opponent B's bits.
+AI_ONE_VS_TWO_BATTLE_TEST("Exp award: A foe of opponent B revived by a Max Revive gives experience again when it faints again")
+{
+    GIVEN {
+        WITH_EXP_AWARD_CONFIGS();
+        VAR_SET(TESTING_VAR_AI_TRAINER_ITEM, ITEM_MAX_REVIVE);
+        PLAYER(SPECIES_WOBBUFFET) { Level(20); Speed(100); }
+        PLAYER(SPECIES_WYNAUT) { Level(20); Speed(100); }
+        OPPONENT_A(SPECIES_WOBBUFFET) { Level(10); Speed(50); Moves(MOVE_CELEBRATE); }
+        OPPONENT_B(SPECIES_WYNAUT) { Level(10); HP(1); MaxHP(40); Speed(50); Moves(MOVE_CELEBRATE); }
+        OPPONENT_B(SPECIES_PICHU) { Level(10); HP(1); Speed(50); Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        TURN { MOVE(playerLeft, MOVE_DRAGON_RAGE, target: opponentRight); MOVE(playerRight, MOVE_CELEBRATE); }
+        TURN { MOVE(playerLeft, MOVE_CELEBRATE); MOVE(playerRight, MOVE_CELEBRATE); }
+        TURN { MOVE(playerLeft, MOVE_DRAGON_RAGE, target: opponentRight); MOVE(playerRight, MOVE_CELEBRATE); }
+        TURN { MOVE(playerLeft, MOVE_DRAGON_RAGE, target: opponentRight); MOVE(playerRight, MOVE_CELEBRATE); }
+    } SCENE {
+        MESSAGE("Wynaut had its HP restored.");
+    } THEN {
+        u32 gain = EXP_YIELD(SPECIES_WYNAUT, 10) * 2 + EXP_YIELD(SPECIES_PICHU, 10);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WOBBUFFET, 20) + gain);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][1], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WYNAUT, 20) + gain);
+    }
+}
+
 // The partner's replacement has party index 1 in its own party, which used to mark the player's benched second Pokemon as sent in.
 AI_TWO_VS_ONE_BATTLE_TEST("Exp award: The partner's replacement does not give experience to the player's benched Pokemon")
 {
