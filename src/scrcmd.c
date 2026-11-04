@@ -1279,18 +1279,23 @@ bool8 ScrCmd_applymovement(struct ScriptContext *ctx)
     u16 localId = VarGet(ScriptReadHalfword(ctx));
     const u8 *movementScript = (const u8 *)ScriptReadWord(ctx);
     struct ObjectEvent *objEvent;
+    u8 objectEventId;
 
     Script_RequestEffects(SCREFF_V1 | SCREFF_HARDWARE);
 
+    // An object that isn't spawned has no slot, and OBJECT_EVENTS_COUNT is past gObjectEvents (rh-hideout#10202)
+    if (TryGetObjectEventIdByLocalIdAndMap(localId, gSaveBlock1Ptr->location.mapNum, gSaveBlock1Ptr->location.mapGroup, &objectEventId))
+        return FALSE;
+
     // When applying script movements to follower, it may have frozen animation that must be cleared
     if ((localId == OBJ_EVENT_ID_FOLLOWER && (objEvent = GetFollowerObject()) && objEvent->frozen)
-            || ((objEvent = &gObjectEvents[GetObjectEventIdByLocalId(localId)]) && IS_OW_MON_OBJ(objEvent)))
+            || ((objEvent = &gObjectEvents[objectEventId]) && IS_OW_MON_OBJ(objEvent)))
     {
         ClearObjectEventMovement(objEvent, &gSprites[objEvent->spriteId]);
         gSprites[objEvent->spriteId].animCmdIndex = 0; // Reset start frame of animation
     }
 
-    gObjectEvents[GetObjectEventIdByLocalId(localId)].directionOverwrite = DIR_NONE;
+    gObjectEvents[objectEventId].directionOverwrite = DIR_NONE;
     ScriptMovement_StartObjectMovementScript(localId, gSaveBlock1Ptr->location.mapNum, gSaveBlock1Ptr->location.mapGroup, movementScript);
     sMovingNpcId = localId;
     if (localId != OBJ_EVENT_ID_FOLLOWER
@@ -1308,10 +1313,14 @@ bool8 ScrCmd_applymovementat(struct ScriptContext *ctx)
     const void *movementScript = (const void *)ScriptReadWord(ctx);
     u8 mapGroup = ScriptReadByte(ctx);
     u8 mapNum = ScriptReadByte(ctx);
+    u8 objectEventId;
 
     Script_RequestEffects(SCREFF_V1 | SCREFF_HARDWARE);
 
-    gObjectEvents[GetObjectEventIdByLocalId(localId)].directionOverwrite = DIR_NONE;
+    if (TryGetObjectEventIdByLocalIdAndMap(localId, mapNum, mapGroup, &objectEventId))
+        return FALSE;
+
+    gObjectEvents[objectEventId].directionOverwrite = DIR_NONE;
     ScriptMovement_StartObjectMovementScript(localId, mapNum, mapGroup, movementScript);
     sMovingNpcId = localId;
     return FALSE;
@@ -3146,8 +3155,12 @@ bool8 Scrcmd_getobjectfacingdirection(struct ScriptContext *ctx)
     Script_RequestWriteVar(varId);
 
     u16 *varPointer = GetVarPointer(varId);
+    u32 objectEventId = GetObjectEventIdByLocalId(objectId);
 
-    *varPointer = gObjectEvents[GetObjectEventIdByLocalId(objectId)].facingDirection;
+    if (objectEventId == OBJECT_EVENTS_COUNT)
+        *varPointer = DIR_NONE;
+    else
+        *varPointer = gObjectEvents[objectEventId].facingDirection;
 
     return FALSE;
 }

@@ -10085,12 +10085,14 @@ void ScriptFaceEachOther(struct ScriptContext *ctx)
 {
     u32 localIdOne = VarGet(ScriptReadHalfword(ctx));
     u32 localIdTwo = VarGet(ScriptReadHalfword(ctx));
-    struct ObjectEvent *objectOne = &gObjectEvents[GetObjectEventIdByLocalId(localIdOne)];
-    struct ObjectEvent *objectTwo = &gObjectEvents[GetObjectEventIdByLocalId(localIdTwo)];
-    
+    u32 objectIdOne = GetObjectEventIdByLocalId(localIdOne);
+    u32 objectIdTwo = GetObjectEventIdByLocalId(localIdTwo);
+
     Script_RequestEffects(SCREFF_V1 | SCREFF_HARDWARE);
-    
-    ObjectEventsTurnToEachOther(objectOne, objectTwo);
+
+    if (objectIdOne == OBJECT_EVENTS_COUNT || objectIdTwo == OBJECT_EVENTS_COUNT)
+        return;
+    ObjectEventsTurnToEachOther(&gObjectEvents[objectIdOne], &gObjectEvents[objectIdTwo]);
 }
 
 enum Direction DetermineObjectEventDirectionFromObject(struct ObjectEvent *objectOne, struct ObjectEvent *objectTwo)
