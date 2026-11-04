@@ -656,6 +656,7 @@ static void InitReleaseMon(void);
 static bool8 TryHideReleaseMon(void);
 static void InitCanReleaseMonVars(void);
 static void ReleaseMon(void);
+static void RemoveReleasedMon(void);
 static bool32 AtLeastThreeUsableMons(void);
 static s8 RunCanReleaseMon(void);
 static void SaveMovingMon(void);
@@ -6606,13 +6607,22 @@ static bool8 TryHideReleaseMon(void)
 
 static void ReleaseMon(void)
 {
+    DestroyReleaseMonIcon();
+    RemoveReleasedMon();
+    TryRefreshDisplayMon();
+}
+
+static void RemoveReleasedMon(void)
+{
     u8 boxId;
     enum Item item = ITEM_NONE;
 
-    DestroyReleaseMonIcon();
     if (sIsMonBeingMoved)
     {
+        // The Pokémon in the cursor's hand has already left its slot
         sIsMonBeingMoved = FALSE;
+        if (OW_PC_RELEASE_ITEM >= GEN_8)
+            item = GetMonData(&sStorage->movingMon, MON_DATA_HELD_ITEM);
     }
     else
     {
@@ -6630,11 +6640,28 @@ static void ReleaseMon(void)
         }
 
         PurgeMonOrBoxMon(boxId, sCursorPosition);
-        if (item != ITEM_NONE)
-            AddBagItem(item, 1);
     }
-    TryRefreshDisplayMon();
+    if (item != ITEM_NONE)
+        AddBagItem(item, 1);
 }
+
+#if TESTING
+// Releases movingMon from the cursor's hand, or with NULL the Pokémon under the cursor (party or current box), without the PC's screen
+void Test_RemoveReleasedMon(struct Pokemon *movingMon, bool8 inParty, u8 cursorPosition)
+{
+    struct PokemonStorageSystemData *savedStorage = sStorage;
+
+    sStorage = AllocZeroed(sizeof(*sStorage));
+    sIsMonBeingMoved = (movingMon != NULL);
+    if (movingMon != NULL)
+        sStorage->movingMon = *movingMon;
+    sCursorArea = inParty ? CURSOR_AREA_IN_PARTY : CURSOR_AREA_IN_BOX;
+    sCursorPosition = cursorPosition;
+    RemoveReleasedMon();
+    Free(sStorage);
+    sStorage = savedStorage;
+}
+#endif
 
 static void TrySetCursorFistAnim(void)
 {
