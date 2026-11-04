@@ -657,6 +657,7 @@ static bool8 TryHideReleaseMon(void);
 static void InitCanReleaseMonVars(void);
 static void ReleaseMon(void);
 static void RemoveReleasedMon(void);
+bool32 CanBagTakeReleasedMonItem(enum Item item);
 static bool32 AtLeastThreeUsableMons(void);
 static s8 RunCanReleaseMon(void);
 static void SaveMovingMon(void);
@@ -2703,6 +2704,10 @@ static void Task_OnSelectedMon(u8 taskId)
             {
                 sStorage->state = 4;
             }
+            else if (!CanBagTakeReleasedMonItem(sStorage->displayMonItemId))
+            {
+                sStorage->state = 7;
+            }
             else
             {
                 PlaySE(SE_SELECT);
@@ -2774,6 +2779,11 @@ static void Task_OnSelectedMon(u8 taskId)
     case 4:
         PlaySE(SE_FAILURE);
         PrintMessage(MSG_PLEASE_REMOVE_MAIL);
+        sStorage->state = 6;
+        break;
+    case 7:
+        PlaySE(SE_FAILURE);
+        PrintMessage(MSG_BAG_FULL);
         sStorage->state = 6;
         break;
     case 6:
@@ -6605,6 +6615,12 @@ static bool8 TryHideReleaseMon(void)
     }
 }
 
+// The release is refused when the held item it returns to the bag wouldn't fit, so the item isn't lost
+bool32 CanBagTakeReleasedMonItem(enum Item item)
+{
+    return OW_PC_RELEASE_ITEM < GEN_8 || item == ITEM_NONE || CheckBagHasSpace(item, 1);
+}
+
 static void ReleaseMon(void)
 {
     DestroyReleaseMonIcon();
@@ -7061,16 +7077,31 @@ static void ReshowDisplayMon(void)
         TryRefreshDisplayMon();
 }
 
+// TryBoxMonFormChange leaves the stats alone: a party Pokémon's follow its new form, as TryFormChange's do
+static void RecalculatePartyMonStats(struct BoxPokemon *boxMon)
+{
+    for (u32 i = 0; i < PARTY_SIZE; i++)
+    {
+        if (boxMon == &gParties[B_TRAINER_PLAYER][i].box)
+        {
+            CalculateMonStats(&gParties[B_TRAINER_PLAYER][i]);
+            return;
+        }
+    }
+}
+
 void SetMonFormPSS(struct BoxPokemon *boxMon, enum FormChanges method)
 {
     if (TryBoxMonFormChange(boxMon, method))
+    {
+        RecalculatePartyMonStats(boxMon);
         sRefreshDisplayMonGfx = TRUE;
+    }
 }
 
 void SetMonFormPSS_ItemHold(struct BoxPokemon *boxMon)
 {
-    if (TryBoxMonFormChange(boxMon, FORM_CHANGE_ITEM_HOLD))
-        sRefreshDisplayMonGfx = TRUE;
+    SetMonFormPSS(boxMon, FORM_CHANGE_ITEM_HOLD);
     UpdateSpeciesSpritePSS(boxMon);
 }
 
