@@ -8395,6 +8395,18 @@ uq4_12_t CalcTypeEffectivenessMultiplier(struct DamageContext *ctx)
     return modifier;
 }
 
+// Outside a battle (the Battle Dome's tourney tree, the overworld) there is no battler whose
+// volatiles, grounding, gimmick or field could apply: gBattleMons[0] is the last battle's and
+// gBattleStruct is NULL. So only the type chart and Freeze-Dry's own rule count.
+static void MulByTypeEffectivenessOutOfBattle(enum Move move, enum Type moveType, uq4_12_t *modifier, enum Type defType)
+{
+    uq4_12_t mod = GetTypeModifier(moveType, defType);
+
+    if (GetMoveEffect(move) == EFFECT_SUPER_EFFECTIVE_ON_ARG && defType == GetMoveArgType(move))
+        mod = UQ_4_12(2.0);
+    *modifier = uq4_12_multiply(*modifier, mod);
+}
+
 uq4_12_t CalcPartyMonTypeEffectivenessMultiplier(enum Move move, enum Species speciesDef, enum Ability abilityDef)
 {
     uq4_12_t modifier = UQ_4_12(1.0);
@@ -8402,19 +8414,11 @@ uq4_12_t CalcPartyMonTypeEffectivenessMultiplier(enum Move move, enum Species sp
 
     if (move != MOVE_STRUGGLE && moveType != TYPE_MYSTERY)
     {
-        struct DamageContext ctx = {0};
-        ctx.move = ctx.chosenMove = ctx.baseMove = move;
-        ctx.moveType = moveType;
-        ctx.updateFlags = FALSE;
-        ctx.abilities[B_BATTLER_0] = abilityDef;
-
-        MulByTypeEffectiveness(&ctx, &modifier, GetSpeciesType(speciesDef, 0));
+        MulByTypeEffectivenessOutOfBattle(move, moveType, &modifier, GetSpeciesType(speciesDef, 0));
         if (GetSpeciesType(speciesDef, 1) != GetSpeciesType(speciesDef, 0))
-            MulByTypeEffectiveness(&ctx, &modifier, GetSpeciesType(speciesDef, 1));
+            MulByTypeEffectivenessOutOfBattle(move, moveType, &modifier, GetSpeciesType(speciesDef, 1));
 
-        if (ctx.moveType == TYPE_GROUND
-         && (abilityDef == ABILITY_LEVITATE || abilityDef == ABILITY_EELEVATE)
-         && !(gFieldStatuses & STATUS_FIELD_GRAVITY))
+        if (moveType == TYPE_GROUND && (abilityDef == ABILITY_LEVITATE || abilityDef == ABILITY_EELEVATE))
             modifier = UQ_4_12(0.0);
         if (abilityDef == ABILITY_WONDER_GUARD && modifier <= UQ_4_12(1.0) && GetMovePower(move) != 0)
             modifier = UQ_4_12(0.0);
@@ -8456,9 +8460,9 @@ uq4_12_t GetOverworldTypeEffectiveness(struct Pokemon *mon, enum Type moveType)
     enum Type type1 = GetSpeciesType(speciesDef, 0);
     enum Type type2 = GetSpeciesType(speciesDef, 1);
 
-    MulByTypeEffectiveness(&ctx, &modifier, type1);
+    MulByTypeEffectivenessOutOfBattle(ctx.move, moveType, &modifier, type1);
     if (type2 != type1)
-        MulByTypeEffectiveness(&ctx, &modifier, type2);
+        MulByTypeEffectivenessOutOfBattle(ctx.move, moveType, &modifier, type2);
 
     if ((modifier <= UQ_4_12(1.0) && ctx.abilities[B_BATTLER_0] == ABILITY_WONDER_GUARD)
      || CanAbilityAbsorbMove(&ctx))

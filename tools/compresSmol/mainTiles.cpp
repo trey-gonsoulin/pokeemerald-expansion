@@ -17,6 +17,11 @@ int main(int argc, char *argv[])
         std::ofstream fileOut(outputName, std::ios::out | std::ios::binary);
         fileOut.write(reinterpret_cast<const char *>(compression.writeVec.data()), compression.writeVec.size()*4);
         fileOut.close();
+        if (!fileOut)
+        {
+            fprintf(stderr, "Failed to write %s\n", outputName.c_str());
+            return 1;
+        }
         return 0;
     }
     /*
@@ -70,6 +75,7 @@ int main(int argc, char *argv[])
     */
     else
     {
-        return 0;
+        fprintf(stderr, "Usage: %s <tilemap> <output.smolTM>\n", argv[0]);
+        return 1;
     }
 }
