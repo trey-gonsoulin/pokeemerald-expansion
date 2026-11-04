@@ -390,9 +390,9 @@ void BattleArena_AddSkillPoints(enum BattlerId battlerAtk)
         return;
     }
 
-    // Score the move's result on its target, the user for a move on itself (the Arena is singles only),
-    // as Stomping Tantrum's check does. A stat move that changes nothing missed in Emerald.
-    u32 resultFlags = gBattleStruct->moveResultFlags[gBattlerTarget];
+    // Score the move's result on its target, the user for a move on itself or on every battler (the Arena
+    // is singles only), as Stomping Tantrum's check does. A stat move that changes nothing missed in Emerald.
+    u32 resultFlags = gBattleStruct->moveResultFlags[GetMoveResultBattler(battlerAtk, gCurrentMove)];
 
     if (resultFlags & (MOVE_RESULT_NO_EFFECT | MOVE_RESULT_STAT_CHANGE_PREVENTED))
     {
