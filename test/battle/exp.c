@@ -458,7 +458,7 @@ AI_SINGLE_BATTLE_TEST("Exp award: A foe revived by Revival Blessing gives experi
         WITH_EXP_AWARD_CONFIGS();
         PLAYER(SPECIES_WOBBUFFET) { Level(20); Speed(100); }
         OPPONENT(SPECIES_WYNAUT) { Level(10); HP(1); Speed(50); Moves(MOVE_CELEBRATE); }
-        OPPONENT(SPECIES_WYNAUT) { Level(10); HP(1); Speed(50); Moves(MOVE_REVIVAL_BLESSING); }
+        OPPONENT(SPECIES_PICHU) { Level(10); HP(1); Speed(50); Moves(MOVE_REVIVAL_BLESSING); }
     } WHEN {
         TURN { MOVE(player, MOVE_DRAGON_RAGE); }
         TURN { MOVE(player, MOVE_CELEBRATE); }
@@ -467,7 +467,7 @@ AI_SINGLE_BATTLE_TEST("Exp award: A foe revived by Revival Blessing gives experi
     } SCENE {
         MESSAGE("Wynaut was revived and is ready to fight again!");
     } THEN {
-        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WOBBUFFET, 20) + EXP_YIELD(SPECIES_WYNAUT, 10) * 3);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WOBBUFFET, 20) + EXP_YIELD(SPECIES_WYNAUT, 10) * 2 + EXP_YIELD(SPECIES_PICHU, 10));
     }
 }
 
@@ -480,7 +480,7 @@ AI_ONE_VS_TWO_BATTLE_TEST("Exp award: A foe of opponent B revived by Revival Ble
         PLAYER(SPECIES_WYNAUT) { Level(20); Speed(100); }
         OPPONENT_A(SPECIES_WOBBUFFET) { Level(10); Speed(50); Moves(MOVE_CELEBRATE); }
         OPPONENT_B(SPECIES_WYNAUT) { Level(10); HP(1); Speed(50); Moves(MOVE_CELEBRATE); }
-        OPPONENT_B(SPECIES_WYNAUT) { Level(10); HP(1); Speed(50); Moves(MOVE_REVIVAL_BLESSING); }
+        OPPONENT_B(SPECIES_PICHU) { Level(10); HP(1); Speed(50); Moves(MOVE_REVIVAL_BLESSING); }
     } WHEN {
         TURN { MOVE(playerLeft, MOVE_DRAGON_RAGE, target: opponentRight); MOVE(playerRight, MOVE_CELEBRATE); }
         TURN { MOVE(playerLeft, MOVE_CELEBRATE); MOVE(playerRight, MOVE_CELEBRATE); }
@@ -489,7 +489,30 @@ AI_ONE_VS_TWO_BATTLE_TEST("Exp award: A foe of opponent B revived by Revival Ble
     } SCENE {
         MESSAGE("Wynaut was revived and is ready to fight again!");
     } THEN {
-        u32 gain = EXP_YIELD(SPECIES_WYNAUT, 10) * 3;
+        u32 gain = EXP_YIELD(SPECIES_WYNAUT, 10) * 2 + EXP_YIELD(SPECIES_PICHU, 10);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WOBBUFFET, 20) + gain);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][1], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WYNAUT, 20) + gain);
+    }
+}
+
+// Reviving the fainted partner sends it straight back out, the other way the revived foe can faint again.
+AI_DOUBLE_BATTLE_TEST("Exp award: A foe's partner revived onto the field by Revival Blessing gives experience again when it faints again")
+{
+    GIVEN {
+        WITH_EXP_AWARD_CONFIGS();
+        PLAYER(SPECIES_WOBBUFFET) { Level(20); Speed(100); }
+        PLAYER(SPECIES_WYNAUT) { Level(20); Speed(100); }
+        OPPONENT(SPECIES_WYNAUT) { Level(10); HP(1); Speed(50); Moves(MOVE_CELEBRATE); }
+        OPPONENT(SPECIES_PICHU) { Level(10); HP(1); Speed(50); Moves(MOVE_REVIVAL_BLESSING); }
+    } WHEN {
+        TURN { MOVE(playerLeft, MOVE_DRAGON_RAGE, target: opponentLeft); MOVE(playerRight, MOVE_CELEBRATE); }
+        TURN { MOVE(playerLeft, MOVE_DRAGON_RAGE, target: opponentLeft); MOVE(playerRight, MOVE_DRAGON_RAGE, target: opponentRight); }
+    } SCENE {
+        MESSAGE("The opposing Wynaut fainted!");
+        MESSAGE("Wynaut was revived and is ready to fight again!");
+        MESSAGE("The opposing Wynaut fainted!");
+    } THEN {
+        u32 gain = EXP_YIELD(SPECIES_WYNAUT, 10) * 2 + EXP_YIELD(SPECIES_PICHU, 10);
         EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WOBBUFFET, 20) + gain);
         EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][1], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WYNAUT, 20) + gain);
     }
