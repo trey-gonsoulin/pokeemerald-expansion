@@ -283,6 +283,7 @@ TEST("Thumb and C SFC32 implementations produce the same results")
 
     EXPECT_EQ(thumbSum, cSum);
 }
+
 // Fisher-Yates' last step swaps the first two elements, so a 2-element
 // array takes both orders and a 3-element one all 6.
 #define SHUFFLE_ORDERS_TEST_IMPL(type) \
