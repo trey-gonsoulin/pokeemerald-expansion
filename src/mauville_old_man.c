@@ -1311,6 +1311,8 @@ static bool8 StorytellerInitializeRandomStat(void)
     u8 storyIds[sNumStories];
     s32 i, j;
 
+    for (i = 0; i < sNumStories; i++)
+        storyIds[i] = i;
     Shuffle(storyIds, sNumStories, sizeof(storyIds[0]));
     for (i = 0; i < sNumStories; i++)
     {

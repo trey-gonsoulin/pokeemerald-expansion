@@ -84,7 +84,7 @@ u8 *GetStaticOutbreakMapName(u8 *dest, enum MassOutbreakIndex outbreakIdx)
 
 void PrepareTvShowForRandomOutbreak(TVShow *show)
 {
-    u32 outbreakIdx = RandomUniform(RNG_NONE, 0, ARRAY_COUNT(sPokeOutbreakSpeciesList));
+    u32 outbreakIdx = RandomUniform(RNG_MASS_OUTBREAK, 0, ARRAY_COUNT(sPokeOutbreakSpeciesList) - 1);
     show->massOutbreak.outbreakIndex = outbreakIdx + 1;
     show->massOutbreak.species = sPokeOutbreakSpeciesList[outbreakIdx].species;
     show->massOutbreak.locationMapNum = MAP_NUM(sPokeOutbreakSpeciesList[outbreakIdx].location);
@@ -107,6 +107,9 @@ void StartMassOutbreak(struct MassOutbreak outbreak)
 
 void StartStaticMassOutbreak(enum MassOutbreakIndex outbreakIdx)
 {
+    // A show from an older save or a record-mixing partner can hold any index.
+    if (outbreakIdx >= OUTBREAK_COUNT)
+        return;
     StartMassOutbreak(sPokeOutbreakSpeciesList[outbreakIdx]);
 }
 

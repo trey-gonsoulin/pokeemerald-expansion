@@ -115,7 +115,7 @@ void AdvanceRandom(void)
     u32 tmp; \
     LOOP_RANDOM_START; \
     --n; \
-    while (n > 1) \
+    while (n > 0) \
     { \
         int j = (LOOP_RANDOM * (n+1)) >> 16; \
         SWAP(data[n], data[j], tmp); \
@@ -147,7 +147,7 @@ void ShuffleN(void *data, size_t n, size_t size)
     LOOP_RANDOM_START;
     --n;
 
-    while (n > 1)
+    while (n > 0)
     {
         int j = (LOOP_RANDOM * (n+1)) >> 16;
         memcpy(tmp, (u8 *)data + n*size, size); // tmp = data[n];

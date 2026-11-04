@@ -283,3 +283,37 @@ TEST("Thumb and C SFC32 implementations produce the same results")
 
     EXPECT_EQ(thumbSum, cSum);
 }
+// Fisher-Yates' last step swaps the first two elements, so a 2-element
+// array takes both orders and a 3-element one all 6.
+#define SHUFFLE_ORDERS_TEST_IMPL(type) \
+    u32 i, seen = 0; \
+    for (i = 0; i < 256; i++) \
+    { \
+        type pair[2] = { 0, 1 }; \
+        type triple[3] = { 0, 1, 2 }; \
+        Shuffle(pair, ARRAY_COUNT(pair), sizeof(pair[0])); \
+        Shuffle(triple, ARRAY_COUNT(triple), sizeof(triple[0])); \
+        seen |= 1 << pair[0]; \
+        seen |= 1 << (2 + triple[0] * 3 + triple[1]); \
+    } \
+    EXPECT_EQ(seen, (1 << 0) | (1 << 1) | (1 << (2 + 1)) | (1 << (2 + 2)) | (1 << (2 + 3)) | (1 << (2 + 5)) | (1 << (2 + 6)) | (1 << (2 + 7)));
+
+TEST("Shuffle reaches every order [Shuffle8]")
+{
+    SHUFFLE_ORDERS_TEST_IMPL(u8);
+}
+
+TEST("Shuffle reaches every order [Shuffle16]")
+{
+    SHUFFLE_ORDERS_TEST_IMPL(u16);
+}
+
+TEST("Shuffle reaches every order [Shuffle32]")
+{
+    SHUFFLE_ORDERS_TEST_IMPL(u32);
+}
+
+TEST("Shuffle reaches every order [Shuffle64]")
+{
+    SHUFFLE_ORDERS_TEST_IMPL(u64);
+}
