@@ -98,9 +98,10 @@ TEST("DexNav: in Flash's light the patch tiles are the 45 wholly inside the circ
 // A cave (Granite Cave's map type) at the given Flash level, with the player at
 // map grid (x, y), MAP_OFFSET included: the start-of-search pick, and the tile
 // it picked in *x, *y. The map is all tall grass, or only (grassX, grassY) when
-// grassX isn't negative. The object slots are empty but for object, if any, in
-// slot 0. The globals are restored before the caller's EXPECTs.
-static bool32 Test_DexNavPickTileOnGrid(s32 width, s32 height, s16 playerX, s16 playerY, s32 grassX, s32 grassY, u8 flashLevel, const struct ObjectEvent *object, s16 *x, s16 *y)
+// grassX isn't negative, its grass at grassElevation. The object slots are empty
+// but for object, if any, in slot 0. The globals are restored before the
+// caller's EXPECTs.
+static bool32 Test_DexNavPickTileOnGrid(s32 width, s32 height, s16 playerX, s16 playerY, s32 grassX, s32 grassY, u8 grassElevation, u8 flashLevel, const struct ObjectEvent *object, s16 *x, s16 *y)
 {
     struct ObjectEvent *savedObjects = Alloc(OBJECT_EVENTS_COUNT * sizeof(struct ObjectEvent));
     static const u16 behaviors[] = {MB_TALL_GRASS, MB_NORMAL};
@@ -122,12 +123,10 @@ static bool32 Test_DexNavPickTileOnGrid(s32 width, s32 height, s16 playerX, s16 
     gBackupMapLayout.width = width;
     gBackupMapLayout.height = height;
     gBackupMapLayout.map = AllocZeroed(width * height * sizeof(u16));
+    for (i = 0; i < width * height; i++)
+        gBackupMapLayout.map[i] = grassX >= 0 ? 1 : PACK_ELEVATION(grassElevation);
     if (grassX >= 0)
-    {
-        for (i = 0; i < width * height; i++)
-            gBackupMapLayout.map[i] = 1;
-        gBackupMapLayout.map[grassY * width + grassX] = 0;
-    }
+        gBackupMapLayout.map[grassY * width + grassX] = PACK_ELEVATION(grassElevation);
     gSaveBlock1Ptr->location.mapGroup = MAP_GROUP(MAP_GRANITE_CAVE_1F);
     gSaveBlock1Ptr->location.mapNum = MAP_NUM(MAP_GRANITE_CAVE_1F);
     gSaveBlock1Ptr->pos.x = playerX - MAP_OFFSET;
@@ -152,7 +151,7 @@ static bool32 Test_DexNavPickTileOnMap(s32 width, s32 height, s16 playerX, s16 p
 {
     s16 x, y;
 
-    return Test_DexNavPickTileOnGrid(width, height, playerX, playerY, -1, -1, 1, NULL, &x, &y)
+    return Test_DexNavPickTileOnGrid(width, height, playerX, playerY, -1, -1, 0, 1, NULL, &x, &y)
         && IsDexNavTileLit(x - playerX, y - playerY);
 }
 
@@ -172,7 +171,7 @@ TEST("DexNav: a cave tile whose chance wraps to 0 always takes the patch")
 {
     s16 x, y;
 
-    EXPECT(Test_DexNavPickTileOnGrid(64, 64, 40, 47, 44, 47, 0, NULL, &x, &y));
+    EXPECT(Test_DexNavPickTileOnGrid(64, 64, 40, 47, 44, 47, 0, 0, NULL, &x, &y));
     EXPECT_EQ(x, 44);
     EXPECT_EQ(y, 47);
 }
@@ -185,13 +184,43 @@ TEST("DexNav: only an active object keeps the patch off its tile")
     bool32 pickedPastInactive, pickedPastActive;
     s16 x, y;
 
-    pickedPastInactive = Test_DexNavPickTileOnGrid(64, 64, 40, 47, 43, 47, 1, &object, &x, &y)
+    pickedPastInactive = Test_DexNavPickTileOnGrid(64, 64, 40, 47, 43, 47, 0, 1, &object, &x, &y)
                       && x == 43 && y == 47;
     object.active = TRUE;
-    pickedPastActive = Test_DexNavPickTileOnGrid(64, 64, 40, 47, 43, 47, 1, &object, &x, &y);
+    pickedPastActive = Test_DexNavPickTileOnGrid(64, 64, 40, 47, 43, 47, 0, 1, &object, &x, &y);
 
     EXPECT(pickedPastInactive);
     EXPECT(!pickedPastActive);
+}
+
+// An NPC mid-step stands on the tile it is leaving as well as the one it is
+// entering, but upstream checked only currentCoords (#229).
+TEST("DexNav: an object mid-step keeps the patch off the tile it is leaving")
+{
+    struct ObjectEvent object = {.active = TRUE, .currentCoords = {44, 47}, .previousCoords = {43, 47}};
+    s16 x, y;
+
+    EXPECT(!Test_DexNavPickTileOnGrid(64, 64, 40, 47, 43, 47, 0, 1, &object, &x, &y));
+}
+
+// Upstream read the player's elevation from the object slot numbered by its
+// sprite ID (#228), here an empty slot, whose elevation 0 matches any tile.
+TEST("DexNav: a cave patch stays at the player's own elevation")
+{
+    struct ObjectEvent player = {.active = TRUE, .currentCoords = {40, 47}, .previousCoords = {40, 47}, .currentElevation = 3};
+    struct PlayerAvatar savedAvatar = gPlayerAvatar;
+    bool32 pickedSameElevation, pickedOtherElevation;
+    s16 x, y;
+
+    gPlayerAvatar.objectEventId = 0;
+    gPlayerAvatar.spriteId = 1;
+    pickedSameElevation = Test_DexNavPickTileOnGrid(64, 64, 40, 47, 43, 47, 3, 1, &player, &x, &y)
+                       && x == 43 && y == 47;
+    pickedOtherElevation = Test_DexNavPickTileOnGrid(64, 64, 40, 47, 43, 47, 4, 1, &player, &x, &y);
+    gPlayerAvatar = savedAvatar;
+
+    EXPECT(pickedSameElevation);
+    EXPECT(!pickedOtherElevation);
 }
 
 // In the debug ROM R+Start opens the debug menu, so R searches on its release,
