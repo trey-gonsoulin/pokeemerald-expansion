@@ -1,5 +1,6 @@
 #include "global.h"
 #include "contest.h"
+#include "contest_painting.h"
 #include "string_util.h"
 #include "constants/contest.h"
 #include "test/test.h"
@@ -81,4 +82,16 @@ TEST("Contest winner: a winner that isn't shiny doesn't keep the old slot's shin
     SaveContestWinner(CONTEST_SAVE_FOR_MUSEUM);
 
     EXPECT(!gSaveBlock1Ptr->contestWinners[id].isShiny);
+}
+
+TEST("Contest winner: a painting from an old save ends a 10-letter name before the trainer's")
+{
+    SetUpContestWinner(COMPOUND_STRING("MASQUERAIN"), FALSE);
+    // As SaveContestWinner left it before the fix: 10 letters, then the old slot's space
+    StringCopyN(gSaveBlock1Ptr->contestWinners[0].monName, COMPOUND_STRING("MASQUERAIN"), VANILLA_POKEMON_NAME_LENGTH);
+    StringCopy(gSaveBlock1Ptr->contestWinners[0].trainerName, COMPOUND_STRING("TREY"));
+
+    SetContestWinnerForPainting(1);
+
+    EXPECT_EQ(StringCompare(gCurContestWinner.monName, COMPOUND_STRING("MASQUERAIN")), 0);
 }

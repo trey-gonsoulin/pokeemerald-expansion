@@ -122,6 +122,8 @@ void SetContestWinnerForPainting(int contestWinnerId)
     u8 *saveIdx = &gCurContestWinnerSaveIdx;
     u8 *isForArtist = &gCurContestWinnerIsForArtist;
     gCurContestWinner = gSaveBlock1Ptr->contestWinners[contestWinnerId - 1];
+    // Saves from before #78 left a 10-letter name unterminated
+    gCurContestWinner.monName[VANILLA_POKEMON_NAME_LENGTH] = EOS;
     *saveIdx = contestWinnerId - 1;
     *isForArtist = FALSE;
 }

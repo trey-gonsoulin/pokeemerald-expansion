@@ -22,6 +22,7 @@ static s32 Test_ArenaSkillPoints(enum BattlerId target, u32 resultFlags, bool32 
     points = gBattleStruct->arenaSkillPoints[B_BATTLER_0];
     TRY_FREE_AND_SET_NULL(gBattleStruct);
     memset(gProtectStructs, 0, sizeof(gProtectStructs));
+    gBattlerTarget = 0;
     return points;
 }
 
@@ -58,6 +59,12 @@ TEST("Battle Arena skill: a move the foe protects from scores nothing")
 TEST("Battle Arena skill: protecting itself scores nothing")
 {
     EXPECT_EQ(Test_ArenaSkillPoints(B_BATTLER_1, 0, TRUE), 0);
+}
+
+TEST("Battle Arena skill: a stat move that changes nothing loses 2")
+{
+    EXPECT_EQ(Test_ArenaSkillPoints(B_BATTLER_1, MOVE_RESULT_STAT_CHANGE_PREVENTED, FALSE), -2);
+    EXPECT_EQ(Test_ArenaSkillPoints(B_BATTLER_0, MOVE_RESULT_STAT_CHANGE_PREVENTED, FALSE), -2);
 }
 
 TEST("Battle Arena skill: a move on the user scores 1")
