@@ -260,6 +260,7 @@ static const u8 gText_SaveFileCorrupted[] = _("The save file is corrupted. The\n
 static const u8 gText_SaveFileErased[] = _("The save file has been erased\ndue to corruption or damage.");
 static const u8 gJPText_No1MSubCircuit[] = _("1Mサブきばんが ささっていません！");
 static const u8 gText_BatteryRunDry[] = _("The internal battery has run dry.\nThe game can be played.\pHowever, clock-based events will\nno longer occur.");
+static const u8 gText_ClockWasReset[] = _("The internal clock was reset.\nThe game can be played.\pClock-based events will continue\nfrom where you last saved.");
 
 static const u8 gText_MainMenuNewGame[] = _("NEW GAME");
 static const u8 gText_MainMenuContinue[] = _("CONTINUE");
@@ -740,7 +741,10 @@ static void Task_MainMenuCheckBattery(u8 taskId)
         }
         else
         {
-            CreateMainMenuErrorWindow(gText_BatteryRunDry);
+            if (RtcGetErrorStatus() & RTC_ERR_FLAG_MASK)
+                CreateMainMenuErrorWindow(gText_BatteryRunDry);
+            else
+                CreateMainMenuErrorWindow(gText_ClockWasReset);
             gTasks[taskId].func = Task_WaitForBatteryDryErrorWindow;
         }
     }
