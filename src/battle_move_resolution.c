@@ -1900,6 +1900,8 @@ static enum CancelerResult CancelerSnatch(struct BattleCalcValues *cv)
 
             gProtectStructs[snatchBattler].stealMove = FALSE;
             gBattleStruct->snatchedMoveIsUsed = TRUE;
+            // The user's targets were set before the snatch, and MOVEEND_CLEAR_BITS clears only the snatcher's
+            memset(gBattleStruct->battlerState[cv->battlerAtk].targetsDone, FALSE, sizeof(gBattleStruct->battlerState[cv->battlerAtk].targetsDone));
 
             if (cv->battlerAtk == cv->battlerDef)
             {
@@ -5178,7 +5180,7 @@ static bool32 ShouldSetStompingTantrumTimer(void)
         return TRUE;
 
     if (!IsDoubleSpreadMove())
-        return gBattleStruct->moveResultFlags[gBattlerTarget] & (MOVE_RESULT_MISSED | MOVE_RESULT_FAILED | MOVE_RESULT_DOESNT_AFFECT_FOE);
+        return gBattleStruct->moveResultFlags[GetMoveResultBattler(gBattlerAttacker, gCurrentMove)] & (MOVE_RESULT_MISSED | MOVE_RESULT_FAILED | MOVE_RESULT_DOESNT_AFFECT_FOE);
 
     for (enum BattlerId battlerDef = 0; battlerDef < gBattlersCount; battlerDef++)
     {
@@ -5193,9 +5195,14 @@ static bool32 ShouldSetStompingTantrumTimer(void)
 
 static enum MoveEndResult MoveEndClearBits(struct BattleCalcValues *cv)
 {
+    // Emerald judged a bounced move as the bouncer's, and the original user's not at all
+    if ((gBattleTypeFlags & BATTLE_TYPE_ARENA) && !gBattleStruct->moveWasBounced)
+        BattleArena_AddSkillPoints(cv->battlerAtk);
+
     // go to next Bouncer or original attacker if possible
     if (gBattleStruct->bouncedMoveIsUsed)
     {
+        gBattleStruct->moveWasBounced = TRUE;
         RestoreAttacker();
         RestoreTarget();
         gBattleStruct->bouncedMoveIsUsed = FALSE;
@@ -5210,11 +5217,10 @@ static enum MoveEndResult MoveEndClearBits(struct BattleCalcValues *cv)
     enum Move originallyUsedMove = GetOriginallyUsedMove(gChosenMove);
     enum Type moveType = GetBattleMoveType(cv->move);
 
-    if (gBattleTypeFlags & BATTLE_TYPE_ARENA)
-        BattleArena_AddSkillPoints(cv->battlerAtk);
-
-    if (ShouldSetStompingTantrumTimer())
+    // A bounced move didn't fail: the bouncer's failure flag only kept the move off it
+    if (!gBattleStruct->moveWasBounced && ShouldSetStompingTantrumTimer())
         gBattleStruct->battlerState[cv->battlerAtk].stompingTantrumTimer = 2;
+    gBattleStruct->moveWasBounced = FALSE; // A Dancer's copy is a move of its own
 
     if (gSpecialStatuses[cv->battlerAtk].backUpTarget)
         gBattleStruct->moveTarget[cv->battlerAtk] = gSpecialStatuses[cv->battlerAtk].backUpTarget - 1;

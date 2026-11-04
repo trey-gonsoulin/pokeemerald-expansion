@@ -240,3 +240,33 @@ SINGLE_BATTLE_TEST("Snatch: If a sound move is snatched while under Throat Chop,
         }
     }
 }
+
+SINGLE_BATTLE_TEST("Snatch: the user whose move was snatched still hits with its next move")
+{
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET) { Speed(10); }
+        OPPONENT(SPECIES_WOBBUFFET) { Speed(5); }
+    } WHEN {
+        TURN { MOVE(opponent, MOVE_SNATCH); MOVE(player, MOVE_AMNESIA); }
+        TURN { MOVE(player, MOVE_TACKLE); MOVE(opponent, MOVE_CELEBRATE); }
+    } SCENE {
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_AMNESIA, opponent);
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_TACKLE, player);
+        HP_BAR(opponent);
+    }
+}
+
+SINGLE_BATTLE_TEST("Snatch: an opponent whose move was snatched still hits with its next move")
+{
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET) { Speed(10); }
+        OPPONENT(SPECIES_WOBBUFFET) { Speed(5); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_SNATCH); MOVE(opponent, MOVE_AMNESIA); }
+        TURN { MOVE(player, MOVE_CELEBRATE); MOVE(opponent, MOVE_TACKLE); }
+    } SCENE {
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_AMNESIA, player);
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_TACKLE, opponent);
+        HP_BAR(player);
+    }
+}

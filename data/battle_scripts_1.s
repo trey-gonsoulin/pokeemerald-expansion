@@ -94,6 +94,7 @@ BattleScript_PlayMoveAnim::
 
 BattleScript_StatChangeFailed::
 	pause B_WAIT_TIME_SHORT
+	setmoveresultflags MOVE_RESULT_FAILED
     printstring STRINGID_BUTITFAILED
 	waitmessage B_WAIT_TIME_LONG
 	goto BattleScript_MoveEnd
@@ -2169,11 +2170,21 @@ BattleScript_TryDestinyKnotAttacker:
 	waitanimation
 	swapattackerwithtarget
 	printstring STRINGID_DESTINYKNOTACTIVATES
-	tryinfatuating BattleScript_SwapTargetAttackerButItFailed
+	jumpifability BS_TARGET, ABILITY_OBLIVIOUS, BattleScript_TryDestinyKnotAttackerOblivious
+	tryinfatuating BattleScript_TryDestinyKnotAttackerFailed
 	swapattackerwithtarget
 	volatileanimation BS_ATTACKER, VOLATILE_INFATUATION
 	waitanimation
 	waitmessage B_WAIT_TIME_LONG
+	return
+@ The Attract worked, so the knot's failure flags nothing and swaps the battlers back before the move ends
+BattleScript_TryDestinyKnotAttackerOblivious:
+	call BattleScript_AbilityProtectsDoesntAffectRet
+	swapattackerwithtarget
+	return
+BattleScript_TryDestinyKnotAttackerFailed:
+	call BattleScript_ButItFailedRet
+	swapattackerwithtarget
 	return
 
 BattleScript_EffectAttract::
@@ -2395,9 +2406,6 @@ BattleScript_RestoreAttackerButItFailed:
 	goto BattleScript_ButItFailed
 BattleScript_RestoreTargetButItFailed:
 	restoretarget
-	goto BattleScript_ButItFailed
-BattleScript_SwapTargetAttackerButItFailed:
-	swapattackerwithtarget
 	goto BattleScript_ButItFailed
 
 BattleScript_NotAffected::
