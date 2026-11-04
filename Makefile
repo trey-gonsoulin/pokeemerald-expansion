@@ -298,18 +298,19 @@ ifneq (,$(MAKECMDGOALS))
   endif
 endif
 
-.SHELLSTATUS ?= 0
-
+# Make 3.81 has no .SHELLSTATUS, so a failed sub-make prints a marker line instead.
 ifeq ($(SETUP_PREREQS),1)
   # If set on: Default target or a rule requiring a scan
   # Forcibly execute `make tools` since we need them for what we are doing.
-  $(foreach line, $(shell $(MAKE) -f make_tools.mk | sed "s/ /__SPACE__/g"), $(info $(subst __SPACE__, ,$(line))))
-  ifneq ($(.SHELLSTATUS),0)
+  SETUP_OUTPUT := $(shell { $(MAKE) -f make_tools.mk || { echo; echo __SETUP_FAILED__; }; } | sed "s/ /__SPACE__/g")
+  $(foreach line, $(filter-out __SETUP_FAILED__,$(SETUP_OUTPUT)), $(info $(subst __SPACE__, ,$(line))))
+  ifneq (,$(filter __SETUP_FAILED__,$(SETUP_OUTPUT)))
     $(error Errors occurred while building tools. See error messages above for more details)
   endif
   # Oh and also generate mapjson sources before we use `SCANINC`.
-  $(foreach line, $(shell $(MAKE) MAP_VERSION=$(MAP_VERSION) generated | sed "s/ /__SPACE__/g"), $(info $(subst __SPACE__, ,$(line))))
-  ifneq ($(.SHELLSTATUS),0)
+  SETUP_OUTPUT := $(shell { $(MAKE) MAP_VERSION=$(MAP_VERSION) generated || { echo; echo __SETUP_FAILED__; }; } | sed "s/ /__SPACE__/g")
+  $(foreach line, $(filter-out __SETUP_FAILED__,$(SETUP_OUTPUT)), $(info $(subst __SPACE__, ,$(line))))
+  ifneq (,$(filter __SETUP_FAILED__,$(SETUP_OUTPUT)))
     $(error Errors occurred while generating map-related sources. See error messages above for more details)
   endif
 endif
@@ -559,7 +560,8 @@ $(LEARNSET_HELPERS_BUILD_DIR):
 $(ALL_LEARNABLES_JSON):
 	python3 $(LEARNSET_HELPERS_DIR)/make_learnables.py $(LEARNSET_HELPERS_DATA_DIR) $@
 
-$(ALL_TUTORS_JSON): $(shell find data/ -type f -name '*.inc')  $(LEARNSET_HELPERS_DIR)/make_tutors.py | $(LEARNSET_HELPERS_BUILD_DIR)
+# The files make_tutors.py globs
+$(ALL_TUTORS_JSON): $(wildcard data/scripts/*.inc data/maps/*/scripts.inc)  $(LEARNSET_HELPERS_DIR)/make_tutors.py | $(LEARNSET_HELPERS_BUILD_DIR)
 	python3 $(LEARNSET_HELPERS_DIR)/make_tutors.py $@
 
 $(ALL_TEACHING_TYPES_JSON): $(wildcard $(DATA_SRC_SUBDIR)/pokemon/species_info/*_families.h)  $(LEARNSET_HELPERS_DIR)/make_teaching_types.py | $(LEARNSET_HELPERS_BUILD_DIR)
