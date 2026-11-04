@@ -76,3 +76,35 @@ TEST("Battle Arena skill: a move on the user that fails loses 2")
 {
     EXPECT_EQ(Test_ArenaSkillPoints(B_BATTLER_0, MOVE_RESULT_FAILED, FALSE), -2);
 }
+
+// Perish Song lands on its user whatever the foe does, so the Arena judges it on the user's flags
+static s32 Test_ArenaPerishSongSkillPoints(u32 foeResultFlags, u32 userResultFlags)
+{
+    s32 points;
+
+    gBattleStruct = AllocZeroed(sizeof(*gBattleStruct));
+    gCurrentMove = MOVE_PERISH_SONG;
+    gBattlerTarget = B_BATTLER_1;
+    gBattleStruct->moveResultFlags[B_BATTLER_1] = foeResultFlags;
+    gBattleStruct->moveResultFlags[B_BATTLER_0] = userResultFlags;
+
+    BattleArena_AddSkillPoints(B_BATTLER_0);
+
+    points = gBattleStruct->arenaSkillPoints[B_BATTLER_0];
+    TRY_FREE_AND_SET_NULL(gBattleStruct);
+    gCurrentMove = MOVE_NONE;
+    gBattlerTarget = 0;
+    return points;
+}
+
+TEST("Battle Arena skill: Perish Song that a Soundproof foe blocks scores 1")
+{
+    ASSUME(GetMoveTarget(MOVE_PERISH_SONG) == TARGET_ALL_BATTLERS);
+    EXPECT_EQ(Test_ArenaPerishSongSkillPoints(MOVE_RESULT_FAILED, 0), 1);
+}
+
+TEST("Battle Arena skill: Perish Song that fails loses 2")
+{
+    ASSUME(GetMoveTarget(MOVE_PERISH_SONG) == TARGET_ALL_BATTLERS);
+    EXPECT_EQ(Test_ArenaPerishSongSkillPoints(MOVE_RESULT_FAILED, MOVE_RESULT_FAILED), -2);
+}

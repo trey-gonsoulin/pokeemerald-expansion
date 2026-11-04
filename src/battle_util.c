@@ -1019,6 +1019,7 @@ void HandleAction_ActionFinished(void)
     gBattleScripting.animTargetsHit = 0;
     gBattleStruct->dynamicMoveType = 0;
     gBattleStruct->bouncedMoveIsUsed = FALSE;
+    gBattleStruct->moveWasBounced = FALSE;
     gBattleStruct->snatchedMoveIsUsed = FALSE;
     gBattleScripting.moveendState = 0;
     gBattleCommunication[3] = 0;
@@ -10888,6 +10889,15 @@ bool32 IsDoubleSpreadMove(void)
     return gBattleStruct->numSpreadTargets > 1
         && !gBattleStruct->unableToUseMove
         && IsSpreadMove(GetBattlerMoveTargetType(gBattlerAttacker, gCurrentMove));
+}
+
+// The battler whose result flags say whether a single-target move worked. A move on every battler
+// (Perish Song) still works when its target blocks it, so its own failure is flagged on the user.
+enum BattlerId GetMoveResultBattler(enum BattlerId battlerAtk, enum Move move)
+{
+    if (GetBattlerMoveTargetType(battlerAtk, move) == TARGET_ALL_BATTLERS)
+        return battlerAtk;
+    return gBattlerTarget;
 }
 
 bool32 IsBattlerInvalidForSpreadMove(enum BattlerId battlerAtk, enum BattlerId battlerDef)
