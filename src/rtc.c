@@ -131,7 +131,12 @@ void RtcInit(void)
         sErrorStatus = 0;
 
     RtcGetRawInfo(&sRtc);
-    sErrorStatus = RtcCheckInfo(&sRtc);
+    sErrorStatus |= RtcCheckInfo(&sRtc); // Keep the probe's reset warning
+}
+
+void RtcClearInitWarning(void)
+{
+    sErrorStatus &= ~RTC_INIT_WARNING;
 }
 
 u16 RtcGetErrorStatus(void)
@@ -197,33 +202,37 @@ u16 RtcCheckInfo(struct SiiRtcInfo *rtc)
 
     value = ConvertBcdToBinary(rtc->day);
 
-    if (value == 0xFF)
+    if (value == 0xFF || value == 0)
         errorFlags |= RTC_ERR_INVALID_DAY;
 
-    if (month == MONTH_FEB)
+    // A bad month has no length to check the day against
+    if (!(errorFlags & RTC_ERR_INVALID_MONTH))
     {
-        if (value > IsLeapYear(year) + sNumDaysInMonths[month - 1])
-            errorFlags |= RTC_ERR_INVALID_DAY;
-    }
-    else
-    {
-        if (value > sNumDaysInMonths[month - 1])
-            errorFlags |= RTC_ERR_INVALID_DAY;
+        if (month == MONTH_FEB)
+        {
+            if (value > IsLeapYear(year) + sNumDaysInMonths[month - 1])
+                errorFlags |= RTC_ERR_INVALID_DAY;
+        }
+        else
+        {
+            if (value > sNumDaysInMonths[month - 1])
+                errorFlags |= RTC_ERR_INVALID_DAY;
+        }
     }
 
     value = ConvertBcdToBinary(rtc->hour);
 
-    if (value > HOURS_PER_DAY)
+    if (value >= HOURS_PER_DAY)
         errorFlags |= RTC_ERR_INVALID_HOUR;
 
     value = ConvertBcdToBinary(rtc->minute);
 
-    if (value > MINUTES_PER_HOUR)
+    if (value >= MINUTES_PER_HOUR)
         errorFlags |= RTC_ERR_INVALID_MINUTE;
 
     value = ConvertBcdToBinary(rtc->second);
 
-    if (value > SECONDS_PER_MINUTE)
+    if (value >= SECONDS_PER_MINUTE)
         errorFlags |= RTC_ERR_INVALID_SECOND;
 
     return errorFlags;
