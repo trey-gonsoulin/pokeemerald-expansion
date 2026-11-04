@@ -39,27 +39,40 @@ void DoTimeBasedEvents(void)
     }
 }
 
-// SiiRtcProbe reset the RTC at boot (a power failure under BUGFIX, 12-hour or test mode), so it
-// restarted at 2000-01-01, far behind the saved localTimeOffset: the local day would go negative and
-// the daily and per-minute events wait for it to pass VAR_DAYS again. Resume from the save instead.
-void TryResumeTimeAfterRtcReset(void)
-{
-    if (!(RtcGetErrorStatus() & RTC_INIT_WARNING))
-        return;
-
-    RtcClearInitWarning();
-    if (FlagGet(FLAG_SYS_CLOCK_SET))
-        ResumeTimeFromLastBerryTreeUpdate();
-}
-
-// The last berry tree update is the last local time the save's time-based events ran at
-void ResumeTimeFromLastBerryTreeUpdate(void)
+// The last berry tree update is the last local time the save's time-based events ran at.
+// VAR_DAYS is at most a day past it (UpdatePerDay ran but not yet a whole minute), so it stays.
+static void ResumeTimeFromLastBerryTreeUpdate(void)
 {
     struct Time *last = &gSaveBlock2Ptr->lastBerryTreeUpdate;
 
     RtcCalcLocalTimeOffset(last->days, last->hours, last->minutes, last->seconds);
-    VarSet(VAR_DAYS, gLocalTime.days);
 }
+
+// SiiRtcProbe reset the RTC (a power failure under BUGFIX, 12-hour or test mode), so it restarted
+// at 2000-01-01, behind the saved localTimeOffset: the daily and per-minute events would wait for the
+// local time to pass the save's again, years later. Resume from the save instead. A negative local
+// day catches a reset this boot's probe didn't see (it reset the chip on an earlier boot that
+// wasn't saved, or a save made before this fix).
+void TryResumeTimeAfterRtcReset(void)
+{
+    bool32 wasReset = RtcGetErrorStatus() & RTC_INIT_WARNING;
+
+    RtcClearInitWarning();
+    // A bad RTC reads as a fixed date (sRtcDummy), which would stop the clock at the save's time
+    if (!FlagGet(FLAG_SYS_CLOCK_SET) || (RtcGetErrorStatus() & RTC_ERR_FLAG_MASK))
+        return;
+
+    RtcCalcLocalTime();
+    if (wasReset || gLocalTime.days < 0)
+        ResumeTimeFromLastBerryTreeUpdate();
+}
+
+#if TESTING
+void Test_ResumeTimeFromLastBerryTreeUpdate(void)
+{
+    ResumeTimeFromLastBerryTreeUpdate();
+}
+#endif
 
 void UpdateDailySeed(void)
 {
