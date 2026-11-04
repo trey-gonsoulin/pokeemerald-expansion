@@ -86,7 +86,8 @@ u16 ConvertDateToDayCount(u8 year, u8 month, u8 day)
             dayCount++;
     }
 
-    for (i = 0; i < month - 1; i++)
+    // A bad month (0xFF from a non-BCD byte) read past sNumDaysInMonths
+    for (i = 0; i < month - 1 && i < MONTH_COUNT; i++)
         dayCount += sNumDaysInMonths[i];
 
     if (month > MONTH_FEB && IsLeapYear(year) == TRUE)
@@ -144,11 +145,24 @@ u16 RtcGetErrorStatus(void)
     return (OW_USE_FAKE_RTC) ? 0 : sErrorStatus;
 }
 
+// A failed probe (RTC_INIT_ERROR) is an error too: the chip can't be read
+bool32 RtcHasError(void)
+{
+    return RtcGetErrorStatus() & (RTC_INIT_ERROR | RTC_ERR_FLAG_MASK);
+}
+
+#if TESTING
+void Test_RtcSetErrorStatus(u16 status)
+{
+    sErrorStatus = status;
+}
+#endif
+
 void RtcGetInfo(struct SiiRtcInfo *rtc)
 {
     if (OW_USE_FAKE_RTC)
         FakeRtc_GetRawInfo(rtc);
-    else if (sErrorStatus & RTC_ERR_FLAG_MASK)
+    else if (RtcHasError())
         *rtc = sRtcDummy;
     else
         RtcGetRawInfo(rtc);
@@ -463,12 +477,12 @@ enum Weekday GetDayOfWeek(void)
     return dateTime.dayOfWeek;
 }
 
-enum TimeOfDay GenConfigTimeOfDay(enum TimeOfDay timeOfDay)
+static enum TimeOfDay GenConfigTimeOfDayForGen(enum TimeOfDay timeOfDay, u32 gen)
 {
     if (timeOfDay >= TIME_LAST)
         return timeOfDay;
 
-    switch (OW_TIMES_OF_DAY)
+    switch (gen)
     {
     case GEN_3:
         if (timeOfDay == TIME_MORNING || timeOfDay == TIME_EVENING)
@@ -484,14 +498,35 @@ enum TimeOfDay GenConfigTimeOfDay(enum TimeOfDay timeOfDay)
     return timeOfDay;
 }
 
+enum TimeOfDay GenConfigTimeOfDay(enum TimeOfDay timeOfDay)
+{
+    return GenConfigTimeOfDayForGen(timeOfDay, OW_TIMES_OF_DAY);
+}
+
 enum TimeOfDay TryIncrementTimeOfDay(enum TimeOfDay timeOfDay)
 {
     timeOfDay = timeOfDay == TIME_LAST ? TIME_FIRST : timeOfDay + 1;
     return GenConfigTimeOfDay(timeOfDay);
 }
 
+// Step down past the times of day the generation skips: GenConfigTimeOfDay would move a skipped
+// one forward again, back to where it started
+static enum TimeOfDay DecrementTimeOfDayForGen(enum TimeOfDay timeOfDay, u32 gen)
+{
+    do
+        timeOfDay = timeOfDay == TIME_FIRST ? TIME_LAST : timeOfDay - 1;
+    while (GenConfigTimeOfDayForGen(timeOfDay, gen) != timeOfDay);
+    return timeOfDay;
+}
+
 enum TimeOfDay TryDecrementTimeOfDay(enum TimeOfDay timeOfDay)
 {
-    timeOfDay = timeOfDay == TIME_FIRST ? TIME_LAST : timeOfDay - 1;
-    return GenConfigTimeOfDay(timeOfDay);
+    return DecrementTimeOfDayForGen(timeOfDay, OW_TIMES_OF_DAY);
 }
+
+#if TESTING
+enum TimeOfDay Test_TryDecrementTimeOfDay(enum TimeOfDay timeOfDay, u32 gen)
+{
+    return DecrementTimeOfDayForGen(timeOfDay, gen);
+}
+#endif
