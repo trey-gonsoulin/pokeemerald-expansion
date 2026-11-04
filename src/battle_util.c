@@ -10892,11 +10892,20 @@ bool32 IsDoubleSpreadMove(void)
 }
 
 // The battler whose result flags say whether a single-target move worked. A move on every battler
-// (Perish Song) still works when its target blocks it, so its own failure is flagged on the user.
+// (Perish Song, Flower Shield) worked if it worked on anyone, so its own failure is flagged on the user.
 enum BattlerId GetMoveResultBattler(enum BattlerId battlerAtk, enum Move move)
 {
-    if (GetMoveTarget(move) == TARGET_ALL_BATTLERS)
+    if (GetMoveTarget(move) != TARGET_ALL_BATTLERS)
+        return gBattlerTarget;
+    if (gBattleStruct->moveResultFlags[battlerAtk] & MOVE_RESULT_FAILED)
         return battlerAtk;
+
+    for (enum BattlerId battler = 0; battler < gBattlersCount; battler++)
+    {
+        if (IsBattlerAlive(battler)
+         && !(gBattleStruct->moveResultFlags[battler] & (MOVE_RESULT_NO_EFFECT | MOVE_RESULT_STAT_CHANGE_PREVENTED)))
+            return battler;
+    }
     return gBattlerTarget;
 }
 
