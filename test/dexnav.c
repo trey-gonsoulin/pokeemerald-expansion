@@ -96,16 +96,18 @@ TEST("DexNav: in Flash's light the patch tiles are the 45 wholly inside the circ
 }
 
 // A cave (Granite Cave's map type) at the given Flash level, with the player at
-// map grid (x, y), MAP_OFFSET included: the start-of-search pick, and the tile
-// it picked in *x, *y. The map is all tall grass, or only (grassX, grassY) when
-// grassX isn't negative, its grass at grassElevation. The object slots are empty
+// map grid (x, y), MAP_OFFSET included: the start-of-search pick for a land or
+// water search, and the tile it picked in *x, *y. The map is all tall grass (or
+// pond water for a water search), or only (grassX, grassY) when grassX isn't
+// negative, the rest plain floor, at grassElevation. The object slots are empty
 // but for object, if any, in slot 0, the player's object slot (its sprite ID is
 // 1, which upstream read as a slot, #228). The globals are restored before the
 // caller's EXPECTs.
-static bool32 Test_DexNavPickTileOnGrid(s32 width, s32 height, s16 playerX, s16 playerY, s32 grassX, s32 grassY, u8 grassElevation, u8 flashLevel, const struct ObjectEvent *object, s16 *x, s16 *y)
+static bool32 Test_DexNavPickTileOnGrid(enum EncounterType environment, s32 width, s32 height, s16 playerX, s16 playerY, s32 grassX, s32 grassY, u8 grassElevation, u8 flashLevel, const struct ObjectEvent *object, s16 *x, s16 *y)
 {
     struct ObjectEvent *savedObjects = Alloc(OBJECT_EVENTS_COUNT * sizeof(struct ObjectEvent));
-    static const u16 behaviors[] = {MB_TALL_GRASS, MB_NORMAL};
+    static const u16 behaviors[] = {MB_TALL_GRASS, MB_NORMAL, MB_POND_WATER};
+    u16 patch = environment == ENCOUNTER_TYPE_WATER ? 2 : 0;
     static const u16 border[] = {1, 1, 1, 1};
     const struct Tileset tileset = {.metatileAttributes = behaviors};
     const struct MapLayout layout = {.width = width, .height = height, .border = border, .primaryTileset = &tileset};
@@ -128,16 +130,16 @@ static bool32 Test_DexNavPickTileOnGrid(s32 width, s32 height, s16 playerX, s16 
     gBackupMapLayout.height = height;
     gBackupMapLayout.map = AllocZeroed(width * height * sizeof(u16));
     for (i = 0; i < width * height; i++)
-        gBackupMapLayout.map[i] = grassX >= 0 ? 1 : PACK_ELEVATION(grassElevation);
+        gBackupMapLayout.map[i] = grassX >= 0 ? 1 : patch | PACK_ELEVATION(grassElevation);
     if (grassX >= 0)
-        gBackupMapLayout.map[grassY * width + grassX] = PACK_ELEVATION(grassElevation);
+        gBackupMapLayout.map[grassY * width + grassX] = patch | PACK_ELEVATION(grassElevation);
     gSaveBlock1Ptr->location.mapGroup = MAP_GROUP(MAP_GRANITE_CAVE_1F);
     gSaveBlock1Ptr->location.mapNum = MAP_NUM(MAP_GRANITE_CAVE_1F);
     gSaveBlock1Ptr->pos.x = playerX - MAP_OFFSET;
     gSaveBlock1Ptr->pos.y = playerY - MAP_OFFSET;
     SetFlashLevel(flashLevel);
 
-    picked = Test_DexNavPickLandTile(x, y);
+    picked = Test_DexNavPickTile(environment, x, y);
 
     SetFlashLevel(0);
     Free(gBackupMapLayout.map);
@@ -156,7 +158,7 @@ static bool32 Test_DexNavPickTileOnMap(s32 width, s32 height, s16 playerX, s16 p
 {
     s16 x, y;
 
-    return Test_DexNavPickTileOnGrid(width, height, playerX, playerY, -1, -1, 0, 1, NULL, &x, &y)
+    return Test_DexNavPickTileOnGrid(ENCOUNTER_TYPE_LAND, width, height, playerX, playerY, -1, -1, 0, 1, NULL, &x, &y)
         && IsDexNavTileLit(x - playerX, y - playerY);
 }
 
@@ -176,7 +178,7 @@ TEST("DexNav: a cave tile whose chance wraps to 0 always takes the patch")
 {
     s16 x, y;
 
-    EXPECT(Test_DexNavPickTileOnGrid(64, 64, 40, 47, 44, 47, 0, 0, NULL, &x, &y));
+    EXPECT(Test_DexNavPickTileOnGrid(ENCOUNTER_TYPE_LAND, 64, 64, 40, 47, 44, 47, 0, 0, NULL, &x, &y));
     EXPECT_EQ(x, 44);
     EXPECT_EQ(y, 47);
 }
@@ -189,10 +191,10 @@ TEST("DexNav: only an active object keeps the patch off its tile")
     bool32 pickedPastInactive, pickedPastActive;
     s16 x, y;
 
-    pickedPastInactive = Test_DexNavPickTileOnGrid(64, 64, 40, 47, 43, 47, 0, 1, &object, &x, &y)
+    pickedPastInactive = Test_DexNavPickTileOnGrid(ENCOUNTER_TYPE_LAND, 64, 64, 40, 47, 43, 47, 0, 1, &object, &x, &y)
                       && x == 43 && y == 47;
     object.active = TRUE;
-    pickedPastActive = Test_DexNavPickTileOnGrid(64, 64, 40, 47, 43, 47, 0, 1, &object, &x, &y);
+    pickedPastActive = Test_DexNavPickTileOnGrid(ENCOUNTER_TYPE_LAND, 64, 64, 40, 47, 43, 47, 0, 1, &object, &x, &y);
 
     EXPECT(pickedPastInactive);
     EXPECT(!pickedPastActive);
@@ -206,10 +208,10 @@ TEST("DexNav: an object mid-step keeps the patch off the tile it is leaving")
     bool32 pickedPastStanding, pickedPastStepping;
     s16 x, y;
 
-    pickedPastStanding = Test_DexNavPickTileOnGrid(64, 64, 40, 47, 43, 47, 0, 1, &object, &x, &y)
+    pickedPastStanding = Test_DexNavPickTileOnGrid(ENCOUNTER_TYPE_LAND, 64, 64, 40, 47, 43, 47, 0, 1, &object, &x, &y)
                       && x == 43 && y == 47;
     object.previousCoords.x = 43;
-    pickedPastStepping = Test_DexNavPickTileOnGrid(64, 64, 40, 47, 43, 47, 0, 1, &object, &x, &y);
+    pickedPastStepping = Test_DexNavPickTileOnGrid(ENCOUNTER_TYPE_LAND, 64, 64, 40, 47, 43, 47, 0, 1, &object, &x, &y);
 
     EXPECT(pickedPastStanding);
     EXPECT(!pickedPastStepping);
@@ -227,18 +229,43 @@ TEST("DexNav: a cave patch stays at the player's own elevation")
     s16 x, y;
 
     gPlayerAvatar.flags = 0;
-    pickedSameElevation = Test_DexNavPickTileOnGrid(64, 64, 40, 47, 43, 47, 3, 1, &player, &x, &y)
+    pickedSameElevation = Test_DexNavPickTileOnGrid(ENCOUNTER_TYPE_LAND, 64, 64, 40, 47, 43, 47, 3, 1, &player, &x, &y)
                        && x == 43 && y == 47;
-    pickedOtherElevation = Test_DexNavPickTileOnGrid(64, 64, 40, 47, 43, 47, 4, 1, &player, &x, &y);
+    pickedOtherElevation = Test_DexNavPickTileOnGrid(ENCOUNTER_TYPE_LAND, 64, 64, 40, 47, 43, 47, 4, 1, &player, &x, &y);
     gPlayerAvatar.flags = PLAYER_AVATAR_FLAG_SURFING;
     player.currentElevation = 1;
-    pickedSurfing = Test_DexNavPickTileOnGrid(64, 64, 40, 47, 43, 47, 3, 1, &player, &x, &y)
+    pickedSurfing = Test_DexNavPickTileOnGrid(ENCOUNTER_TYPE_LAND, 64, 64, 40, 47, 43, 47, 3, 1, &player, &x, &y)
                  && x == 43 && y == 47;
     gPlayerAvatar.flags = savedFlags;
 
     EXPECT(pickedSameElevation);
     EXPECT(!pickedOtherElevation);
     EXPECT(pickedSurfing);
+}
+
+// The water branch (#230): surfing, the patch stays at the player's elevation,
+// the water's (#228); from the shore, the player's elevation is the land's,
+// which says nothing of the water's.
+TEST("DexNav: a water patch stays at the surfing player's elevation, not the shore's")
+{
+    struct ObjectEvent player = {.active = TRUE, .currentCoords = {40, 47}, .previousCoords = {40, 47}, .currentElevation = 1};
+    u8 savedFlags = gPlayerAvatar.flags;
+    bool32 pickedSameElevation, pickedOtherElevation, pickedFromShore;
+    s16 x, y;
+
+    gPlayerAvatar.flags = PLAYER_AVATAR_FLAG_SURFING;
+    pickedSameElevation = Test_DexNavPickTileOnGrid(ENCOUNTER_TYPE_WATER, 64, 64, 40, 47, 43, 47, 1, 1, &player, &x, &y)
+                       && x == 43 && y == 47;
+    pickedOtherElevation = Test_DexNavPickTileOnGrid(ENCOUNTER_TYPE_WATER, 64, 64, 40, 47, 43, 47, 4, 1, &player, &x, &y);
+    gPlayerAvatar.flags = 0;
+    player.currentElevation = 3;
+    pickedFromShore = Test_DexNavPickTileOnGrid(ENCOUNTER_TYPE_WATER, 64, 64, 40, 47, 43, 47, 1, 1, &player, &x, &y)
+                   && x == 43 && y == 47;
+    gPlayerAvatar.flags = savedFlags;
+
+    EXPECT(pickedSameElevation);
+    EXPECT(!pickedOtherElevation);
+    EXPECT(pickedFromShore);
 }
 
 // In the debug ROM R+Start opens the debug menu, so R searches on its release,

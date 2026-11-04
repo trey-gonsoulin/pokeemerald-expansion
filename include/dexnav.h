@@ -82,7 +82,7 @@ u32 CalculateDexNavShinyRolls(void);
 void IncrementDexNavChain(void);
 bool32 OnStep_DexNavSearch(void);
 #if TESTING
-bool32 Test_DexNavPickLandTile(s16 *x, s16 *y);
+bool32 Test_DexNavPickTile(enum EncounterType environment, s16 *x, s16 *y);
 #endif
 
 extern enum Species gDexNavSpecies;
