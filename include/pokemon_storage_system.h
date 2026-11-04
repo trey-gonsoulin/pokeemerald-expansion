@@ -73,11 +73,11 @@ bool32 IsWaldaPhraseEmpty(void);
 void ChooseMonFromStorage();
 u32 CountPartyNonEggMons(void);
 void RemoveSelectedPcMon(struct Pokemon *mon);
-bool32 CanBagTakeReleasedMonItem(enum Item item);
-void SetMonFormPSS(struct BoxPokemon *boxMon, enum FormChanges method);
 
 #if TESTING
 void Test_RemoveReleasedMon(struct Pokemon *movingMon, bool8 inParty, u8 cursorPosition);
+bool32 CanBagTakeReleasedMonItem(enum Item item);
+void SetMonFormPSS(struct BoxPokemon *boxMon, enum FormChanges method);
 #endif
 
 #endif // GUARD_POKEMON_STORAGE_SYSTEM_H
