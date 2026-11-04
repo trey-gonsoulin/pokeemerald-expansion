@@ -603,7 +603,6 @@ static bool8 DexNavPickTile(enum EncounterType environment, u8 areaX, u8 areaY, 
     // instead, and every eligible tile wholly inside it can take the patch
     bool32 litOnly = GetFlashLevel() > 0;
     u8 i;
-    bool8 nextIter;
     u8 scale = 0;
     u8 weight = 0;
     enum MapType currMapType = GetCurrentMapType();
@@ -639,7 +638,6 @@ static bool8 DexNavPickTile(enum EncounterType environment, u8 areaX, u8 areaY, 
         {
             tileBehaviour = MapGridGetMetatileBehaviorAt(topX, topY);
             //Check for objects
-            nextIter = FALSE;
             if (TestPlayerAvatarFlags(PLAYER_AVATAR_FLAG_BIKE))
                 tileBuffer = SNEAKING_PROXIMITY + 3;
             else if (TestPlayerAvatarFlags(PLAYER_AVATAR_FLAG_DASH))
@@ -653,17 +651,9 @@ static bool8 DexNavPickTile(enum EncounterType environment, u8 areaX, u8 areaY, 
                 continue;
             }
 
-            for (i = 0; i < OBJECT_EVENTS_COUNT; i++)
-            {
-                if (gObjectEvents[i].currentCoords.x == topX && gObjectEvents[i].currentCoords.y == topY)
-                {
-                    // cannot be on a tile where an object exists
-                    nextIter = TRUE;
-                    break;
-                }
-            }
-
-            if (nextIter)
+            // Fork fix (#225): cannot be on a tile where an object exists, but a
+            // despawned object's stale coordinates don't count
+            if (GetObjectEventIdByXY(topX, topY) != OBJECT_EVENTS_COUNT)
             {
                 topX++;
                 continue;
@@ -682,6 +672,9 @@ static bool8 DexNavPickTile(enum EncounterType environment, u8 areaX, u8 areaY, 
                             break; //occurs at same z coord
 
                         scale = 440 - (smallScan * 200) - (GetPlayerDistance(topX, topY) / 2)  - (2 * (topX + topY));
+                        // Fork fix (#224): the u8 wraps (upstream's chances, kept), and
+                        // a 0 would divide by zero, so it counts as 1
+                        scale = max(scale, 1);
                         weight = (litOnly || (Random() % scale) < 1) && !MapGridGetCollisionAt(topX, topY);
                     }
                     else
@@ -696,6 +689,7 @@ static bool8 DexNavPickTile(enum EncounterType environment, u8 areaX, u8 areaY, 
                 if (MetatileBehavior_IsSurfableWaterOrUnderwater(tileBehaviour))
                 {
                     u8 scale = 320 - (smallScan * 200) - (GetPlayerDistance(topX, topY) / 2);
+                    scale = max(scale, 1); // as in the cave branch (#224)
                     if (IsElevationMismatchAt(gObjectEvents[gPlayerAvatar.spriteId].currentElevation, topX, topY))
                         break;
 
