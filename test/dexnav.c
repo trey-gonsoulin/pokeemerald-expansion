@@ -98,9 +98,11 @@ TEST("DexNav: in Flash's light the patch tiles are the 45 wholly inside the circ
 // A cave (Granite Cave's map type) at the given Flash level, with the player at
 // map grid (x, y), MAP_OFFSET included: the start-of-search pick, and the tile
 // it picked in *x, *y. The map is all tall grass, or only (grassX, grassY) when
-// grassX isn't negative. The globals are restored before the caller's EXPECTs.
-static bool32 Test_DexNavPickTileOnGrid(s32 width, s32 height, s16 playerX, s16 playerY, s32 grassX, s32 grassY, u8 flashLevel, s16 *x, s16 *y)
+// grassX isn't negative. The object slots are empty but for object, if any, in
+// slot 0. The globals are restored before the caller's EXPECTs.
+static bool32 Test_DexNavPickTileOnGrid(s32 width, s32 height, s16 playerX, s16 playerY, s32 grassX, s32 grassY, u8 flashLevel, const struct ObjectEvent *object, s16 *x, s16 *y)
 {
+    struct ObjectEvent *savedObjects = Alloc(OBJECT_EVENTS_COUNT * sizeof(struct ObjectEvent));
     static const u16 behaviors[] = {MB_TALL_GRASS, MB_NORMAL};
     static const u16 border[] = {1, 1, 1, 1};
     const struct Tileset tileset = {.metatileAttributes = behaviors};
@@ -112,6 +114,10 @@ static bool32 Test_DexNavPickTileOnGrid(s32 width, s32 height, s16 playerX, s16 
     bool32 picked;
     s32 i;
 
+    memcpy(savedObjects, gObjectEvents, OBJECT_EVENTS_COUNT * sizeof(struct ObjectEvent));
+    memset(gObjectEvents, 0, OBJECT_EVENTS_COUNT * sizeof(struct ObjectEvent));
+    if (object != NULL)
+        gObjectEvents[0] = *object;
     gMapHeader.mapLayout = &layout;
     gBackupMapLayout.width = width;
     gBackupMapLayout.height = height;
@@ -136,6 +142,8 @@ static bool32 Test_DexNavPickTileOnGrid(s32 width, s32 height, s16 playerX, s16 
     gSaveBlock1Ptr->pos = savedPos;
     gSaveBlock1Ptr->location = savedLocation;
     gMapHeader.mapLayout = savedLayout;
+    memcpy(gObjectEvents, savedObjects, OBJECT_EVENTS_COUNT * sizeof(struct ObjectEvent));
+    Free(savedObjects);
     return picked;
 }
 
@@ -144,7 +152,7 @@ static bool32 Test_DexNavPickTileOnMap(s32 width, s32 height, s16 playerX, s16 p
 {
     s16 x, y;
 
-    return Test_DexNavPickTileOnGrid(width, height, playerX, playerY, -1, -1, 1, &x, &y)
+    return Test_DexNavPickTileOnGrid(width, height, playerX, playerY, -1, -1, 1, NULL, &x, &y)
         && IsDexNavTileLit(x - playerX, y - playerY);
 }
 
@@ -164,7 +172,7 @@ TEST("DexNav: a cave tile whose chance wraps to 0 always takes the patch")
 {
     s16 x, y;
 
-    EXPECT(Test_DexNavPickTileOnGrid(64, 64, 40, 47, 44, 47, 0, &x, &y));
+    EXPECT(Test_DexNavPickTileOnGrid(64, 64, 40, 47, 44, 47, 0, NULL, &x, &y));
     EXPECT_EQ(x, 44);
     EXPECT_EQ(y, 47);
 }
@@ -173,19 +181,14 @@ TEST("DexNav: a cave tile whose chance wraps to 0 always takes the patch")
 // not, so a despawned object's stale ones kept the patch off its tile (#225).
 TEST("DexNav: only an active object keeps the patch off its tile")
 {
-    struct ObjectEvent *object = &gObjectEvents[OBJECT_EVENTS_COUNT - 1];
-    struct ObjectEvent savedObject = *object;
+    struct ObjectEvent object = {.currentCoords = {43, 47}};
     bool32 pickedPastInactive, pickedPastActive;
     s16 x, y;
 
-    object->active = FALSE;
-    object->currentCoords.x = 43;
-    object->currentCoords.y = 47;
-    pickedPastInactive = Test_DexNavPickTileOnGrid(64, 64, 40, 47, 43, 47, 1, &x, &y)
+    pickedPastInactive = Test_DexNavPickTileOnGrid(64, 64, 40, 47, 43, 47, 1, &object, &x, &y)
                       && x == 43 && y == 47;
-    object->active = TRUE;
-    pickedPastActive = Test_DexNavPickTileOnGrid(64, 64, 40, 47, 43, 47, 1, &x, &y);
-    *object = savedObject;
+    object.active = TRUE;
+    pickedPastActive = Test_DexNavPickTileOnGrid(64, 64, 40, 47, 43, 47, 1, &object, &x, &y);
 
     EXPECT(pickedPastInactive);
     EXPECT(!pickedPastActive);

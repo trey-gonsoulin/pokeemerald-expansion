@@ -603,7 +603,6 @@ static bool8 DexNavPickTile(enum EncounterType environment, u8 areaX, u8 areaY, 
     // instead, and every eligible tile wholly inside it can take the patch
     bool32 litOnly = GetFlashLevel() > 0;
     u8 i;
-    bool8 nextIter;
     u8 scale = 0;
     u8 weight = 0;
     enum MapType currMapType = GetCurrentMapType();
@@ -639,7 +638,6 @@ static bool8 DexNavPickTile(enum EncounterType environment, u8 areaX, u8 areaY, 
         {
             tileBehaviour = MapGridGetMetatileBehaviorAt(topX, topY);
             //Check for objects
-            nextIter = FALSE;
             if (TestPlayerAvatarFlags(PLAYER_AVATAR_FLAG_BIKE))
                 tileBuffer = SNEAKING_PROXIMITY + 3;
             else if (TestPlayerAvatarFlags(PLAYER_AVATAR_FLAG_DASH))
@@ -653,19 +651,9 @@ static bool8 DexNavPickTile(enum EncounterType environment, u8 areaX, u8 areaY, 
                 continue;
             }
 
-            for (i = 0; i < OBJECT_EVENTS_COUNT; i++)
-            {
-                // Fork fix (#225): a despawned object's stale coordinates don't count
-                if (gObjectEvents[i].active
-                 && gObjectEvents[i].currentCoords.x == topX && gObjectEvents[i].currentCoords.y == topY)
-                {
-                    // cannot be on a tile where an object exists
-                    nextIter = TRUE;
-                    break;
-                }
-            }
-
-            if (nextIter)
+            // Fork fix (#225): cannot be on a tile where an object exists, but a
+            // despawned object's stale coordinates don't count
+            if (GetObjectEventIdByXY(topX, topY) != OBJECT_EVENTS_COUNT)
             {
                 topX++;
                 continue;
