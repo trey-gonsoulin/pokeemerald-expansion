@@ -2142,6 +2142,7 @@ void CB2_ContinueSavedGame(void)
         LoadSaveblockObjEventScripts();
 
     UnfreezeObjectEvents();
+    TryResumeTimeAfterRtcReset();
     DoTimeBasedEvents();
     UpdateMiscOverworldStates();
     if (gMapHeader.mapLayoutId == LAYOUT_BATTLE_FRONTIER_BATTLE_PYRAMID_FLOOR)
