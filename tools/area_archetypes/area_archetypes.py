@@ -48,6 +48,9 @@ VANILLA_WILD = os.path.join(DEFAULT_OUT, 'wild_encounters.vanilla.json')
 # Wild level offsets (map -> table field -> levels), which restock applies
 # after the species; tools/rebalance's apply writes them (#150).
 LEVEL_OFFSETS = os.path.join(HERE, 'level_offsets.json')
+# The --config the committed src/data/wild_encounters.json is restocked with,
+# which tools/rebalance's apply passes too: ratio 0, the vanilla species.
+RESTOCK_SETTINGS = os.path.join(HERE, 'restock_settings.json')
 # Top-level key restock adds to the JSON it writes, so a restocked file is
 # never mistaken for the vanilla baseline.
 RESTOCK_STAMP = 'restocked_by'

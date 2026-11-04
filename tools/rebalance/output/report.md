@@ -105,13 +105,13 @@ Party level just before each boss. Every party member is Medium Slow (the starte
 | Flannery | Flannery 1 | 39 | 35.8 | 56 | 36.5 | 41 | 33.5 | 41 | 37.0 |
 | Norman | Norman 1 | 41 | 38.5 | 58 | 37.8 | 42 | 35.0 | 42 | 38.0 |
 | Winona | Winona 1 | 57 | 54.4 | 76 | 49.5 | 56 | 47.5 | 56 | 53.0 |
-| Tate and Liza | Tate And Liza 1 | 67 | 66.5 | 92 | 59.2 | 68 | 57.5 | 68 | 63.0 |
+| Tate and Liza | Tate And Liza 1 | 67 | 66.5 | 92 | 59.2 | 68 | 57.8 | 68 | 63.0 |
 | Juan | Juan 1 | 76 | 72.8 | 100 | 65.0 | 75 | 63.8 | 75 | 70.0 |
 | Elite Four | Sidney | 80 | 78.4 | 100 | 68.0 | 79 | 67.0 | 79 | 74.0 |
-| Elite Four | Phoebe | 81 | 79.4 | 100 | 68.0 | 80 | 67.0 | 80 | 75.0 |
-| Elite Four | Glacia | 82 | 80.4 | 100 | 68.2 | 81 | 67.8 | 81 | 75.0 |
+| Elite Four | Phoebe | 81 | 79.4 | 100 | 68.0 | 80 | 67.2 | 80 | 75.0 |
+| Elite Four | Glacia | 82 | 80.4 | 100 | 68.2 | 81 | 68.0 | 81 | 75.0 |
 | Elite Four | Drake | 83 | 81.4 | 100 | 69.0 | 81 | 68.0 | 81 | 75.0 |
-| Elite Four | Wallace | 86 | 84.3 | 100 | 69.0 | 82 | 68.0 | 82 | 76.0 |
+| Elite Four | Wallace | 86 | 84.3 | 100 | 69.0 | 82 | 68.2 | 82 | 76.0 |
 
 ## Exp. Share curve (#127)
 
@@ -127,11 +127,11 @@ The share6 party on modern data: one Pokemon takes every KO (KO-taker) and five 
 | Brawly | Brawly 1 | 19 | 18 | 16 / 16 / 17 | 141 | 19 | 17 / 17 / 18 | 144 |
 | Wattson | May Route 110 Mudkip | 26 | 25 | 23 / 23 / 23 | 180 | 26 | 24 / 24 / 24 | 183 |
 | Wattson | Wally Mauville | 26 | 25 | 23 / 23 / 24 | 180 | 26 | 25 / 25 / 25 | 186 |
-| Wattson | Wattson 1 | 26 | 26 | 24 / 24 / 24 | 183 | 27 | 25 / 25 / 25 | 186 |
-| Flannery | Tabitha Mt Chimney | 38 | 39 | 35 / 36 / 36 | 225 | 41 | 37 / 38 / 38 | 231 |
-| Flannery | Maxie Mt Chimney | 39 | 40 | 36 / 36 / 37 | 225 | 42 | 38 / 39 / 39 | 233 |
-| Flannery | Flannery 1 | 39 | 41 | 37 / 37 / 38 | 227 | 43 | 39 / 40 / 40 | 235 |
-| Norman | Norman 1 | 41 | 42 | 38 / 39 / 39 | 248 | 44 | 40 / 41 / 41 | 254 |
+| Wattson | Wattson 1 | 26 | 25 | 24 / 24 / 24 | 183 | 27 | 25 / 25 / 25 | 186 |
+| Flannery | Tabitha Mt Chimney | 38 | 39 | 35 / 36 / 36 | 225 | 41 | 37 / 38 / 38 | 230 |
+| Flannery | Maxie Mt Chimney | 39 | 40 | 36 / 36 / 37 | 225 | 42 | 38 / 39 / 39 | 232 |
+| Flannery | Flannery 1 | 39 | 41 | 37 / 37 / 38 | 227 | 43 | 39 / 40 / 40 | 234 |
+| Norman | Norman 1 | 41 | 42 | 38 / 39 / 39 | 248 | 44 | 40 / 41 / 41 | 253 |
 | Winona | May Route 119 Mudkip | 56 | 56 | 52 / 53 / 53 | 255 | 57 | 54 / 54 / 55 | 255 |
 | Winona | Shelly Weather Institute | 56 | 56 | 52 / 53 / 53 | 255 | 58 | 54 / 55 / 55 | 255 |
 | Winona | Winona 1 | 57 | 57 | 53 / 54 / 54 | 255 | 59 | 55 / 55 / 56 | 255 |
@@ -157,7 +157,7 @@ The share6 party on modern data: one Pokemon takes every KO (KO-taker) and five 
 | stage | boss | boss ace | 1.5x off KO-taker | 1.5x off bench (none / friendship / always) | 1.5x off bench friendship | 1.5x on KO-taker | 1.5x on bench (none / friendship / always) | 1.5x on bench friendship |
 |---|---|---|---|---|---|---|---|---|
 | Roxanne | Roxanne 1 | 15 | 14 | 13 / 13 / 13 | 114 | 14 | 13 / 13 / 13 | 114 |
-| Brawly | Brawly 1 | 19 | 17 | 16 / 16 / 16 | 141 | 18 | 17 / 17 / 17 | 144 |
+| Brawly | Brawly 1 | 19 | 18 | 16 / 16 / 16 | 141 | 18 | 17 / 17 / 17 | 144 |
 | Wattson | Wattson 1 | 26 | 24 | 22 / 22 / 23 | 177 | 25 | 23 / 23 / 24 | 180 |
 | Flannery | Flannery 1 | 39 | 38 | 34 / 34 / 35 | 221 | 41 | 36 / 36 / 37 | 225 |
 | Norman | Norman 1 | 41 | 40 | 35 / 36 / 36 | 242 | 42 | 38 / 38 / 39 | 246 |
@@ -245,7 +245,7 @@ Full clear: 3 of 30 bosses have the bench (friendship) within 1 of their ace; th
 | Brawly | Brawly 1 | 19 | 18 | 16 / 16 / 17 | -3 | 16 / 16 / 16 | -3 |
 | Wattson | May Route 110 Mudkip | 26 | 25 | 23 / 23 / 23 | -3 | 21 / 21 / 22 | -5 |
 | Wattson | Wally Mauville | 26 | 25 | 23 / 23 / 24 | -3 | 22 / 22 / 23 | -4 |
-| Wattson | Wattson 1 | 26 | 26 | 24 / 24 / 24 | -2 | 22 / 22 / 23 | -4 |
+| Wattson | Wattson 1 | 26 | 25 | 24 / 24 / 24 | -2 | 22 / 22 / 23 | -4 |
 | Flannery | Tabitha Mt Chimney | 38 | 39 | 35 / 36 / 36 | -2 | 32 / 32 / 33 | -6 |
 | Flannery | Maxie Mt Chimney | 39 | 40 | 36 / 36 / 37 | -3 | 33 / 33 / 34 | -6 |
 | Flannery | Flannery 1 | 39 | 41 | 37 / 37 / 38 | -2 | 34 / 34 / 35 | -5 |
@@ -842,16 +842,16 @@ Species on the stage maps so far (every table), vanilla tables vs the restocked 
 
 | stage | species so far vanilla / modern | new this stage | strongest new (BST, lv) | Fairy first met |
 |---|---|---|---|---|
-| Rival (Route 103) | 4 / 9 | 5 | Doduo (310, 4), Geodude (300, 4), Purrloin (281, 4), Rattata (253, 3), Pidgey (251, 3) | - |
-| Roxanne | 20 / 37 | 15 | Tentacool (335, 5), Finneon (330, 10), Mankey (305, 4), Barboach (288, 20), Purrloin (281, 3), Lillipup (275, 4) | Marill, Ralts |
-| Brawly | 28 / 56 | 15 | Gyarados (540, 23), Wailord (500, 43), Solrock (460, 13), Drilbur (328, 12), Dwebble (325, 18), Krabby (325, 13) | - |
-| Wattson | 34 / 69 | 10 | Gyarados (540, 26), Clawitzer (500, 41), Lanturn (460, 31), Chinchou (330, 21), Clauncher (330, 36), Voltorb (330, 13) | - |
-| Flannery | 57 / 109 | 25 | Shuckle (505, 7), Slowbro (490, 42), Kingler (475, 32), Maractus (461, 21), Seaking (450, 37), Pelipper (440, 28) | Jigglypuff |
-| Norman | 57 / 118 | 9 | Sigilyph (490, 29), Sandslash (450, 29), Gabite (410, 29), Machoke (405, 32), Onix (385, 31), Krokorok (351, 32) | - |
-| Winona | 70 / 157 | 41 | Gyarados (540, 32), Golduck (500, 37), Wailord (500, 47), Barraskewda (490, 32), Xatu (470, 32), Basculin Blue Striped (460, 22) | Azumarill |
-| Tate and Liza | 94 / 215 | 64 | Gyarados (540, 26), Walrein (530, 48), Donphan (500, 45), Wailord (500, 46), Talonflame (499, 45), Magmar (495, 47) | - |
-| Juan | 106 / 234 | 33 | Krookodile (519, 53), Excadrill (508, 49), Bronzong (500, 55), Toxapex (495, 55), Slowbro (490, 49), Unfezant (488, 58) | Mawile |
-| Elite Four | 112 / 243 | 18 | Salamence (600, 55), Aggron (530, 56), Cloyster (525, 55), Bronzong (500, 56), Floatzel (495, 35), Exploud (490, 58) | - |
+| Rival (Route 103) | 4 / 4 | 0 | - | - |
+| Roxanne | 20 / 20 | 0 | - | Marill, Ralts |
+| Brawly | 28 / 29 | 1 | Wailord (500, 43) | - |
+| Wattson | 34 / 35 | 0 | - | - |
+| Flannery | 57 / 61 | 3 | Crawdaunt (468, 37), Whiscash (468, 37), Pelipper (440, 28) | Jigglypuff |
+| Norman | 57 / 62 | 1 | Sandslash (450, 29) | - |
+| Winona | 70 / 77 | 5 | Wailord (500, 47), Whiscash (468, 37), Golbat (455, 37), Azumarill (420, 27), Gloom (395, 31) | Azumarill |
+| Tate and Liza | 94 / 101 | 9 | Gyarados (540, 26), Walrein (530, 48), Donphan (500, 43), Wailord (500, 46), Rhydon (485, 45), Glalie (480, 46) | - |
+| Juan | 106 / 109 | 2 | Lanturn (460, 40), Seadra (440, 45) | - |
+| Elite Four | 112 / 115 | 4 | Salamence (600, 55), Aggron (530, 56), Exploud (490, 56), Shelgon (420, 45) | Mawile |
 
 ## Economy
 
