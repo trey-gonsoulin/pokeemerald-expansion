@@ -762,13 +762,13 @@ static bool8 DexNavPickTile(enum EncounterType environment, u8 areaX, u8 areaY, 
 
 #if TESTING
 // Runs the start-of-search pick on the current map grid and returns the tile
-bool32 Test_DexNavPickLandTile(s16 *x, s16 *y)
+bool32 Test_DexNavPickTile(enum EncounterType environment, s16 *x, s16 *y)
 {
     struct DexNavSearch *savedSearch = sDexNavSearchDataPtr;
     bool32 picked;
 
     sDexNavSearchDataPtr = AllocZeroed(sizeof(struct DexNavSearch));
-    picked = DexNavPickTile(ENCOUNTER_TYPE_LAND, SCANSIZE_X, SCANSIZE_Y, FALSE);
+    picked = DexNavPickTile(environment, SCANSIZE_X, SCANSIZE_Y, FALSE);
     *x = sDexNavSearchDataPtr->tileX;
     *y = sDexNavSearchDataPtr->tileY;
     Free(sDexNavSearchDataPtr);
