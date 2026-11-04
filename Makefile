@@ -302,13 +302,13 @@ endif
 ifeq ($(SETUP_PREREQS),1)
   # If set on: Default target or a rule requiring a scan
   # Forcibly execute `make tools` since we need them for what we are doing.
-  SETUP_OUTPUT := $(shell { $(MAKE) -f make_tools.mk || echo __SETUP_FAILED__; } | sed "s/ /__SPACE__/g")
+  SETUP_OUTPUT := $(shell { $(MAKE) -f make_tools.mk || { echo; echo __SETUP_FAILED__; }; } | sed "s/ /__SPACE__/g")
   $(foreach line, $(filter-out __SETUP_FAILED__,$(SETUP_OUTPUT)), $(info $(subst __SPACE__, ,$(line))))
   ifneq (,$(filter __SETUP_FAILED__,$(SETUP_OUTPUT)))
     $(error Errors occurred while building tools. See error messages above for more details)
   endif
   # Oh and also generate mapjson sources before we use `SCANINC`.
-  SETUP_OUTPUT := $(shell { $(MAKE) MAP_VERSION=$(MAP_VERSION) generated || echo __SETUP_FAILED__; } | sed "s/ /__SPACE__/g")
+  SETUP_OUTPUT := $(shell { $(MAKE) MAP_VERSION=$(MAP_VERSION) generated || { echo; echo __SETUP_FAILED__; }; } | sed "s/ /__SPACE__/g")
   $(foreach line, $(filter-out __SETUP_FAILED__,$(SETUP_OUTPUT)), $(info $(subst __SPACE__, ,$(line))))
   ifneq (,$(filter __SETUP_FAILED__,$(SETUP_OUTPUT)))
     $(error Errors occurred while generating map-related sources. See error messages above for more details)
