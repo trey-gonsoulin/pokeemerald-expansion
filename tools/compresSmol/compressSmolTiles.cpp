@@ -42,8 +42,18 @@ CompressionResult compressTileset(std::string fileName)
     std::vector<unsigned short> tiles = readFileAsUS(fileName);
     std::vector<unsigned short> origTiles = tiles;
     if (tiles.size() == 0)
+    {
+        fprintf(stderr, "Tilemap %s is empty or unreadable\n", fileName.c_str());
+        result.failed = true;
         return result;
+    }
     result.tilemapSize = tiles.size()*2;
+    if (result.tilemapSize > 0x3fff)
+    {
+        fprintf(stderr, "Tilemap %s is %zu bytes, past the header's limit of 16383\n", fileName.c_str(), result.tilemapSize);
+        result.failed = true;
+        return result;
+    }
     deltaEncodeTileNums(&tiles);
     result.vecs = compressVector(&tiles);
     result.header = getHeader(result);
