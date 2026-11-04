@@ -86,7 +86,7 @@ TEST("RTC error: a failed probe reads the dummy date and keeps the clock")
 }
 
 // TryDecrementTimeOfDay stepped back into a time of day the generation skips, which
-// GenConfigTimeOfDay moved forward again, so Left on the Pokédex area screen stuck (#233)
+// GenConfigTimeOfDay moved forward again, so Up on the Pokédex area screen stuck (#233)
 TEST("RTC time of day: decrementing skips the times of day the generation doesn't have")
 {
     EXPECT_EQ(Test_TryDecrementTimeOfDay(TIME_DAY, GEN_3), TIME_NIGHT);
