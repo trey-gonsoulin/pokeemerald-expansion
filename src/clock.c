@@ -39,6 +39,28 @@ void DoTimeBasedEvents(void)
     }
 }
 
+// SiiRtcProbe reset the RTC at boot (a power failure under BUGFIX, 12-hour or test mode), so it
+// restarted at 2000-01-01, far behind the saved localTimeOffset: the local day would go negative and
+// the daily and per-minute events wait for it to pass VAR_DAYS again. Resume from the save instead.
+void TryResumeTimeAfterRtcReset(void)
+{
+    if (!(RtcGetErrorStatus() & RTC_INIT_WARNING))
+        return;
+
+    RtcClearInitWarning();
+    if (FlagGet(FLAG_SYS_CLOCK_SET))
+        ResumeTimeFromLastBerryTreeUpdate();
+}
+
+// The last berry tree update is the last local time the save's time-based events ran at
+void ResumeTimeFromLastBerryTreeUpdate(void)
+{
+    struct Time *last = &gSaveBlock2Ptr->lastBerryTreeUpdate;
+
+    RtcCalcLocalTimeOffset(last->days, last->hours, last->minutes, last->seconds);
+    VarSet(VAR_DAYS, gLocalTime.days);
+}
+
 void UpdateDailySeed(void)
 {
     gSaveBlock1Ptr->dailySeed = Random32();
