@@ -5220,6 +5220,7 @@ static enum MoveEndResult MoveEndClearBits(struct BattleCalcValues *cv)
     // A bounced move didn't fail: the bouncer's failure flag only kept the move off it
     if (!gBattleStruct->moveWasBounced && ShouldSetStompingTantrumTimer())
         gBattleStruct->battlerState[cv->battlerAtk].stompingTantrumTimer = 2;
+    gBattleStruct->moveWasBounced = FALSE; // A Dancer's copy is a move of its own
 
     if (gSpecialStatuses[cv->battlerAtk].backUpTarget)
         gBattleStruct->moveTarget[cv->battlerAtk] = gSpecialStatuses[cv->battlerAtk].backUpTarget - 1;

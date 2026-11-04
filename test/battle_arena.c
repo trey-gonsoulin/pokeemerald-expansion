@@ -77,13 +77,15 @@ TEST("Battle Arena skill: a move on the user that fails loses 2")
     EXPECT_EQ(Test_ArenaSkillPoints(B_BATTLER_0, MOVE_RESULT_FAILED, FALSE), -2);
 }
 
-// Perish Song lands on its user whatever the foe does, so the Arena judges it on the user's flags
-static s32 Test_ArenaPerishSongSkillPoints(u32 foeResultFlags, u32 userResultFlags)
+// A move on every battler worked if it worked on anyone, so the Arena judges it on a battler it worked on
+static s32 Test_ArenaAllBattlersSkillPoints(enum Move move, u32 foeResultFlags, u32 userResultFlags)
 {
     s32 points;
 
     gBattleStruct = AllocZeroed(sizeof(*gBattleStruct));
-    gCurrentMove = MOVE_PERISH_SONG;
+    gBattlersCount = 2;
+    gBattleMons[B_BATTLER_0].hp = gBattleMons[B_BATTLER_1].hp = 1;
+    gCurrentMove = move;
     gBattlerTarget = B_BATTLER_1;
     gBattleStruct->moveResultFlags[B_BATTLER_1] = foeResultFlags;
     gBattleStruct->moveResultFlags[B_BATTLER_0] = userResultFlags;
@@ -92,6 +94,8 @@ static s32 Test_ArenaPerishSongSkillPoints(u32 foeResultFlags, u32 userResultFla
 
     points = gBattleStruct->arenaSkillPoints[B_BATTLER_0];
     TRY_FREE_AND_SET_NULL(gBattleStruct);
+    gBattleMons[B_BATTLER_0].hp = gBattleMons[B_BATTLER_1].hp = 0;
+    gBattlersCount = 0;
     gCurrentMove = MOVE_NONE;
     gBattlerTarget = 0;
     return points;
@@ -100,11 +104,23 @@ static s32 Test_ArenaPerishSongSkillPoints(u32 foeResultFlags, u32 userResultFla
 TEST("Battle Arena skill: Perish Song that a Soundproof foe blocks scores 1")
 {
     ASSUME(GetMoveTarget(MOVE_PERISH_SONG) == TARGET_ALL_BATTLERS);
-    EXPECT_EQ(Test_ArenaPerishSongSkillPoints(MOVE_RESULT_FAILED, 0), 1);
+    EXPECT_EQ(Test_ArenaAllBattlersSkillPoints(MOVE_PERISH_SONG, MOVE_RESULT_FAILED, 0), 1);
 }
 
 TEST("Battle Arena skill: Perish Song that fails loses 2")
 {
     ASSUME(GetMoveTarget(MOVE_PERISH_SONG) == TARGET_ALL_BATTLERS);
-    EXPECT_EQ(Test_ArenaPerishSongSkillPoints(MOVE_RESULT_FAILED, MOVE_RESULT_FAILED), -2);
+    EXPECT_EQ(Test_ArenaAllBattlersSkillPoints(MOVE_PERISH_SONG, MOVE_RESULT_FAILED, MOVE_RESULT_FAILED), -2);
+}
+
+TEST("Battle Arena skill: Flower Shield that raises only the foe's Defense scores 1")
+{
+    ASSUME(GetMoveTarget(MOVE_FLOWER_SHIELD) == TARGET_ALL_BATTLERS);
+    EXPECT_EQ(Test_ArenaAllBattlersSkillPoints(MOVE_FLOWER_SHIELD, MOVE_RESULT_ATTEMPT_STAT_CHANGE, MOVE_RESULT_STAT_CHANGE_PREVENTED), 1);
+}
+
+TEST("Battle Arena skill: Flower Shield that raises no one's Defense loses 2")
+{
+    ASSUME(GetMoveTarget(MOVE_FLOWER_SHIELD) == TARGET_ALL_BATTLERS);
+    EXPECT_EQ(Test_ArenaAllBattlersSkillPoints(MOVE_FLOWER_SHIELD, MOVE_RESULT_STAT_CHANGE_PREVENTED, MOVE_RESULT_STAT_CHANGE_PREVENTED), -2);
 }
