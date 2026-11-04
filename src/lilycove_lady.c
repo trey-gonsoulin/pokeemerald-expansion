@@ -424,9 +424,20 @@ static u8 GetPlayerNameLength(const u8 *playerName)
     return len;
 }
 
+// A reusable TM the player already owns would be a dead prize, so it becomes a PP Up,
+// in the name she shows and the item she gives (#253)
+static enum Item GetQuizPrize(void)
+{
+    enum Item prize = gSaveBlock1Ptr->lilycoveLady.quiz.prize;
+
+    if (GetItemImportance(prize) && (CheckBagHasItem(prize, 1) || CheckPCHasItem(prize, 1)))
+        return ITEM_PP_UP;
+    return prize;
+}
+
 void BufferQuizPrizeName(void)
 {
-    StringCopy(gStringVar1, GetItemName(sQuizLadyPtr->prize));
+    StringCopy(gStringVar1, GetItemName(GetQuizPrize()));
 }
 
 bool8 BufferQuizAuthorNameAndCheckIfLady(void)
@@ -462,7 +473,7 @@ bool8 IsQuizAnswerCorrect(void)
 void BufferQuizPrizeItem(void)
 {
     sQuizLadyPtr = &gSaveBlock1Ptr->lilycoveLady.quiz;
-    gSpecialVar_0x8005 = sQuizLadyPtr->prize;
+    gSpecialVar_0x8005 = GetQuizPrize();
 }
 
 void SetQuizLadyState_Complete(void)
