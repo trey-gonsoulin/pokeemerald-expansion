@@ -9246,6 +9246,13 @@ static bool32 IsItemTargetActivePartner(enum BattlerId battler)
         && gBattleStruct->itemPartyIndex[battler] == gBattlerPartyIndexes[partner];
 }
 
+// A foe revived by a Revive or Revival Blessing gives exp again when it faints again.
+static void ClearRevivedFoeGivenExp(enum BattlerId reviver, u32 partyIndex)
+{
+    if (!IsOnPlayerSide(reviver))
+        gBattleStruct->givenExpMons[GetGivenExpMonsIndex(reviver)] &= ~(1u << partyIndex);
+}
+
 void BS_ItemRestoreHP(void)
 {
     NATIVE_ARGS(const u8 *alreadyMaxHpInstr, const u8 *restoreBattlerInstr);
@@ -9266,6 +9273,8 @@ void BS_ItemRestoreHP(void)
         // Track the number of Revives used in a battle.
         if (hp == 0 && IsOnPlayerSide(gBattlerAttacker) && gBattleResults.numRevivesUsed < 255)
             gBattleResults.numRevivesUsed++;
+        if (hp == 0)
+            ClearRevivedFoeGivenExp(gBattlerAttacker, gBattleStruct->itemPartyIndex[gBattlerAttacker]);
 
         // Check if the recipient is an active battler.
         if (gBattleStruct->itemPartyIndex[gBattlerAttacker] == gBattlerPartyIndexes[gBattlerAttacker])
@@ -9904,9 +9913,7 @@ void BS_TryRevivalBlessing(void)
         MarkBattlerForControllerExec(gBattlerAttacker);
         PREPARE_SPECIES_BUFFER(gBattleTextBuff1, GetMonData(&party[gSelectedMonPartyId], MON_DATA_SPECIES));
 
-        // A revived foe gives exp again when it faints again.
-        if (!IsOnPlayerSide(gBattlerAttacker))
-            gBattleStruct->givenExpMons[GetGivenExpMonsIndex(gBattlerAttacker)] &= ~(1u << gSelectedMonPartyId);
+        ClearRevivedFoeGivenExp(gBattlerAttacker, gSelectedMonPartyId);
 
         // If an on-field battler is revived, it needs to be sent out again.
         if (IsDoubleBattle()

@@ -223,6 +223,11 @@ void BattleAI_SetupItems(void)
                 gBattleHistory->itemsNo++;
             }
         }
+    #if TESTING
+        // The AI tests' trainer carries no items: VAR_SET(TESTING_VAR_AI_TRAINER_ITEM, item) gives it one.
+        if (VarGet(TESTING_VAR_AI_TRAINER_ITEM) != ITEM_NONE && gBattleHistory->itemsNo < MAX_TRAINER_ITEMS)
+            gBattleHistory->trainerItems[gBattleHistory->itemsNo++] = VarGet(TESTING_VAR_AI_TRAINER_ITEM);
+    #endif
     }
 }
 
