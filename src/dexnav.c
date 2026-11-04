@@ -655,7 +655,9 @@ static bool8 DexNavPickTile(enum EncounterType environment, u8 areaX, u8 areaY, 
 
             for (i = 0; i < OBJECT_EVENTS_COUNT; i++)
             {
-                if (gObjectEvents[i].currentCoords.x == topX && gObjectEvents[i].currentCoords.y == topY)
+                // Fork fix (#225): a despawned object's stale coordinates don't count
+                if (gObjectEvents[i].active
+                 && gObjectEvents[i].currentCoords.x == topX && gObjectEvents[i].currentCoords.y == topY)
                 {
                     // cannot be on a tile where an object exists
                     nextIter = TRUE;
@@ -682,6 +684,9 @@ static bool8 DexNavPickTile(enum EncounterType environment, u8 areaX, u8 areaY, 
                             break; //occurs at same z coord
 
                         scale = 440 - (smallScan * 200) - (GetPlayerDistance(topX, topY) / 2)  - (2 * (topX + topY));
+                        // Fork fix (#224): the u8 wraps (upstream's chances, kept), and
+                        // a 0 would divide by zero, so it counts as 1
+                        scale = max(scale, 1);
                         weight = (litOnly || (Random() % scale) < 1) && !MapGridGetCollisionAt(topX, topY);
                     }
                     else
@@ -696,6 +701,7 @@ static bool8 DexNavPickTile(enum EncounterType environment, u8 areaX, u8 areaY, 
                 if (MetatileBehavior_IsSurfableWaterOrUnderwater(tileBehaviour))
                 {
                     u8 scale = 320 - (smallScan * 200) - (GetPlayerDistance(topX, topY) / 2);
+                    scale = max(scale, 1); // as in the cave branch (#224)
                     if (IsElevationMismatchAt(gObjectEvents[gPlayerAvatar.spriteId].currentElevation, topX, topY))
                         break;
 
