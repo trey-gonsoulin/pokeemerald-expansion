@@ -1454,7 +1454,7 @@ static bool32 DebugSelection_HandleInput_NameOrder(u8 taskId, const struct Debug
     if (JOY_NEW(START_BUTTON))
     {
         Debug_BuildNameOrder(sortedNames, min, max, sDebugStepNameFuncs[selectionStep->names]);
-        // With no names to order (a failed Alloc), Up/Down keep turning digits
+        // With no names to order, Up/Down keep turning digits (Alloc never fails: it stops the game)
         sDebugMenuListData->nameOrder = sortedNames->count > 0;
         input = Debug_NextNameInitial(sortedNames, input);
     }
