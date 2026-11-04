@@ -375,24 +375,29 @@ SINGLE_BATTLE_TEST("Stomping Tantrum will not deal double damage if Attract work
 
 SINGLE_BATTLE_TEST("Stomping Tantrum will not deal double damage if Attract worked but Oblivious stopped the foe's Destiny Knot")
 {
-    s16 damage[2];
+    s16 damage[4];
     GIVEN {
         ASSUME(GetMoveEffect(MOVE_ATTRACT) == EFFECT_ATTRACT);
-        PLAYER(SPECIES_SLOWPOKE) { Gender(MON_MALE); Ability(ABILITY_OBLIVIOUS); }
-        OPPONENT(SPECIES_WOBBUFFET) { Gender(MON_FEMALE); Item(ITEM_DESTINY_KNOT); }
+        PLAYER(SPECIES_SLOWPOKE) { Gender(MON_MALE); Ability(ABILITY_OBLIVIOUS); Speed(10); }
+        OPPONENT(SPECIES_WOBBUFFET) { Gender(MON_FEMALE); Item(ITEM_DESTINY_KNOT); Speed(5); }
     } WHEN {
-        TURN { MOVE(player, MOVE_STOMPING_TANTRUM); }
-        TURN { MOVE(player, MOVE_ATTRACT); }
-        TURN { MOVE(player, MOVE_STOMPING_TANTRUM); }
+        TURN { MOVE(player, MOVE_STOMPING_TANTRUM); MOVE(opponent, MOVE_STOMPING_TANTRUM); }
+        TURN { MOVE(player, MOVE_ATTRACT); MOVE(opponent, MOVE_CELEBRATE, WITH_RNG(RNG_INFATUATION, FALSE)); }
+        TURN { MOVE(player, MOVE_STOMPING_TANTRUM); MOVE(opponent, MOVE_STOMPING_TANTRUM, WITH_RNG(RNG_INFATUATION, FALSE)); }
     } SCENE {
         ANIMATION(ANIM_TYPE_MOVE, MOVE_STOMPING_TANTRUM, player);
         HP_BAR(opponent, captureDamage: &damage[0]);
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_STOMPING_TANTRUM, opponent);
+        HP_BAR(player, captureDamage: &damage[2]);
         ANIMATION(ANIM_TYPE_MOVE, MOVE_ATTRACT, player);
         ABILITY_POPUP(player, ABILITY_OBLIVIOUS);
         ANIMATION(ANIM_TYPE_MOVE, MOVE_STOMPING_TANTRUM, player);
         HP_BAR(opponent, captureDamage: &damage[1]);
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_STOMPING_TANTRUM, opponent);
+        HP_BAR(player, captureDamage: &damage[3]);
     } THEN {
         EXPECT_EQ(damage[0], damage[1]);
+        EXPECT_EQ(damage[2], damage[3]); // The foe's Destiny Knot left the battlers swapped through the move's end
     }
 }
 
