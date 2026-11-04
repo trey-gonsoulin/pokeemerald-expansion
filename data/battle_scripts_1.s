@@ -2179,16 +2179,11 @@ BattleScript_TryDestinyKnotAttacker:
 	return
 @ The Attract worked, so the knot's failure flags nothing and swaps the battlers back before the move ends
 BattleScript_TryDestinyKnotAttackerOblivious:
-	pause B_WAIT_TIME_SHORT
-	call BattleScript_AbilityPopUp
-	printstring STRINGID_ITDOESNTAFFECT
-	waitmessage B_WAIT_TIME_LONG
+	call BattleScript_AbilityProtectsDoesntAffectRet
 	swapattackerwithtarget
 	return
 BattleScript_TryDestinyKnotAttackerFailed:
-	pause B_WAIT_TIME_SHORT
-	printstring STRINGID_BUTITFAILED
-	waitmessage B_WAIT_TIME_LONG
+	call BattleScript_ButItFailedRet
 	swapattackerwithtarget
 	return
 

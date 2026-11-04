@@ -10895,7 +10895,7 @@ bool32 IsDoubleSpreadMove(void)
 // (Perish Song) still works when its target blocks it, so its own failure is flagged on the user.
 enum BattlerId GetMoveResultBattler(enum BattlerId battlerAtk, enum Move move)
 {
-    if (GetBattlerMoveTargetType(battlerAtk, move) == TARGET_ALL_BATTLERS)
+    if (GetMoveTarget(move) == TARGET_ALL_BATTLERS)
         return battlerAtk;
     return gBattlerTarget;
 }
