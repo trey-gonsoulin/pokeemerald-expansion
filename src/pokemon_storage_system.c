@@ -6650,6 +6650,8 @@ static void RemoveReleasedMon(void)
 void Test_RemoveReleasedMon(struct Pokemon *movingMon, bool8 inParty, u8 cursorPosition)
 {
     struct PokemonStorageSystemData *savedStorage = sStorage;
+    s8 savedCursorArea = sCursorArea;
+    s8 savedCursorPosition = sCursorPosition;
 
     sStorage = AllocZeroed(sizeof(*sStorage));
     sIsMonBeingMoved = (movingMon != NULL);
@@ -6660,6 +6662,8 @@ void Test_RemoveReleasedMon(struct Pokemon *movingMon, bool8 inParty, u8 cursorP
     RemoveReleasedMon();
     Free(sStorage);
     sStorage = savedStorage;
+    sCursorArea = savedCursorArea;
+    sCursorPosition = savedCursorPosition;
 }
 #endif
 
