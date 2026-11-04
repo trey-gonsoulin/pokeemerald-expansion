@@ -202,7 +202,7 @@ u16 RtcCheckInfo(struct SiiRtcInfo *rtc)
 
     value = ConvertBcdToBinary(rtc->day);
 
-    if (value == 0xFF)
+    if (value == 0xFF || value == 0)
         errorFlags |= RTC_ERR_INVALID_DAY;
 
     // A bad month has no length to check the day against
