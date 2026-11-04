@@ -1901,8 +1901,7 @@ static enum CancelerResult CancelerSnatch(struct BattleCalcValues *cv)
             gProtectStructs[snatchBattler].stealMove = FALSE;
             gBattleStruct->snatchedMoveIsUsed = TRUE;
             // The user's targets were set before the snatch, and MOVEEND_CLEAR_BITS clears only the snatcher's
-            for (enum BattlerId battler = 0; battler < gBattlersCount; battler++)
-                gBattleStruct->battlerState[cv->battlerAtk].targetsDone[battler] = FALSE;
+            memset(gBattleStruct->battlerState[cv->battlerAtk].targetsDone, FALSE, sizeof(gBattleStruct->battlerState[cv->battlerAtk].targetsDone));
 
             if (cv->battlerAtk == cv->battlerDef)
             {
@@ -5196,12 +5195,13 @@ static bool32 ShouldSetStompingTantrumTimer(void)
 
 static enum MoveEndResult MoveEndClearBits(struct BattleCalcValues *cv)
 {
+    // Emerald judged a bounced move as the bouncer's, and the original user's not at all
+    if ((gBattleTypeFlags & BATTLE_TYPE_ARENA) && !gBattleStruct->moveWasBounced)
+        BattleArena_AddSkillPoints(cv->battlerAtk);
+
     // go to next Bouncer or original attacker if possible
     if (gBattleStruct->bouncedMoveIsUsed)
     {
-        // Emerald judged the bounced move as the bouncer's, and the original user's not at all
-        if (gBattleTypeFlags & BATTLE_TYPE_ARENA)
-            BattleArena_AddSkillPoints(cv->battlerAtk);
         gBattleStruct->moveWasBounced = TRUE;
         RestoreAttacker();
         RestoreTarget();
@@ -5216,9 +5216,6 @@ static enum MoveEndResult MoveEndClearBits(struct BattleCalcValues *cv)
 
     enum Move originallyUsedMove = GetOriginallyUsedMove(gChosenMove);
     enum Type moveType = GetBattleMoveType(cv->move);
-
-    if ((gBattleTypeFlags & BATTLE_TYPE_ARENA) && !gBattleStruct->moveWasBounced)
-        BattleArena_AddSkillPoints(cv->battlerAtk);
 
     // A bounced move didn't fail: the bouncer's failure flag only kept the move off it
     if (!gBattleStruct->moveWasBounced && ShouldSetStompingTantrumTimer())

@@ -238,6 +238,7 @@ SINGLE_BATTLE_TEST("Stomping Tantrum will deal double damage if Charge failed")
         OPPONENT(SPECIES_WOBBUFFET);
     } WHEN {
         TURN { MOVE(player, MOVE_STOMPING_TANTRUM); }
+        // Charge fails only when it is already active and Sp. Def can't rise
         TURN { MOVE(player, MOVE_AMNESIA); }
         TURN { MOVE(player, MOVE_AMNESIA); }
         TURN { MOVE(player, MOVE_AMNESIA); }
