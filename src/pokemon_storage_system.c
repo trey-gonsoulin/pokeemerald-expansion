@@ -7101,11 +7101,7 @@ void SetMonFormPSS(struct BoxPokemon *boxMon, enum FormChanges method)
 
 void SetMonFormPSS_ItemHold(struct BoxPokemon *boxMon)
 {
-    if (TryBoxMonFormChange(boxMon, FORM_CHANGE_ITEM_HOLD))
-    {
-        RecalculatePartyMonStats(boxMon);
-        sRefreshDisplayMonGfx = TRUE;
-    }
+    SetMonFormPSS(boxMon, FORM_CHANGE_ITEM_HOLD);
     UpdateSpeciesSpritePSS(boxMon);
 }
 
