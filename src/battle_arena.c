@@ -390,29 +390,30 @@ void BattleArena_AddSkillPoints(enum BattlerId battlerAtk)
         return;
     }
 
-    for (enum BattlerId battlerDef = 0; battlerDef < gBattlersCount; battlerDef++)
+    // Score the move's result on its target, the user for a move on itself (the Arena is singles only),
+    // as Stomping Tantrum's check does. A stat move that changes nothing missed in Emerald.
+    u32 resultFlags = gBattleStruct->moveResultFlags[gBattlerTarget];
+
+    if (resultFlags & (MOVE_RESULT_NO_EFFECT | MOVE_RESULT_STAT_CHANGE_PREVENTED))
     {
-        if (IsBattlerUnaffectedByMove(battlerDef))
-        {
-            if (!(gBattleStruct->moveResultFlags[battlerDef] & MOVE_RESULT_MISSED))
-                skillPoints[battlerAtk] -= 2;
-        }
-        else if ((gBattleStruct->moveResultFlags[battlerDef] & MOVE_RESULT_HIGH_EFFECTIVENESS) && (gBattleStruct->moveResultFlags[battlerDef] & MOVE_RESULT_LOW_EFFECTIVENESS))
-        {
-            skillPoints[battlerAtk] += 1;
-        }
-        else if (gBattleStruct->moveResultFlags[battlerDef] & MOVE_RESULT_HIGH_EFFECTIVENESS)
-        {
-            skillPoints[battlerAtk] += 2;
-        }
-        else if (gBattleStruct->moveResultFlags[battlerDef] & MOVE_RESULT_LOW_EFFECTIVENESS)
-        {
-            skillPoints[battlerAtk] -= 1;
-        }
-        else if (!gProtectStructs[battlerDef].protected)
-        {
-            skillPoints[battlerAtk] += 1;
-        }
+        if (!(resultFlags & MOVE_RESULT_PROTECTED))
+            skillPoints[battlerAtk] -= 2;
+    }
+    else if ((resultFlags & MOVE_RESULT_HIGH_EFFECTIVENESS) && (resultFlags & MOVE_RESULT_LOW_EFFECTIVENESS))
+    {
+        skillPoints[battlerAtk] += 1;
+    }
+    else if (resultFlags & MOVE_RESULT_HIGH_EFFECTIVENESS)
+    {
+        skillPoints[battlerAtk] += 2;
+    }
+    else if (resultFlags & MOVE_RESULT_LOW_EFFECTIVENESS)
+    {
+        skillPoints[battlerAtk] -= 1;
+    }
+    else if (!gProtectStructs[battlerAtk].protected)
+    {
+        skillPoints[battlerAtk] += 1;
     }
 }
 
