@@ -49,6 +49,56 @@ TEST("RTC check: a bad month doesn't check the day against a month length")
     EXPECT_EQ(CheckRtc(0x24, 0x1A, 0x1A, 0x00, 0x00, 0x00), RTC_ERR_INVALID_MONTH | RTC_ERR_INVALID_DAY);
 }
 
+TEST("RTC check: a bad month counts no days past December")
+{
+    // A non-BCD month reads as 0xFF, which summed 254 entries of sNumDaysInMonths (#237)
+    u16 dayCount = ConvertDateToDayCount(0, 13, 1);
+    EXPECT_EQ(dayCount, 367);
+    EXPECT_EQ(ConvertDateToDayCount(0, 14, 1), dayCount);
+    EXPECT_EQ(ConvertDateToDayCount(0, 0xFF, 1), dayCount);
+}
+
+// A failed SiiRtcProbe (RTC_INIT_ERROR) read the chip anyway and showed no message (#237)
+TEST("RTC error: a failed probe reads the dummy date and keeps the clock")
+{
+    struct SiiRtcInfo rtc;
+    struct Time offset;
+    bool32 hasError;
+    u16 status = RtcGetErrorStatus();
+
+    Test_RtcSetErrorStatus(RTC_INIT_ERROR);
+    FlagSet(FLAG_SYS_CLOCK_SET);
+    gSaveBlock2Ptr->localTimeOffset.days = -100;
+    offset = gSaveBlock2Ptr->localTimeOffset;
+
+    hasError = RtcHasError();
+    RtcGetInfo(&rtc);
+    TryResumeTimeAfterRtcReset();
+    Test_RtcSetErrorStatus(status);
+
+    EXPECT(hasError);
+    EXPECT_EQ(rtc.year, 0);
+    EXPECT_EQ(rtc.month, MONTH_JAN);
+    EXPECT_EQ(rtc.day, 1);
+    EXPECT_EQ(gSaveBlock2Ptr->localTimeOffset.days, offset.days);
+    EXPECT_EQ(gSaveBlock2Ptr->localTimeOffset.hours, offset.hours);
+    EXPECT_EQ(gSaveBlock2Ptr->localTimeOffset.minutes, offset.minutes);
+}
+
+// TryDecrementTimeOfDay stepped back into a time of day the generation skips, which
+// GenConfigTimeOfDay moved forward again, so Up on the Pokédex area screen stuck (#233)
+TEST("RTC time of day: decrementing skips the times of day the generation doesn't have")
+{
+    EXPECT_EQ(Test_TryDecrementTimeOfDay(TIME_DAY, GEN_3), TIME_NIGHT);
+    EXPECT_EQ(Test_TryDecrementTimeOfDay(TIME_NIGHT, GEN_3), TIME_DAY);
+    EXPECT_EQ(Test_TryDecrementTimeOfDay(TIME_NIGHT, GEN_4), TIME_DAY);
+    EXPECT_EQ(Test_TryDecrementTimeOfDay(TIME_DAY, GEN_4), TIME_MORNING);
+    EXPECT_EQ(Test_TryDecrementTimeOfDay(TIME_MORNING, GEN_4), TIME_NIGHT);
+    EXPECT_EQ(Test_TryDecrementTimeOfDay(TIME_NIGHT, GEN_2), TIME_DAY);
+    EXPECT_EQ(Test_TryDecrementTimeOfDay(TIME_NIGHT, GEN_LATEST), TIME_EVENING);
+    EXPECT_EQ(Test_TryDecrementTimeOfDay(TIME_MORNING, GEN_LATEST), TIME_NIGHT);
+}
+
 // After SiiRtcProbe resets the RTC, Continue resumes the in-game clock from the save's last berry
 // tree update instead of leaving the local time far behind it (#231).
 static void ExpectLocalTimeAtLastBerryTreeUpdate(void)

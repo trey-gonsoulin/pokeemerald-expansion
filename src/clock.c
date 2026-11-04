@@ -59,7 +59,7 @@ void TryResumeTimeAfterRtcReset(void)
 
     RtcClearInitWarning();
     // A bad RTC reads as a fixed date (sRtcDummy), which would stop the clock at the save's time
-    if (!FlagGet(FLAG_SYS_CLOCK_SET) || (RtcGetErrorStatus() & RTC_ERR_FLAG_MASK))
+    if (!FlagGet(FLAG_SYS_CLOCK_SET) || RtcHasError())
         return;
 
     RtcCalcLocalTime();
