@@ -99,7 +99,8 @@ TEST("DexNav: in Flash's light the patch tiles are the 45 wholly inside the circ
 // map grid (x, y), MAP_OFFSET included: the start-of-search pick, and the tile
 // it picked in *x, *y. The map is all tall grass, or only (grassX, grassY) when
 // grassX isn't negative, its grass at grassElevation. The object slots are empty
-// but for object, if any, in slot 0. The globals are restored before the
+// but for object, if any, in slot 0, the player's object slot (its sprite ID is
+// 1, which upstream read as a slot, #228). The globals are restored before the
 // caller's EXPECTs.
 static bool32 Test_DexNavPickTileOnGrid(s32 width, s32 height, s16 playerX, s16 playerY, s32 grassX, s32 grassY, u8 grassElevation, u8 flashLevel, const struct ObjectEvent *object, s16 *x, s16 *y)
 {
@@ -112,9 +113,12 @@ static bool32 Test_DexNavPickTileOnGrid(s32 width, s32 height, s16 playerX, s16 
     struct BackupMapLayout savedGrid = gBackupMapLayout;
     struct WarpData savedLocation = gSaveBlock1Ptr->location;
     struct Coords16 savedPos = gSaveBlock1Ptr->pos;
+    struct PlayerAvatar savedAvatar = gPlayerAvatar;
     bool32 picked;
     s32 i;
 
+    gPlayerAvatar.objectEventId = 0;
+    gPlayerAvatar.spriteId = 1;
     memcpy(savedObjects, gObjectEvents, OBJECT_EVENTS_COUNT * sizeof(struct ObjectEvent));
     memset(gObjectEvents, 0, OBJECT_EVENTS_COUNT * sizeof(struct ObjectEvent));
     if (object != NULL)
@@ -143,6 +147,7 @@ static bool32 Test_DexNavPickTileOnGrid(s32 width, s32 height, s16 playerX, s16 
     gMapHeader.mapLayout = savedLayout;
     memcpy(gObjectEvents, savedObjects, OBJECT_EVENTS_COUNT * sizeof(struct ObjectEvent));
     Free(savedObjects);
+    gPlayerAvatar = savedAvatar;
     return picked;
 }
 
@@ -197,30 +202,43 @@ TEST("DexNav: only an active object keeps the patch off its tile")
 // entering, but upstream checked only currentCoords (#229).
 TEST("DexNav: an object mid-step keeps the patch off the tile it is leaving")
 {
-    struct ObjectEvent object = {.active = TRUE, .currentCoords = {44, 47}, .previousCoords = {43, 47}};
+    struct ObjectEvent object = {.active = TRUE, .currentCoords = {44, 47}, .previousCoords = {44, 47}};
+    bool32 pickedPastStanding, pickedPastStepping;
     s16 x, y;
 
-    EXPECT(!Test_DexNavPickTileOnGrid(64, 64, 40, 47, 43, 47, 0, 1, &object, &x, &y));
+    pickedPastStanding = Test_DexNavPickTileOnGrid(64, 64, 40, 47, 43, 47, 0, 1, &object, &x, &y)
+                      && x == 43 && y == 47;
+    object.previousCoords.x = 43;
+    pickedPastStepping = Test_DexNavPickTileOnGrid(64, 64, 40, 47, 43, 47, 0, 1, &object, &x, &y);
+
+    EXPECT(pickedPastStanding);
+    EXPECT(!pickedPastStepping);
 }
 
 // Upstream read the player's elevation from the object slot numbered by its
 // sprite ID (#228), here an empty slot, whose elevation 0 matches any tile.
+// Surfing, the player's elevation is the water's, which says nothing of the
+// land's.
 TEST("DexNav: a cave patch stays at the player's own elevation")
 {
     struct ObjectEvent player = {.active = TRUE, .currentCoords = {40, 47}, .previousCoords = {40, 47}, .currentElevation = 3};
-    struct PlayerAvatar savedAvatar = gPlayerAvatar;
-    bool32 pickedSameElevation, pickedOtherElevation;
+    u8 savedFlags = gPlayerAvatar.flags;
+    bool32 pickedSameElevation, pickedOtherElevation, pickedSurfing;
     s16 x, y;
 
-    gPlayerAvatar.objectEventId = 0;
-    gPlayerAvatar.spriteId = 1;
+    gPlayerAvatar.flags = 0;
     pickedSameElevation = Test_DexNavPickTileOnGrid(64, 64, 40, 47, 43, 47, 3, 1, &player, &x, &y)
                        && x == 43 && y == 47;
     pickedOtherElevation = Test_DexNavPickTileOnGrid(64, 64, 40, 47, 43, 47, 4, 1, &player, &x, &y);
-    gPlayerAvatar = savedAvatar;
+    gPlayerAvatar.flags = PLAYER_AVATAR_FLAG_SURFING;
+    player.currentElevation = 1;
+    pickedSurfing = Test_DexNavPickTileOnGrid(64, 64, 40, 47, 43, 47, 3, 1, &player, &x, &y)
+                 && x == 43 && y == 47;
+    gPlayerAvatar.flags = savedFlags;
 
     EXPECT(pickedSameElevation);
     EXPECT(!pickedOtherElevation);
+    EXPECT(pickedSurfing);
 }
 
 // In the debug ROM R+Start opens the debug menu, so R searches on its release,
