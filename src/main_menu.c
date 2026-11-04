@@ -735,13 +735,13 @@ static void Task_MainMenuCheckBattery(u8 taskId)
         SetGpuReg(REG_OFFSET_BLDALPHA, 0);
         SetGpuReg(REG_OFFSET_BLDY, 7);
 
-        if (!(RtcGetErrorStatus() & (RTC_ERR_FLAG_MASK | RTC_INIT_WARNING)))
+        if (!RtcHasError() && !(RtcGetErrorStatus() & RTC_INIT_WARNING))
         {
             gTasks[taskId].func = Task_DisplayMainMenu;
         }
         else
         {
-            if (RtcGetErrorStatus() & RTC_ERR_FLAG_MASK)
+            if (RtcHasError())
                 CreateMainMenuErrorWindow(gText_BatteryRunDry);
             else
                 CreateMainMenuErrorWindow(gText_ClockWasReset);

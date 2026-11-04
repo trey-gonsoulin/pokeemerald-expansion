@@ -17,6 +17,7 @@ u16 ConvertDateToDayCount(u8 year, u8 month, u8 day);
 u16 RtcGetDayCount(struct SiiRtcInfo *rtc);
 void RtcInit(void);
 u16 RtcGetErrorStatus(void);
+bool32 RtcHasError(void);
 void RtcClearInitWarning(void);
 void RtcGetInfo(struct SiiRtcInfo *rtc);
 void RtcGetDateTime(struct SiiRtcInfo *rtc);
@@ -41,5 +42,10 @@ enum Weekday GetDayOfWeek(void);
 enum TimeOfDay GenConfigTimeOfDay(enum TimeOfDay timeOfDay);
 enum TimeOfDay TryIncrementTimeOfDay(enum TimeOfDay timeOfDay);
 enum TimeOfDay TryDecrementTimeOfDay(enum TimeOfDay timeOfDay);
+
+#if TESTING
+void Test_RtcSetErrorStatus(u16 status);
+enum TimeOfDay Test_TryDecrementTimeOfDay(enum TimeOfDay timeOfDay, u32 gen);
+#endif
 
 #endif // GUARD_RTC_UTIL_H
