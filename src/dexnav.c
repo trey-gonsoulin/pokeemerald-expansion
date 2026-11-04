@@ -585,6 +585,24 @@ bool32 IsDexNavTileLit(s32 dx, s32 dy)
     return farX * farX + farY * farY <= radius * radius;
 }
 
+// Fork fix (#229): an active object stands on its currentCoords and, mid-step,
+// on its previousCoords too, as DoesObjectCollideWithObjectAt counts it
+static bool32 IsDexNavTileTakenByObject(s16 x, s16 y)
+{
+    u32 i;
+
+    for (i = 0; i < OBJECT_EVENTS_COUNT; i++)
+    {
+        struct ObjectEvent *object = &gObjectEvents[i];
+
+        if (object->active
+         && ((object->currentCoords.x == x && object->currentCoords.y == y)
+          || (object->previousCoords.x == x && object->previousCoords.y == y)))
+            return TRUE;
+    }
+    return FALSE;
+}
+
 static void DexNavProximityUpdate(void)
 {
     sDexNavSearchDataPtr->proximity = GetPlayerDistance(sDexNavSearchDataPtr->tileX, sDexNavSearchDataPtr->tileY);
@@ -653,7 +671,7 @@ static bool8 DexNavPickTile(enum EncounterType environment, u8 areaX, u8 areaY, 
 
             // Fork fix (#225): cannot be on a tile where an object exists, but a
             // despawned object's stale coordinates don't count
-            if (GetObjectEventIdByXY(topX, topY) != OBJECT_EVENTS_COUNT)
+            if (IsDexNavTileTakenByObject(topX, topY))
             {
                 topX++;
                 continue;
@@ -667,8 +685,9 @@ static bool8 DexNavPickTile(enum EncounterType environment, u8 areaX, u8 areaY, 
                 {
                     if (currMapType == MAP_TYPE_UNDERGROUND)
                     {
-                        // inside (cave)
-                        if (IsElevationMismatchAt(gObjectEvents[gPlayerAvatar.spriteId].currentElevation, topX, topY))
+                        // inside (cave); fork fix (#228): the player's object
+                        // slot, not its sprite ID
+                        if (IsElevationMismatchAt(gObjectEvents[gPlayerAvatar.objectEventId].currentElevation, topX, topY))
                             break; //occurs at same z coord
 
                         scale = 440 - (smallScan * 200) - (GetPlayerDistance(topX, topY) / 2)  - (2 * (topX + topY));
@@ -690,7 +709,8 @@ static bool8 DexNavPickTile(enum EncounterType environment, u8 areaX, u8 areaY, 
                 {
                     u8 scale = 320 - (smallScan * 200) - (GetPlayerDistance(topX, topY) / 2);
                     scale = max(scale, 1); // as in the cave branch (#224)
-                    if (IsElevationMismatchAt(gObjectEvents[gPlayerAvatar.spriteId].currentElevation, topX, topY))
+                    // the player's object slot, as in the cave branch (#228)
+                    if (IsElevationMismatchAt(gObjectEvents[gPlayerAvatar.objectEventId].currentElevation, topX, topY))
                         break;
 
                     weight = (litOnly || Random() % scale <= 1) && !MapGridGetCollisionAt(topX, topY);
