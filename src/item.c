@@ -281,7 +281,12 @@ static u32 NONNULL BagPocket_GetFreeSpaceForItem(struct BagPocket *pocket, enum 
     {
         tempItem = BagPocket_GetSlotData(pocket, i);
         if (tempItem.itemId == ITEM_NONE || tempItem.itemId == itemId)
+        {
             spaceForItem += (tempItem.itemId ? (MAX_BAG_ITEM_CAPACITY - tempItem.quantity) : MAX_BAG_ITEM_CAPACITY);
+            // BagPocket_AddItem keeps one stack of a TM or berry, in the first slot it finds
+            if (pocket->id == POCKET_TM_HM || pocket->id == POCKET_BERRIES)
+                break;
+        }
     }
 
     return spaceForItem;

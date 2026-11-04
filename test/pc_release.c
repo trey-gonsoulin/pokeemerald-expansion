@@ -52,3 +52,22 @@ TEST("PC release: the Pokemon in the cursor's hand returns its held item")
     EXPECT_EQ(GetBoxMonDataAt(StorageGetCurrentBox(), 0, MON_DATA_SPECIES), SPECIES_WOBBUFFET);
     EXPECT_EQ(CountTotalItemQuantityInBag(ITEM_LEFTOVERS), 1);
 }
+
+TEST("PC release: a held item that the bag can't take refuses the release")
+{
+    ASSUME(OW_PC_RELEASE_ITEM >= GEN_8);
+    ASSUME(GetItemPocket(ITEM_ORAN_BERRY) == POCKET_BERRIES);
+    EXPECT(AddBagItem(ITEM_ORAN_BERRY, MAX_BAG_ITEM_CAPACITY)); // A berry keeps one stack
+
+    EXPECT(!CanBagTakeReleasedMonItem(ITEM_ORAN_BERRY));
+    EXPECT(CanBagTakeReleasedMonItem(ITEM_SITRUS_BERRY));
+    EXPECT(CanBagTakeReleasedMonItem(ITEM_NONE));
+}
+
+TEST("PC release: a held item whose stack is full can go in a new bag slot")
+{
+    ASSUME(OW_PC_RELEASE_ITEM >= GEN_8);
+    EXPECT(AddBagItem(ITEM_LEFTOVERS, MAX_BAG_ITEM_CAPACITY));
+
+    EXPECT(CanBagTakeReleasedMonItem(ITEM_LEFTOVERS));
+}

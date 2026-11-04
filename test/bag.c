@@ -205,3 +205,23 @@ TEST("RemoveBagItem empties both stacks of a split item or leaves them alone whe
     EXPECT_EQ(CountTotalItemQuantityInBag(ITEM_POTION), 0);
     EXPECT_EQ(GetBagItemId(POCKET_ITEMS, 0), ITEM_NONE);
 }
+
+TEST("CheckBagHasSpace agrees with AddBagItem on a berry's one stack")
+{
+    ASSUME(GetItemPocket(ITEM_ORAN_BERRY) == POCKET_BERRIES);
+    EXPECT(AddBagItem(ITEM_ORAN_BERRY, MAX_BAG_ITEM_CAPACITY - 1));
+
+    EXPECT(CheckBagHasSpace(ITEM_ORAN_BERRY, 1));
+    EXPECT(!CheckBagHasSpace(ITEM_ORAN_BERRY, 2));
+    EXPECT(!AddBagItem(ITEM_ORAN_BERRY, 2));
+    EXPECT(CheckBagHasSpace(ITEM_SITRUS_BERRY, MAX_BAG_ITEM_CAPACITY));
+    EXPECT(!CheckBagHasSpace(ITEM_SITRUS_BERRY, MAX_BAG_ITEM_CAPACITY + 1));
+}
+
+TEST("CheckBagHasSpace counts every free slot for an item outside the TM and berry pockets")
+{
+    ASSUME(GetItemPocket(ITEM_POTION) == POCKET_ITEMS);
+    EXPECT(AddBagItem(ITEM_POTION, MAX_BAG_ITEM_CAPACITY));
+
+    EXPECT(CheckBagHasSpace(ITEM_POTION, MAX_BAG_ITEM_CAPACITY + 1));
+}
