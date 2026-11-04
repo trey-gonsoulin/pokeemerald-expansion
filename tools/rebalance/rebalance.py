@@ -1781,6 +1781,7 @@ def analyze(repo, stages_path):
 CURVE_SETTINGS = os.path.join(G.HERE, 'curve_settings.json')
 # restock's wild level offsets (map -> table field -> levels over vanilla), which apply writes.
 LEVEL_OFFSETS = os.path.relpath(G.R.AA.LEVEL_OFFSETS, G.R.AA.REPO)
+RESTOCK_SETTINGS = os.path.relpath(G.R.AA.RESTOCK_SETTINGS, G.R.AA.REPO)
 # The stage that opens Surf (from Wally's father after Norman): water tables
 # count from it (stage_tables).
 SURF_STAGE = 'Winona'
@@ -2019,7 +2020,8 @@ def apply_round(argv):
         with open(staged, 'w', encoding='utf-8') as f:
             json.dump(plan['wild'], f, indent=2)
             f.write('\n')
-        G.R.main(['--write', '--repo', args.repo, '--levels', staged])
+        G.R.main(['--write', '--repo', args.repo, '--levels', staged,
+                  '--config', os.path.join(args.repo, RESTOCK_SETTINGS)])
         shutil.copy(staged, os.path.join(args.repo, LEVEL_OFFSETS))
     print(f'{LEVEL_OFFSETS}: {sum(map(len, plan["wild"].values()))} tables on {len(plan["wild"])} maps')
     for name, (text, evolved, boss_evolved) in raised.items():

@@ -685,16 +685,17 @@ class CliTests(unittest.TestCase):
             with open(WILD, encoding='utf-8') as f, open(path, encoding='utf-8') as g:
                 self.assertEqual(f.read(), g.read())
 
-    def test_committed_wild_encounters_is_the_default_restock(self):
-        # Since #28 src/data/wild_encounters.json is `restock --write` with the defaults. restock
+    def test_committed_wild_encounters_is_the_committed_restock(self):
+        # src/data/wild_encounters.json is `restock --write --config restock_settings.json`. restock
         # reads only committed files, so this needs no PokeAPI cache.
         with tempfile.TemporaryDirectory() as tmp:
             out = os.path.join(tmp, 'out')
-            run_quietly(['--out-dir', out])
+            run_quietly(['--out-dir', out, '--config', AA.RESTOCK_SETTINGS])
             self.assertTrue(read(os.path.join(out, 'wild_encounters.json')) == read(AA.SRC_WILD),
-                            f'{AA.SRC_WILD} is no longer what the default restock gives. If the change '
+                            f'{AA.SRC_WILD} is no longer what the committed restock gives. If the change '
                             f'is intended, rerun `python3 tools/area_archetypes/area_archetypes.py '
-                            f'restock --write` and commit the result.')
+                            f'restock --write --config tools/area_archetypes/restock_settings.json` '
+                            f'and commit the result.')
 
 
 class FixtureRestockTests(unittest.TestCase):

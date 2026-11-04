@@ -134,13 +134,18 @@ python3 tools/area_archetypes/area_archetypes.py restock --ratio 0.4 --write
 
 `restock_report.md` lists every changed table slot by slot (`=` = unchanged).
 
-The committed `src/data/wild_encounters.json` is the default restock (#28):
-`python3 tools/area_archetypes/area_archetypes.py restock --write`, with no
-flags or `--config` (ratio 0.5, seed 1, Hoenn only). Rerun that command to
-regenerate it, for example after refreshing the baseline. A unittest fails
-when the committed file is no longer what that command gives (#96), so a
-change to `restock.py`, the pools or the baseline also commits the
-regenerated table.
+The committed `src/data/wild_encounters.json` is the restock with the
+committed settings in `restock_settings.json`, now `{"ratio": 0}`: the
+vanilla species, with only the level offsets applied. (#28 committed the
+default restock, ratio 0.5, which put Gen 4-9 species on the routes; the owner
+turned it back to vanilla for now.) Regenerate it, for example after
+refreshing the baseline, with
+`python3 tools/area_archetypes/area_archetypes.py restock --write --config tools/area_archetypes/restock_settings.json`;
+`tools/rebalance`'s `apply` passes the same `--config`. A unittest fails when
+the committed file is no longer what that command gives (#96), so a change to
+`restock.py`, the pools, the baseline or the settings also commits the
+regenerated table. To restock again, edit `restock_settings.json` (any
+`--config` key) and rerun that command.
 
 ### The vanilla baseline
 
