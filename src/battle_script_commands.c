@@ -6546,7 +6546,10 @@ static void Cmd_trysetperishsong(void)
     }
 
     if (notAffectedCount == gBattlersCount)
+    {
+        gBattleStruct->moveResultFlags[gBattlerAttacker] |= MOVE_RESULT_FAILED;
         gBattlescriptCurrInstr = cmd->failInstr;
+    }
     else
         gBattlescriptCurrInstr = cmd->nextInstr;
 }
@@ -9818,7 +9821,10 @@ void BS_CheckTeaTimeTargets(void)
             count++;
     }
     if (count == 0)
+    {
+        gBattleStruct->moveResultFlags[gBattlerAttacker] |= MOVE_RESULT_FAILED;
         gBattlescriptCurrInstr = cmd->failInstr;
+    }
     else
         gBattlescriptCurrInstr = cmd->nextInstr;
 }
