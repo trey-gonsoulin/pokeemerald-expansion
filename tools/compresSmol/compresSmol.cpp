@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
             }
             else
             {
-                fprintf(stderr, "Failed to compress image %s\n", image.fileName.c_str());
+                fprintf(stderr, "Failed to compress image %s\n", input.c_str());
                 return 1;
             }
         }
