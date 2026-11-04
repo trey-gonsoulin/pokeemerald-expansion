@@ -38,7 +38,7 @@ MID_CFG_PATH := $(MID_SUBDIR)/midi.cfg
 
 # $1: Source path no extension, $2 Options
 define MID_RULE
-$(MID_ASM_DIR)/$1.s: $(MID_SUBDIR)/$1.mid $(MID_CFG_PATH) $(EXPANSION_BATTLE_CONFIG)
+$(MID_ASM_DIR)/$1.s: $(MID_SUBDIR)/$1.mid $(MID_CFG_PATH)
 	$(MID) $$< $$@ $2
 endef
 #                            source path,                             remaining text (options)
@@ -47,6 +47,9 @@ define MID_EXPANSION
 endef
 
 $(foreach line,$(shell cat $(MID_CFG_PATH) | sed "s/ /__SPACE__/g"),$(call MID_EXPANSION,$(subst __SPACE__, ,$(line))))
+
+# Only se_low_health reads B_NUM_LOW_HEALTH_BEEPS
+$(MID_ASM_DIR)/se_low_health.s: $(EXPANSION_BATTLE_CONFIG)
 
 # Warn users building without a .cfg - build will fail at link time
 $(MID_ASM_DIR)/%.s: $(MID_SUBDIR)/%.mid
