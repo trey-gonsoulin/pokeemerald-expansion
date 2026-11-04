@@ -560,6 +560,7 @@ $(LEARNSET_HELPERS_BUILD_DIR):
 $(ALL_LEARNABLES_JSON):
 	python3 $(LEARNSET_HELPERS_DIR)/make_learnables.py $(LEARNSET_HELPERS_DATA_DIR) $@
 
+# The files make_tutors.py globs
 $(ALL_TUTORS_JSON): $(wildcard data/scripts/*.inc data/maps/*/scripts.inc)  $(LEARNSET_HELPERS_DIR)/make_tutors.py | $(LEARNSET_HELPERS_BUILD_DIR)
 	python3 $(LEARNSET_HELPERS_DIR)/make_tutors.py $@
 
