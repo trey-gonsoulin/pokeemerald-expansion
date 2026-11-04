@@ -657,6 +657,7 @@ static bool8 TryHideReleaseMon(void);
 static void InitCanReleaseMonVars(void);
 static void ReleaseMon(void);
 static void RemoveReleasedMon(void);
+bool32 CanBagTakeReleasedMonItem(enum Item item);
 static bool32 AtLeastThreeUsableMons(void);
 static s8 RunCanReleaseMon(void);
 static void SaveMovingMon(void);
