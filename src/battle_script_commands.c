@@ -9904,6 +9904,10 @@ void BS_TryRevivalBlessing(void)
         MarkBattlerForControllerExec(gBattlerAttacker);
         PREPARE_SPECIES_BUFFER(gBattleTextBuff1, GetMonData(&party[gSelectedMonPartyId], MON_DATA_SPECIES));
 
+        // A revived foe gives exp again when it faints again.
+        if (!IsOnPlayerSide(gBattlerAttacker))
+            gBattleStruct->givenExpMons[GetGivenExpMonsIndex(gBattlerAttacker)] &= ~(1u << gSelectedMonPartyId);
+
         // If an on-field battler is revived, it needs to be sent out again.
         if (IsDoubleBattle()
          && BattlersShareParty(gBattlerAttacker, GetPartnerBattler(gBattlerAttacker))
