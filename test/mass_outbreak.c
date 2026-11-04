@@ -159,3 +159,21 @@ TEST("getmassoutbreakdata")
     EXPECT_EQ(gSpecialVar_0x8008, MAP_OLDALE_TOWN);
 }
 
+TEST("Mass outbreak: the TV show's random outbreak is one of the static outbreaks")
+{
+    TVShow show = {0};
+
+    // Unrigged, a function test's RandomUniform returns its highest value.
+    PrepareTvShowForRandomOutbreak(&show);
+    EXPECT_EQ(show.massOutbreak.outbreakIndex, OUTBREAK_COUNT);
+    EXPECT_EQ(show.massOutbreak.species, GetStaticOutbreakSpecies(OUTBREAK_COUNT - 1));
+}
+
+TEST("Mass outbreak: a static outbreak index past the list starts none")
+{
+    ZeroMassOutbreak();
+    StartStaticMassOutbreak(OUTBREAK_COUNT);
+    EXPECT_EQ(gSaveBlock1Ptr->outbreakPokemonSpecies, SPECIES_NONE);
+    EXPECT_EQ(gSaveBlock1Ptr->outbreakDaysLeft, 0);
+    EXPECT(!IsMassOutbreakActive());
+}
