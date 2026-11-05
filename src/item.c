@@ -485,6 +485,25 @@ bool32 CheckPCHasItem(enum Item itemId, u16 count)
     return BagPocket_CheckPocketForItemCount(&dummyPocket, itemId, count);
 }
 
+// An important item the player already owns, in the bag or the PC (with reusable TMs, a TM),
+// would be a dead prize, so Trainer Hill and the Quiz Lady give a PP Up instead, and the Game
+// Corner offers one with a yes/no
+bool32 IsPrizeAlreadyOwned(enum Item itemId)
+{
+    return GetItemImportance(itemId) && (CheckBagHasItem(itemId, 1) || CheckPCHasItem(itemId, 1));
+}
+
+enum Item GetPrizeOrPPUpIfOwned(enum Item itemId)
+{
+    return IsPrizeAlreadyOwned(itemId) ? ITEM_PP_UP : itemId;
+}
+
+// Special for the Game Corner's TM prizes, which offer the PP Up with a yes/no
+bool8 ScriptIsPrizeAlreadyOwned(void)
+{
+    return IsPrizeAlreadyOwned(gSpecialVar_0x8004);
+}
+
 bool32 AddPCItem(enum Item itemId, u16 count)
 {
     struct BagPocket dummyPocket = DUMMY_PC_BAG_POCKET;
