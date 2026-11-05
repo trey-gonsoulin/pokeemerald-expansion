@@ -1019,7 +1019,8 @@ void HandleAction_ActionFinished(void)
     gBattleScripting.animTargetsHit = 0;
     gBattleStruct->dynamicMoveType = 0;
     gBattleStruct->bouncedMoveIsUsed = FALSE;
-    gBattleStruct->moveWasBounced = FALSE;
+    gBattleStruct->bouncedBattlers = 0;
+    gBattleStruct->statMoveChangedNothing = FALSE;
     gBattleStruct->snatchedMoveIsUsed = FALSE;
     gBattleScripting.moveendState = 0;
     gBattleCommunication[3] = 0;
