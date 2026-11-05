@@ -8,6 +8,7 @@
 
 TEST("Owned prize: a TM the player doesn't own stays the prize")
 {
+    ASSUME(GetItemImportance(ITEM_TM_THUNDERBOLT));
     EXPECT(!IsPrizeAlreadyOwned(ITEM_TM_THUNDERBOLT));
     EXPECT_EQ(GetPrizeOrPPUpIfOwned(ITEM_TM_THUNDERBOLT), ITEM_TM_THUNDERBOLT);
 }
@@ -26,6 +27,7 @@ TEST("Owned prize: a reusable TM in the PC becomes a PP Up")
     ASSUME(GetItemImportance(ITEM_TM_THUNDERBOLT));
     AddPCItem(ITEM_TM_THUNDERBOLT, 1);
 
+    EXPECT(IsPrizeAlreadyOwned(ITEM_TM_THUNDERBOLT));
     EXPECT_EQ(GetPrizeOrPPUpIfOwned(ITEM_TM_THUNDERBOLT), ITEM_PP_UP);
 }
 
