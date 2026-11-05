@@ -424,15 +424,10 @@ static u8 GetPlayerNameLength(const u8 *playerName)
     return len;
 }
 
-// An important item the player already owns (a reusable TM) would be a dead prize, so it
-// becomes a PP Up, in the name she shows and the item she gives, as at Trainer Hill (#253)
+// An owned reusable TM becomes a PP Up, in the name she shows and the item she gives (#253)
 static enum Item GetQuizPrize(void)
 {
-    enum Item prize = gSaveBlock1Ptr->lilycoveLady.quiz.prize;
-
-    if (GetItemImportance(prize) && (CheckBagHasItem(prize, 1) || CheckPCHasItem(prize, 1)))
-        return ITEM_PP_UP;
-    return prize;
+    return GetPrizeOrPPUpIfOwned(gSaveBlock1Ptr->lilycoveLady.quiz.prize);
 }
 
 void BufferQuizPrizeName(void)

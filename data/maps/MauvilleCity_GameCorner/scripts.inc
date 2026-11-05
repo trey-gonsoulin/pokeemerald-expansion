@@ -277,12 +277,8 @@ MauvilleCity_GameCorner_EventScript_TMIceBeam::
 
 MauvilleCity_GameCorner_EventScript_ConfirmTMPrize::
 	special BufferTMHMMoveName
-.if I_REUSABLE_TMS == TRUE
-	checkitem VAR_0x8004
+	specialvar VAR_RESULT, ScriptIsPrizeAlreadyOwned
 	goto_if_eq VAR_RESULT, TRUE, MauvilleCity_GameCorner_EventScript_OfferPPUpForOwnedTM
-	checkpcitem VAR_0x8004
-	goto_if_eq VAR_RESULT, TRUE, MauvilleCity_GameCorner_EventScript_OfferPPUpForOwnedTM
-.endif
 	msgbox MauvilleCity_GameCorner_Text_SoYourChoiceIsTheTMX, MSGBOX_YESNO
 	goto_if_eq VAR_RESULT, NO, MauvilleCity_GameCorner_EventScript_CancelTMSelect
 MauvilleCity_GameCorner_EventScript_BuyTMPrize::
