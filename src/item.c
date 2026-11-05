@@ -486,7 +486,8 @@ bool32 CheckPCHasItem(enum Item itemId, u16 count)
 }
 
 // An important item the player already owns, in the bag or the PC (with reusable TMs, a TM),
-// would be a dead prize, so Trainer Hill, the Game Corner and the Quiz Lady give a PP Up instead
+// would be a dead prize, so Trainer Hill and the Quiz Lady give a PP Up instead, and the Game
+// Corner offers one with a yes/no
 bool32 IsPrizeAlreadyOwned(enum Item itemId)
 {
     return GetItemImportance(itemId) && (CheckBagHasItem(itemId, 1) || CheckPCHasItem(itemId, 1));
