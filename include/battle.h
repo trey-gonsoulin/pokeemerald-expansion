@@ -736,8 +736,7 @@ struct BattleStruct
     u32 dancerSavedTarget:3;
     u32 statChangeBattler:3;
     u32 overworldWeatherPresent:1;
-    u32 moveWasBounced:1;
-    u32 padding5:3;
+    u32 bouncedBattlers:MAX_BATTLERS_COUNT; // Battlers that bounced the current move back
     u8 statChangeMoveAnim:1;
     u8 tidyUpActivates:1;
     u8 positiveAnimPlayed:1;
@@ -746,6 +745,8 @@ struct BattleStruct
     u8 intimidateActivated:1;
     u8 allowPartingShot:1;
     u8 adrenalineOrbActivated:1; // prevents looping after an adrenaline stat changed
+    u8 statMoveChangedNothing:1; // No stat could change and the move had no other effect
+    u8 padding6:7;
 };
 
 struct AiBattleData
