@@ -111,9 +111,9 @@ static const u8 sJapaneseEggNickname[] = _("タマゴ"); // "tamago" ("egg" in J
 
 u8 *GetMonNicknameVanilla(struct Pokemon *mon, u8 *dest)
 {
-    u8 nickname[POKEMON_NAME_BUFFER_SIZE];
-    GetMonData(mon, MON_DATA_NICKNAME, nickname);
-    return StringCopyN(dest, nickname, VANILLA_POKEMON_NAME_LENGTH);
+    // Cuts the nickname to 10 letters and terminates it
+    GetMonData(mon, MON_DATA_NICKNAME10, dest);
+    return dest + StringLength(dest);
 }
 
 u8 *GetBoxMonNickname(struct BoxPokemon *mon, u8 *dest)
@@ -437,16 +437,22 @@ u8 GetNumLevelsGainedFromDaycare(void)
 static bool32 _CheckDaycareMonReceivedMail(struct DayCare *daycare, u32 slot)
 {
     u8 nickname[max(32, POKEMON_NAME_BUFFER_SIZE)];
+    u8 nickname10[POKEMON_NAME_BUFFER_SIZE];
+    u8 mailMonName[VANILLA_POKEMON_NAME_LENGTH + 1];
     struct DaycareMon *daycareMon = &daycare->mons[slot];
 
     GetBoxMonNickname(&daycareMon->mon, nickname);
+    // The mail keeps 10 letters, and saves from before #247 left them unterminated
+    GetBoxMonData(&daycareMon->mon, MON_DATA_NICKNAME10, nickname10);
+    memcpy(mailMonName, daycareMon->mail.monName, VANILLA_POKEMON_NAME_LENGTH);
+    mailMonName[VANILLA_POKEMON_NAME_LENGTH] = EOS;
     if (daycareMon->mail.message.itemId != ITEM_NONE
-        && (StringCompareWithoutExtCtrlCodes(nickname, daycareMon->mail.monName) != 0
+        && (StringCompareWithoutExtCtrlCodes(nickname10, mailMonName) != 0
          || StringCompareWithoutExtCtrlCodes(gSaveBlock2Ptr->playerName, daycareMon->mail.otName) != 0))
     {
         StringCopy(gStringVar1, nickname);
         TVShowConvertInternationalString(gStringVar2, daycareMon->mail.otName, daycareMon->mail.gameLanguage);
-        TVShowConvertInternationalString(gStringVar3, daycareMon->mail.monName, daycareMon->mail.monLanguage);
+        TVShowConvertInternationalString(gStringVar3, mailMonName, daycareMon->mail.monLanguage);
         return TRUE;
     }
     return FALSE;

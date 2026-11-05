@@ -1366,6 +1366,9 @@ static void GetRecordMixingDaycareMail(struct RecordMixingDaycareMail *dst)
 {
     sRecordMixMail.mail[0] = gSaveBlock1Ptr->daycare.mons[0].mail;
     sRecordMixMail.mail[1] = gSaveBlock1Ptr->daycare.mons[1].mail;
+    // Saves from before #247 hold a 10-letter name unterminated
+    sRecordMixMail.mail[0].monName[VANILLA_POKEMON_NAME_LENGTH] = EOS;
+    sRecordMixMail.mail[1].monName[VANILLA_POKEMON_NAME_LENGTH] = EOS;
     InitDaycareMailRecordMixing(&gSaveBlock1Ptr->daycare, &sRecordMixMail);
     *dst = *sRecordMixMailSave;
 }
