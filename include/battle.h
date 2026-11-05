@@ -718,7 +718,8 @@ struct BattleStruct
     u32 savedMoveResultFlags[MAX_BATTLERS_COUNT]; // for Bounced moves
     u8 numSpreadTargets:3;
     u8 moldBreakerActive:1;
-    u8 unused4:4;
+    u8 statMoveChangedNothing:1; // No stat could change and the move had no other effect
+    u8 unused4:3;
     struct MessageStatus slideMessageStatus;
     u8 trainerSlideSpriteIds[MAX_BATTLERS_COUNT];
     u8 hazardsQueue[NUM_BATTLE_SIDES][HAZARDS_MAX_COUNT];
@@ -736,8 +737,7 @@ struct BattleStruct
     u32 dancerSavedTarget:3;
     u32 statChangeBattler:3;
     u32 overworldWeatherPresent:1;
-    u32 moveWasBounced:1;
-    u32 padding5:3;
+    u32 bouncedBattlers:MAX_BATTLERS_COUNT; // Battlers that bounced the current move back
     u8 statChangeMoveAnim:1;
     u8 tidyUpActivates:1;
     u8 positiveAnimPlayed:1;
