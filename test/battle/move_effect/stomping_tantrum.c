@@ -571,6 +571,29 @@ SINGLE_BATTLE_TEST("Stomping Tantrum will not deal double damage if Magic Bounce
     }
 }
 
+SINGLE_BATTLE_TEST("Stomping Tantrum will not deal double damage if Mirror Armor reflected a stat move")
+{
+    s16 damage[2];
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET);
+        OPPONENT(SPECIES_CORVIKNIGHT) { Ability(ABILITY_MIRROR_ARMOR); Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_GRAVITY); }
+        TURN { MOVE(player, MOVE_STOMPING_TANTRUM); }
+        TURN { MOVE(player, MOVE_GROWL); }
+        TURN { MOVE(player, MOVE_STOMPING_TANTRUM); }
+    } SCENE {
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_STOMPING_TANTRUM, player);
+        HP_BAR(opponent, captureDamage: &damage[0]);
+        ABILITY_POPUP(opponent, ABILITY_MIRROR_ARMOR);
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_STOMPING_TANTRUM, player);
+        HP_BAR(opponent, captureDamage: &damage[1]);
+    } THEN {
+        // The reflected Growl lowered the user's Attack by one stage
+        EXPECT_MUL_EQ(damage[0], Q_4_12(0.667), damage[1]);
+    }
+}
+
 SINGLE_BATTLE_TEST("Stomping Tantrum will deal double damage if Flower Shield found no Grass type")
 {
     s16 damage[2];
