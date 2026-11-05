@@ -5189,7 +5189,7 @@ static bool32 ShouldSetStompingTantrumTimer(void)
     bool32 targetsFoesOnly = GetBattlerMoveTargetType(gBattlerAttacker, gCurrentMove) == TARGET_BOTH;
     for (enum BattlerId battlerDef = 0; battlerDef < gBattlersCount; battlerDef++)
     {
-        // The ally of a move on both foes carries flags too, though the move never targeted it
+        // IsTargetingBothFoes flags the untargeted ally MOVE_RESULT_DOESNT_AFFECT_FOE
         if (gBattlerAttacker == battlerDef || (targetsFoesOnly && IsBattlerAlly(gBattlerAttacker, battlerDef)))
             continue;
         if (gBattleStruct->moveResultFlags[battlerDef] & (MOVE_RESULT_MISSED | MOVE_RESULT_FAILED | MOVE_RESULT_DOESNT_AFFECT_FOE))
@@ -5592,16 +5592,6 @@ static bool32 WillAnyStatChange(void)
     return FALSE;
 }
 
-static bool32 IsMirrorArmorPending(void)
-{
-    for (enum BattlerId battler = 0; battler < gBattlersCount; battler++)
-    {
-        if (gBattleStruct->moveResultFlags[battler] & MOVE_RESULT_MIRROR_ARMOR_PENDING)
-            return TRUE;
-    }
-    return FALSE;
-}
-
 static enum MoveResult StatChangeBeforeChange(struct BattleCalcValues *cv)
 {
     switch (GetMoveEffect(cv->move))
@@ -5744,15 +5734,15 @@ static enum MoveResult StatChangeBeforeChange(struct BattleCalcValues *cv)
     }
 
     #define MOVE_RESULT_HANDLE_FAILURE (MOVE_RESULT_MISSED | MOVE_RESULT_MIRROR_ARMOR_PENDING | MOVE_RESULT_ATTEMPT_STAT_CHANGE | MOVE_RESULT_STAT_CHANGE_PREVENTED)
+    u32 resultFlags = 0;
     for (enum BattlerId battler = 0; battler < gBattlersCount; battler++)
+        resultFlags |= gBattleStruct->moveResultFlags[battler];
+    if (resultFlags & MOVE_RESULT_HANDLE_FAILURE)
     {
-        if (gBattleStruct->moveResultFlags[battler] & MOVE_RESULT_HANDLE_FAILURE)
-        {
-            // No stat will change, so only the messages are left, unless Mirror Armor reflects a drop
-            if (!gBattleStruct->bouncedMoveIsUsed && !IsMirrorArmorPending())
-                gBattleStruct->statMoveChangedNothing = TRUE;
-            return MOVE_RESULT_CONTINUE;
-        }
+        // No stat will change, so only the messages are left, unless Mirror Armor reflects a drop
+        if (!gBattleStruct->bouncedMoveIsUsed && !(resultFlags & MOVE_RESULT_MIRROR_ARMOR_PENDING))
+            gBattleStruct->statMoveChangedNothing = TRUE;
+        return MOVE_RESULT_CONTINUE;
     }
     #undef MOVE_RESULT_HANDLE_FAILURE
 
