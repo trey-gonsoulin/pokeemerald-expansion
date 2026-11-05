@@ -2330,43 +2330,63 @@ bool32 IsPowderMoveBlocked(struct DamageContext *ctx)
     return TRUE;
 }
 
+// Whether the ability absorbs moves of this type. Battler state plays no part, so the overworld
+// (GetOverworldTypeEffectiveness) reads it too.
+bool32 DoesAbilityAbsorbMoveType(enum Ability ability, enum Type moveType)
+{
+    switch (ability)
+    {
+    case ABILITY_VOLT_ABSORB:
+    case ABILITY_MOTOR_DRIVE:
+        return moveType == TYPE_ELECTRIC;
+    case ABILITY_LIGHTNING_ROD:
+        return GetConfig(B_REDIRECT_ABILITY_IMMUNITY) >= GEN_5 && moveType == TYPE_ELECTRIC;
+    case ABILITY_WATER_ABSORB:
+    case ABILITY_DRY_SKIN:
+        return moveType == TYPE_WATER;
+    case ABILITY_STORM_DRAIN:
+        return GetConfig(B_REDIRECT_ABILITY_IMMUNITY) >= GEN_5 && moveType == TYPE_WATER;
+    case ABILITY_EARTH_EATER:
+        return moveType == TYPE_GROUND;
+    case ABILITY_SAP_SIPPER:
+        return moveType == TYPE_GRASS;
+    case ABILITY_WELL_BAKED_BODY:
+    case ABILITY_FLASH_FIRE:
+        return moveType == TYPE_FIRE;
+    default:
+        return FALSE;
+    }
+}
+
 bool32 CanAbilityAbsorbMove(struct DamageContext *ctx)
 {
     const u8 *battleScript = NULL;
+    bool32 absorbsType = DoesAbilityAbsorbMoveType(ctx->abilities[ctx->battlerDef], ctx->moveType);
 
     switch (ctx->abilities[ctx->battlerDef])
     {
     case ABILITY_VOLT_ABSORB:
-        if (ctx->moveType == TYPE_ELECTRIC)
-            battleScript = AbsorbedByDrainHpAbility(ctx->battlerDef);
-        break;
     case ABILITY_WATER_ABSORB:
     case ABILITY_DRY_SKIN:
-        if (ctx->moveType == TYPE_WATER)
-            battleScript = AbsorbedByDrainHpAbility(ctx->battlerDef);
-        break;
     case ABILITY_EARTH_EATER:
-        if (ctx->moveType == TYPE_GROUND)
+        if (absorbsType)
             battleScript = AbsorbedByDrainHpAbility(ctx->battlerDef);
         break;
     case ABILITY_MOTOR_DRIVE:
-        if (ctx->moveType == TYPE_ELECTRIC)
+        if (absorbsType)
             battleScript = AbsorbedByStatIncreaseAbility(ctx, STAT_SPEED, 1);
         break;
     case ABILITY_LIGHTNING_ROD:
-        if (GetConfig(B_REDIRECT_ABILITY_IMMUNITY) >= GEN_5 && ctx->moveType == TYPE_ELECTRIC)
-            battleScript = AbsorbedByStatIncreaseAbility(ctx, STAT_SPATK, 1);
-        break;
     case ABILITY_STORM_DRAIN:
-        if (GetConfig(B_REDIRECT_ABILITY_IMMUNITY) >= GEN_5 && ctx->moveType == TYPE_WATER)
+        if (absorbsType)
             battleScript = AbsorbedByStatIncreaseAbility(ctx, STAT_SPATK, 1);
         break;
     case ABILITY_SAP_SIPPER:
-        if (ctx->moveType == TYPE_GRASS)
+        if (absorbsType)
             battleScript = AbsorbedByStatIncreaseAbility(ctx, STAT_ATK, 1);
         break;
     case ABILITY_WELL_BAKED_BODY:
-        if (ctx->moveType == TYPE_FIRE)
+        if (absorbsType)
             battleScript = AbsorbedByStatIncreaseAbility(ctx, STAT_DEF, 2);
         break;
     case ABILITY_WIND_RIDER:
@@ -2374,7 +2394,7 @@ bool32 CanAbilityAbsorbMove(struct DamageContext *ctx)
             battleScript = AbsorbedByStatIncreaseAbility(ctx, STAT_ATK, 1);
         break;
     case ABILITY_FLASH_FIRE:
-        if (ctx->moveType == TYPE_FIRE && (B_FLASH_FIRE_FROZEN >= GEN_5 || !(gBattleMons[ctx->battlerDef].status1 & STATUS1_FREEZE)))
+        if (absorbsType && (B_FLASH_FIRE_FROZEN >= GEN_5 || !(gBattleMons[ctx->battlerDef].status1 & STATUS1_FREEZE)))
             battleScript = AbsorbedByFlashFire(ctx);
         break;
     case ABILITY_SOUNDPROOF:
@@ -8407,24 +8427,30 @@ static void MulByTypeEffectivenessOutOfBattle(enum Move move, enum Type moveType
     *modifier = uq4_12_multiply(*modifier, mod);
 }
 
-uq4_12_t CalcPartyMonTypeEffectivenessMultiplier(enum Move move, enum Species speciesDef, enum Ability abilityDef)
+static uq4_12_t CalcSpeciesTypeEffectivenessOutOfBattle(enum Move move, enum Type moveType, enum Species speciesDef, enum Ability abilityDef)
 {
     uq4_12_t modifier = UQ_4_12(1.0);
-    enum Type moveType = GetBattleMoveType(move);
 
-    if (move != MOVE_STRUGGLE && moveType != TYPE_MYSTERY)
-    {
-        MulByTypeEffectivenessOutOfBattle(move, moveType, &modifier, GetSpeciesType(speciesDef, 0));
-        if (GetSpeciesType(speciesDef, 1) != GetSpeciesType(speciesDef, 0))
-            MulByTypeEffectivenessOutOfBattle(move, moveType, &modifier, GetSpeciesType(speciesDef, 1));
+    MulByTypeEffectivenessOutOfBattle(move, moveType, &modifier, GetSpeciesType(speciesDef, 0));
+    if (GetSpeciesType(speciesDef, 1) != GetSpeciesType(speciesDef, 0))
+        MulByTypeEffectivenessOutOfBattle(move, moveType, &modifier, GetSpeciesType(speciesDef, 1));
 
-        if (moveType == TYPE_GROUND && (abilityDef == ABILITY_LEVITATE || abilityDef == ABILITY_EELEVATE))
-            modifier = UQ_4_12(0.0);
-        if (abilityDef == ABILITY_WONDER_GUARD && modifier <= UQ_4_12(1.0) && GetMovePower(move) != 0)
-            modifier = UQ_4_12(0.0);
-    }
+    if (moveType == TYPE_GROUND && (abilityDef == ABILITY_LEVITATE || abilityDef == ABILITY_EELEVATE))
+        modifier = UQ_4_12(0.0);
+    if (abilityDef == ABILITY_WONDER_GUARD && modifier <= UQ_4_12(1.0) && GetMovePower(move) != 0)
+        modifier = UQ_4_12(0.0);
 
     return modifier;
+}
+
+uq4_12_t CalcPartyMonTypeEffectivenessMultiplier(enum Move move, enum Species speciesDef, enum Ability abilityDef)
+{
+    enum Type moveType = GetBattleMoveType(move);
+
+    if (move == MOVE_STRUGGLE || moveType == TYPE_MYSTERY)
+        return UQ_4_12(1.0);
+
+    return CalcSpeciesTypeEffectivenessOutOfBattle(move, moveType, speciesDef, abilityDef);
 }
 
 static uq4_12_t GetInverseTypeMultiplier(uq4_12_t multiplier)
@@ -8442,33 +8468,18 @@ static uq4_12_t GetInverseTypeMultiplier(uq4_12_t multiplier)
     }
 }
 
+// A Pound of the given type against the mon, as the follower's gym-type emote reads it.
 uq4_12_t GetOverworldTypeEffectiveness(struct Pokemon *mon, enum Type moveType)
 {
-    uq4_12_t modifier = UQ_4_12(1.0);
-
     if (moveType == TYPE_MYSTERY)
-        return modifier;
+        return UQ_4_12(1.0);
 
+    enum Ability ability = GetMonAbility(mon);
 
-    struct DamageContext ctx = {0};
-    ctx.abilities[B_BATTLER_0] = GetMonAbility(mon);
-    ctx.move = ctx.chosenMove = ctx.baseMove = MOVE_POUND;
-    ctx.moveType = moveType;
-    ctx.updateFlags = FALSE;
+    if (DoesAbilityAbsorbMoveType(ability, moveType))
+        return UQ_4_12(0.0);
 
-    enum Species speciesDef = GetMonData(mon, MON_DATA_SPECIES);
-    enum Type type1 = GetSpeciesType(speciesDef, 0);
-    enum Type type2 = GetSpeciesType(speciesDef, 1);
-
-    MulByTypeEffectivenessOutOfBattle(ctx.move, moveType, &modifier, type1);
-    if (type2 != type1)
-        MulByTypeEffectivenessOutOfBattle(ctx.move, moveType, &modifier, type2);
-
-    if ((modifier <= UQ_4_12(1.0) && ctx.abilities[B_BATTLER_0] == ABILITY_WONDER_GUARD)
-     || CanAbilityAbsorbMove(&ctx))
-        modifier = UQ_4_12(0.0);
-
-    return modifier;
+    return CalcSpeciesTypeEffectivenessOutOfBattle(MOVE_POUND, moveType, GetMonData(mon, MON_DATA_SPECIES), ability);
 }
 
 uq4_12_t GetTypeModifier(enum Type atkType, enum Type defType)

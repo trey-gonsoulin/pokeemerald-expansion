@@ -102,6 +102,7 @@ bool32 IsPowderMoveBlocked(struct DamageContext *ctx);
 bool32 CanTargetBlockPranksterMove(struct DamageContext *ctx, s32 movePriority);
 bool32 CanPsychicTerrainProtectTarget(struct DamageContext *ctx, s32 movePriority);
 bool32 CanMoveBeBlockedByTarget(struct DamageContext *ctx, s32 movePriority);
+bool32 DoesAbilityAbsorbMoveType(enum Ability ability, enum Type moveType);
 bool32 CanAbilityAbsorbMove(struct DamageContext *ctx);
 bool32 TryFieldEffects(enum FieldEffectCases caseId);
 u32 AbilityBattleEffects(enum AbilityEffect caseID, enum BattlerId battler, enum Ability ability, enum Move move, bool32 shouldAbilityTrigger);
