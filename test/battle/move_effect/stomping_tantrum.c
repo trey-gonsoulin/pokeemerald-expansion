@@ -498,6 +498,79 @@ SINGLE_BATTLE_TEST("Stomping Tantrum will deal double damage if a stat move chan
     }
 }
 
+SINGLE_BATTLE_TEST("Stomping Tantrum will not deal double damage if Defense Curl only curled the user up")
+{
+    s16 damage[2];
+    GIVEN {
+        ASSUME(GetMoveEffect(MOVE_DEFENSE_CURL) == EFFECT_DEFENSE_CURL);
+        PLAYER(SPECIES_WOBBUFFET);
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(player, MOVE_IRON_DEFENSE); }
+        TURN { MOVE(player, MOVE_IRON_DEFENSE); }
+        TURN { MOVE(player, MOVE_IRON_DEFENSE); }
+        TURN { MOVE(player, MOVE_STOMPING_TANTRUM); }
+        TURN { MOVE(player, MOVE_DEFENSE_CURL); }
+        TURN { MOVE(player, MOVE_STOMPING_TANTRUM); }
+    } SCENE {
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_STOMPING_TANTRUM, player);
+        HP_BAR(opponent, captureDamage: &damage[0]);
+        MESSAGE("Wobbuffet's Defense won't go any higher!");
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_STOMPING_TANTRUM, player);
+        HP_BAR(opponent, captureDamage: &damage[1]);
+    } THEN {
+        EXPECT_EQ(damage[0], damage[1]);
+    }
+}
+
+SINGLE_BATTLE_TEST("Stomping Tantrum will deal double damage if Defense Curl changed nothing")
+{
+    s16 damage[2];
+    GIVEN {
+        ASSUME(GetMoveEffect(MOVE_DEFENSE_CURL) == EFFECT_DEFENSE_CURL);
+        PLAYER(SPECIES_WOBBUFFET);
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(player, MOVE_IRON_DEFENSE); }
+        TURN { MOVE(player, MOVE_IRON_DEFENSE); }
+        TURN { MOVE(player, MOVE_IRON_DEFENSE); }
+        TURN { MOVE(player, MOVE_DEFENSE_CURL); }
+        TURN { MOVE(player, MOVE_STOMPING_TANTRUM); }
+        TURN { MOVE(player, MOVE_DEFENSE_CURL); }
+        TURN { MOVE(player, MOVE_STOMPING_TANTRUM); }
+    } SCENE {
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_STOMPING_TANTRUM, player);
+        HP_BAR(opponent, captureDamage: &damage[0]);
+        MESSAGE("Wobbuffet's Defense won't go any higher!");
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_STOMPING_TANTRUM, player);
+        HP_BAR(opponent, captureDamage: &damage[1]);
+    } THEN {
+        EXPECT_MUL_EQ(damage[0], Q_4_12(2.0), damage[1]);
+    }
+}
+
+SINGLE_BATTLE_TEST("Stomping Tantrum will not deal double damage if Magic Bounce sent back a stat move that changed nothing")
+{
+    s16 damage[2];
+    GIVEN {
+        PLAYER(SPECIES_BELDUM) { Ability(ABILITY_CLEAR_BODY); }
+        OPPONENT(SPECIES_ESPEON) { Ability(ABILITY_MAGIC_BOUNCE); Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_STOMPING_TANTRUM); }
+        TURN { MOVE(player, MOVE_GROWL); }
+        TURN { MOVE(player, MOVE_STOMPING_TANTRUM); }
+    } SCENE {
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_STOMPING_TANTRUM, player);
+        HP_BAR(opponent, captureDamage: &damage[0]);
+        ABILITY_POPUP(opponent, ABILITY_MAGIC_BOUNCE);
+        ABILITY_POPUP(player, ABILITY_CLEAR_BODY);
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_STOMPING_TANTRUM, player);
+        HP_BAR(opponent, captureDamage: &damage[1]);
+    } THEN {
+        EXPECT_EQ(damage[0], damage[1]);
+    }
+}
+
 SINGLE_BATTLE_TEST("Stomping Tantrum will deal double damage if Flower Shield found no Grass type")
 {
     s16 damage[2];

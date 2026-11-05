@@ -5592,6 +5592,20 @@ static bool32 WillAnyStatChange(void)
     return FALSE;
 }
 
+// SetAdditionalEffectsOnStatChange applies these even when no stat can rise
+static bool32 WillStatMoveSetVolatile(struct BattleCalcValues *cv)
+{
+    switch (cv->moveEffect)
+    {
+    case EFFECT_DEFENSE_CURL:
+        return !gBattleMons[cv->battlerAtk].volatiles.defenseCurl;
+    case EFFECT_NO_RETREAT:
+        return !gBattleMons[cv->battlerAtk].volatiles.escapePrevention;
+    default:
+        return FALSE;
+    }
+}
+
 static enum MoveResult StatChangeBeforeChange(struct BattleCalcValues *cv)
 {
     switch (GetMoveEffect(cv->move))
@@ -5740,7 +5754,9 @@ static enum MoveResult StatChangeBeforeChange(struct BattleCalcValues *cv)
     if (resultFlags & MOVE_RESULT_HANDLE_FAILURE)
     {
         // No stat will change, so only the messages are left, unless Mirror Armor reflects a drop
-        if (!gBattleStruct->bouncedMoveIsUsed && !(resultFlags & MOVE_RESULT_MIRROR_ARMOR_PENDING))
+        if (!gBattleStruct->bouncedMoveIsUsed
+         && !(resultFlags & MOVE_RESULT_MIRROR_ARMOR_PENDING)
+         && !WillStatMoveSetVolatile(cv))
             gBattleStruct->statMoveChangedNothing = TRUE;
         return MOVE_RESULT_CONTINUE;
     }
