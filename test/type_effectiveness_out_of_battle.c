@@ -80,9 +80,16 @@ TEST("Out-of-battle type effectiveness: the overworld's absorbing abilities don'
 {
     struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][0];
     struct BattleStruct *savedBattleStruct = gBattleStruct;
+    u8 savedChooser = gBattleCommunication[MULTISTRING_CHOOSER];
+    enum Ability voltAbsorb, flashFire;
+    uq4_12_t electric, ground, fire, water;
+    s32 heal;
+    u8 chooser;
+    bool32 flashFireBoosted;
 
     // A hurt last battler would make Volt Absorb heal it through gBattleStruct (NULL outside a
-    // battle), and Flash Fire sets the battle message chooser.
+    // battle), and Flash Fire sets the battle message chooser. Everything is read and restored
+    // before the first EXPECT, which ends the test when it fails.
     gBattleStruct = AllocZeroed(sizeof(*gBattleStruct));
     SetStaleBattleState(TYPE_NORMAL, 0);
     gBattleMons[B_BATTLER_0].hp = 1;
@@ -90,23 +97,33 @@ TEST("Out-of-battle type effectiveness: the overworld's absorbing abilities don'
     gBattleCommunication[MULTISTRING_CHOOSER] = 0xFF;
 
     CreateMonWithFirstAbility(mon, SPECIES_JOLTEON);
-    EXPECT_EQ(GetMonAbility(mon), ABILITY_VOLT_ABSORB);
-    EXPECT_EQ(GetOverworldTypeEffectiveness(mon, TYPE_ELECTRIC), UQ_4_12(0.0));
-    EXPECT_EQ(GetOverworldTypeEffectiveness(mon, TYPE_GROUND), UQ_4_12(2.0));
+    voltAbsorb = GetMonAbility(mon);
+    electric = GetOverworldTypeEffectiveness(mon, TYPE_ELECTRIC);
+    ground = GetOverworldTypeEffectiveness(mon, TYPE_GROUND);
     CreateMonWithFirstAbility(mon, SPECIES_VULPIX);
-    EXPECT_EQ(GetMonAbility(mon), ABILITY_FLASH_FIRE);
-    EXPECT_EQ(GetOverworldTypeEffectiveness(mon, TYPE_FIRE), UQ_4_12(0.0));
-    EXPECT_EQ(GetOverworldTypeEffectiveness(mon, TYPE_WATER), UQ_4_12(2.0));
+    flashFire = GetMonAbility(mon);
+    fire = GetOverworldTypeEffectiveness(mon, TYPE_FIRE);
+    water = GetOverworldTypeEffectiveness(mon, TYPE_WATER);
 
-    EXPECT_EQ(gBattleStruct->passiveHpUpdate[B_BATTLER_0], 0);
-    EXPECT_EQ(gBattleCommunication[MULTISTRING_CHOOSER], 0xFF);
-    EXPECT(!gBattleMons[B_BATTLER_0].volatiles.flashFireBoosted);
+    heal = gBattleStruct->passiveHpUpdate[B_BATTLER_0];
+    chooser = gBattleCommunication[MULTISTRING_CHOOSER];
+    flashFireBoosted = gBattleMons[B_BATTLER_0].volatiles.flashFireBoosted;
 
-    gBattleCommunication[MULTISTRING_CHOOSER] = 0;
+    gBattleCommunication[MULTISTRING_CHOOSER] = savedChooser;
     Free(gBattleStruct);
     gBattleStruct = savedBattleStruct;
     ClearStaleBattleState();
     ZeroMonData(mon);
+
+    EXPECT_EQ(voltAbsorb, ABILITY_VOLT_ABSORB);
+    EXPECT_EQ(electric, UQ_4_12(0.0));
+    EXPECT_EQ(ground, UQ_4_12(2.0));
+    EXPECT_EQ(flashFire, ABILITY_FLASH_FIRE);
+    EXPECT_EQ(fire, UQ_4_12(0.0));
+    EXPECT_EQ(water, UQ_4_12(2.0));
+    EXPECT_EQ(heal, 0);
+    EXPECT_EQ(chooser, 0xFF);
+    EXPECT(!flashFireBoosted);
 }
 
 TEST("Out-of-battle type effectiveness: the overworld's Ground check counts Levitate")
