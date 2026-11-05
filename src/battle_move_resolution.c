@@ -5171,38 +5171,47 @@ static enum MoveEndResult MoveEndSprayLeppaBlunder(struct BattleCalcValues *cv)
 static bool32 ShouldSetStompingTantrumTimer(void)
 {
     u32 numNotAffectedTargets = 0;
+    u32 numBouncedTargets = 0;
 
     if (gBattleStruct->battlerState[gBattlerAttacker].originalBattlerPartyId != PARTY_SIZE) // no longer the same battler
         return FALSE;
 
     if (gBattleStruct->pledgeState == PLEDGE_COMBO_WAITING // Is the battler that uses the first Pledge move in the combo
-     || gBattleStruct->unableToUseMove)
+     || gBattleStruct->unableToUseMove
+     || gBattleStruct->statMoveChangedNothing)
         return TRUE;
 
+    // A bounced move didn't fail: the bouncer's failure flag only kept the move off it
     if (!IsDoubleSpreadMove())
-        return gBattleStruct->moveResultFlags[GetMoveResultBattler(gBattlerAttacker, gCurrentMove)] & (MOVE_RESULT_MISSED | MOVE_RESULT_FAILED | MOVE_RESULT_DOESNT_AFFECT_FOE);
+        return !gBattleStruct->bouncedBattlers
+            && gBattleStruct->moveResultFlags[GetMoveResultBattler(gBattlerAttacker, gCurrentMove)] & (MOVE_RESULT_MISSED | MOVE_RESULT_FAILED | MOVE_RESULT_DOESNT_AFFECT_FOE);
 
+    bool32 targetsFoesOnly = GetBattlerMoveTargetType(gBattlerAttacker, gCurrentMove) == TARGET_BOTH;
     for (enum BattlerId battlerDef = 0; battlerDef < gBattlersCount; battlerDef++)
     {
-        if (gBattlerAttacker == battlerDef)
+        // The ally of a move on both foes carries flags too, though the move never targeted it
+        if (gBattlerAttacker == battlerDef || (targetsFoesOnly && IsBattlerAlly(gBattlerAttacker, battlerDef)))
             continue;
         if (gBattleStruct->moveResultFlags[battlerDef] & (MOVE_RESULT_MISSED | MOVE_RESULT_FAILED | MOVE_RESULT_DOESNT_AFFECT_FOE))
             numNotAffectedTargets++;
+        if (gBattleStruct->bouncedBattlers & (1u << battlerDef))
+            numBouncedTargets++;
     }
 
-    return numNotAffectedTargets == gBattleStruct->numSpreadTargets;
+    // Like Pokémon Showdown, a spread move fails if no target took it and at least one target wasn't a bouncer
+    return numNotAffectedTargets == gBattleStruct->numSpreadTargets && numBouncedTargets < numNotAffectedTargets;
 }
 
 static enum MoveEndResult MoveEndClearBits(struct BattleCalcValues *cv)
 {
     // Emerald judged a bounced move as the bouncer's, and the original user's not at all
-    if ((gBattleTypeFlags & BATTLE_TYPE_ARENA) && !gBattleStruct->moveWasBounced)
+    if ((gBattleTypeFlags & BATTLE_TYPE_ARENA) && !gBattleStruct->bouncedBattlers)
         BattleArena_AddSkillPoints(cv->battlerAtk);
 
     // go to next Bouncer or original attacker if possible
     if (gBattleStruct->bouncedMoveIsUsed)
     {
-        gBattleStruct->moveWasBounced = TRUE;
+        gBattleStruct->bouncedBattlers |= 1u << gBattlerAttacker;
         RestoreAttacker();
         RestoreTarget();
         gBattleStruct->bouncedMoveIsUsed = FALSE;
@@ -5217,10 +5226,11 @@ static enum MoveEndResult MoveEndClearBits(struct BattleCalcValues *cv)
     enum Move originallyUsedMove = GetOriginallyUsedMove(gChosenMove);
     enum Type moveType = GetBattleMoveType(cv->move);
 
-    // A bounced move didn't fail: the bouncer's failure flag only kept the move off it
-    if (!gBattleStruct->moveWasBounced && ShouldSetStompingTantrumTimer())
+    if (ShouldSetStompingTantrumTimer())
         gBattleStruct->battlerState[cv->battlerAtk].stompingTantrumTimer = 2;
-    gBattleStruct->moveWasBounced = FALSE; // A Dancer's copy is a move of its own
+    // A Dancer's copy is a move of its own
+    gBattleStruct->bouncedBattlers = 0;
+    gBattleStruct->statMoveChangedNothing = FALSE;
 
     if (gSpecialStatuses[cv->battlerAtk].backUpTarget)
         gBattleStruct->moveTarget[cv->battlerAtk] = gSpecialStatuses[cv->battlerAtk].backUpTarget - 1;
@@ -5582,6 +5592,16 @@ static bool32 WillAnyStatChange(void)
     return FALSE;
 }
 
+static bool32 IsMirrorArmorPending(void)
+{
+    for (enum BattlerId battler = 0; battler < gBattlersCount; battler++)
+    {
+        if (gBattleStruct->moveResultFlags[battler] & MOVE_RESULT_MIRROR_ARMOR_PENDING)
+            return TRUE;
+    }
+    return FALSE;
+}
+
 static enum MoveResult StatChangeBeforeChange(struct BattleCalcValues *cv)
 {
     switch (GetMoveEffect(cv->move))
@@ -5727,7 +5747,12 @@ static enum MoveResult StatChangeBeforeChange(struct BattleCalcValues *cv)
     for (enum BattlerId battler = 0; battler < gBattlersCount; battler++)
     {
         if (gBattleStruct->moveResultFlags[battler] & MOVE_RESULT_HANDLE_FAILURE)
+        {
+            // No stat will change, so only the messages are left, unless Mirror Armor reflects a drop
+            if (!gBattleStruct->bouncedMoveIsUsed && !IsMirrorArmorPending())
+                gBattleStruct->statMoveChangedNothing = TRUE;
             return MOVE_RESULT_CONTINUE;
+        }
     }
     #undef MOVE_RESULT_HANDLE_FAILURE
 
