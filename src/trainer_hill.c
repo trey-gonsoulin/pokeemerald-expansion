@@ -446,11 +446,7 @@ static void GetOwnerState(void)
 static void GiveChallengePrize(void)
 {
 #if FREE_TRAINER_HILL == FALSE
-    enum Item itemId = GetPrizeItemId();
-
-    // A reusable TM the player already owns would be a dead prize
-    if (GetItemImportance(itemId) && (CheckBagHasItem(itemId, 1) || CheckPCHasItem(itemId, 1)))
-        itemId = ITEM_PP_UP;
+    enum Item itemId = GetPrizeOrPPUpIfOwned(GetPrizeItemId());
 
     if (sHillData->challenge.numFloors != NUM_TRAINER_HILL_FLOORS || gSaveBlock1Ptr->trainerHill.receivedPrize)
     {
