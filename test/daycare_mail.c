@@ -6,7 +6,7 @@
 #include "test/test.h"
 
 // Leaves a party Pokémon holding mail at the Day Care, in slot 0.
-static void LeaveMonWithMailAtDaycare(const u8 *nickname)
+static void LeaveMonWithMailAtDaycare(const u8 *nickname, u8 language)
 {
     struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][0];
 
@@ -17,6 +17,7 @@ static void LeaveMonWithMailAtDaycare(const u8 *nickname)
     StringCopy(gSaveBlock2Ptr->playerName, COMPOUND_STRING("TREY"));
 
     CreateMon(mon, SPECIES_MASQUERAIN, 20, 0, OTID_STRUCT_PRESET(0));
+    SetMonData(mon, MON_DATA_LANGUAGE, &language);
     SetMonData(mon, MON_DATA_NICKNAME, nickname);
     GiveMailToMonByItemId(mon, ITEM_ORANGE_MAIL);
     StorePokemonInDaycare(mon, &gSaveBlock1Ptr->daycare.mons[0]);
@@ -25,7 +26,7 @@ static void LeaveMonWithMailAtDaycare(const u8 *nickname)
 
 TEST("Day Care mail: a 10-letter nickname keeps its terminator")
 {
-    LeaveMonWithMailAtDaycare(COMPOUND_STRING("MASQUERAIN"));
+    LeaveMonWithMailAtDaycare(COMPOUND_STRING("MASQUERAIN"), GAME_LANGUAGE);
 
     EXPECT_EQ(StringCompare(gSaveBlock1Ptr->daycare.mons[0].mail.monName, COMPOUND_STRING("MASQUERAIN")), 0);
     EXPECT(!CheckDaycareMonReceivedMail());
@@ -33,7 +34,7 @@ TEST("Day Care mail: a 10-letter nickname keeps its terminator")
 
 TEST("Day Care mail: a 12-letter nickname is cut to 10 letters and received no mail")
 {
-    LeaveMonWithMailAtDaycare(COMPOUND_STRING("ABCDEFGHIJKL"));
+    LeaveMonWithMailAtDaycare(COMPOUND_STRING("ABCDEFGHIJKL"), GAME_LANGUAGE);
 
     EXPECT_EQ(StringCompare(gSaveBlock1Ptr->daycare.mons[0].mail.monName, COMPOUND_STRING("ABCDEFGHIJ")), 0);
     EXPECT(!CheckDaycareMonReceivedMail());
@@ -41,14 +42,23 @@ TEST("Day Care mail: a 12-letter nickname is cut to 10 letters and received no m
 
 TEST("Day Care mail: a short nickname received no mail")
 {
-    LeaveMonWithMailAtDaycare(COMPOUND_STRING("BUG"));
+    LeaveMonWithMailAtDaycare(COMPOUND_STRING("BUG"), GAME_LANGUAGE);
 
+    EXPECT(!CheckDaycareMonReceivedMail());
+}
+
+TEST("Day Care mail: a Japanese nickname received no mail")
+{
+    LeaveMonWithMailAtDaycare(COMPOUND_STRING("ABCDE"), LANGUAGE_JAPANESE);
+
+    // The stored name drops the Japanese control codes
+    EXPECT_EQ(StringCompare(gSaveBlock1Ptr->daycare.mons[0].mail.monName, COMPOUND_STRING("ABCDE")), 0);
     EXPECT(!CheckDaycareMonReceivedMail());
 }
 
 TEST("Day Care mail: mail written for another Pokémon was received")
 {
-    LeaveMonWithMailAtDaycare(COMPOUND_STRING("MASQUERAIN"));
+    LeaveMonWithMailAtDaycare(COMPOUND_STRING("MASQUERAIN"), GAME_LANGUAGE);
     StringCopy(gSaveBlock1Ptr->daycare.mons[0].mail.monName, COMPOUND_STRING("ZIGZAGOON"));
 
     EXPECT(CheckDaycareMonReceivedMail());
@@ -60,7 +70,7 @@ TEST("Day Care mail: a 10-letter name saved without its terminator received no m
 {
     u8 *monName;
 
-    LeaveMonWithMailAtDaycare(COMPOUND_STRING("MASQUERAIN"));
+    LeaveMonWithMailAtDaycare(COMPOUND_STRING("MASQUERAIN"), GAME_LANGUAGE);
     // Saves from before the fix hold the 10 letters and a stray byte
     monName = gSaveBlock1Ptr->daycare.mons[0].mail.monName;
     monName[VANILLA_POKEMON_NAME_LENGTH] = 0;
@@ -72,7 +82,7 @@ TEST("Day Care mail: another Pokémon's 10-letter name saved without its termina
 {
     u8 *monName;
 
-    LeaveMonWithMailAtDaycare(COMPOUND_STRING("BUG"));
+    LeaveMonWithMailAtDaycare(COMPOUND_STRING("BUG"), GAME_LANGUAGE);
     monName = gSaveBlock1Ptr->daycare.mons[0].mail.monName;
     memcpy(monName, COMPOUND_STRING("TENTACRUEL"), VANILLA_POKEMON_NAME_LENGTH);
     monName[VANILLA_POKEMON_NAME_LENGTH] = 0;
