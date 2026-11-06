@@ -2123,6 +2123,15 @@ static const struct MapHeader *DebugSelectionStep_GetWarpMapHeader(u8 taskId)
     return Overworld_GetMapHeaderByGroupAndId(mapGroup, mapNum);
 }
 
+// "<prefix>12, Y 34": the prefix ends with the X label
+static void Debug_CopyCoords(u8 *dest, const u8 *prefix, u32 x, u32 y)
+{
+    dest = StringCopy(dest, prefix);
+    dest = ConvertIntToDecimalStringN(dest, x, STR_CONV_MODE_LEFT_ALIGN, 3);
+    dest = StringCopy(dest, COMPOUND_STRING(", Y "));
+    ConvertIntToDecimalStringN(dest, y, STR_CONV_MODE_LEFT_ALIGN, 3);
+}
+
 static void DebugSelectionStep_UpdateWarp(u8 taskId, u8 digits, u32 min, u32 max)
 {
     const struct MapHeader *mapHeader = DebugSelectionStep_GetWarpMapHeader(taskId);
@@ -2148,10 +2157,7 @@ static void DebugSelectionStep_UpdateWarp(u8 taskId, u8 digits, u32 min, u32 max
         else
             Debug_CopyMapName(end, warp->mapGroup, warp->mapNum);
         // Where the player lands
-        end = StringCopy(gStringVar3, COMPOUND_STRING("At X "));
-        end = ConvertIntToDecimalStringN(end, warp->x, STR_CONV_MODE_LEFT_ALIGN, 3);
-        end = StringCopy(end, COMPOUND_STRING(", Y "));
-        ConvertIntToDecimalStringN(end, warp->y, STR_CONV_MODE_LEFT_ALIGN, 3);
+        Debug_CopyCoords(gStringVar3, COMPOUND_STRING("At X "), warp->x, warp->y);
     }
     DebugNativeStep_PrintWindowSelectionToFit(taskId);
 }
@@ -2192,6 +2198,12 @@ static void Debug_SaveWarpBack(void)
     sDebugWarpBack.y = gSaveBlock1Ptr->pos.y;
 }
 
+// Debug_SaveWarpBack sets warpId to WARP_ID_NONE; the zeroed EWRAM before the first debug warp has 0
+static bool32 Debug_HasWarpBack(void)
+{
+    return sDebugWarpBack.warpId == WARP_ID_NONE;
+}
+
 // Called by the fly map as it closes. A fly that Fly to map… started records the warp back
 // once its destination is chosen, not when the map opens, since B cancels it.
 void Debug_OnFlyMapExit(bool32 choseDestination)
@@ -2223,7 +2235,7 @@ static void DebugAction_Util_WarpBack(u8 taskId)
 {
     struct WarpData back = sDebugWarpBack;
 
-    if (back.warpId != WARP_ID_NONE)
+    if (!Debug_HasWarpBack())
     {
         PlaySE(SE_FAILURE);
         return;
@@ -2281,7 +2293,7 @@ static u32 Debug_GenerateListRecentWarpsMenu(const struct DebugMenuOption *items
     sDebugMenuListData->listItems[0].name = sDebugMenuListData->itemNames[0];
     // The empty list's one entry is the warp back, which isn't set before the first debug warp.
     // A fly or an x/y warp sets it without adding a recent warp.
-    if (sDebugWarpBack.warpId != WARP_ID_NONE)
+    if (!Debug_HasWarpBack())
     {
         StringCopy(sDebugMenuListData->itemNames[0], COMPOUND_STRING("No warps yet"));
         return 1;
@@ -2351,7 +2363,6 @@ static void DebugSelectionStep_UpdateCoord(u8 taskId, u8 digits, u32 min, u32 ma
     bool32 isY = gTasks[taskId].tStep == 1;
     u32 x = isY ? DebugSelection_GetStepData(taskId, 0) : DEBUG_TASK_INPUT(taskId);
     u32 y = isY ? DEBUG_TASK_INPUT(taskId) : DebugSelection_GetStepData(taskId, 1);
-    u8 *end;
 
     Debug_InputToDecimalString(gStringVar2, taskId, digits);
     ConvertIntToDecimalStringN(gStringVar3, max, STR_CONV_MODE_LEADING_ZEROS, digits);
@@ -2359,36 +2370,21 @@ static void DebugSelectionStep_UpdateCoord(u8 taskId, u8 digits, u32 min, u32 ma
                                               : COMPOUND_STRING("X: {STR_VAR_2} / {STR_VAR_3}"));
     Debug_CopyMapName(gStringVar2, gSaveBlock1Ptr->location.mapGroup, gSaveBlock1Ptr->location.mapNum);
     // Where the player lands: the other step's value is the one it holds now
-    end = StringCopy(gStringVar3, COMPOUND_STRING("To X "));
-    end = ConvertIntToDecimalStringN(end, x, STR_CONV_MODE_LEFT_ALIGN, 3);
-    end = StringCopy(end, COMPOUND_STRING(", Y "));
-    ConvertIntToDecimalStringN(end, y, STR_CONV_MODE_LEFT_ALIGN, 3);
+    Debug_CopyCoords(gStringVar3, COMPOUND_STRING("To X "), x, y);
     DebugNativeStep_PrintWindowSelectionToFit(taskId);
 }
 
-static u32 DebugSelectionStep_GetLastCoordX(u8 taskId)
+static u32 DebugSelectionStep_GetLastCoord(u8 taskId)
 {
-    return gMapHeader.mapLayout->width - 1;
+    return (gTasks[taskId].tStep == 1 ? gMapHeader.mapLayout->height : gMapHeader.mapLayout->width) - 1;
 }
 
-static u32 DebugSelectionStep_GetLastCoordY(u8 taskId)
-{
-    return gMapHeader.mapLayout->height - 1;
-}
-
-static const struct DebugSelectionStep sCoordXSelectionStep = {
+// Used for both steps, which tell X and Y apart by tStep
+static const struct DebugSelectionStep sCoordSelectionStep = {
     .stepUpdate = DebugSelectionStep_UpdateCoord,
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = 0,
-    .maxFunc = DebugSelectionStep_GetLastCoordX,
-    .useMaxFunc = TRUE,
-};
-
-static const struct DebugSelectionStep sCoordYSelectionStep = {
-    .stepUpdate = DebugSelectionStep_UpdateCoord,
-    .stepConfirm = DebugSelectionStep_GenericInputConfirm,
-    .minValue = 0,
-    .maxFunc = DebugSelectionStep_GetLastCoordY,
+    .maxFunc = DebugSelectionStep_GetLastCoord,
     .useMaxFunc = TRUE,
 };
 
@@ -2400,13 +2396,15 @@ static void DebugSelection_WarpToCoords_Init(u8 taskId)
     DebugSelection_SetData(taskId, 1, gSaveBlock1Ptr->pos.y);
 }
 
-// Records the warp back like Back to <map>, and isn't a recent warp: those are map warps
+// Records the warp back like Back to <map>, and isn't a recent warp: those are map warps.
+// A warp to the player's own tile keeps the warp back it has, which A, A would otherwise lose.
 static bool32 DebugSelection_WarpToCoords_OnComplete(u8 taskId)
 {
     s16 x = DebugSelection_GetData(taskId, 0);
     s16 y = DebugSelection_GetData(taskId, 1);
 
-    Debug_SaveWarpBack();
+    if (x != gSaveBlock1Ptr->pos.x || y != gSaveBlock1Ptr->pos.y)
+        Debug_SaveWarpBack();
     SetWarpDestination(gSaveBlock1Ptr->location.mapGroup, gSaveBlock1Ptr->location.mapNum, WARP_ID_NONE, x, y);
     Debug_DoWarp(taskId);
     return TRUE;
@@ -2416,7 +2414,7 @@ static const struct DebugSelection sWarpToCoordsSelection = {
     .onInit = DebugSelection_WarpToCoords_Init,
     .onCancel = DebugSelectionStep_ReturnToUtilMenu,
     .onComplete = DebugSelection_WarpToCoords_OnComplete,
-    .steps = {&sCoordXSelectionStep, &sCoordYSelectionStep},
+    .steps = {&sCoordSelectionStep, &sCoordSelectionStep},
     .maxSteps = 2,
 };
 
