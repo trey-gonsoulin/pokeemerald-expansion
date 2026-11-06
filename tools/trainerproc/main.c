@@ -1056,20 +1056,22 @@ static bool token_human_identifiers(struct Parser *p, const struct Token *t, str
 // no newline would send strtol past its end.
 static bool token_int(struct Parser *p, const struct Token *t, int *i, int min, int max, const char *range_error)
 {
-    long l = 0;
-    if (t->begin == t->end)
+    struct Source source = {
+        .path = p->source->path,
+        .buffer = p->source->buffer,
+        .buffer_n = t->end,
+    };
+    struct Parser p_ = {
+        .source = &source,
+        .location = t->location,
+        .offset = t->begin,
+    };
+    int value;
+    if (!match_int(&p_, &value) || !match_eof(&p_))
         return set_parse_error(p, t->location, "invalid integer");
-    for (int offset = t->begin; offset < t->end; offset++)
-    {
-        unsigned char c = t->source->buffer[offset];
-        if (!('0' <= c && c <= '9'))
-            return set_parse_error(p, t->location, "invalid integer");
-        if (l <= max)
-            l = l * 10 + (c - '0');
-    }
-    if (!(min <= l && l <= max))
+    if (!(min <= value && value <= max))
         return set_parse_error(p, t->location, range_error);
-    *i = l;
+    *i = value;
     return true;
 }
 
