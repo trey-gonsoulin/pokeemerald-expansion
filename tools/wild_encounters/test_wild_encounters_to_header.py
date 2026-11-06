@@ -69,9 +69,10 @@ def route101(data):
     return data["wild_encounter_groups"][0]["encounters"][0]
 
 
-def add_encounter(data, base_label, **changes):
-    """A copy of gRoute101's encounter under another label."""
-    data["wild_encounter_groups"][0]["encounters"].append(dict(route101(data), base_label=base_label, **changes))
+def add_encounter(data, base_label, group=0, **changes):
+    """A copy of the group's first encounter under another label."""
+    encounters = data["wild_encounter_groups"][group]["encounters"]
+    encounters.append(dict(encounters[0], base_label=base_label, **changes))
 
 
 def validate(data, time_encounters=False):
@@ -80,9 +81,17 @@ def validate(data, time_encounters=False):
     gen.ValidateLabels(data, TIMES_OF_DAY, "TIME_MORNING", time_encounters)
 
 
+def add_field(data, field_type, rates, groups=None):
+    """A field, and a table of it on gRoute101."""
+    field = {"type": field_type, "encounter_rates": rates}
+    if groups is not None:
+        field["groups"] = groups
+    data["wild_encounter_groups"][0]["fields"].append(field)
+    route101(data)[field_type] = {"encounter_rate": 20, "mons": mons(len(rates))}
+
+
 def add_fishing(data, rates=ROD_RATES, groups=ROD_GROUPS):
-    data["wild_encounter_groups"][0]["fields"].append({"type": "fishing_mons", "encounter_rates": rates, "groups": groups})
-    route101(data)["fishing_mons"] = {"encounter_rate": 20, "mons": mons(len(rates))}
+    add_field(data, "fishing_mons", rates, groups)
 
 
 class ValidateTest(unittest.TestCase):
@@ -134,10 +143,8 @@ class ValidateTest(unittest.TestCase):
 
     def test_rock_smash_and_hidden_fields_pass(self):
         data = sample()
-        data["wild_encounter_groups"][0]["fields"].append({"type": "rock_smash_mons", "encounter_rates": [60, 30, 5, 4, 1]})
-        data["wild_encounter_groups"][0]["fields"].append({"type": "hidden_mons", "encounter_rates": [50, 30, 20]})
-        route101(data)["rock_smash_mons"] = {"encounter_rate": 20, "mons": mons(5)}
-        route101(data)["hidden_mons"] = {"encounter_rate": 20, "mons": mons(3)}
+        add_field(data, "rock_smash_mons", [60, 30, 5, 4, 1])
+        add_field(data, "hidden_mons", [50, 30, 20])
         validate(data)
 
     def test_field_type_without_a_picker(self):
@@ -158,8 +165,7 @@ class ValidateTest(unittest.TestCase):
                 self.assertRejected(data, "gWildMonHeaders field fishing_mons: groups are "
                                     f"{groups}, but src/wild_encounter.c picks from {gen.PICKER_GROUPS['fishing_mons']}")
         data = sample()
-        add_fishing(data, [10] * 10)
-        del data["wild_encounter_groups"][0]["fields"][-1]["groups"]
+        add_fishing(data, [10] * 10, None)
         self.assertRejected(data, "field fishing_mons: groups are None")
         data = sample()
         data["wild_encounter_groups"][0]["fields"][1]["groups"] = {"water": [0, 1, 2, 3, 4]}
@@ -278,7 +284,7 @@ class ValidateTest(unittest.TestCase):
         self.assertRejected(data, "field fishing_mons group old_rod: the encounter_rates total is 257")
 
     def test_group_indices(self):
-        super_rod = [5, 6, 7, 8, 9]
+        super_rod = ROD_GROUPS["super_rod"]
         for groups, message in (
             ({"old_rod": [0, 1], "good_rod": [2, 3, 10], "super_rod": super_rod}, "group good_rod: slot index is 10, expected 0 to 9"),
             ({"old_rod": [0, 1], "good_rod": [2, 3, -1], "super_rod": super_rod}, "group good_rod: slot index is -1"),
@@ -339,8 +345,7 @@ class ValidateTest(unittest.TestCase):
         data = sample()
         add_encounter(data, "sRoute101_FireRed")
         add_encounter(data, "sRoute101_LeafGreen")
-        data["wild_encounter_groups"][1]["encounters"].append(
-            dict(data["wild_encounter_groups"][1]["encounters"][0], base_label="gBattlePike_2"))
+        add_encounter(data, "gBattlePike_2", group=1)
         validate(data)
 
     def test_altering_cave_takes_a_label_per_table(self):
