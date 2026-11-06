@@ -4,11 +4,13 @@ python3 -m unittest discover -s tools/learnset_helpers
 
 import json
 import os
+import pathlib
 import subprocess
 import sys
 import tempfile
 import unittest
 
+import make_learnables
 import make_teachables
 import make_teaching_types
 import make_tutors
@@ -154,24 +156,113 @@ class TeachingTypeTest(RepoDirTest):
         })
 
 
+def run_make_learnables(inputs_dir, out, **kwargs):
+    return subprocess.run([sys.executable, os.path.join(HELPERS_DIR, "make_learnables.py"), inputs_dir, out],
+                          **kwargs)
+
+
+def porymoves_entry(move):
+    return {"LevelMoves": [{"Move": move}], "TMMoves": [], "EggMoves": [], "TutorMoves": []}
+
+
 class LearnablesOrderTest(RepoDirTest):
     """all_learnables.json comes out the same under any hash seed (#258)."""
 
     def test_same_output_under_any_hash_seed(self):
         species = ["ZUBAT", "ABRA", "MEW", "KOFFING", "BULBASAUR", "PIDGEY", "ONIX", "EEVEE"]
-        entry = {"LevelMoves": [{"Move": "MOVE_TACKLE"}], "TMMoves": [], "EggMoves": [], "TutorMoves": []}
+        entry = porymoves_entry("MOVE_TACKLE")
         self.write("inputs/a.json", json.dumps({name: entry for name in species[:5]}))
         self.write("inputs/b.json", json.dumps({name: entry for name in species[3:]}))
         outputs = []
         for seed in ("1", "2", "3"):
-            subprocess.run([sys.executable, os.path.join(HELPERS_DIR, "make_learnables.py"),
-                            "inputs", f"out{seed}.json"],
-                           env={**os.environ, "PYTHONHASHSEED": seed}, check=True)
+            run_make_learnables("inputs", f"out{seed}.json", env={**os.environ, "PYTHONHASHSEED": seed}, check=True)
             with open(f"out{seed}.json") as f:
                 outputs.append(f.read())
         self.assertEqual(outputs[0], outputs[1])
         self.assertEqual(outputs[0], outputs[2])
         self.assertEqual(list(json.loads(outputs[0])), sorted(species))
+
+
+class LearnablesKeyTest(RepoDirTest):
+    """Every species key comes out in the snake-case form make_teachables looks up (#274)."""
+
+    def make(self, inputs):
+        for name, species in inputs.items():
+            entries = {key: porymoves_entry(move) for key, move in species.items()}
+            self.write(f"inputs/{name}.json", json.dumps(entries))
+        return run_make_learnables("inputs", "out.json", capture_output=True, text=True)
+
+    def learnables(self, inputs):
+        self.make(inputs).check_returncode()
+        with open("out.json") as f:
+            return json.load(f)
+
+    def test_punctuated_names_become_snake_case(self):
+        out = self.learnables({"new": {"MR. MIME": "MOVE_A", "MIME JR.": "MOVE_B", "MR. RIME": "MOVE_C",
+                                       "PORYGON-Z": "MOVE_D", "FARFETCH'D": "MOVE_F", "SIRFETCH’D": "MOVE_G"},
+                               "sv": {"MR_MIME": "MOVE_E"}})
+        self.assertEqual(out, {"MR_MIME": ["MOVE_A", "MOVE_E"], "MIME_JR": ["MOVE_B"], "MR_RIME": ["MOVE_C"],
+                               "PORYGON_Z": ["MOVE_D"], "FARFETCHD": ["MOVE_F"], "SIRFETCHD": ["MOVE_G"]})
+
+    def test_accented_and_misencoded_names_lose_their_accents(self):
+        out = self.learnables({"za": {"FLABÃ©BÃ©": "MOVE_A"},
+                               "xy": {"FLABÉBÉ": "MOVE_B"},
+                               "sv": {"FLABEBE": "MOVE_C"}})
+        self.assertEqual(out, {"FLABEBE": ["MOVE_A", "MOVE_B", "MOVE_C"]})
+
+    def test_merged_form_entries_are_skipped(self):
+        out = self.learnables({"za": {"SLOWBRO": "MOVE_A", "MR. MIME": "MOVE_B", "HOOPA": "MOVE_C",
+                                      "PIKACHU": "MOVE_D"},
+                               "sv": {"SLOWBRO": "MOVE_E", "SLOWBRO_GALAR": "MOVE_F", "HOOPA_UNBOUND": "MOVE_G"}})
+        self.assertEqual(out, {"SLOWBRO": ["MOVE_E"], "SLOWBRO_GALAR": ["MOVE_F"], "HOOPA_UNBOUND": ["MOVE_G"],
+                               "PIKACHU": ["MOVE_D"]})
+
+    def test_unreadable_key_stops_the_build(self):
+        result = self.make({"za": {"PIKACHU": "MOVE_A", "???": "MOVE_B"}})
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("za.json", result.stderr)
+        self.assertIn("'???'", result.stderr)
+        self.assertFalse(os.path.exists("out.json"))
+
+    def test_symbol_in_a_name_stops_the_build(self):
+        # Dropping the symbol would merge both Nidoran into one key no lookup reads
+        result = self.make({"za": {"NIDORAN♀": "MOVE_A", "NIDORAN♂": "MOVE_B"}})
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("NIDORAN", result.stderr)
+
+
+class CommittedLearnablesTest(unittest.TestCase):
+    """The committed all_learnables.json is what make_learnables.py makes from porymoves_files (#274)."""
+
+    PORYMOVES_DIR = pathlib.Path(HELPERS_DIR, "porymoves_files")
+
+    def test_committed_file_is_up_to_date(self):
+        repo = os.path.dirname(os.path.dirname(HELPERS_DIR))
+        committed = os.path.join(repo, "src", "data", "pokemon", "all_learnables.json")
+        with tempfile.TemporaryDirectory() as tmp:
+            out = os.path.join(tmp, "all_learnables.json")
+            run_make_learnables(str(self.PORYMOVES_DIR), out, check=True)
+            with open(out) as f, open(committed) as g:
+                made, kept = f.read(), g.read()
+        if made != kept:
+            made, kept = json.loads(made), json.loads(kept)
+            differ = sorted(k for k in made.keys() | kept.keys() if made.get(k) != kept.get(k))
+            self.fail(f"all_learnables.json is stale for {len(differ)} species ({', '.join(differ[:10])}): "
+                      "run `make src/data/pokemon/all_learnables.json`")
+
+    def test_za_merged_forms_are_the_bare_names_of_other_games_forms(self):
+        # A bare name in za.json whose forms za.json doesn't list but another game does. Older games
+        # aren't checked: their bare names (rse's MAROWAK) predate the forms. PORYGON_Z is its own
+        # species, not a form of Porygon. ROTOM is read: its forms share one learnset.
+        keys = {}
+        for fname in self.PORYMOVES_DIR.glob("*.json"):
+            with open(fname, encoding="utf-8") as f:
+                keys[fname.name] = {make_learnables.species_key(fname, species) for species in json.load(f)}
+        za = keys.pop("za.json")
+        others = set().union(*keys.values()) - {"PORYGON_Z"}
+        merged = {key for key in za
+                  if not any(k.startswith(key + "_") for k in za) and any(k.startswith(key + "_") for k in others)}
+        self.assertEqual(merged - {"ROTOM"}, make_learnables.ZA_MERGED_FORMS)
 
 
 if __name__ == "__main__":
