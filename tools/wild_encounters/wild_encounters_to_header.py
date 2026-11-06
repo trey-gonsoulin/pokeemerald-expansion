@@ -14,6 +14,11 @@ DEFAULT_MIN_LEVEL = 2
 MIN_LEVEL = 1
 MAX_LEVEL = 100
 MAX_ENCOUNTER_RATE = 255 # struct WildPokemonInfo's u8 encounterRate
+# The most a field's encounter_rates (each group's, in a field with groups) can add up to:
+# the pickers in src/wild_encounter.c draw a u8 below that total. The fishing picker draws
+# one number below the largest rod's total for every rod, so the rods' totals must match.
+MAX_RATES_TOTAL = 256
+VERSION_SUFFIXES = {"_FireRed": "FIRERED", "_LeafGreen": "LEAFGREEN"}
 
 
 class WildEncountersError(Exception):
@@ -34,19 +39,63 @@ def CheckInt(value, low, high, what, where):
         raise WildEncountersError(f"{where}: {what} is {value!r}, expected {low} to {high}")
 
 
+def CheckRates(rates, slots, where):
+    """Return the slots' total, which has to be 1 to MAX_RATES_TOTAL."""
+    for slot in slots:
+        CheckInt(rates[slot], 0, MAX_RATES_TOTAL, f"encounter_rates[{slot}]", where)
+    total = sum(rates[slot] for slot in slots)
+    CheckInt(total, 1, MAX_RATES_TOTAL, "the encounter_rates total", where)
+    return total
+
+
+def CheckGroups(field, where):
+    """Each slot in exactly one group, each group's slots consecutive in any
+    order (WriteMacros sums them by slot), and every group's rates adding up to
+    the same total."""
+    slot_count = len(field["encounter_rates"])
+    slot_groups = {}
+    group_totals = {}
+    if type(field["groups"]) is not dict:
+        raise WildEncountersError(f"{where}: groups is {field['groups']!r}, expected an object of slot lists")
+    for name, slots in field["groups"].items():
+        group_where = f"{where} group {name}"
+        if type(slots) is not list or not slots:
+            raise WildEncountersError(f"{group_where}: slots are {slots!r}, expected a list of slot indices")
+        for slot in slots:
+            CheckInt(slot, 0, slot_count - 1, "slot index", group_where)
+            if slot in slot_groups:
+                raise WildEncountersError(f"{group_where}: slot {slot} is also in group {slot_groups[slot]}")
+            slot_groups[slot] = name
+        if sorted(slots) != list(range(min(slots), min(slots) + len(slots))):
+            raise WildEncountersError(f"{group_where}: slots {slots} aren't consecutive")
+        group_totals[name] = CheckRates(field["encounter_rates"], slots, group_where)
+    ungrouped = [str(slot) for slot in range(slot_count) if slot not in slot_groups]
+    if ungrouped:
+        raise WildEncountersError(f"{where}: slot(s) {', '.join(ungrouped)} in no group")
+    if len(set(group_totals.values())) > 1:
+        totals = ", ".join(f"{name} {total}" for name, total in group_totals.items())
+        raise WildEncountersError(f"{where}: the groups' encounter_rates totals differ ({totals})")
+
+
 def ValidateEncounters(json_data):
     """Raise WildEncountersError on data the header would carry silently wrong: a
-    table whose slot count differs from its field's encounter_rates, an unknown key,
-    a missing key, a level outside 1-100 or above max_level, or an encounter rate past
-    a u8."""
+    table whose slot count differs from its field's encounter_rates, encounter_rates
+    whose total is 0 or past MAX_RATES_TOTAL (or differs between groups), a bad
+    groups index, an unknown key, a missing
+    key, a level outside 1-100 or above max_level, or an encounter rate past a u8."""
     slot_counts = {}
     for group in json_data["wild_encounter_groups"]:
         CheckKeys(group, *GROUP_KEYS, group.get("label", "wild encounter group"))
         for field in group.get("fields", []):
-            CheckKeys(field, *FIELD_KEYS, f"{group['label']} field {field.get('type')}")
+            field_where = f"{group['label']} field {field.get('type')}"
+            CheckKeys(field, *FIELD_KEYS, field_where)
             slot_count = len(field["encounter_rates"])
+            if "groups" in field:
+                CheckGroups(field, field_where)
+            else:
+                CheckRates(field["encounter_rates"], range(slot_count), field_where)
             if slot_counts.setdefault(field["type"], slot_count) != slot_count:
-                raise WildEncountersError(f"{group['label']} field {field['type']}: {slot_count} encounter_rates, but another group's has {slot_counts[field['type']]}")
+                raise WildEncountersError(f"{field_where}: {slot_count} encounter_rates, but another group's has {slot_counts[field['type']]}")
 
     for group in json_data["wild_encounter_groups"]:
         required = {"base_label", "map"} if group.get("for_maps") else {"base_label"}
@@ -71,6 +120,41 @@ def ValidateEncounters(json_data):
                     CheckInt(max_level, MIN_LEVEL, MAX_LEVEL, "max_level", mon_where)
                     CheckInt(min_level, MIN_LEVEL, max_level, "min_level", mon_where)
 
+
+def SplitTimeOfDay(base_label, times_of_day, time_fallback):
+    """The label without its time-of-day suffix (_Morning, _Day, ...) and that
+    time, or the label and the fallback time when it has no such suffix."""
+    for time_ident, suffix in times_of_day.items():
+        if base_label.endswith("_" + suffix):
+            return base_label[:-len("_" + suffix)], time_ident
+    return base_label, time_fallback
+
+
+def GetLabelVersion(shared_label):
+    """The game a label's encounters are for, from its _FireRed or _LeafGreen suffix."""
+    for suffix, version in VERSION_SUFFIXES.items():
+        if shared_label.endswith(suffix):
+            return version
+    return "EMERALD"
+
+
+def ValidateLabels(json_data, times_of_day, time_fallback):
+    """Raise WildEncountersError when two encounters of a group share a label and time
+    of day, or two times of one label name different maps: WriteEncounters would keep
+    only the later one's tables, or map, in the header."""
+    for group in json_data["wild_encounter_groups"]:
+        label_times = {}
+        label_maps = {}
+        for map_encounters in group["encounters"]:
+            where = map_encounters["base_label"]
+            shared_label, time = SplitTimeOfDay(where, times_of_day, time_fallback)
+            if (shared_label, time) in label_times:
+                raise WildEncountersError(f"{where}: same label and time of day as {label_times[shared_label, time]} ({shared_label}, {time})")
+            label_times[shared_label, time] = where
+            map_name = map_encounters.get("map")
+            first_map, first_where = label_maps.setdefault(shared_label, (map_name, where))
+            if map_name != first_map:
+                raise WildEncountersError(f"{where}: map {map_name}, but {first_where} has {first_map}")
 
 class Config:
     def __init__(self, config_file_name, rtc_constants_file_name, encounters_json_data):
@@ -234,13 +318,7 @@ class WildEncounterAssembler:
             encounter_data = map_data
             map_group = map_data["mapGroup"]
             map_num = map_data["mapNum"]
-            version = "EMERALD"
-            if "FireRed" in shared_label:
-                version = "FIRERED"
-            elif "LeafGreen" in shared_label:
-                version = "LEAFGREEN"
-            
-            self.WriteLine(f"#ifdef {version}")
+            self.WriteLine(f"#ifdef {GetLabelVersion(shared_label)}")
 
             self.WriteLine("{", 1)
             self.WriteLine(f".mapGroup = {map_group},", 2)
@@ -271,14 +349,6 @@ class WildEncounterAssembler:
         self.WriteLine("};")
 
 
-    def SplitTimeOfDay(self, base_label):
-        """The label without its time-of-day suffix (_Morning, _Day, ...) and that
-        time, or the label and the fallback time when it has no such suffix."""
-        for time_ident, suffix in self.config.times_of_day.items():
-            if base_label.endswith("_" + suffix):
-                return base_label[:-len("_" + suffix)], time_ident
-        return base_label, self.config.time_fallback
-
     def WriteEncounters(self):
         wild_encounter_groups = self.json_data["wild_encounter_groups"]
         for wild_encounter_group in wild_encounter_groups:
@@ -300,7 +370,7 @@ class WildEncounterAssembler:
                     map_num = f"MAP_NUM({map_name})"
                 map_num_counter += 1
                 base_label = map_encounters["base_label"]
-                shared_label, time = self.SplitTimeOfDay(base_label)
+                shared_label, time = SplitTimeOfDay(base_label, self.config.times_of_day, self.config.time_fallback)
 
                 if shared_label not in headers["data"]:
                     headers["data"][shared_label] = {}
@@ -309,12 +379,7 @@ class WildEncounterAssembler:
                 headers["data"][shared_label]["mapGroup"] = map_group
                 headers["data"][shared_label]["mapNum"] = map_num
 
-                version = "EMERALD"
-                if "FireRed" in shared_label:
-                    version = "FIRERED"
-                elif "LeafGreen" in shared_label:
-                    version = "LEAFGREEN"
-                self.WriteLine(f"#ifdef {version}")
+                self.WriteLine(f"#ifdef {GetLabelVersion(shared_label)}")
                 for mon_type in self.config.mon_types:
                     if mon_type not in map_encounters:
                         headers["data"][shared_label][mon_type] = "NULL"
@@ -334,8 +399,9 @@ class WildEncounterAssembler:
 
 def ConvertToHeaderFile(json_data):
     ValidateEncounters(json_data)
+    config = Config('include/config/overworld.h', 'include/constants/rtc.h', json_data)
+    ValidateLabels(json_data, config.times_of_day, config.time_fallback)
     with open('src/data/wild_encounters.h', 'w') as output_file:
-        config = Config('include/config/overworld.h', 'include/constants/rtc.h', json_data)
         assembler = WildEncounterAssembler(output_file, json_data, config)
         assembler.WriteHeader()
         assembler.WriteMacros()
