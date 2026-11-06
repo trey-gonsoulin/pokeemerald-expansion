@@ -20,12 +20,9 @@ bool readFileAsUS(std::string filePath, std::vector<unsigned short> *pFileData)
         fprintf(stderr, "Error: %s is %zu bytes, not a whole number of 2-byte tilemap entries\n", filePath.c_str(), (size_t)size);
         return false;
     }
-    std::vector<unsigned char> ucVec(size);
-    iStream.read((char*)(ucVec.data()), size);
+    pFileData->resize(size/2);
+    iStream.read((char *)(pFileData->data()), size);
     iStream.close();
-    unsigned short *pUInt = reinterpret_cast<unsigned short *>(ucVec.data());
-    for (size_t i = 0; i < ucVec.size()/2; i++)
-        pFileData->push_back(pUInt[i]);
     return true;
 }
 
