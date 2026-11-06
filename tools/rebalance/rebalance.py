@@ -81,7 +81,7 @@ CURVE_CLASSES =('TRAINER_CLASS_LEADER', 'TRAINER_CLASS_ELITE_FOUR', 'TRAINER_CLA
 # Exp. Share curve (#127): the share6 party (one KO-taker, five on the Gen 6
 # Exp. Share bench), modern data, under both trainer-exp settings and three
 # affection brackets, with catch exp.
-# B_TRAINER_EXP_MULTIPLIER values: Cmd_getexp gives the 1.5x for <= GEN_7.
+# B_TRAINER_EXP_MULTIPLIER values: Cmd_getexp gives the 1.5x for <= GEN_6.
 TRAINER_EXP = {'1.5x off': 'GEN_LATEST', '1.5x on': 'GEN_6'}
 AFFECTION = ('none', 'friendship', 'always')
 # Catches per stage (B_EXP_CATCH: a catch gives the exp of a KO), at the
@@ -646,7 +646,7 @@ def exp_award(gd, scaling, yield_, foe_level, getter_level, trainer, sent_in, se
     scaling_factors table (game_scaling: the configs')."""
     scaled = gd.flag('B_SCALED_EXP >= GEN_5 && B_SCALED_EXP != GEN_6')
     calc = yield_ * foe_level // (5 if scaled else 7)
-    if trainer and gd.flag('B_TRAINER_EXP_MULTIPLIER <= GEN_7'):
+    if trainer and gd.flag('B_TRAINER_EXP_MULTIPLIER <= GEN_6'):
         calc = calc * 150 // 100
     if gd.flag('B_SPLIT_EXP < GEN_6'):
         # Half to the sent-in members, half split over every holder; a
@@ -1461,7 +1461,7 @@ def share_report(share, raised_defaults, stage_trainers):
            'The share6 party on modern data: one Pokemon takes every KO (KO-taker) and five sit on the Gen 6 '
            'Exp. Share bench, all Medium Slow from level 5, before each story boss. "1.5x off" is '
            f'B_TRAINER_EXP_MULTIPLIER {TRAINER_EXP["1.5x off"]}, "1.5x on" {TRAINER_EXP["1.5x on"]} '
-           '(Cmd_getexp gives the 1.5x for GEN_7 and earlier). Each stage adds '
+           '(Cmd_getexp gives the 1.5x for GEN_6 and earlier). Each stage adds '
            f'{WALK_STEPS_PER_STAGE:,} steps of walking and {CATCHES_PER_STAGE} catches at its land-table average '
            '(B_EXP_CATCH). Affection brackets: none; friendship (1.2x once the modelled friendship reaches '
            f'{AFFECTION_FOUR_HEARTS}: {STANDARD_FRIENDSHIP} at the start, level-ups, league battles and walking); '
