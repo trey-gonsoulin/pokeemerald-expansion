@@ -27,10 +27,50 @@ TEST("TV show: an inactive slot ends the TV loop")
     EXPECT_EQ(gSpecialVar_Result, TRUE);
 }
 
-TEST("TV show: the dummied-out show ends the TV loop")
+TEST("TV show: the dummied-out show ends the TV loop and goes off the air")
 {
-    DoTVShowOnSlot(TVSHOW_DUMMY, TRUE);
+    bool32 stillActive = DoTVShowOnSlot(TVSHOW_DUMMY, TRUE);
     EXPECT_EQ(gSpecialVar_Result, TRUE);
+    EXPECT_EQ(stillActive, FALSE);
+}
+
+// GetRandomActiveShowIdx picks the show EventScript_TryDoTVShow airs, and through
+// FindAnyTVShowOnTheAir decides whether the TV screens flash.
+static u32 PickShowWithOnlySlot0Active(u32 kind)
+{
+    TVShow saved[TV_SHOWS_COUNT];
+    u32 picked;
+
+    memcpy(saved, gSaveBlock1Ptr->tvShows, sizeof(saved));
+    memset(gSaveBlock1Ptr->tvShows, 0, sizeof(saved));
+    gSaveBlock1Ptr->tvShows[0].common.kind = kind;
+    gSaveBlock1Ptr->tvShows[0].common.active = TRUE;
+    picked = GetRandomActiveShowIdx();
+    memcpy(gSaveBlock1Ptr->tvShows, saved, sizeof(saved));
+    return picked;
+}
+
+TEST("TV show: the picker skips an active slot with no show to air")
+{
+    u32 kind = 0;
+    PARAMETRIZE { kind = TVSHOW_OFF_AIR; }
+    PARAMETRIZE { kind = TVSHOW_DUMMY; }
+    PARAMETRIZE { kind = TVSHOW_LILYCOVE_CONTEST_LADY + 1; }
+    PARAMETRIZE { kind = TVGROUP_NORMAL_END; }
+    PARAMETRIZE { kind = TVGROUP_RECORD_MIX_END; }
+    PARAMETRIZE { kind = TVSHOW_MASS_OUTBREAK + 1; }
+    PARAMETRIZE { kind = 0xFF; }
+    EXPECT_EQ(PickShowWithOnlySlot0Active(kind), 0xFF);
+}
+
+TEST("TV show: the picker finds an active show that airs")
+{
+    u32 kind = 0;
+    PARAMETRIZE { kind = TVSHOW_FAN_CLUB_LETTER; }
+    PARAMETRIZE { kind = TVSHOW_LILYCOVE_CONTEST_LADY; }
+    PARAMETRIZE { kind = TVSHOW_POKEMON_TODAY_CAUGHT; }
+    PARAMETRIZE { kind = TVSHOW_SAFARI_FAN_CLUB; }
+    EXPECT_EQ(PickShowWithOnlySlot0Active(kind), 0);
 }
 
 TEST("TV show: an active slot of an unknown kind ends the TV loop and goes off the air")
