@@ -115,7 +115,7 @@ Party level just before each boss. Every party member is Medium Slow (the starte
 
 ## Exp. Share curve (#127)
 
-The share6 party on modern data: one Pokemon takes every KO (KO-taker) and five sit on the Gen 6 Exp. Share bench, all Medium Slow from level 5, before each story boss. "1.5x off" is B_TRAINER_EXP_MULTIPLIER GEN_LATEST, "1.5x on" GEN_6 (Cmd_getexp gives the 1.5x for GEN_7 and earlier). Each stage adds 4,096 steps of walking and 3 catches at its land-table average (B_EXP_CATCH). Affection brackets: none; friendship (1.2x once the modelled friendship reaches 220: 50 at the start, level-ups, league battles and walking); always (4 hearts from the start). Bench friendship is the friendship bracket's. No Lucky Egg, traded or unevolved bonuses.
+The share6 party on modern data: one Pokemon takes every KO (KO-taker) and five sit on the Gen 6 Exp. Share bench, all Medium Slow from level 5, before each story boss. "1.5x off" is B_TRAINER_EXP_MULTIPLIER GEN_LATEST, "1.5x on" GEN_6 (Cmd_getexp gives the 1.5x for GEN_6 and earlier). Each stage adds 4,096 steps of walking and 3 catches at its land-table average (B_EXP_CATCH). Affection brackets: none; friendship (1.2x once the modelled friendship reaches 220: 50 at the start, level-ups, league battles and walking); always (4 hearts from the start). Bench friendship is the friendship bracket's. No Lucky Egg, traded or unevolved bonuses.
 
 ### Now: full clear
 
