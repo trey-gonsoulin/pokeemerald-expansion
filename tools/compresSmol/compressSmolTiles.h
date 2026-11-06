@@ -45,7 +45,7 @@ struct CompressionResult
     bool failed = false;
 };
 
-std::vector<unsigned short> readFileAsUS(std::string filePath);
+bool readFileAsUS(std::string filePath, std::vector<unsigned short> *pFileData);
 
 CompressionResult compressTileset(std::string fileName);
 void deltaEncodeTileNums(std::vector<unsigned short> *pTileNums);

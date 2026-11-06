@@ -1,27 +1,29 @@
 #include "compressSmolTiles.h"
 #include <vector>
 
-std::vector<unsigned short> readFileAsUS(std::string filePath)
+bool readFileAsUS(std::string filePath, std::vector<unsigned short> *pFileData)
 {
     std::ifstream iStream;
     iStream.open(filePath.c_str(), std::ios::binary);
     if (!iStream.is_open())
     {
         fprintf(stderr, "Error: Couldn't open %s for reading bytes\n", filePath.c_str());
-        return std::vector<unsigned short>(0);
+        return false;
     }
     iStream.ignore( std::numeric_limits<std::streamsize>::max() );
     std::streamsize size = iStream.gcount();
     iStream.clear();
     iStream.seekg( 0, std::ios_base::beg );
-    std::vector<unsigned char> ucVec(size);
-    iStream.read((char*)(&ucVec[0]), size);
+    //  A tilemap is 2-byte entries; an odd size would lose its last byte
+    if (size % 2 != 0)
+    {
+        fprintf(stderr, "Error: %s is %zu bytes, not a whole number of 2-byte tilemap entries\n", filePath.c_str(), (size_t)size);
+        return false;
+    }
+    pFileData->resize(size/2);
+    iStream.read((char *)(pFileData->data()), size);
     iStream.close();
-    unsigned short *pUInt = reinterpret_cast<unsigned short *>(ucVec.data());
-    std::vector<unsigned short> returnVec;
-    for (size_t i = 0; i < ucVec.size()/2; i++)
-        returnVec.push_back(pUInt[i]);
-    return returnVec;
+    return true;
 }
 
 void deltaEncodeTileNums(std::vector<unsigned short> *pTileNums)
@@ -39,11 +41,16 @@ CompressionResult compressTileset(std::string fileName)
 {
     CompressionResult result;
     result.tilemapSize = 0;
-    std::vector<unsigned short> tiles = readFileAsUS(fileName);
+    std::vector<unsigned short> tiles;
+    if (!readFileAsUS(fileName, &tiles))
+    {
+        result.failed = true;
+        return result;
+    }
     std::vector<unsigned short> origTiles = tiles;
     if (tiles.size() == 0)
     {
-        fprintf(stderr, "Tilemap %s is empty or unreadable\n", fileName.c_str());
+        fprintf(stderr, "Tilemap %s is empty\n", fileName.c_str());
         result.failed = true;
         return result;
     }
