@@ -8429,11 +8429,30 @@ static void MulByTypeEffectivenessOutOfBattle(enum Move move, enum Type moveType
     *modifier = uq4_12_multiply(*modifier, mod);
 }
 
+// Whether the move is aimed at a foe, so a foe's absorbing ability can take it: not a move on the
+// user, its ally or a side of the field (Charge, Rain Dance, Spikes).
+static bool32 IsMoveAimedAtFoe(enum Move move)
+{
+    switch (GetMoveTarget(move))
+    {
+    case TARGET_SELECTED:
+    case TARGET_SMART:
+    case TARGET_DEPENDS:
+    case TARGET_OPPONENT:
+    case TARGET_RANDOM:
+    case TARGET_BOTH:
+    case TARGET_FOES_AND_ALLY:
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+
 static uq4_12_t CalcSpeciesTypeEffectivenessOutOfBattle(enum Move move, enum Type moveType, enum Species speciesDef, enum Ability abilityDef)
 {
     uq4_12_t modifier = UQ_4_12(1.0);
 
-    if (DoesAbilityAbsorbMoveType(abilityDef, moveType))
+    if (IsMoveAimedAtFoe(move) && DoesAbilityAbsorbMoveType(abilityDef, moveType))
         return UQ_4_12(0.0);
 
     MulByTypeEffectivenessOutOfBattle(move, moveType, &modifier, GetSpeciesType(speciesDef, 0));
