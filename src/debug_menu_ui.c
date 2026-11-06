@@ -625,7 +625,8 @@ void Debug_CopyStringEndToFit(u8 *dest, u32 destSize, const u8 *src, u32 fontId,
 // Copies text, in a narrower font than fontId if it would run past DEBUG_SUBMENU_ARROW_X,
 // then the arrow at that x in fontId. The list fits a label by its whole width, which here
 // is at least the arrow's x plus the arrow, so it can't fit the text alone (#88).
-// Text past destSize - DEBUG_SUBMENU_LABEL_EXTRA - 1 bytes is cut off.
+// Text past destSize - DEBUG_SUBMENU_LABEL_EXTRA - 1 bytes is cut off, by bytes: labels are plain text.
+STATIC_ASSERT(DEBUG_SUBMENU_ARROW_X < 256, DebugSubMenuArrowXFitsClearTo);
 void Debug_CopySubMenuLabel(u8 *dest, u32 destSize, const u8 *text, u32 fontId)
 {
     u32 length = min(StringLength(text), destSize - DEBUG_SUBMENU_LABEL_EXTRA - 1);
