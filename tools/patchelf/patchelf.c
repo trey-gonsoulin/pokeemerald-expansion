@@ -9,6 +9,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+static char *find_symbol_data(const char *sym, const Elf32_Ehdr *ehdr, const Elf32_Shdr *shdrs, const Elf32_Sym *symbol, char *f, off_t file_size);
+// With dest NULL, only checks that source fits in size bytes and is well formed.
 static bool try_patch_value(const char *sym, char *dest, const char *source, size_t size);
 
 int main(int argc, char *argv[])
@@ -82,22 +84,31 @@ int main(int argc, char *argv[])
 
     const Elf32_Sym *symtab = (Elf32_Sym *)(f + shdr_symtab->sh_offset);
     const char *strtab = (const char *)(f + shdr_strtab->sh_offset);
-    for (int i = 0; i < shdr_symtab->sh_size / shdr_symtab->sh_entsize; i++)
+    int num_syms = shdr_symtab->sh_size / shdr_symtab->sh_entsize;
+    // The first pass checks every request and writes nothing, so a bad one leaves the file as it was.
+    for (int pass = 0; pass < 2; pass++)
     {
-        if (symtab[i].st_name == 0) continue;
-        if (symtab[i].st_shndx > ehdr->e_shnum) continue;
-        const char *st_name = strtab + symtab[i].st_name;
-        const Elf32_Shdr *shdr = &shdrs[symtab[i].st_shndx];
-        uint32_t sym_offset = symtab[i].st_value - shdr->sh_addr;
+        bool write = pass == 1;
         for (int j = 2; j < argc; j += 2)
         {
             const char *arg_name = argv[j + 0];
             const char *arg_value = argv[j + 1];
-            if (strcmp(st_name, arg_name) == 0)
+            bool found = false;
+            for (int i = 0; i < num_syms; i++)
             {
-                char *value = (char *)(f + shdr->sh_offset + sym_offset);
-                if (!try_patch_value(st_name, value, arg_value, symtab[i].st_size))
+                if (symtab[i].st_name == 0) continue;
+                if (strcmp(strtab + symtab[i].st_name, arg_name) != 0) continue;
+                char *value = find_symbol_data(arg_name, ehdr, shdrs, &symtab[i], f, st.st_size);
+                if (value == NULL)
                     goto error;
+                if (!try_patch_value(arg_name, write ? value : NULL, arg_value, symtab[i].st_size))
+                    goto error;
+                found = true;
+            }
+            if (!found)
+            {
+                fprintf(stderr, "%s: symbol not found\n", arg_name);
+                goto error;
             }
         }
     }
@@ -129,6 +140,36 @@ error:
     }
 
     return exit_code;
+}
+
+// Returns where the symbol's bytes are in the file, or NULL (with a message) when it has none
+// there: no section, a section with no file data (.bss), or a range outside the section or file.
+static char *find_symbol_data(const char *sym, const Elf32_Ehdr *ehdr, const Elf32_Shdr *shdrs, const Elf32_Sym *symbol, char *f, off_t file_size)
+{
+    if (symbol->st_shndx == SHN_UNDEF || symbol->st_shndx >= ehdr->e_shnum)
+    {
+        fprintf(stderr, "%s: symbol has no section (index %u)\n", sym, symbol->st_shndx);
+        return NULL;
+    }
+    const Elf32_Shdr *shdr = &shdrs[symbol->st_shndx];
+    if (shdr->sh_type == SHT_NOBITS)
+    {
+        fprintf(stderr, "%s: symbol's section has no data in the file (SHT_NOBITS, such as .bss)\n", sym);
+        return NULL;
+    }
+    if (symbol->st_value < shdr->sh_addr
+     || symbol->st_value - shdr->sh_addr > shdr->sh_size
+     || symbol->st_size > shdr->sh_size - (symbol->st_value - shdr->sh_addr))
+    {
+        fprintf(stderr, "%s: symbol lies outside its section\n", sym);
+        return NULL;
+    }
+    if (shdr->sh_offset > file_size || shdr->sh_size > file_size - shdr->sh_offset)
+    {
+        fprintf(stderr, "%s: symbol's section lies outside the file\n", sym);
+        return NULL;
+    }
+    return f + shdr->sh_offset + (symbol->st_value - shdr->sh_addr);
 }
 
 static int parsexdigit(char c)
@@ -185,7 +226,9 @@ static bool try_patch_value(const char *sym, char *dest, const char *source, siz
             value = c;
             break;
         }
-        dest[i++] = value;
+        if (dest != NULL)
+            dest[i] = value;
+        i++;
     }
     return true;
 }
