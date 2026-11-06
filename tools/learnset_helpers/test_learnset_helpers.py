@@ -199,10 +199,10 @@ class LearnablesKeyTest(RepoDirTest):
 
     def test_punctuated_names_become_snake_case(self):
         out = self.learnables({"new": {"MR. MIME": "MOVE_A", "MIME JR.": "MOVE_B", "MR. RIME": "MOVE_C",
-                                       "PORYGON-Z": "MOVE_D", "FARFETCH'D": "MOVE_F"},
+                                       "PORYGON-Z": "MOVE_D", "FARFETCH'D": "MOVE_F", "SIRFETCH’D": "MOVE_G"},
                                "sv": {"MR_MIME": "MOVE_E"}})
         self.assertEqual(out, {"MR_MIME": ["MOVE_A", "MOVE_E"], "MIME_JR": ["MOVE_B"], "MR_RIME": ["MOVE_C"],
-                               "PORYGON_Z": ["MOVE_D"], "FARFETCHD": ["MOVE_F"]})
+                               "PORYGON_Z": ["MOVE_D"], "FARFETCHD": ["MOVE_F"], "SIRFETCHD": ["MOVE_G"]})
 
     def test_accented_and_misencoded_names_lose_their_accents(self):
         out = self.learnables({"za": {"FLABÃ©BÃ©": "MOVE_A"},

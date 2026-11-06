@@ -36,7 +36,7 @@ def species_key(fname: pathlib.Path, species: str) -> str:
         except (UnicodeEncodeError, UnicodeDecodeError):
             pass
         name = "".join(c for c in unicodedata.normalize("NFKD", name) if not unicodedata.combining(c))
-    key = re.sub(r"[ .-]+", "_", name.upper().replace("'", "")).strip("_")
+    key = re.sub(r"[ .-]+", "_", name.upper().replace("'", "").replace("’", "")).strip("_")
     # Anything else (♀, ?) has no snake-case spelling to fall back on
     if not re.fullmatch(r"[A-Z0-9]+(_[A-Z0-9]+)*", key):
         print(f"{fname.name}: can't make a species name of {species!r}", file=sys.stderr)
