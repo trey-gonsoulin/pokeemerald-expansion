@@ -4608,10 +4608,9 @@ enum Species GetEvolutionTargetSpecies(struct Pokemon *mon, enum EvolutionMode m
         if (targetSpecies == SPECIES_NONE && gSpecialVar_0x8000 == SPIN_EITHER
          && (gSpecialVar_0x8001 == SPIN_CW_LONG || gSpecialVar_0x8001 == SPIN_CCW_LONG))
         {
-            u16 spin = gSpecialVar_0x8000;
             gSpecialVar_0x8000 = gSpecialVar_0x8001;
             targetSpecies = GetEvolutionTargetSpecies(mon, mode, evolutionItem, tradePartner, canStopEvo, evoState);
-            gSpecialVar_0x8000 = spin;
+            gSpecialVar_0x8000 = SPIN_EITHER;
         }
         break;
     case EVO_MODE_SCRIPT_TRIGGER:
