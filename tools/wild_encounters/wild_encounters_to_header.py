@@ -1,5 +1,76 @@
 import json
 import re
+import sys
+
+# The keys each object of wild_encounters.json must have, and the others it may have.
+# An encounter's are built in ValidateEncounters: base_label, "map" in a group with
+# for_maps, and one key per field type (land_mons, water_mons, ...).
+GROUP_KEYS = ({"label", "encounters"}, {"for_maps", "fields"})
+FIELD_KEYS = ({"type", "encounter_rates"}, {"groups"})
+MONS_ENTRY_KEYS = ({"encounter_rate", "mons"}, set())
+MON_KEYS = ({"species"}, {"min_level", "max_level"})
+
+DEFAULT_MIN_LEVEL = 2
+MIN_LEVEL = 1
+MAX_LEVEL = 100
+MAX_ENCOUNTER_RATE = 255 # struct WildPokemonInfo's u8 encounterRate
+
+
+class WildEncountersError(Exception):
+    pass
+
+
+def CheckKeys(obj, required, optional, where):
+    missing = sorted(required - set(obj))
+    if missing:
+        raise WildEncountersError(f"{where}: missing key(s) {', '.join(missing)}")
+    unknown = sorted(set(obj) - required - optional)
+    if unknown:
+        raise WildEncountersError(f"{where}: unknown key(s) {', '.join(unknown)}")
+
+
+def CheckInt(value, low, high, what, where):
+    if type(value) is not int or not low <= value <= high:
+        raise WildEncountersError(f"{where}: {what} is {value!r}, expected {low} to {high}")
+
+
+def ValidateEncounters(json_data):
+    """Raise WildEncountersError on data the header would carry silently wrong: a
+    table whose slot count differs from its field's encounter_rates, an unknown key,
+    a missing key, a level outside 1-100 or above max_level, or an encounter rate past
+    a u8."""
+    slot_counts = {}
+    for group in json_data["wild_encounter_groups"]:
+        CheckKeys(group, *GROUP_KEYS, group.get("label", "wild encounter group"))
+        for field in group.get("fields", []):
+            CheckKeys(field, *FIELD_KEYS, f"{group['label']} field {field.get('type')}")
+            slot_count = len(field["encounter_rates"])
+            if slot_counts.setdefault(field["type"], slot_count) != slot_count:
+                raise WildEncountersError(f"{group['label']} field {field['type']}: {slot_count} encounter_rates, but another group's has {slot_counts[field['type']]}")
+
+    for group in json_data["wild_encounter_groups"]:
+        required = {"base_label", "map"} if group.get("for_maps") else {"base_label"}
+        for idx, map_encounters in enumerate(group["encounters"]):
+            where = map_encounters.get("base_label", f"{group['label']} encounter {idx}")
+            CheckKeys(map_encounters, required, {"map"} | slot_counts.keys(), where)
+            for mon_type, slot_count in slot_counts.items():
+                if mon_type not in map_encounters:
+                    continue
+                mons_entry = map_encounters[mon_type]
+                type_where = f"{where} {mon_type}"
+                CheckKeys(mons_entry, *MONS_ENTRY_KEYS, type_where)
+                CheckInt(mons_entry["encounter_rate"], 0, MAX_ENCOUNTER_RATE, "encounter_rate", type_where)
+                mons = mons_entry["mons"]
+                if len(mons) != slot_count:
+                    raise WildEncountersError(f"{type_where}: {len(mons)} mons, but the {mon_type} field has {slot_count} encounter_rates")
+                for slot, mon in enumerate(mons):
+                    mon_where = f"{type_where} slot {slot}"
+                    CheckKeys(mon, *MON_KEYS, mon_where)
+                    min_level = mon.get("min_level", DEFAULT_MIN_LEVEL)
+                    max_level = mon.get("max_level", MAX_LEVEL)
+                    CheckInt(max_level, MIN_LEVEL, MAX_LEVEL, "max_level", mon_where)
+                    CheckInt(min_level, MIN_LEVEL, max_level, "min_level", mon_where)
+
 
 class Config:
     def __init__(self, config_file_name, rtc_constants_file_name, encounters_json_data):
@@ -125,8 +196,8 @@ class WildEncounterAssembler:
         self.WriteLine("{")
         for mon in mons:
             species = mon["species"]
-            min_level = 2 if "min_level" not in mon else mon["min_level"]
-            max_level = 100 if "max_level" not in mon else mon["max_level"]
+            min_level = mon.get("min_level", DEFAULT_MIN_LEVEL)
+            max_level = mon.get("max_level", MAX_LEVEL)
             self.WriteLine(f"{{ {min_level}, {max_level}, {species} }},", 1)
 
         self.WriteLine("};")
@@ -200,6 +271,14 @@ class WildEncounterAssembler:
         self.WriteLine("};")
 
 
+    def SplitTimeOfDay(self, base_label):
+        """The label without its time-of-day suffix (_Morning, _Day, ...) and that
+        time, or the label and the fallback time when it has no such suffix."""
+        for time_ident, suffix in self.config.times_of_day.items():
+            if base_label.endswith("_" + suffix):
+                return base_label[:-len("_" + suffix)], time_ident
+        return base_label, self.config.time_fallback
+
     def WriteEncounters(self):
         wild_encounter_groups = self.json_data["wild_encounter_groups"]
         for wild_encounter_group in wild_encounter_groups:
@@ -221,13 +300,7 @@ class WildEncounterAssembler:
                     map_num = f"MAP_NUM({map_name})"
                 map_num_counter += 1
                 base_label = map_encounters["base_label"]
-                shared_label = base_label
-                time = self.config.time_fallback
-
-                for time_ident in self.config.times_of_day:
-                    if self.config.times_of_day[time_ident] in base_label:
-                        time = time_ident
-                        shared_label = shared_label.replace('_' + self.config.times_of_day[time_ident], '')
+                shared_label, time = self.SplitTimeOfDay(base_label)
 
                 if shared_label not in headers["data"]:
                     headers["data"][shared_label] = {}
@@ -260,6 +333,7 @@ class WildEncounterAssembler:
 
 
 def ConvertToHeaderFile(json_data):
+    ValidateEncounters(json_data)
     with open('src/data/wild_encounters.h', 'w') as output_file:
         config = Config('include/config/overworld.h', 'include/constants/rtc.h', json_data)
         assembler = WildEncounterAssembler(output_file, json_data, config)
@@ -270,8 +344,11 @@ def ConvertToHeaderFile(json_data):
 def main():
     with open('src/data/wild_encounters.json', 'r') as json_file:
         json_data = json.load(json_file)
+    try:
         ConvertToHeaderFile(json_data)
-        
+    except WildEncountersError as error:
+        sys.exit(f"src/data/wild_encounters.json: {error}")
+
 
 if __name__ == '__main__':
     main()

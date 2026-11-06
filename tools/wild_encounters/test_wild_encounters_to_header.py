@@ -1,0 +1,230 @@
+"""Tests for wild_encounters_to_header.py. Run from the repo root:
+python3 -m unittest discover -s tools/wild_encounters
+"""
+
+import io
+import json
+import os
+import subprocess
+import sys
+import tempfile
+import unittest
+from types import SimpleNamespace
+
+import wild_encounters_to_header as gen
+
+REPO = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+SCRIPT = os.path.join(REPO, "tools", "wild_encounters", "wild_encounters_to_header.py")
+REAL_JSON = os.path.join(REPO, "src", "data", "wild_encounters.json")
+
+TIMES_OF_DAY = {"TIME_MORNING": "Morning", "TIME_DAY": "Day", "TIME_EVENING": "Evening", "TIME_NIGHT": "Night"}
+
+
+def mons(count, min_level=2, max_level=5):
+    return [{"min_level": min_level, "max_level": max_level, "species": "SPECIES_ZIGZAGOON"} for _ in range(count)]
+
+
+def sample():
+    """A two-field file: land with 3 slots, water with 2."""
+    return {
+        "wild_encounter_groups": [
+            {
+                "label": "gWildMonHeaders",
+                "for_maps": True,
+                "fields": [
+                    {"type": "land_mons", "encounter_rates": [50, 30, 20]},
+                    {"type": "water_mons", "encounter_rates": [60, 40]},
+                ],
+                "encounters": [
+                    {
+                        "map": "MAP_ROUTE101",
+                        "base_label": "gRoute101",
+                        "land_mons": {"encounter_rate": 20, "mons": mons(3)},
+                        "water_mons": {"encounter_rate": 4, "mons": mons(2)},
+                    }
+                ],
+            },
+            {
+                "label": "gBattlePikeWildMonHeaders",
+                "for_maps": False,
+                "encounters": [
+                    {"base_label": "gBattlePike_1", "land_mons": {"encounter_rate": 10, "mons": mons(3)}}
+                ],
+            },
+        ]
+    }
+
+
+def route101(data):
+    return data["wild_encounter_groups"][0]["encounters"][0]
+
+
+class ValidateTest(unittest.TestCase):
+    def assertRejected(self, data, message):
+        with self.assertRaises(gen.WildEncountersError) as context:
+            gen.ValidateEncounters(data)
+        self.assertIn(message, str(context.exception))
+
+    def test_sample_passes(self):
+        gen.ValidateEncounters(sample())
+
+    def test_real_data_passes(self):
+        with open(REAL_JSON) as json_file:
+            gen.ValidateEncounters(json.load(json_file))
+
+    def test_default_levels_pass(self):
+        data = sample()
+        route101(data)["land_mons"]["mons"] = [{"species": "SPECIES_ZIGZAGOON"}] * 3
+        gen.ValidateEncounters(data)
+
+    def test_too_few_slots(self):
+        data = sample()
+        route101(data)["land_mons"]["mons"].pop()
+        self.assertRejected(data, "gRoute101 land_mons: 2 mons, but the land_mons field has 3 encounter_rates")
+
+    def test_too_many_slots(self):
+        data = sample()
+        route101(data)["water_mons"]["mons"].append(mons(1)[0])
+        self.assertRejected(data, "gRoute101 water_mons: 3 mons")
+
+    def test_slot_count_checked_in_groups_without_fields(self):
+        data = sample()
+        data["wild_encounter_groups"][1]["encounters"][0]["land_mons"]["mons"].pop()
+        self.assertRejected(data, "gBattlePike_1 land_mons: 2 mons")
+
+    def test_misspelled_level_keys(self):
+        data = sample()
+        route101(data)["land_mons"]["mons"][1] = {"min_lvl": 3, "max_lvl": 4, "species": "SPECIES_ZIGZAGOON"}
+        self.assertRejected(data, "gRoute101 land_mons slot 1: unknown key(s) max_lvl, min_lvl")
+
+    def test_misspelled_field_key(self):
+        data = sample()
+        route101(data)["lnd_mons"] = route101(data).pop("land_mons")
+        self.assertRejected(data, "gRoute101: unknown key(s) lnd_mons")
+
+    def test_unknown_mons_entry_key(self):
+        data = sample()
+        route101(data)["land_mons"]["rate"] = 20
+        self.assertRejected(data, "gRoute101 land_mons: unknown key(s) rate")
+
+    def test_unknown_field_and_group_keys(self):
+        data = sample()
+        data["wild_encounter_groups"][0]["fields"][0]["encounter_rate"] = 1
+        self.assertRejected(data, "field land_mons: unknown key(s) encounter_rate")
+        data = sample()
+        data["wild_encounter_groups"][1]["for_map"] = True
+        self.assertRejected(data, "gBattlePikeWildMonHeaders: unknown key(s) for_map")
+
+    def test_missing_keys(self):
+        data = sample()
+        del route101(data)["land_mons"]["mons"][0]["species"]
+        self.assertRejected(data, "gRoute101 land_mons slot 0: missing key(s) species")
+        data = sample()
+        del route101(data)["water_mons"]["encounter_rate"]
+        self.assertRejected(data, "gRoute101 water_mons: missing key(s) encounter_rate")
+        data = sample()
+        del route101(data)["map"]
+        self.assertRejected(data, "gRoute101: missing key(s) map")
+        data = sample()
+        del data["wild_encounter_groups"][1]["encounters"][0]["base_label"]
+        self.assertRejected(data, "gBattlePikeWildMonHeaders encounter 0: missing key(s) base_label")
+
+    def test_field_type_with_two_slot_counts(self):
+        data = sample()
+        data["wild_encounter_groups"][1]["fields"] = [{"type": "land_mons", "encounter_rates": [100]}]
+        self.assertRejected(data, "gBattlePikeWildMonHeaders field land_mons: 1 encounter_rates, but another group's has 3")
+
+    def test_levels_out_of_range(self):
+        for min_level, max_level, message in (
+            (0, 5, "min_level is 0, expected 1 to 5"),
+            (2, 250, "max_level is 250, expected 1 to 100"),
+            (2, 101, "max_level is 101"),
+            (6, 5, "min_level is 6, expected 1 to 5"),
+            (2, "5", "max_level is '5'"),
+        ):
+            with self.subTest(min_level=min_level, max_level=max_level):
+                data = sample()
+                route101(data)["land_mons"]["mons"][2] = mons(1, min_level, max_level)[0]
+                self.assertRejected(data, f"gRoute101 land_mons slot 2: {message}")
+
+    def test_default_min_level_above_max(self):
+        data = sample()
+        route101(data)["land_mons"]["mons"][0] = {"max_level": 1, "species": "SPECIES_ZIGZAGOON"}
+        self.assertRejected(data, "min_level is 2, expected 1 to 1")
+
+    def test_level_bounds_pass(self):
+        data = sample()
+        route101(data)["land_mons"]["mons"][0] = mons(1, 1, 1)[0]
+        route101(data)["land_mons"]["mons"][1] = mons(1, 100, 100)[0]
+        gen.ValidateEncounters(data)
+
+    def test_encounter_rate_range(self):
+        data = sample()
+        route101(data)["land_mons"]["encounter_rate"] = 255
+        gen.ValidateEncounters(data)
+        route101(data)["land_mons"]["encounter_rate"] = 400
+        self.assertRejected(data, "gRoute101 land_mons: encounter_rate is 400, expected 0 to 255")
+        route101(data)["land_mons"]["encounter_rate"] = -1
+        self.assertRejected(data, "encounter_rate is -1")
+
+
+class TimeOfDayTest(unittest.TestCase):
+    def assembler(self, json_data=None, time_encounters=False):
+        config = SimpleNamespace(
+            times_of_day=TIMES_OF_DAY,
+            time_fallback="TIME_MORNING",
+            time_encounters=time_encounters,
+            mon_types=["land_mons", "water_mons"],
+        )
+        return gen.WildEncounterAssembler(io.StringIO(), json_data, config)
+
+    def test_suffix_is_matched_exactly(self):
+        split = self.assembler().SplitTimeOfDay
+        self.assertEqual(split("gRoute101"), ("gRoute101", "TIME_MORNING"))
+        self.assertEqual(split("gRoute101_Night"), ("gRoute101", "TIME_NIGHT"))
+        self.assertEqual(split("gRoute101_Day"), ("gRoute101", "TIME_DAY"))
+        self.assertEqual(split("gSunDayRoad_Craft"), ("gSunDayRoad_Craft", "TIME_MORNING"))
+        self.assertEqual(split("gRoute101_DayCare"), ("gRoute101_DayCare", "TIME_MORNING"))
+        self.assertEqual(split("gNightRoute_Day"), ("gNightRoute", "TIME_DAY"))
+
+    def test_label_containing_a_time_keeps_its_encounters(self):
+        data = sample()
+        route101(data)["base_label"] = "gSunDayRoad_Craft"
+        assembler = self.assembler(data)
+        assembler.WriteEncounters()
+        output = assembler.output_file.getvalue()
+        self.assertIn(".landMonsInfo = &gSunDayRoad_Craft_LandMonsInfo,", output)
+
+
+class MainTest(unittest.TestCase):
+    """The generator as the Makefile runs it, from a copy of the repo's inputs."""
+
+    def run_generator(self, data):
+        with tempfile.TemporaryDirectory() as root:
+            for path in ("include/config/overworld.h", "include/constants/rtc.h"):
+                os.makedirs(os.path.join(root, os.path.dirname(path)), exist_ok=True)
+                with open(os.path.join(REPO, path)) as src, open(os.path.join(root, path), "w") as dst:
+                    dst.write(src.read())
+            os.makedirs(os.path.join(root, "src", "data"))
+            with open(os.path.join(root, "src", "data", "wild_encounters.json"), "w") as json_file:
+                json.dump(data, json_file)
+            result = subprocess.run([sys.executable, SCRIPT], cwd=root, capture_output=True, text=True)
+            header = os.path.join(root, "src", "data", "wild_encounters.h")
+            return result, os.path.exists(header)
+
+    def test_bad_data_fails_without_writing_the_header(self):
+        data = sample()
+        route101(data)["land_mons"]["mons"].pop()
+        result, wrote_header = self.run_generator(data)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("src/data/wild_encounters.json: gRoute101 land_mons: 2 mons", result.stderr)
+        self.assertFalse(wrote_header)
+
+    def test_good_data_writes_the_header(self):
+        result, wrote_header = self.run_generator(sample())
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(wrote_header)
+
+
+if __name__ == "__main__":
+    unittest.main()
