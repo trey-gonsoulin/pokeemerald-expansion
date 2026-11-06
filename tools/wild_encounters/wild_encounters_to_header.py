@@ -51,16 +51,18 @@ def CheckGroups(field, where):
     them in order), and each group's rates adding up to RATES_TOTAL."""
     slot_count = len(field["encounter_rates"])
     slot_groups = {}
+    if type(field["groups"]) is not dict:
+        raise WildEncountersError(f"{where}: groups is {field['groups']!r}, expected an object of slot lists")
     for name, slots in field["groups"].items():
         group_where = f"{where} group {name}"
-        if not slots:
-            raise WildEncountersError(f"{group_where}: no slots")
+        if type(slots) is not list or not slots:
+            raise WildEncountersError(f"{group_where}: slots are {slots!r}, expected a list of slot indices")
         for slot in slots:
             CheckInt(slot, 0, slot_count - 1, "slot index", group_where)
             if slot in slot_groups:
                 raise WildEncountersError(f"{group_where}: slot {slot} is also in group {slot_groups[slot]}")
             slot_groups[slot] = name
-        if slots != list(range(slots[0], slots[0] + len(slots))):
+        if sorted(slots) != list(range(min(slots), min(slots) + len(slots))):
             raise WildEncountersError(f"{group_where}: slots {slots} aren't consecutive")
         CheckRates(field["encounter_rates"], slots, group_where)
     ungrouped = [str(slot) for slot in range(slot_count) if slot not in slot_groups]
