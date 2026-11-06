@@ -112,6 +112,7 @@ static s8 GetPokeNewsSlotIfActive(PokeNews *, u8);
 static void InitTryMixPokeNewsShow(PokeNews *[POKE_NEWS_COUNT], PokeNews *[POKE_NEWS_COUNT]);
 static bool8 TryMixPokeNewsShow(PokeNews *, PokeNews *, s8);
 static void TVShowDone(void);
+static bool32 IsTVShowKindAirable(u8 kind);
 static void InterviewAfter_FanClubLetter(void);
 static void InterviewAfter_RecentHappenings(void);
 static void InterviewAfter_PkmnFanClubOpinions(void);
@@ -144,7 +145,6 @@ static void ChangeBoxPokemonNickname_CB(void);
 static void DoTVShowPokemonFanClubLetter(void);
 static void DoTVShowRecentHappenings(void);
 static void DoTVShowPokemonFanClubOpinions(void);
-static void DoTVShowDummiedOut(void);
 static void DoTVShowPokemonNewsMassOutbreak(void);
 static void DoTVShowBravoTrainerPokemonProfile(void);
 static void DoTVShowBravoTrainerBattleTower(void);
@@ -721,7 +721,13 @@ u8 GetRandomActiveShowIdx(void)
     selIdx = j;
     do
     {
-        if (GetTVGroupByShowId(gSaveBlock1Ptr->tvShows[j].common.kind) != TVGROUP_OUTBREAK)
+        if (!IsTVShowKindAirable(gSaveBlock1Ptr->tvShows[j].common.kind))
+        {
+            // DoTVShow can't air it (kind 0, a gap, the dummied-out or an unknown kind): picked, it would
+            // leave the TV waiting for a button with no message, and it would flash the TV screens
+            gSaveBlock1Ptr->tvShows[j].common.active = FALSE;
+        }
+        else if (GetTVGroupByShowId(gSaveBlock1Ptr->tvShows[j].common.kind) != TVGROUP_OUTBREAK)
         {
             if (gSaveBlock1Ptr->tvShows[j].common.active == TRUE)
                 return j;
@@ -3979,118 +3985,62 @@ void SanitizeTVShowLocationsForRuby(TVShow *shows)
     }
 }
 
+// The kinds DoTVShow can air. The dummied-out show, the unused kinds and anything
+// else (a corrupt slot, or another game's show via record mixing) print nothing.
+static void (*const sTVShowAirFuncs[])(void) =
+{
+    [TVSHOW_FAN_CLUB_LETTER]                    = DoTVShowPokemonFanClubLetter,
+    [TVSHOW_RECENT_HAPPENINGS]                  = DoTVShowRecentHappenings,
+    [TVSHOW_PKMN_FAN_CLUB_OPINIONS]             = DoTVShowPokemonFanClubOpinions,
+    [TVSHOW_MASS_OUTBREAK]                      = DoTVShowPokemonNewsMassOutbreak,
+    [TVSHOW_BRAVO_TRAINER_POKEMON_PROFILE]      = DoTVShowBravoTrainerPokemonProfile,
+    [TVSHOW_BRAVO_TRAINER_BATTLE_TOWER_PROFILE] = DoTVShowBravoTrainerBattleTower,
+    [TVSHOW_POKEMON_TODAY_CAUGHT]               = DoTVShowPokemonTodaySuccessfulCapture,
+    [TVSHOW_SMART_SHOPPER]                      = DoTVShowTodaysSmartShopper,
+    [TVSHOW_NAME_RATER_SHOW]                    = DoTVShowTheNameRaterShow,
+    [TVSHOW_CONTEST_LIVE_UPDATES]               = DoTVShowPokemonContestLiveUpdates,
+    [TVSHOW_BATTLE_UPDATE]                      = DoTVShowPokemonBattleUpdate,
+    [TVSHOW_3_CHEERS_FOR_POKEBLOCKS]            = DoTVShow3CheersForPokeblocks,
+    [TVSHOW_POKEMON_TODAY_FAILED]               = DoTVShowPokemonTodayFailedCapture,
+    [TVSHOW_FISHING_ADVICE]                     = DoTVShowPokemonAngler,
+    [TVSHOW_WORLD_OF_MASTERS]                   = DoTVShowTheWorldOfMasters,
+    [TVSHOW_TODAYS_RIVAL_TRAINER]               = DoTVShowTodaysRivalTrainer,
+    [TVSHOW_TREND_WATCHER]                      = DoTVShowDewfordTrendWatcherNetwork,
+    [TVSHOW_TREASURE_INVESTIGATORS]             = DoTVShowHoennTreasureInvestigators,
+    [TVSHOW_FIND_THAT_GAMER]                    = DoTVShowFindThatGamer,
+    [TVSHOW_BREAKING_NEWS]                      = DoTVShowBreakingNewsTV,
+    [TVSHOW_SECRET_BASE_VISIT]                  = DoTVShowSecretBaseVisit,
+    [TVSHOW_LOTTO_WINNER]                       = DoTVShowPokemonLotteryWinnerFlashReport,
+    [TVSHOW_BATTLE_SEMINAR]                     = DoTVShowThePokemonBattleSeminar,
+    [TVSHOW_FAN_CLUB_SPECIAL]                   = DoTVShowTrainerFanClubSpecial,
+    [TVSHOW_TRAINER_FAN_CLUB]                   = DoTVShowTrainerFanClub,
+    [TVSHOW_CUTIES]                             = DoTVShowSpotTheCuties,
+    [TVSHOW_FRONTIER]                           = DoTVShowPokemonNewsBattleFrontier,
+    [TVSHOW_NUMBER_ONE]                         = DoTVShowWhatsNo1InHoennToday,
+    [TVSHOW_SECRET_BASE_SECRETS]                = DoTVShowSecretBaseSecrets,
+    [TVSHOW_SAFARI_FAN_CLUB]                    = DoTVShowSafariFanClub,
+    [TVSHOW_LILYCOVE_CONTEST_LADY]              = DoTVShowLilycoveContestLady,
+};
+
+static bool32 IsTVShowKindAirable(u8 kind)
+{
+    return kind < ARRAY_COUNT(sTVShowAirFuncs) && sTVShowAirFuncs[kind] != NULL;
+}
+
 // gSpecialVar_0x8004 here is set from GetRandomActiveShowIdx in EventScript_TryDoTVShow
 void DoTVShow(void)
 {
+    TVShow *show = &gSaveBlock1Ptr->tvShows[gSpecialVar_0x8004];
+
     // Each show sets it FALSE while it has more to say, so a slot that prints
-    // nothing (inactive, dummy or an unknown kind) still ends EventScript_DoTVShow's loop
+    // nothing (inactive, or a kind with no show) still ends EventScript_DoTVShow's loop
     gSpecialVar_Result = TRUE;
-    if (gSaveBlock1Ptr->tvShows[gSpecialVar_0x8004].common.active)
-    {
-        switch (gSaveBlock1Ptr->tvShows[gSpecialVar_0x8004].common.kind)
-        {
-        case TVSHOW_FAN_CLUB_LETTER:
-            DoTVShowPokemonFanClubLetter();
-            break;
-        case TVSHOW_RECENT_HAPPENINGS:
-            DoTVShowRecentHappenings();
-            break;
-        case TVSHOW_PKMN_FAN_CLUB_OPINIONS:
-            DoTVShowPokemonFanClubOpinions();
-            break;
-        case TVSHOW_DUMMY:
-            DoTVShowDummiedOut();
-            break;
-        case TVSHOW_MASS_OUTBREAK:
-            DoTVShowPokemonNewsMassOutbreak();
-            break;
-        case TVSHOW_BRAVO_TRAINER_POKEMON_PROFILE:
-            DoTVShowBravoTrainerPokemonProfile();
-            break;
-        case TVSHOW_BRAVO_TRAINER_BATTLE_TOWER_PROFILE:
-            DoTVShowBravoTrainerBattleTower();
-            break;
-        case TVSHOW_POKEMON_TODAY_CAUGHT:
-            DoTVShowPokemonTodaySuccessfulCapture();
-            break;
-        case TVSHOW_SMART_SHOPPER:
-            DoTVShowTodaysSmartShopper();
-            break;
-        case TVSHOW_NAME_RATER_SHOW:
-            DoTVShowTheNameRaterShow();
-            break;
-        case TVSHOW_CONTEST_LIVE_UPDATES:
-            DoTVShowPokemonContestLiveUpdates();
-            break;
-        case TVSHOW_BATTLE_UPDATE:
-            DoTVShowPokemonBattleUpdate();
-            break;
-        case TVSHOW_3_CHEERS_FOR_POKEBLOCKS:
-            DoTVShow3CheersForPokeblocks();
-            break;
-        case TVSHOW_POKEMON_TODAY_FAILED:
-            DoTVShowPokemonTodayFailedCapture();
-            break;
-        case TVSHOW_FISHING_ADVICE:
-            DoTVShowPokemonAngler();
-            break;
-        case TVSHOW_WORLD_OF_MASTERS:
-            DoTVShowTheWorldOfMasters();
-            break;
-        case TVSHOW_TODAYS_RIVAL_TRAINER:
-            DoTVShowTodaysRivalTrainer();
-            break;
-        case TVSHOW_TREND_WATCHER:
-            DoTVShowDewfordTrendWatcherNetwork();
-            break;
-        case TVSHOW_TREASURE_INVESTIGATORS:
-            DoTVShowHoennTreasureInvestigators();
-            break;
-        case TVSHOW_FIND_THAT_GAMER:
-            DoTVShowFindThatGamer();
-            break;
-        case TVSHOW_BREAKING_NEWS:
-            DoTVShowBreakingNewsTV();
-            break;
-        case TVSHOW_SECRET_BASE_VISIT:
-            DoTVShowSecretBaseVisit();
-            break;
-        case TVSHOW_LOTTO_WINNER:
-            DoTVShowPokemonLotteryWinnerFlashReport();
-            break;
-        case TVSHOW_BATTLE_SEMINAR:
-            DoTVShowThePokemonBattleSeminar();
-            break;
-        case TVSHOW_FAN_CLUB_SPECIAL:
-            DoTVShowTrainerFanClubSpecial();
-            break;
-        case TVSHOW_TRAINER_FAN_CLUB:
-            DoTVShowTrainerFanClub();
-            break;
-        case TVSHOW_CUTIES:
-            DoTVShowSpotTheCuties();
-            break;
-        case TVSHOW_FRONTIER:
-            DoTVShowPokemonNewsBattleFrontier();
-            break;
-        case TVSHOW_NUMBER_ONE:
-            DoTVShowWhatsNo1InHoennToday();
-            break;
-        case TVSHOW_SECRET_BASE_SECRETS:
-            DoTVShowSecretBaseSecrets();
-            break;
-        case TVSHOW_SAFARI_FAN_CLUB:
-            DoTVShowSafariFanClub();
-            break;
-        case TVSHOW_LILYCOVE_CONTEST_LADY:
-            DoTVShowLilycoveContestLady();
-            break;
-        default:
-            // Can't air here (a corrupt slot, or another game's show via record mixing)
-            TVShowDone();
-            break;
-        }
-    }
+    if (!show->common.active)
+        return;
+    if (IsTVShowKindAirable(show->common.kind))
+        sTVShowAirFuncs[show->common.kind]();
+    else
+        TVShowDone(); // GetRandomActiveShowIdx takes these off the air without picking them
 }
 
 static void DoTVShowBravoTrainerPokemonProfile(void)
@@ -4680,11 +4630,6 @@ static void DoTVShowPokemonFanClubOpinions(void)
         break;
     }
     ShowFieldMessage(sTVFanClubOpinionsTextGroup[state]);
-}
-
-static void DoTVShowDummiedOut(void)
-{
-
 }
 
 static void DoTVShowPokemonNewsMassOutbreak(void)
