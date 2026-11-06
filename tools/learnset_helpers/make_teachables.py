@@ -31,9 +31,9 @@ import sys
 import typing
 
 
-CONFIG_ENABLED_PAT = re.compile(r"^#define P_LEARNSET_HELPER_TEACHABLE\s+(?P<cfg_val>[^ ]*)", flags=re.MULTILINE)
-ALPHABETICAL_ORDER_ENABLED_PAT = re.compile(r"^#define HGSS_SORT_TMS_BY_NUM\s+(?P<cfg_val>[^ ]*)", flags=re.MULTILINE)
-TM_LITERACY_PAT = re.compile(r"^#define P_TM_LITERACY\s+GEN_(?P<cfg_val>[^ ]*)", flags=re.MULTILINE)
+CONFIG_ENABLED_PAT = re.compile(r"^#define P_LEARNSET_HELPER_TEACHABLE\s+(?P<cfg_val>\S+)", flags=re.MULTILINE)
+ALPHABETICAL_ORDER_ENABLED_PAT = re.compile(r"^#define HGSS_SORT_TMS_BY_NUM\s+(?P<cfg_val>\S+)", flags=re.MULTILINE)
+TM_LITERACY_PAT = re.compile(r"^#define P_TM_LITERACY\s+GEN_(?P<cfg_val>\S+)", flags=re.MULTILINE)
 TMHM_MACRO_PAT = re.compile(r"F\((\w+)\)")
 SNAKIFY_PAT = re.compile(r"(?!^)([A-Z]+)")
 
@@ -101,7 +101,7 @@ def prepare_output(all_learnables: dict[str, set[str]], tms: list[str], tutors: 
             if teaching_type == "TM_ILLITERATE":
                 learnables = all_learnables[species_upper]
                 if not tm_litteracy_config:
-                    learnables = filter(lambda m: m not in special_movesets["universalMoves"], learnables)
+                    learnables = list(filter(lambda m: m not in special_movesets["universalMoves"], learnables))
             else:
                 learnables = all_learnables[species_upper] + special_movesets["universalMoves"]
             part1 = list(filter(lambda m: m in learnables, tms))

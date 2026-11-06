@@ -55,7 +55,8 @@ def main():
         for species, learnables in from_batch(INPUTS_DIR).items()
     }
     with open(OUTPUT_FILE, "w") as fp:
-        json.dump(batch, fp, indent=2)
+        # from_batch's species come from a set union, whose order changes with the hash seed.
+        json.dump(batch, fp, indent=2, sort_keys=True)
 
 
 if __name__ == "__main__":
