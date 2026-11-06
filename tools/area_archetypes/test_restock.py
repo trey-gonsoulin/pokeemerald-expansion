@@ -283,7 +283,7 @@ class RestockTests(unittest.TestCase):
     def setUpClass(cls):
         cls.info = R.SpeciesInfo(AA.REPO)
         cls.wild = R.load_json(WILD)
-        cls.maps = R.load_json(MAPS)
+        cls.maps = R.load_maps(MAPS)
         cls.pools = R.load_json(POOLS)
         cls.runs = {ratio: R.restock(cls.wild, cls.maps, cls.pools, cls.info, R.Settings(ratio=ratio))
                     for ratio in (0.0, 0.5, 1.0)}
@@ -535,7 +535,7 @@ class CliTests(unittest.TestCase):
             self.assertEqual(read(base), read(WILD))
 
     def test_labels_missing_from_maps_are_reported(self):
-        maps = R.load_json(MAPS)
+        maps = R.load_maps(MAPS)
         del maps['gRoute101']
         err = io.StringIO()
         with contextlib.redirect_stderr(err):
