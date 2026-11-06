@@ -30,7 +30,9 @@
 #define MAX_DYNAMAX_LEVEL 10
 #define MAX_FRIENDSHIP 255
 #define MAX_PER_STAT_IVS 31
-#define MAX_PER_STAT_EVS 252
+// The game's MAX_PER_STAT_EVS is 252 from P_EV_CAP GEN_6 and 255 before, a
+// config the tool can't read: 253-255 give the same stat as 252 (EV / 4).
+#define MAX_PER_STAT_EVS 255
 #define MAX_TOTAL_EVS 510
 
 #define STR(x) #x
@@ -1574,6 +1576,10 @@ static bool parse_trainer(struct Parser *p, const struct Parsed *parsed, struct 
             }
         }
 
+        // The output writes one gimmick: 'Tera Type' would be dropped.
+        if (pokemon->tera_type_line && (pokemon->dynamax_level_line || pokemon->gigantamax_factor_line))
+            any_error = !set_show_parse_error(p, (struct SourceLocation) { .line = pokemon->tera_type_line, .column = 1 }, "'Tera Type' can't go with 'Dynamax Level' or 'Gigantamax'");
+
         if (!pokemon->level_line)
         {
             if (!parsed->default_level_off)
@@ -2175,10 +2181,7 @@ static void fprint_trainers(const char *output_path, FILE *f, struct Parsed *par
             {
                 fprintf(f, "            .shouldUseDynamax = TRUE,\n");
             }
-
-            // TrainerMon keeps both, and AssignUsableGimmicks gives the
-            // battler whichever of them it can use first.
-            if (pokemon->tera_type_line)
+            else if (pokemon->tera_type_line)
             {
                 fprintf(f, "#line %d\n", pokemon->tera_type_line);
                 fprintf(f, "            .teraType = ");

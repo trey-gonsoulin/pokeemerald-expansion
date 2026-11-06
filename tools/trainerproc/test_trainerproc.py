@@ -106,8 +106,12 @@ class EVs(TrainerprocTestCase):
         out = self.assertAccepted(trainer(mon("EVs: 252 HP / 252 Atk / 6 Def")))
         self.assertIn("TRAINER_PARTY_EVS(252, 252, 6, 0, 0, 0)", out)
 
-    def test_over_252_is_rejected(self):
-        self.assertRejected(trainer(mon("EVs: 253 HP")), "EVs must be from 0 to 252", 6)
+    def test_255_is_accepted(self):
+        # The game's cap is 255 before P_EV_CAP GEN_6, a config the tool can't read.
+        self.assertIn("TRAINER_PARTY_EVS(255, 0, 0, 0, 0, 0)", self.assertAccepted(trainer(mon("EVs: 255 HP"))))
+
+    def test_over_255_is_rejected(self):
+        self.assertRejected(trainer(mon("EVs: 256 HP")), "EVs must be from 0 to 255", 6)
 
     def test_over_510_in_total_is_rejected(self):
         self.assertRejected(trainer(mon("EVs: 252 HP / 252 Atk / 7 Def")), "EVs must total at most 510", 6)
@@ -130,11 +134,16 @@ class DynamaxLevel(TrainerprocTestCase):
 
 
 class TeraType(TrainerprocTestCase):
-    def test_kept_with_dynamax(self):
-        # Used to be dropped silently; TrainerMon keeps both.
-        out = self.assertAccepted(trainer(mon("Dynamax Level: 5", "Tera Type: Fire")))
-        self.assertIn(".shouldUseDynamax = TRUE,", out)
-        self.assertIn(".teraType = TYPE_FIRE,", out)
+    def test_alone_is_written(self):
+        self.assertIn(".teraType = TYPE_FIRE,", self.assertAccepted(trainer(mon("Tera Type: Fire"))))
+
+    def test_with_dynamax_is_rejected(self):
+        # Used to be dropped silently.
+        for gimmick in ("Dynamax Level: 5", "Gigantamax: Yes", "Gigantamax: No"):
+            with self.subTest(gimmick=gimmick):
+                self.assertRejected(
+                    trainer(mon(gimmick, "Tera Type: Fire")),
+                    "'Tera Type' can't go with 'Dynamax Level' or 'Gigantamax'", 7)
 
 
 class PartySize(TrainerprocTestCase):
@@ -171,6 +180,12 @@ class Lists(TrainerprocTestCase):
     def test_too_many_ai_flags_are_rejected(self):
         flags = " / ".join(["Check Bad Move"] * 65)
         self.assertRejected(trainer(mon(), fields="AI: " + flags + "\n"), "too many AI flags (at most 64)", 4)
+
+    def test_too_many_starting_statuses_are_rejected(self):
+        statuses = " / ".join(["Electric Terrain"] * 65)
+        self.assertRejected(
+            trainer(mon(), fields="Starting Status: " + statuses + "\n"),
+            "too many starting statuses (at most 64)", 4)
 
     def test_too_many_tags_are_rejected(self):
         self.assertRejected(trainer(mon("Tags: " + " / ".join(["Lead"] * 33))), "too many tags (at most 32)", 6)
