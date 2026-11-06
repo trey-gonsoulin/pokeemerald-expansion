@@ -780,6 +780,166 @@ Per boss Pokemon: retyping, defensive multipliers that changed (attacking type: 
 
 - Tentacruel 83: takes Fairy new->0.5x; hits Fairy new->2x
 
+## Combat power estimate
+
+`power.py` scores each Pokemon one-on-one against a reference Pokemon of its own level (base 80 in every stat, IV 15, no type) on turns to KO, with its best expected damage per turn (STAB, accuracy, strikes, half for recharge and two-turn moves) and up to 0.5 turn for the faster side. Its effective level is the level at which the reference itself would score the same: what level of typical Pokemon it fights like. Types, abilities, items, status and stat moves are left out (README, "Matchup-relative strength").
+
+The reference's expected power is fitted to every trainer Pokemon's best move: 9.95 + 25.6 ln(level), 51 at 5, 92 at 25, 110 at 50, 120 at 75, 128 at 100.
+
+Bench: the Exp. Share bench before the fight (1.5x off, full / friendship, the Exp. Share curve's). Strongest: the highest effective level on the team.
+
+| stage | boss | ace level | strongest (level -> effective) | mean level | mean effective | bench | strongest - bench |
+|---|---|---|---|---|---|---|---|
+| Rival (Route 103) | May Route 103 Mudkip | 6 | Treecko 6 -> 4.2 | 6.0 | 4.2 | 5 | -0.8 |
+| Roxanne | Roxanne 1 | 15 | Nosepass 15 -> 13.3 | 13.0 | 11.2 | 14 | -0.7 |
+| Brawly | May Rustboro Mudkip | 17 | Grovyle 17 -> 13.9 | 16.0 | 11.7 | 16 | -2.1 |
+| Brawly | Brawly 1 | 19 | Makuhita 19 -> 15.7 | 17.0 | 14.7 | 16 | -0.3 |
+| Wattson | May Route 110 Mudkip | 26 | Grovyle 26 -> 24.7 | 24.7 | 19.0 | 23 | +1.7 |
+| Wattson | Wally Mauville | 26 | Ralts 26 -> 15.4 | 26.0 | 15.4 | 23 | -7.6 |
+| Wattson | Wattson 1 | 26 | Manectric 26 -> 27.5 | 23.5 | 22.4 | 24 | +3.5 |
+| Flannery | Tabitha Mt Chimney | 38 | Camerupt 38 -> 38.0 | 36.5 | 33.6 | 36 | +2.0 |
+| Flannery | Maxie Mt Chimney | 39 | Camerupt 39 -> 40.4 | 38.3 | 38.0 | 36 | +4.4 |
+| Flannery | Flannery 1 | 39 | Torkoal 39 -> 44.7 | 35.8 | 36.9 | 37 | +7.7 |
+| Norman | Norman 1 | 41 | Slaking 41 -> 46.6 | 38.5 | 38.9 | 39 | +7.6 |
+| Winona | May Route 119 Mudkip | 56 | Sceptile 56 -> 62.4 | 54.7 | 56.5 | 53 | +9.4 |
+| Winona | Shelly Weather Institute | 56 | Sharpedo 56 -> 54.1 | 56.0 | 52.2 | 53 | +1.1 |
+| Winona | Winona 1 | 57 | Altaria 57 -> 59.0 | 54.4 | 53.3 | 54 | +5.0 |
+| Tate and Liza | May Lilycove Mudkip | 66 | Sceptile 66 -> 74.3 | 64.2 | 66.8 | 63 | +11.3 |
+| Tate and Liza | Tabitha Magma Hideout | 66 | Camerupt 66 -> 65.6 | 62.2 | 60.4 | 63 | +2.6 |
+| Tate and Liza | Maxie Magma Hideout | 67 | Camerupt 67 -> 68.4 | 66.0 | 65.8 | 64 | +4.4 |
+| Tate and Liza | Matt | 67 | Crobat 67 -> 64.7 | 67.0 | 63.0 | 64 | +0.7 |
+| Tate and Liza | Tate And Liza 1 | 67 | Lunatone 67 -> 73.7 | 66.5 | 71.7 | 64 | +9.7 |
+| Juan | Tabitha Mossdeep | 75 | Crobat 75 -> 73.5 | 73.0 | 70.4 | 71 | +2.5 |
+| Juan | Maxie Mossdeep | 75 | Camerupt 75 -> 76.1 | 74.0 | 72.8 | 71 | +5.1 |
+| Juan | Shelly Seafloor Cavern | 75 | Sharpedo 75 -> 73.4 | 75.0 | 70.8 | 71 | +2.4 |
+| Juan | Archie | 75 | Sharpedo 75 -> 75.2 | 73.7 | 72.2 | 71 | +4.2 |
+| Juan | Juan 1 | 76 | Kingdra 76 -> 80.0 | 72.8 | 72.8 | 72 | +8.0 |
+| Elite Four | Wally Vr 1 | 79 | Gardevoir 79 -> 91.7 | 77.4 | 78.9 | 75 | +16.7 |
+| Elite Four | Sidney | 80 | Crawdaunt 79 -> 78.8 | 78.4 | 76.3 | 76 | +2.8 |
+| Elite Four | Phoebe | 81 | Dusknoir 81 -> 84.9 | 79.4 | 75.7 | 76 | +8.9 |
+| Elite Four | Glacia | 82 | Walrein 82 -> 94.3 | 80.4 | 84.3 | 76 | +18.3 |
+| Elite Four | Drake | 83 | Salamence 83 -> 100.5 | 81.4 | 90.8 | 77 | +23.5 |
+| Elite Four | Wallace | 86 | Milotic 86 -> 102.3 | 84.3 | 94.7 | 78 | +24.3 |
+
+Boss Pokemon at least 10% from their level, strongest first (best move; "default" for a default moveset):
+
+| boss | Pokemon | level | effective | off | best move |
+|---|---|---|---|---|---|
+| Drake | Salamence | 83 | 100.5 | +21% | Dragon Claw |
+| Wallace | Milotic | 86 | 102.3 | +19% | Surf |
+| Wallace | Gyarados | 84 | 99.9 | +19% | Double Edge |
+| Drake | Flygon | 81 | 95.2 | +18% | Earthquake |
+| Wally Vr 1 | Gardevoir | 79 | 91.7 | +16% | Psychic |
+| Glacia | Walrein | 82 | 94.3 | +15% | Surf |
+| Drake | Kingdra | 81 | 92.9 | +15% | Surf |
+| Flannery 1 | Torkoal | 39 | 44.7 | +15% | Overheat |
+| Norman 1 | Slaking | 41 | 46.6 | +14% | Facade |
+| Flannery 1 | Camerupt | 36 | 40.7 | +13% | Overheat |
+| May Lilycove Mudkip | Sceptile | 66 | 74.3 | +13% | Energy Ball |
+| Wally Vr 1 | Magnezone | 75 | 83.8 | +12% | Thunderbolt |
+| Wallace | Tentacruel | 83 | 92.5 | +11% | Sludge Bomb |
+| May Route 119 Mudkip | Sceptile | 56 | 62.4 | +11% | Energy Ball |
+| Tate And Liza 1 | Claydol | 66 | 73.3 | +11% | Earthquake |
+| Tate And Liza 1 | Lunatone | 67 | 73.7 | +10% | Psychic |
+| Flannery 1 | Slugma | 34 | 30.4 | -11% | Overheat |
+| Winona 1 | Pelipper | 54 | 48.2 | -11% | Water Gun |
+| Tabitha Mt Chimney | Mightyena | 36 | 32.1 | -11% | Assurance (default) |
+| Roxanne 1 | Nosepass | 15 | 13.3 | -11% | Rock Tomb |
+| Norman 1 | Spinda | 37 | 32.7 | -12% | Facade |
+| Wattson 1 | Voltorb | 22 | 19.1 | -13% | Shock Wave |
+| Brawly 1 | Machop | 16 | 13.7 | -14% | Seismic Toss |
+| Roxanne 1 | Geodude | 12 | 10.1 | -16% | Rock Tomb |
+| Roxanne 1 | Geodude | 12 | 10.1 | -16% | Rock Tomb |
+| Brawly 1 | Makuhita | 19 | 15.7 | -17% | Vital Throw |
+| May Rustboro Mudkip | Grovyle | 17 | 13.9 | -18% | Mega Drain (default) |
+| Tabitha Mt Chimney | Numel | 34 | 27.6 | -19% | Earth Power (default) |
+| Wattson 1 | Electrike | 22 | 17.8 | -19% | Shock Wave |
+| Wally Vr 1 | Delcatty | 77 | 61.1 | -21% | Feint Attack |
+| Juan 1 | Luvdisc | 71 | 56.1 | -21% | Water Pulse |
+| May Route 103 Mudkip | Treecko | 6 | 4.2 | -30% | Leafage (default) |
+| May Route 110 Mudkip | Wingull | 24 | 16.7 | -30% | Water Pulse (default) |
+| May Route 110 Mudkip | Slugma | 24 | 15.7 | -35% | Ember |
+| May Rustboro Mudkip | Wingull | 15 | 9.5 | -37% | Water Gun (default) |
+| Wally Mauville | Ralts | 26 | 15.4 | -41% | Psybeam (default) |
+
+No scored attack: Brawly 1's Meditite.
+
+## Matchup-relative strength
+
+`matchup.py` (a prototype) puts each story boss against a stand-in for the player's team, with types: the starter line at the Exp. Share lead's level and the best catches the wild tables offer by then, at the bench's level, each with the attacks of its default moveset and the TMs found before the boss's stage that cover the most types (`matchup_settings.json`). Each stand-in fights each boss Pokemon one-on-one on `power.score` with the type chart: above 1, the stand-in is ahead (inf: the boss Pokemon can't damage it).
+
+Hardest: the boss Pokemon whose best answer on the team is lowest, with that answer and who gives it. Cover: the boss Pokemon with an answer of 1 or more. Lead: the best answer to the boss's first Pokemon. Every answer is a fresh one-on-one with free switching, so it flatters the team: read the ranking more than the numbers. A double battle is scored as one-on-one fights too.
+
+| stage | boss | ace | bench | Treecko hardest | Treecko cover | Treecko lead | Torchic hardest | Torchic cover | Torchic lead | Mudkip hardest | Mudkip cover | Mudkip lead |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Rival (Route 103) | May Route 103 | 6 | 5 | Torchic 6: 0.39 (Treecko) | 0/1 | 0.39 | Mudkip 6: 0.39 (Torchic) | 0/1 | 0.39 | Treecko 6: 0.40 (Mudkip) | 0/1 | 0.40 |
+| Roxanne | Roxanne 1 | 15 | 14 | Nosepass 15: 1.11 (Marill) | 3/3 | 6.26 | Nosepass 15: 1.27 (Lombre) | 3/3 | 6.78 | Nosepass 15: 1.00 (Mudkip) | 3/3 | 5.70 |
+| Brawly | May Rustboro | 17 | 16 | Combusken 17: 2.35 (Kadabra) | 2/2 | 18.26 | Torkoal 15: 2.12 (Combusken) | 2/2 | 2.12 | Wingull 15: 5.56 (Marshtomp) | 2/2 | 5.56 |
+| Brawly | Brawly 1 | 19 | 16 | Machop 16: inf (Sableye) | 3/3 | inf | Machop 16: inf (Sableye) | 3/3 | inf | Machop 16: inf (Sableye) | 3/3 | inf |
+| Wattson | May Route 110 | 26 | 23 | Combusken 26: 2.05 (Azumarill) | 3/3 | 3.43 | Marshtomp 26: 1.05 (Vigoroth) | 3/3 | 1.91 | Grovyle 26: 1.42 (Breloom) | 3/3 | 3.81 |
+| Wattson | Wally Mauville | 26 | 23 | Ralts 26: 4.68 (Grovyle) | 1/1 | 4.68 | Ralts 26: 4.41 (Azumarill) | 1/1 | 4.41 | Ralts 26: 6.12 (Marshtomp) | 1/1 | 6.12 |
+| Wattson | Wattson 1 | 26 | 24 | Manectric 26: 1.21 (Grovyle) | 4/4 | 4.86 | Magneton 24: 0.57 (Mightyena) | 2/4 | 2.94 | Manectric 26: 1.25 (Marshtomp) | 4/4 | 11.79 |
+| Flannery | Tabitha Mt Chimney | 38 | 36 | Camerupt 38: 1.34 (Gardevoir) | 4/4 | 4.47 | Camerupt 38: 1.34 (Gardevoir) | 4/4 | 4.47 | Mightyena 36: 2.60 (Cacturne) | 4/4 | 15.69 |
+| Flannery | Maxie Mt Chimney | 39 | 36 | Camerupt 39: 1.51 (Sceptile) | 3/3 | 1.73 | Camerupt 39: 1.21 (Cacturne) | 3/3 | 2.53 | Mightyena 38: 1.81 (Cacturne) | 3/3 | 1.81 |
+| Flannery | Flannery 1 | 39 | 37 | Torkoal 39: 0.99 (Gardevoir) | 3/4 | 3.01 | Torkoal 39: 1.29 (Blaziken) | 4/4 | 4.33 | Torkoal 39: 3.37 (Swampert) | 4/4 | 20.48 |
+| Norman | Norman 1 | 41 | 39 | Slaking 41: 0.71 (Slaking) | 3/4 | 3.26 | Slaking 41: 1.29 (Blaziken) | 4/4 | 4.12 | Slaking 41: 1.02 (Swampert) | 4/4 | 3.33 |
+| Winona | May Route 119 | 56 | 53 | Ludicolo 54: 2.85 (Sceptile) | 3/3 | 112.73 | Ludicolo 54: 1.99 (Gardevoir) | 3/3 | 1.99 | Ludicolo 54: 2.18 (Muk) | 3/3 | 12.14 |
+| Winona | Shelly Weather Institute | 56 | 53 | Mightyena 56: 3.52 (Gardevoir) | 2/2 | 3.52 | Sharpedo 56: 2.13 (Slaking) | 2/2 | 3.58 | Sharpedo 56: 2.13 (Slaking) | 2/2 | 3.52 |
+| Winona | Winona 1 | 57 | 54 | Altaria 57: 1.55 (Gardevoir) | 5/5 | 2.80 | Altaria 57: 1.55 (Gardevoir) | 5/5 | 2.80 | Altaria 57: 1.55 (Gardevoir) | 5/5 | 2.80 |
+| Tate and Liza | May Lilycove | 66 | 63 | Ludicolo 64: 2.59 (Sceptile) | 4/4 | 4.86 | Swampert 66: 1.70 (Walrein) | 4/4 | 4.86 | Sceptile 66: 3.71 (Muk) | 4/4 | 4.86 |
+| Tate and Liza | Tabitha Magma Hideout | 66 | 63 | Crobat 63: 3.95 (Aggron) | 4/4 | 8.38 | Crobat 63: 3.95 (Aggron) | 4/4 | 8.38 | Crobat 63: 3.95 (Aggron) | 4/4 | 8.76 |
+| Tate and Liza | Maxie Magma Hideout | 67 | 64 | Mightyena 65: 2.87 (Gardevoir) | 3/3 | 2.87 | Crobat 66: 3.16 (Aggron) | 3/3 | 3.66 | Crobat 66: 3.16 (Aggron) | 3/3 | 5.99 |
+| Tate and Liza | Matt | 67 | 64 | Mightyena 67: 3.30 (Gardevoir) | 2/2 | 3.30 | Crobat 67: 3.53 (Aggron) | 2/2 | 4.03 | Crobat 67: 3.53 (Aggron) | 2/2 | 6.71 |
+| Tate and Liza | Tate And Liza 1 (double) | 67 | 64 | Lunatone 67: 2.77 (Sceptile) | 4/4 | 3.27 | Claydol 66: 1.48 (Walrein) | 4/4 | 1.48 | Claydol 66: 1.64 (Swampert) | 4/4 | 1.64 |
+| Juan | Tabitha Mossdeep | 75 | 71 | Crobat 75: 3.15 (Aggron) | 3/3 | 6.35 | Crobat 75: 3.15 (Aggron) | 3/3 | 6.35 | Crobat 75: 3.15 (Aggron) | 3/3 | 6.51 |
+| Juan | Maxie Mossdeep | 75 | 71 | Mightyena 73: 3.04 (Gardevoir) | 3/3 | 3.04 | Crobat 74: 3.05 (Aggron) | 3/3 | 3.24 | Mightyena 73: 3.04 (Gardevoir) | 3/3 | 3.04 |
+| Juan | Shelly Seafloor Cavern | 75 | 71 | Mightyena 75: 3.07 (Gardevoir) | 2/2 | 3.07 | Sharpedo 75: 2.46 (Slaking) | 2/2 | 3.42 | Sharpedo 75: 2.46 (Slaking) | 2/2 | 3.07 |
+| Juan | Archie | 75 | 71 | Mightyena 73: 3.04 (Gardevoir) | 3/3 | 3.04 | Sharpedo 75: 2.18 (Slaking) | 3/3 | 3.43 | Sharpedo 75: 2.18 (Slaking) | 3/3 | 3.04 |
+| Juan | Juan 1 | 76 | 72 | Walrein 73: 1.95 (Sceptile) | 5/5 | 26.82 | Walrein 73: 1.61 (Gardevoir) | 5/5 | 10.69 | Kingdra 76: 2.27 (Gardevoir) | 5/5 | 6.32 |
+| Elite Four | Wally Vr 1 | 79 | 75 | Gardevoir 79: 1.31 (Gardevoir) | 5/5 | 4.41 | Gardevoir 79: 1.31 (Gardevoir) | 5/5 | 4.41 | Gardevoir 79: 1.31 (Gardevoir) | 5/5 | 3.66 |
+| Elite Four | Sidney | 80 | 76 | Mightyena 77: 2.32 (Slaking) | 5/5 | 2.32 | Mightyena 77: 2.50 (Blaziken) | 5/5 | 2.50 | Mightyena 77: 3.20 (Heracross) | 5/5 | 3.20 |
+| Elite Four | Phoebe | 81 | 76 | Dusknoir 81: 1.17 (Sceptile) | 5/5 | inf | Dusknoir 81: 0.89 (Blaziken) | 4/5 | inf | Dusknoir 81: 1.47 (Swampert) | 5/5 | inf |
+| Elite Four | Glacia | 82 | 76 | Walrein 82: 1.25 (Sceptile) | 5/5 | 2.88 | Walrein 82: 1.01 (Gardevoir) | 5/5 | 4.48 | Walrein 82: 1.82 (Heracross) | 5/5 | 5.39 |
+| Elite Four | Drake | 83 | 77 | Salamence 83: 1.37 (Walrein) | 5/5 | 3.68 | Salamence 83: 1.37 (Walrein) | 5/5 | 3.68 | Salamence 83: 1.34 (Swampert) | 5/5 | 3.68 |
+| Elite Four | Wallace | 86 | 78 | Gyarados 84: 0.85 (Gardevoir) | 5/6 | 2.38 | Milotic 86: 0.78 (Walrein) | 3/6 | 0.96 | Gyarados 84: 0.85 (Gardevoir) | 4/6 | 1.19 |
+
+Fights with a boss Pokemon the team has no answer of 1 for, hardest first: May Route 103 with Treecko (Torchic, 0.39); May Route 103 with Torchic (Mudkip, 0.39); May Route 103 with Mudkip (Treecko, 0.40); Wattson 1 with Torchic (Magneton, 0.57); Norman 1 with Treecko (Slaking, 0.71); Wallace with Torchic (Milotic, 0.78); Wallace with Treecko (Gyarados, 0.85); Wallace with Mudkip (Gyarados, 0.85); Phoebe with Torchic (Dusknoir, 0.89); Flannery 1 with Treecko (Torkoal, 0.99).
+
+The stand-in teams at each stage's last boss, with their attacks:
+
+| stage | starter | team |
+|---|---|---|
+| Rival (Route 103) | Treecko | Treecko 5 (Leafage, Pound) |
+| Rival (Route 103) | Torchic | Torchic 5 (Ember, Scratch) |
+| Rival (Route 103) | Mudkip | Mudkip 5 (Water Gun, Tackle) |
+| Roxanne | Treecko | Treecko 14 (Leafage, Quick Attack, Mega Drain); Beautifly 14 (Bug Bite, Poison Sting, Absorb); Slakoth 14 (Headbutt); Marill 14 (Bubble Beam, Slam) |
+| Roxanne | Torchic | Torchic 14 (Flame Charge, Quick Attack, Ember); Beautifly 14 (Bug Bite, Poison Sting, Absorb); Lombre 14 (Mega Drain, Flail); Slakoth 14 (Headbutt) |
+| Roxanne | Mudkip | Mudkip 14 (Rock Throw, Rock Smash, Water Gun); Beautifly 14 (Bug Bite, Poison Sting, Absorb); Nuzleaf 14 (Rollout, Astonish); Slakoth 14 (Headbutt) |
+| Brawly | Treecko | Grovyle 18 (Bullet Seed, Rock Tomb, Leafage, Mega Drain); Kadabra 16 (Psybeam); Beautifly 16 (Bug Bite, Poison Sting, Absorb); Sableye 16 (Rock Tomb, Shadow Sneak, Astonish); Aron 16 (Rock Tomb, Metal Claw, Headbutt); Slakoth 16 (Headbutt, Rock Tomb) |
+| Brawly | Torchic | Combusken 18 (Flame Charge, Rock Tomb, Quick Attack); Kadabra 16 (Psybeam); Beautifly 16 (Bug Bite, Poison Sting, Absorb); Sableye 16 (Rock Tomb, Shadow Sneak, Astonish); Lombre 16 (Bullet Seed, Flail, Mega Drain); Aron 16 (Rock Tomb, Metal Claw, Headbutt) |
+| Brawly | Mudkip | Marshtomp 18 (Rock Tomb, Water Gun, Rock Throw); Kadabra 16 (Psybeam); Beautifly 16 (Bug Bite, Poison Sting, Absorb); Sableye 16 (Rock Tomb, Shadow Sneak, Astonish); Aron 16 (Rock Tomb, Metal Claw, Headbutt); Shroomish 16 (Bullet Seed, Headbutt, Mega Drain) |
+| Wattson | Treecko | Grovyle 25 (Bullet Seed, Rock Tomb, Assurance, Giga Drain); Hariyama 24 (Force Palm, Knock Off, Rock Tomb); Ninjask 24 (False Swipe, Absorb); Vigoroth 24 (Uproar, Rock Tomb, Fury Swipes, Slash); Azumarill 24 (Aqua Tail, Bounce, Slam); Mightyena 24 (Assurance) |
+| Wattson | Torchic | Combusken 25 (Rock Tomb, Aerial Ace, Slash); Ninjask 24 (False Swipe, Absorb); Vigoroth 24 (Uproar, Rock Tomb, Fury Swipes, Slash); Azumarill 24 (Aqua Tail, Bounce, Slam); Mightyena 24 (Assurance); Minun 24 (Swift, Electro Ball) |
+| Wattson | Mudkip | Marshtomp 25 (Rock Slide, Water Pulse, Sludge Bomb, Rock Tomb); Hariyama 24 (Force Palm, Knock Off, Rock Tomb); Ninjask 24 (False Swipe, Absorb); Vigoroth 24 (Uproar, Rock Tomb, Fury Swipes, Slash); Mightyena 24 (Assurance); Minun 24 (Swift, Electro Ball) |
+| Flannery | Treecko | Sceptile 41 (Bullet Seed, Rock Tomb, Secret Power, Assurance); Slaking 37 (Secret Power, Throat Chop, Thunderbolt, Rock Tomb); Gardevoir 37 (Psybeam, Thunderbolt, Hidden Power, Secret Power); Altaria 37 (Dragon Breath, Steel Wing, Thief, Hidden Power); Weezing 37 (Sludge Bomb, Thunderbolt, Hidden Power, Sludge); Manectric 37 (Thunderbolt, Hidden Power, Bite, Thunder Fang) |
+| Flannery | Torchic | Blaziken 41 (Rock Tomb, Aerial Ace, Thief, Slash); Slaking 37 (Secret Power, Throat Chop, Thunderbolt, Rock Tomb); Gardevoir 37 (Psybeam, Thunderbolt, Hidden Power, Secret Power); Altaria 37 (Dragon Breath, Steel Wing, Thief, Hidden Power); Weezing 37 (Sludge Bomb, Thunderbolt, Hidden Power, Sludge); Cacturne 37 (Bullet Seed, Sucker Punch, Payback, Hidden Power) |
+| Flannery | Mudkip | Swampert 41 (Water Pulse, Rock Slide, Sludge Bomb, Hidden Power); Slaking 37 (Secret Power, Throat Chop, Thunderbolt, Rock Tomb); Gardevoir 37 (Psybeam, Thunderbolt, Hidden Power, Secret Power); Altaria 37 (Dragon Breath, Steel Wing, Thief, Hidden Power); Weezing 37 (Sludge Bomb, Thunderbolt, Hidden Power, Sludge); Cacturne 37 (Bullet Seed, Sucker Punch, Payback, Hidden Power) |
+| Norman | Treecko | Sceptile 42 (Bullet Seed, Rock Tomb, Iron Tail, Dig); Slaking 39 (Secret Power, Throat Chop, Thunderbolt, Rock Tomb); Gardevoir 39 (Psybeam, Thunderbolt, Hidden Power, Return); Muk 39 (Sludge Wave, Thief, Rock Tomb, Dig); Altaria 39 (Iron Tail, Thief, Take Down, Hidden Power); Manectric 39 (Thunderbolt, Overheat, Bite, Thunder Fang) |
+| Norman | Torchic | Blaziken 42 (Overheat, Rock Tomb, Dig, Slash); Slaking 39 (Secret Power, Throat Chop, Thunderbolt, Rock Tomb); Gardevoir 39 (Psybeam, Thunderbolt, Hidden Power, Return); Muk 39 (Sludge Wave, Thief, Rock Tomb, Dig); Altaria 39 (Iron Tail, Thief, Take Down, Hidden Power); Cacturne 39 (Bullet Seed, Sucker Punch, Pin Missile, Payback) |
+| Norman | Mudkip | Swampert 42 (Muddy Water, Sludge Bomb, Rock Slide, Dig); Slaking 39 (Secret Power, Throat Chop, Thunderbolt, Rock Tomb); Gardevoir 39 (Psybeam, Thunderbolt, Hidden Power, Return); Muk 39 (Sludge Wave, Thief, Rock Tomb, Dig); Altaria 39 (Iron Tail, Thief, Take Down, Hidden Power); Cacturne 39 (Bullet Seed, Sucker Punch, Pin Missile, Payback) |
+| Winona | Treecko | Sceptile 57 (Leaf Storm, Rock Tomb, Dig, Bullet Seed); Slaking 54 (Mega Kick, Thunderbolt, Thief, Dig); Aggron 54 (Thunderbolt, Iron Head, Hidden Power, Rock Tomb); Flygon 54 (Earthquake, Rock Tomb, Iron Tail, Earth Power); Gardevoir 54 (Moonblast, Psychic, Thunderbolt, Facade); Tentacruel 54 (Poison Jab, Surf, Thief, Sludge Wave) |
+| Winona | Torchic | Blaziken 57 (Flare Blitz, Rock Tomb, Reversal, Dig); Slaking 54 (Mega Kick, Thunderbolt, Thief, Dig); Aggron 54 (Thunderbolt, Iron Head, Hidden Power, Rock Tomb); Flygon 54 (Earthquake, Rock Tomb, Iron Tail, Earth Power); Gardevoir 54 (Moonblast, Psychic, Thunderbolt, Facade); Tentacruel 54 (Poison Jab, Surf, Thief, Sludge Wave) |
+| Winona | Mudkip | Swampert 57 (Muddy Water, Sludge Bomb, Dig, Rock Tomb); Slaking 54 (Mega Kick, Thunderbolt, Thief, Dig); Aggron 54 (Thunderbolt, Iron Head, Hidden Power, Rock Tomb); Gardevoir 54 (Moonblast, Psychic, Thunderbolt, Facade); Muk 54 (Gunk Shot, Thief, Dig, Facade); Altaria 54 (Moonblast, Iron Tail, Thief, Take Down) |
+| Tate and Liza | Treecko | Sceptile 69 (Leaf Storm, Rock Tomb, Aerial Ace, Dig); Slaking 64 (Mega Kick, Hammer Arm, Ice Beam, Thief); Aggron 64 (Ice Beam, Thunderbolt, Iron Tail, Hidden Power); Walrein 64 (Ice Beam, Surf, Body Slam, Blizzard); Flygon 64 (Earthquake, Dragon Rush, Aerial Ace, Iron Tail); Gardevoir 64 (Moonblast, Psychic, Ice Beam, Thunderbolt) |
+| Tate and Liza | Torchic | Blaziken 69 (Flare Blitz, Brave Bird, Reversal, Aerial Ace); Slaking 64 (Mega Kick, Hammer Arm, Ice Beam, Thief); Aggron 64 (Ice Beam, Thunderbolt, Iron Tail, Hidden Power); Walrein 64 (Ice Beam, Surf, Body Slam, Blizzard); Flygon 64 (Earthquake, Dragon Rush, Aerial Ace, Iron Tail); Gardevoir 64 (Moonblast, Psychic, Ice Beam, Thunderbolt) |
+| Tate and Liza | Mudkip | Swampert 69 (Hydro Pump, Ice Beam, Iron Tail, Dig); Slaking 64 (Mega Kick, Hammer Arm, Ice Beam, Thief); Aggron 64 (Ice Beam, Thunderbolt, Iron Tail, Hidden Power); Gardevoir 64 (Moonblast, Psychic, Ice Beam, Thunderbolt); Heracross 64 (Close Combat, Megahorn, Thrash, Thief); Muk 64 (Gunk Shot, Thief, Dig, Facade) |
+| Juan | Treecko | Sceptile 76 (Leaf Storm, Rock Tomb, Aerial Ace, Bullet Seed); Slaking 72 (Mega Kick, Hammer Arm, Ice Beam, Shadow Ball); Gyarados 72 (Thrash, Iron Tail, Fire Blast, Hydro Pump); Aggron 72 (Fire Blast, Ice Beam, Thunderbolt, Iron Tail); Flygon 72 (Earthquake, Dragon Rush, Fire Blast, Rock Tomb); Gardevoir 72 (Moonblast, Psychic, Ice Beam, Thunderbolt) |
+| Juan | Torchic | Blaziken 76 (Flare Blitz, Brave Bird, Solar Beam, Reversal); Slaking 72 (Mega Kick, Hammer Arm, Ice Beam, Shadow Ball); Gyarados 72 (Thrash, Iron Tail, Fire Blast, Hydro Pump); Aggron 72 (Fire Blast, Ice Beam, Thunderbolt, Iron Tail); Flygon 72 (Earthquake, Dragon Rush, Fire Blast, Rock Tomb); Gardevoir 72 (Moonblast, Psychic, Ice Beam, Thunderbolt) |
+| Juan | Mudkip | Swampert 76 (Hydro Pump, Ice Beam, Iron Tail, Dig); Slaking 72 (Mega Kick, Hammer Arm, Ice Beam, Shadow Ball); Aggron 72 (Fire Blast, Ice Beam, Thunderbolt, Iron Tail); Gardevoir 72 (Moonblast, Psychic, Ice Beam, Thunderbolt); Heracross 72 (Close Combat, Megahorn, Thrash, Thief); Muk 72 (Gunk Shot, Thief, Dig, Fire Blast) |
+| Elite Four | Treecko | Sceptile 84 (Leaf Storm, Earthquake, Aerial Ace, Rock Tomb); Slaking 78 (Mega Kick, Earthquake, Hammer Arm, Ice Beam); Salamence 78 (Earthquake, Double Edge, Aerial Ace, Brick Break); Aggron 78 (Fire Blast, Ice Beam, Earthquake, Thunderbolt); Walrein 78 (Ice Beam, Surf, Earthquake, Blizzard); Gardevoir 78 (Moonblast, Psychic, Ice Beam, Thunderbolt) |
+| Elite Four | Torchic | Blaziken 84 (Flare Blitz, Brick Break, Earthquake, Brave Bird); Slaking 78 (Mega Kick, Earthquake, Hammer Arm, Ice Beam); Salamence 78 (Earthquake, Double Edge, Aerial Ace, Brick Break); Aggron 78 (Fire Blast, Ice Beam, Earthquake, Thunderbolt); Walrein 78 (Ice Beam, Surf, Earthquake, Blizzard); Gardevoir 78 (Moonblast, Psychic, Ice Beam, Thunderbolt) |
+| Elite Four | Mudkip | Swampert 84 (Earthquake, Ice Beam, Hydro Pump, Rock Tomb); Slaking 78 (Mega Kick, Earthquake, Hammer Arm, Ice Beam); Salamence 78 (Earthquake, Double Edge, Aerial Ace, Brick Break); Aggron 78 (Fire Blast, Ice Beam, Earthquake, Thunderbolt); Gardevoir 78 (Moonblast, Psychic, Ice Beam, Thunderbolt); Heracross 78 (Close Combat, Megahorn, Earthquake, Thrash) |
+
 ## TMs by story stage
 
 First stage where each TM is on a stage map (ball, hidden item, mart list, script, or reward: a Trick House puzzle prize, filed under that puzzle). Hidden Power's type comes from the IVs. Reusable TMs mean one copy covers the whole party.
