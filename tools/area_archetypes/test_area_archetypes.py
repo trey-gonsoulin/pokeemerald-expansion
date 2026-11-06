@@ -245,16 +245,6 @@ class FixtureBuildTests(unittest.TestCase):
         self.assertIn('## underwater/mid', self.read_output('archetype_pools.md'))
 
 
-class FakeResponse(io.BytesIO):
-    """What urlopen returns, as a context manager."""
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *exc):
-        self.close()
-
-
 class CacheTests(unittest.TestCase):
     """fetch writes the cache atomically and records its provenance; build refuses a bad cache (#52)."""
 
@@ -277,7 +267,7 @@ class CacheTests(unittest.TestCase):
             if name == fail_on:
                 raise OSError('connection reset')
             with open(os.path.join(TESTDATA, 'pokeapi', name + '.csv'), 'rb') as f:
-                return FakeResponse(f.read())
+                return io.BytesIO(f.read())
         return urlopen, calls
 
     def fetch(self, cache, urlopen, ref=AA.POKEAPI_REF):
@@ -323,7 +313,7 @@ class CacheTests(unittest.TestCase):
     def test_fetch_refuses_a_bad_response(self):
         for body, msg in [(b'', 'is empty'), (b'<html>rate limited</html>\n', 'column')]:
             with self.subTest(msg=msg):
-                self.assertExits(lambda: self.fetch(self.cache, lambda url, timeout=None: FakeResponse(body)),
+                self.assertExits(lambda: self.fetch(self.cache, lambda url, timeout=None: io.BytesIO(body)),
                                  'encounters.csv', msg)
                 self.assertGreater(os.path.getsize(self.csv_path('encounters')), 0)
 
