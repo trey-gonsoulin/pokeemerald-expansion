@@ -57,6 +57,25 @@ TEST("Out-of-battle type effectiveness: the type chart and Freeze-Dry still appl
     ClearStaleBattleState();
 }
 
+TEST("Out-of-battle type effectiveness: the Dome's absorbing abilities take the move")
+{
+    SetStaleBattleState(TYPE_NORMAL, 0);
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_THUNDERBOLT, SPECIES_JOLTEON, ABILITY_VOLT_ABSORB), UQ_4_12(0.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_THUNDER_WAVE, SPECIES_JOLTEON, ABILITY_VOLT_ABSORB), UQ_4_12(0.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_EARTHQUAKE, SPECIES_JOLTEON, ABILITY_VOLT_ABSORB), UQ_4_12(2.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_FLAMETHROWER, SPECIES_VULPIX, ABILITY_FLASH_FIRE), UQ_4_12(0.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_SURF, SPECIES_VULPIX, ABILITY_FLASH_FIRE), UQ_4_12(2.0));
+    ClearStaleBattleState();
+}
+
+TEST("Out-of-battle type effectiveness: the Dome's other abilities leave the type chart alone")
+{
+    SetStaleBattleState(TYPE_NORMAL, 0);
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_THUNDERBOLT, SPECIES_JOLTEON, ABILITY_QUICK_FEET), UQ_4_12(0.5));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_FLAMETHROWER, SPECIES_VULPIX, ABILITY_DROUGHT), UQ_4_12(0.5));
+    ClearStaleBattleState();
+}
+
 TEST("Out-of-battle type effectiveness: the overworld's Ground check doesn't read the last battler")
 {
     struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][0];
