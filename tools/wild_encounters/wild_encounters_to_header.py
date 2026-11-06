@@ -19,12 +19,14 @@ MAX_ENCOUNTER_RATE = 255 # struct WildPokemonInfo's u8 encounterRate
 # one number below the largest rod's total for every rod, so the rods' totals must match.
 MAX_RATES_TOTAL = 256
 # The slots the pickers in src/wild_encounter.c choose from (ChooseWildMonIndex_Land and the
-# rest), whose lure swaps (11 - index, ...) and else branches assume exactly these.
+# rest), whose lure swaps (11 - index, ...) and else branches assume exactly these. Keep in
+# step with the pickers.
 PICKER_SLOT_COUNTS = {"land_mons": 12, "water_mons": 5, "rock_smash_mons": 5, "fishing_mons": 10, "hidden_mons": 3}
 PICKER_GROUPS = {"fishing_mons": {"old_rod": [0, 1], "good_rod": [2, 3, 4], "super_rod": [5, 6, 7, 8, 9]}}
 VERSION_SUFFIXES = {"_FireRed": "FIRERED", "_LeafGreen": "LEAFGREEN"}
-# GetCurrentMapWildMonHeaderId adds VAR_ALTERING_CAVE_WILD_SET to the first header of
-# Altering Cave, so its tables are labels of their own on one map.
+# Maps whose tables are labels of their own on one map: GetCurrentMapWildMonHeaderId adds
+# VAR_ALTERING_CAVE_WILD_SET to MAP_ALTERING_CAVE's first header. FRLG's Altering Cave has
+# its 9 tables the same way, though no C code rotates them yet (only the first is used).
 ROTATING_TABLE_MAPS = {"MAP_ALTERING_CAVE", "MAP_SIX_ISLAND_ALTERING_CAVE"}
 
 
@@ -84,17 +86,17 @@ def CheckGroups(field, where):
         raise WildEncountersError(f"{where}: the groups' encounter_rates totals differ ({totals})")
 
 
-def CheckPickerShape(field, where):
+def CheckPickerShape(field, slot_count, where):
     """The field's slots and groups as its picker in src/wild_encounter.c takes them."""
     field_type = field["type"]
     if field_type not in PICKER_SLOT_COUNTS:
         raise WildEncountersError(f"{where}: no picker in src/wild_encounter.c reads this field type")
-    slot_count = len(field["encounter_rates"])
     if slot_count != PICKER_SLOT_COUNTS[field_type]:
         raise WildEncountersError(f"{where}: {slot_count} encounter_rates, but src/wild_encounter.c picks from {PICKER_SLOT_COUNTS[field_type]} slots")
     groups = field.get("groups")
+    sorted_groups = None if groups is None else {name: sorted(slots) for name, slots in groups.items()}
     expected = PICKER_GROUPS.get(field_type)
-    if (groups and {name: sorted(slots) for name, slots in groups.items()}) != expected:
+    if sorted_groups != expected:
         raise WildEncountersError(f"{where}: groups are {groups}, but src/wild_encounter.c picks from {expected}")
 
 
@@ -105,7 +107,7 @@ def ValidateEncounters(json_data):
     past MAX_RATES_TOTAL (or differs between groups), a bad groups index, an unknown
     key, a missing key, a level outside 1-100 or above max_level, or an encounter
     rate past a u8."""
-    slot_counts = {}
+    field_types = []
     for group in json_data["wild_encounter_groups"]:
         CheckKeys(group, *GROUP_KEYS, group.get("label", "wild encounter group"))
         for field in group.get("fields", []):
@@ -116,17 +118,19 @@ def ValidateEncounters(json_data):
                 CheckGroups(field, field_where)
             else:
                 CheckRates(field["encounter_rates"], range(slot_count), field_where)
-            CheckPickerShape(field, field_where)
-            slot_counts[field["type"]] = slot_count
+            CheckPickerShape(field, slot_count, field_where)
+            if field["type"] not in field_types:
+                field_types.append(field["type"])
 
     for group in json_data["wild_encounter_groups"]:
         required = {"base_label", "map"} if group.get("for_maps") else {"base_label"}
         for idx, map_encounters in enumerate(group["encounters"]):
             where = map_encounters.get("base_label", f"{group['label']} encounter {idx}")
-            CheckKeys(map_encounters, required, {"map"} | slot_counts.keys(), where)
-            for mon_type, slot_count in slot_counts.items():
+            CheckKeys(map_encounters, required, {"map", *field_types}, where)
+            for mon_type in field_types:
                 if mon_type not in map_encounters:
                     continue
+                slot_count = PICKER_SLOT_COUNTS[mon_type]
                 mons_entry = map_encounters[mon_type]
                 type_where = f"{where} {mon_type}"
                 CheckKeys(mons_entry, *MONS_ENTRY_KEYS, type_where)
@@ -165,10 +169,9 @@ def CheckVersionSuffixLast(label, times_of_day):
     SplitTimeOfDay and GetLabelVersion each read only the last suffix."""
     for version_suffix in VERSION_SUFFIXES:
         if label.endswith(version_suffix):
-            for time_suffix in times_of_day.values():
-                if label[:-len(version_suffix)].endswith("_" + time_suffix):
-                    renamed = label[:-len(version_suffix + "_" + time_suffix)] + version_suffix + "_" + time_suffix
-                    raise WildEncountersError(f"{label}: version suffix after the time of day suffix, expected {renamed}")
+            stem, time = SplitTimeOfDay(label[:-len(version_suffix)], times_of_day, None)
+            if time:
+                raise WildEncountersError(f"{label}: version suffix after the time of day suffix, expected {stem}{version_suffix}_{times_of_day[time]}")
 
 
 def ValidateLabels(json_data, times_of_day, time_fallback, time_encounters):
@@ -194,8 +197,8 @@ def ValidateLabels(json_data, times_of_day, time_fallback, time_encounters):
             first_map, first_where = label_maps.setdefault(shared_label, (map_name, where))
             if map_name != first_map:
                 raise WildEncountersError(f"{where}: map {map_name}, but {first_where} has {first_map}")
-            version = GetLabelVersion(shared_label)
             if map_name is not None and map_name not in ROTATING_TABLE_MAPS:
+                version = GetLabelVersion(shared_label)
                 map_label = map_labels.setdefault((map_name, version), shared_label)
                 if map_label != shared_label:
                     raise WildEncountersError(f"{where}: map {map_name} already has {map_label}'s encounters ({version})")
