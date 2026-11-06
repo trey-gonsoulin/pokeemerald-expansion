@@ -46,14 +46,16 @@ force_if_missing = $(if $(filter-out $(wildcard $1),$1),FORCE)
 # mapjson groups also rewrites the tracked heal_locations.json, which jsonproc reads: as a stamp
 # output, jsonproc runs after it and sees its new contents.
 $(MAPJSON_GROUPS_OUTPUTS) $(DATA_SRC_SUBDIR)/heal_locations.json: $(MAPJSON_GROUPS_STAMP) ;
-$(MAPJSON_GROUPS_STAMP): $(MAPS_DIR)/map_groups.json $(MAP_JSONS) .map_version $(MAPJSON) $(call force_if_missing,$(MAPJSON_GROUPS_OUTPUTS))
+# Both read required_map_defines.json (the constants of removed maps and layouts), which isn't a map file.
+REQUIRED_MAP_DEFINES := tools/mapjson/required_map_defines.json
+$(MAPJSON_GROUPS_STAMP): $(MAPS_DIR)/map_groups.json $(MAP_JSONS) $(REQUIRED_MAP_DEFINES) .map_version $(MAPJSON) $(call force_if_missing,$(MAPJSON_GROUPS_OUTPUTS))
 	@touch $@.tmp
-	@$(MAPJSON) groups $(MAP_VERSION) $(filter %.json,$^) $(MAPS_OUTDIR) $(INCLUDECONSTS_OUTDIR)
+	@$(MAPJSON) groups $(MAP_VERSION) $(filter-out $(REQUIRED_MAP_DEFINES),$(filter %.json,$^)) $(MAPS_OUTDIR) $(INCLUDECONSTS_OUTDIR)
 	@echo "$(MAPJSON) groups $(MAP_VERSION) $(MAPS_DIR)/map_groups.json <MAP_JSONS> $(MAPS_OUTDIR) $(INCLUDECONSTS_OUTDIR)"
 	@mv $@.tmp $@
 
 $(MAPJSON_LAYOUTS_OUTPUTS): $(MAPJSON_LAYOUTS_STAMP) ;
-$(MAPJSON_LAYOUTS_STAMP): $(LAYOUTS_DIR)/layouts.json .map_version $(MAPJSON) $(call force_if_missing,$(MAPJSON_LAYOUTS_OUTPUTS))
+$(MAPJSON_LAYOUTS_STAMP): $(LAYOUTS_DIR)/layouts.json $(REQUIRED_MAP_DEFINES) .map_version $(MAPJSON) $(call force_if_missing,$(MAPJSON_LAYOUTS_OUTPUTS))
 	@touch $@.tmp
 	$(MAPJSON) layouts $(MAP_VERSION) $< $(LAYOUTS_OUTDIR) $(INCLUDECONSTS_OUTDIR)
 	@mv $@.tmp $@

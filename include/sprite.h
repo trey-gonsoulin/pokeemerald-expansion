@@ -6,6 +6,9 @@
 #define SPRITE_NONE 0xFF
 #define TAG_NONE 0xFFFF
 
+// The 4bpp tiles a sheet or frame of this many bytes takes, a partial last tile included.
+#define SPRITE_SIZE_TO_TILE_COUNT(size) DIV_ROUND_UP(size, TILE_SIZE_4BPP)
+
 // Given to SetSpriteMatrixAnchor to skip anchoring one of the coords.
 #define NO_ANCHOR 0x800
 
