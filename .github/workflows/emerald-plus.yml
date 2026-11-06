@@ -121,3 +121,9 @@ jobs:
         run: |
           make -C tools/mapjson
           python3 -m unittest discover -s tools/mapjson
+
+      # compresSmol's and compresSmolTilemap's input checks (#259), which run the built tools
+      - name: compresSmol unit tests
+        run: |
+          make -C tools/compresSmol
+          python3 -m unittest discover -s tools/compresSmol
