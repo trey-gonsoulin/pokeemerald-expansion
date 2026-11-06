@@ -25,7 +25,7 @@
 #define NUM_SHORT_BITS          0xf
 #define LENGTH_MOD_MASK         0xf
 #define INITIAL_STATE_MASK      0x3f
-#define MODE_MASK               0x1f
+#define MODE_MASK               0xf
 #define IMAGE_SIZE_MASK         0x3fff
 #define IMAGE_SIZE_OFFSET       4
 #define SYM_SIZE_MASK           0x3fff
@@ -36,6 +36,8 @@
 #define LO_SIZE_OFFSET          19
 
 #define IMAGE_SIZE_MODIFIER     4
+//  The largest image the header's 14-bit imageSize (in units of IMAGE_SIZE_MODIFIER bytes) holds
+#define MAX_IMAGE_BYTES         (IMAGE_SIZE_MASK * IMAGE_SIZE_MODIFIER)
 
 enum CompressionMode {
     LZ77 = 0,
@@ -133,7 +135,7 @@ bool compareVectorsShort(std::vector<unsigned short> *pVec1, std::vector<unsigne
 bool verifyCompressionShort(CompressedImage *pInput, std::vector<unsigned short> *pImage);
 
 bool verifyBytesShort(std::vector<unsigned char> *pLoVec, std::vector<unsigned short> *pSymVec, std::vector<unsigned short> *pImage);
-void readRawDataVecs(std::vector<unsigned int> *pInput, std::vector<unsigned short> *pOutput);
+bool readRawDataVecs(std::vector<unsigned int> *pInput, std::vector<unsigned short> *pOutput);
 
 bool isModeLoEncoded(CompressionMode mode);
 bool isModeSymEncoded(CompressionMode mode);

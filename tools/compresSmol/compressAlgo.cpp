@@ -980,13 +980,43 @@ void getUIntVecFromData(CompressedImage *pImage, std::vector<unsigned int> *pOut
         pOutput->push_back(currInt);
 }
 
-void readRawDataVecs(std::vector<unsigned int> *pInput, std::vector<unsigned short> *pOutput)
+//  The decoder's table has one entry per state, so the frequencies have to fill it exactly
+static bool areFrequenciesValid(std::vector<int> *pFreqs, const char *name)
 {
+    int sum = 0;
+    for (int freq : *pFreqs)
+        sum += freq;
+    if (sum == TANS_TABLE_SIZE)
+        return true;
+    fprintf(stderr, "Error: the %s frequencies add up to %d, not %d\n", name, sum, TANS_TABLE_SIZE);
+    return false;
+}
+
+bool readRawDataVecs(std::vector<unsigned int> *pInput, std::vector<unsigned short> *pOutput)
+{
+    if (pInput->size() < 2)
+    {
+        fprintf(stderr, "Error: the data is %zu words, shorter than the 2-word header\n", pInput->size());
+        return false;
+    }
     CompressedImage readImage;
     readNewHeader(pInput, &readImage);
+    if (readImage.mode < BASE_ONLY || readImage.mode > ENCODE_BOTH_DELTA_SYMS)
+    {
+        fprintf(stderr, "Error: mode %d isn't a smol image mode\n", (int)readImage.mode);
+        return false;
+    }
     bool loEncoded = isModeLoEncoded(readImage.mode);
     bool symEncoded = isModeSymEncoded(readImage.mode);
     bool symDelta = isModeSymDelta(readImage.mode);
+    size_t rawBytes = (symEncoded ? 0 : 2*readImage.symSize) + (loEncoded ? 0 : readImage.loSize);
+    size_t neededWords = 2 + (loEncoded ? 3 : 0) + (symEncoded ? 3 : 0)
+                       + (loEncoded || symEncoded ? readImage.bitreamSize : 0) + (rawBytes + 3)/4;
+    if (pInput->size() < neededWords)
+    {
+        fprintf(stderr, "Error: the header needs %zu words of data, but there are %zu\n", neededWords, pInput->size());
+        return false;
+    }
     size_t readIndex = 2;
     std::vector<unsigned int> tANSbits;
     std::vector<unsigned int> allBits;
@@ -1001,6 +1031,8 @@ void readRawDataVecs(std::vector<unsigned int> *pInput, std::vector<unsigned sho
             readImage.loFreqs[i] = (*pInput)[readIndex + i];
         readIndex += 3;
         std::vector<int> loFreqs = unpackFrequencies(&readImage.loFreqs[0]);
+        if (!areFrequenciesValid(&loFreqs, "LO"))
+            return false;
         size_t currCol = 0;
         for (size_t i = 0; i < 16; i++)
         {
@@ -1023,6 +1055,8 @@ void readRawDataVecs(std::vector<unsigned int> *pInput, std::vector<unsigned sho
             readImage.symFreqs[i] = (*pInput)[readIndex + i];
         readIndex += 3;
         std::vector<int> symFreqs = unpackFrequencies(&readImage.symFreqs[0]);
+        if (!areFrequenciesValid(&symFreqs, "symbol"))
+            return false;
         size_t currCol = 0;
         for (size_t i = 0; i < 16; i++)
         {
@@ -1081,7 +1115,7 @@ void readRawDataVecs(std::vector<unsigned int> *pInput, std::vector<unsigned sho
             offsetMod = 2;
         for (size_t i = 0; i < readImage.loSize; i++)
         {
-            loVec[i] = ((*pInput)[readIndex] >> (8*((i%4) + offsetMod))) & 0xff;
+            loVec[i] = ((*pInput)[readIndex] >> (8*((i + offsetMod) % 4))) & 0xff;
             if ((i+offsetMod+1) % 4 == 0)
                 readIndex++;
         }
@@ -1105,6 +1139,7 @@ void readRawDataVecs(std::vector<unsigned int> *pInput, std::vector<unsigned sho
                 symVec[i] += (unsigned short)symNibbles[i*4 + j] << (4*j);
     }
     *pOutput = decodeBytesShort(&loVec, &symVec);
+    return true;
 }
 
 InputSettings::InputSettings() {}
@@ -1150,6 +1185,11 @@ bool readFileAsUInt(std::string filePath, std::vector<unsigned int> *pFileData)
     std::streamsize size = iStream.gcount();
     iStream.clear();
     iStream.seekg( 0, std::ios_base::beg );
+    if (size % 4 != 0)
+    {
+        fprintf(stderr, "Error: %s is %zu bytes, not a whole number of 4-byte words\n", filePath.c_str(), (size_t)size);
+        return false;
+    }
     pFileData->resize(size/4);
     iStream.read((char *)(pFileData->data()), size);
     iStream.close();
@@ -1183,6 +1223,23 @@ bool processImageData(std::vector<unsigned char> *pInput, CompressedImage *pImag
 {
     CompressionMode someMode;
     bool hasImage = false;
+
+    //  The header stores the size in units of IMAGE_SIZE_MODIFIER bytes, in 14 bits
+    if (pInput->size() == 0)
+    {
+        fprintf(stderr, "ERROR: Image %s is empty\n", fileName.c_str());
+        return false;
+    }
+    if (pInput->size() % IMAGE_SIZE_MODIFIER != 0)
+    {
+        fprintf(stderr, "ERROR: Image %s is %zu bytes, not a multiple of %d\n", fileName.c_str(), pInput->size(), IMAGE_SIZE_MODIFIER);
+        return false;
+    }
+    if (pInput->size() > MAX_IMAGE_BYTES)
+    {
+        fprintf(stderr, "ERROR: Image %s is %zu bytes, past the header's limit of %d\n", fileName.c_str(), pInput->size(), MAX_IMAGE_BYTES);
+        return false;
+    }
 
     std::vector<unsigned short> usBase(pInput->size() / 2);
     memcpy(usBase.data(), pInput->data(), pInput->size());
@@ -1290,8 +1347,7 @@ bool processImageData(std::vector<unsigned char> *pInput, CompressedImage *pImag
             std::vector<unsigned int> uiVec;
             getUIntVecFromData(&currImg, &uiVec);
             std::vector<unsigned short> decodedImage;
-            readRawDataVecs(&uiVec, &decodedImage);
-            if (!compareVectorsShort(&decodedImage, &usBase))
+            if (!readRawDataVecs(&uiVec, &decodedImage) || !compareVectorsShort(&decodedImage, &usBase))
             {
                 fprintf(stderr, "WARNING: Couldn't verify compression for mode %u for minCodeLength %zu\n", mode, minCodeLength);
                 continue;
