@@ -243,16 +243,17 @@ class ValidateTest(unittest.TestCase):
         self.assertRejected(data, "gRoute101_Night: map MAP_ROUTE102, but gRoute101 has MAP_ROUTE101")
 
 
-class TimeOfDayTest(unittest.TestCase):
-    def assembler(self, json_data=None, time_encounters=False):
-        config = SimpleNamespace(
-            times_of_day=TIMES_OF_DAY,
-            time_fallback="TIME_MORNING",
-            time_encounters=time_encounters,
-            mon_types=["land_mons", "water_mons"],
-        )
-        return gen.WildEncounterAssembler(io.StringIO(), json_data, config)
+def assembler(json_data, time_encounters=False):
+    config = SimpleNamespace(
+        times_of_day=TIMES_OF_DAY,
+        time_fallback="TIME_MORNING",
+        time_encounters=time_encounters,
+        mon_types=["land_mons", "water_mons"],
+    )
+    return gen.WildEncounterAssembler(io.StringIO(), json_data, config)
 
+
+class TimeOfDayTest(unittest.TestCase):
     def test_suffix_is_matched_exactly(self):
         def split(label):
             return gen.SplitTimeOfDay(label, TIMES_OF_DAY, "TIME_MORNING")
@@ -266,9 +267,9 @@ class TimeOfDayTest(unittest.TestCase):
     def test_label_containing_a_time_keeps_its_encounters(self):
         data = sample()
         route101(data)["base_label"] = "gSunDayRoad_Craft"
-        assembler = self.assembler(data)
-        assembler.WriteEncounters()
-        output = assembler.output_file.getvalue()
+        writer = assembler(data)
+        writer.WriteEncounters()
+        output = writer.output_file.getvalue()
         self.assertIn(".landMonsInfo = &gSunDayRoad_Craft_LandMonsInfo,", output)
 
 
@@ -289,10 +290,9 @@ class VersionTest(unittest.TestCase):
         data = sample()
         data["wild_encounter_groups"][0]["encounters"].append(dict(route101(data), base_label="gFireRedRoad", map="MAP_ROUTE102"))
         data["wild_encounter_groups"][0]["encounters"].append(dict(route101(data), base_label="sRoute1_LeafGreen_Night", map="MAP_ROUTE103"))
-        config = SimpleNamespace(times_of_day=TIMES_OF_DAY, time_fallback="TIME_MORNING", time_encounters=True, mon_types=["land_mons", "water_mons"])
-        assembler = gen.WildEncounterAssembler(io.StringIO(), data, config)
-        assembler.WriteEncounters()
-        output = assembler.output_file.getvalue()
+        writer = assembler(data, time_encounters=True)
+        writer.WriteEncounters()
+        output = writer.output_file.getvalue()
         self.assertNotIn("#ifdef FIRERED", output)
         self.assertEqual(output.count("#ifdef LEAFGREEN"), 2)  # its tables and its header entry
         self.assertIn("#ifdef EMERALD\n    {\n        .mapGroup = MAP_GROUP(MAP_ROUTE102)", output)
