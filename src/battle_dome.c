@@ -5126,14 +5126,25 @@ static u16 GetWinningMove(int winnerTournamentId, int loserTournamentId, u8 roun
             {
                 u32 personality = 0;
                 enum Species targetSpecies = SPECIES_NONE;
+                u8 targetNature;
                 enum Ability targetAbility = ABILITY_NONE;
                 uq4_12_t typeMultiplier = 0;
+
+                // The Frontier Brain's DOME_MONS hold species IDs, not facility mon indexes.
+                if (DOME_TRAINERS[loserTournamentId].trainerId == TRAINER_FRONTIER_BRAIN)
+                {
+                    targetSpecies = GetFrontierBrainMonSpecies(k);
+                    targetNature = GetFrontierBrainMonNature(k);
+                }
+                else
+                {
+                    targetSpecies = gFacilityTrainerMons[DOME_MONS[loserTournamentId][k]].species;
+                    targetNature = gFacilityTrainerMons[DOME_MONS[loserTournamentId][k]].nature;
+                }
                 do
                 {
                     personality = Random32();
-                } while (gFacilityTrainerMons[DOME_MONS[loserTournamentId][k]].nature != GetNatureFromPersonality(personality));
-
-                targetSpecies = gFacilityTrainerMons[DOME_MONS[loserTournamentId][k]].species;
+                } while (targetNature != GetNatureFromPersonality(personality));
 
                 targetAbility = GetDomeMonAbility(targetSpecies, personality & 1);
 
@@ -5200,6 +5211,13 @@ static u16 GetWinningMove(int winnerTournamentId, int loserTournamentId, u8 roun
 
     return moves[j];
 }
+
+#if TESTING
+u16 Test_GetWinningMove(int winnerTournamentId, int loserTournamentId, u8 roundId)
+{
+    return GetWinningMove(winnerTournamentId, loserTournamentId, roundId);
+}
+#endif
 
 static void Task_ShowTourneyTree(u8 taskId)
 {
