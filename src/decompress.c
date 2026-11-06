@@ -227,6 +227,9 @@ u32 LoadCompressedSpriteSheetByTemplate(const struct SpriteTemplate *template, s
     struct SpriteFrameImage myImage;
     u32 size;
 
+    myTemplate.images = &myImage;
+    myTemplate.tileTag = template->tileTag;
+
     // Check for LZ77 header and read uncompressed size, or fallback if not compressed (zero size)
     if (IsCompressedData(template->images->data))
     {
@@ -234,15 +237,15 @@ u32 LoadCompressedSpriteSheetByTemplate(const struct SpriteTemplate *template, s
         void *buffer = malloc_and_decompress(template->images->data, NULL);
         myImage.data = buffer;
         myImage.size = size + offset;
-        myTemplate.images = &myImage;
-        myTemplate.tileTag = template->tileTag;
 
         u32 ret = LoadSpriteSheetByTemplate(&myTemplate, 0, offset);
         Free(buffer);
         return ret;
     }
-    return LoadSpriteSheetByTemplate(template, 0, offset);
-
+    // The sheet's size covers the offset in both branches, so the whole frame is copied after it.
+    myImage.data = template->images->data;
+    myImage.size = template->images->size + offset;
+    return LoadSpriteSheetByTemplate(&myTemplate, 0, offset);
 }
 
 void HandleLoadSpecialPokePic(bool32 isFrontPic, void *dest, enum Species species, u32 personality)

@@ -1,4 +1,5 @@
 #include "global.h"
+#include "decompress.h"
 #include "main.h"
 #include "malloc.h"
 #include "random.h"
@@ -276,6 +277,34 @@ TEST("LoadSpriteSheetByTemplate fails on an offset past the sheet")
     EXPECT_EQ(gLoadFail, FALSE);
     EXPECT_EQ(tileStart, 0);
     EXPECT_EQ(GetSpriteTileStartByTag(TAG_TEST_SHEET), 0);
+    ResetSpriteData();
+}
+
+TEST("LoadCompressedSpriteSheetByTemplate loads an uncompressed sheet whole after its offset")
+{
+    // 0xFF reads as smol mode 15, which IsCompressedData takes as uncompressed.
+    static const u8 ALIGNED(4) filledTiles[2 * TILE_SIZE_4BPP] = { [0 ... 2 * TILE_SIZE_4BPP - 1] = 0xFF };
+    static const struct SpriteFrameImage image[] = { { filledTiles, sizeof(filledTiles) } };
+    struct SpriteTemplate template = gDummySpriteTemplate;
+    const u8 *sheetTiles = (const u8 *)OBJ_VRAM0 + TILE_SIZE_4BPP;
+    u32 i, tileStart, filledBytes = 0;
+    template.tileTag = TAG_TEST_SHEET;
+    template.images = image;
+    ResetSpriteData();
+    CpuFill16(0, (void *)OBJ_VRAM0, 3 * TILE_SIZE_4BPP);
+
+    // The offset is a blank first tile, so the sheet takes three tiles and its two go after it.
+    gLoadFail = FALSE;
+    tileStart = LoadCompressedSpriteSheetByTemplate(&template, TILE_SIZE_4BPP);
+    EXPECT_EQ(gLoadFail, FALSE);
+    EXPECT_EQ(tileStart, 0);
+    for (i = 0; i < sizeof(filledTiles); i++)
+    {
+        if (sheetTiles[i] == 0xFF)
+            filledBytes++;
+    }
+    EXPECT_EQ(filledBytes, sizeof(filledTiles));
+    EXPECT_EQ(LoadTestSheet(1), 3);
     ResetSpriteData();
 }
 
