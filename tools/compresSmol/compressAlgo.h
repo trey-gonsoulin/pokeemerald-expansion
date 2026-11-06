@@ -35,6 +35,9 @@
 #define LO_SIZE_MASK            0x1fff
 #define LO_SIZE_OFFSET          19
 
+//  decodeNibbles' result when the nibbles need more bits than the bitstream holds
+#define DECODE_PAST_BITSTREAM   SIZE_MAX
+
 #define IMAGE_SIZE_MODIFIER     4
 //  The largest image the header's 14-bit imageSize (in units of IMAGE_SIZE_MODIFIER bytes) holds
 #define MAX_IMAGE_BYTES         (IMAGE_SIZE_MASK * IMAGE_SIZE_MODIFIER)
@@ -127,7 +130,7 @@ std::vector<int> unpackFrequencies(unsigned int pInts[3]);
 void readNewHeader(std::vector<unsigned int> *pInput, CompressedImage *pOutput);
 void getUIntVecFromData(CompressedImage *pImage, std::vector<unsigned int> *pOutput);
 
-std::vector<unsigned short> decodeBytesShort(std::vector<unsigned char> *pLoVec, std::vector<unsigned short> *pSymVec);
+bool decodeBytesShort(std::vector<unsigned char> *pLoVec, std::vector<unsigned short> *pSymVec, std::vector<unsigned short> *pOutput);
 std::vector<unsigned short> decodeImageShort(CompressedImage *pInput);
 DataVecs decodeDataVectorsNew(CompressedImage *pInput);
 bool compareVectorsShort(std::vector<unsigned short> *pVec1, std::vector<unsigned short> *pVec2);
