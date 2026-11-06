@@ -5086,7 +5086,24 @@ static u16 GetWinningMove(int winnerTournamentId, int loserTournamentId, u8 roun
     u16 bestScore = 0;
     u16 bestId = 0;
     int movePower = 0;
+    enum Species targetSpecies[FRONTIER_PARTY_SIZE];
+    u8 targetNatures[FRONTIER_PARTY_SIZE];
     SetFacilityPtrsGetLevel();
+
+    // The Frontier Brain's DOME_MONS hold species IDs, not facility mon indexes.
+    for (k = 0; k < FRONTIER_PARTY_SIZE; k++)
+    {
+        if (DOME_TRAINERS[loserTournamentId].trainerId == TRAINER_FRONTIER_BRAIN)
+        {
+            targetSpecies[k] = GetFrontierBrainMonSpecies(k);
+            targetNatures[k] = GetFrontierBrainMonNature(k);
+        }
+        else
+        {
+            targetSpecies[k] = gFacilityTrainerMons[DOME_MONS[loserTournamentId][k]].species;
+            targetNatures[k] = gFacilityTrainerMons[DOME_MONS[loserTournamentId][k]].nature;
+        }
+    }
 
     // Calc move points of all 4 moves for all 3 Pokémon hitting all 3 target mons.
     for (i = 0; i < FRONTIER_PARTY_SIZE; i++)
@@ -5125,19 +5142,16 @@ static u16 GetWinningMove(int winnerTournamentId, int loserTournamentId, u8 roun
             for (k = 0; k < FRONTIER_PARTY_SIZE; k++)
             {
                 u32 personality = 0;
-                enum Species targetSpecies = SPECIES_NONE;
                 enum Ability targetAbility = ABILITY_NONE;
                 uq4_12_t typeMultiplier = 0;
                 do
                 {
                     personality = Random32();
-                } while (gFacilityTrainerMons[DOME_MONS[loserTournamentId][k]].nature != GetNatureFromPersonality(personality));
+                } while (targetNatures[k] != GetNatureFromPersonality(personality));
 
-                targetSpecies = gFacilityTrainerMons[DOME_MONS[loserTournamentId][k]].species;
+                targetAbility = GetDomeMonAbility(targetSpecies[k], personality & 1);
 
-                targetAbility = GetDomeMonAbility(targetSpecies, personality & 1);
-
-                typeMultiplier = CalcPartyMonTypeEffectivenessMultiplier(moves[i * 4 + j], attackerAbility, targetSpecies, targetAbility);
+                typeMultiplier = CalcPartyMonTypeEffectivenessMultiplier(moves[i * 4 + j], attackerAbility, targetSpecies[k], targetAbility);
                 if (typeMultiplier == UQ_4_12(0))
                     moveScores[moveIndex] += 0;
                 else if (typeMultiplier >= UQ_4_12(2.0))
@@ -5200,6 +5214,13 @@ static u16 GetWinningMove(int winnerTournamentId, int loserTournamentId, u8 roun
 
     return moves[j];
 }
+
+#if TESTING
+u16 Test_GetWinningMove(int winnerTournamentId, int loserTournamentId, u8 roundId)
+{
+    return GetWinningMove(winnerTournamentId, loserTournamentId, roundId);
+}
+#endif
 
 static void Task_ShowTourneyTree(u8 taskId)
 {

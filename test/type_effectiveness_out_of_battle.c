@@ -1,8 +1,15 @@
 #include "global.h"
 #include "battle.h"
+#include "battle_dome.h"
+#include "battle_frontier.h"
 #include "battle_util.h"
+#include "event_data.h"
+#include "frontier_util.h"
 #include "malloc.h"
 #include "test/test.h"
+#include "constants/battle_frontier.h"
+#include "constants/battle_frontier_mons.h"
+#include "constants/trainers.h"
 
 // The Battle Dome's tourney tree (GetWinningMove) and the overworld (GetOverworldTypeEffectiveness)
 // score moves after a battle, when gBattleMons[0] is the player's last battler and gFieldStatuses
@@ -240,4 +247,49 @@ TEST("Out-of-battle type effectiveness: the Dome's move on every battler reaches
     EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_PERISH_SONG, ABILITY_NONE, SPECIES_VOLTORB, ABILITY_STATIC), UQ_4_12(1.0));
     EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_FLOWER_SHIELD, ABILITY_NONE, SPECIES_GHOLDENGO, ABILITY_GOOD_AS_GOLD), UQ_4_12(0.5));
     ClearStaleBattleState();
+}
+
+// Tournament ID 0 is a facility trainer with three Porygon2 (Psychic, Thunderbolt, Ice Beam,
+// Recover) and ID 1 the loser. A Frontier Brain's DOME_MONS hold its species IDs.
+static u16 GetDomeWinningMoveAgainst(u16 loserTrainerId, const u16 *loserMons)
+{
+    u32 i;
+
+    gSaveBlock2Ptr->frontier.domeTrainers[0].trainerId = 0;
+    gSaveBlock2Ptr->frontier.domeTrainers[1].trainerId = loserTrainerId;
+    for (i = 0; i < FRONTIER_PARTY_SIZE; i++)
+    {
+        gSaveBlock2Ptr->frontier.domeMonIds[0][i] = FRONTIER_MON_PORYGON2_4;
+        gSaveBlock2Ptr->frontier.domeMonIds[1][i] = loserMons[i];
+    }
+    // Round 1, so no earlier round's winning move is skipped.
+    return Test_GetWinningMove(0, 1, 1);
+}
+
+TEST("Out-of-battle type effectiveness: the Dome's winning move against a losing Frontier Brain reads its Pokemon by species")
+{
+    u16 brainSpecies[FRONTIER_PARTY_SIZE];
+    const u16 sameSpeciesMons[FRONTIER_PARTY_SIZE] = {FRONTIER_MON_SWAMPERT_1, FRONTIER_MON_SALAMENCE_1, FRONTIER_MON_CHARIZARD_1};
+    u32 i;
+
+    VarSet(VAR_FRONTIER_FACILITY, FRONTIER_FACILITY_DOME);
+    gSaveBlock2Ptr->frontier.lvlMode = FRONTIER_LVL_50;
+    SetFacilityPtrsGetLevel();
+    for (i = 0; i < FRONTIER_PARTY_SIZE; i++)
+        brainSpecies[i] = GetFrontierBrainMonSpecies(i);
+    ASSUME(brainSpecies[0] == SPECIES_SWAMPERT);
+    ASSUME(brainSpecies[1] == SPECIES_SALAMENCE);
+    ASSUME(brainSpecies[2] == SPECIES_CHARIZARD);
+    for (i = 0; i < FRONTIER_PARTY_SIZE; i++)
+        ASSUME(gFacilityTrainerMons[sameSpeciesMons[i]].species == brainSpecies[i]);
+    // The facility mons at the Brain's species IDs: Omastar, Medicham and Magikarp.
+    ASSUME(gFacilityTrainerMons[SPECIES_SWAMPERT].species == SPECIES_OMASTAR);
+    ASSUME(gFacilityTrainerMons[SPECIES_SALAMENCE].species == SPECIES_MEDICHAM);
+    ASSUME(gFacilityTrainerMons[SPECIES_CHARIZARD].species == SPECIES_MAGIKARP);
+
+    // Ice Beam: 1x on Swampert and Charizard, 4x on Salamence. Thunderbolt wins on the
+    // facility mons at those indexes (2x on Omastar and Magikarp).
+    EXPECT_EQ(GetDomeWinningMoveAgainst(TRAINER_FRONTIER_BRAIN, brainSpecies), MOVE_ICE_BEAM);
+    EXPECT_EQ(GetDomeWinningMoveAgainst(1, sameSpeciesMons), MOVE_ICE_BEAM);
+    EXPECT_EQ(GetDomeWinningMoveAgainst(1, brainSpecies), MOVE_THUNDERBOLT);
 }
