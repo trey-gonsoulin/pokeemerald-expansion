@@ -365,10 +365,6 @@ top:
             gTestRunnerState.timeoutSeconds = UINT_MAX;
         InitHeap(gHeap, HEAP_SIZE);
         ResetTasks();
-        // A test that ends with sprites or palettes loaded (test/sprite.c's BuildOamBuffer
-        // benchmarks fill every slot) would leave the next test on this runner no room (#272).
-        ResetSpriteData();
-        FreeAllSpritePalettes();
         EnableInterrupts(INTR_FLAG_TIMER2);
         REG_TM2CNT_L = UINT16_MAX - (274 * 60); // Approx. 1 second.
         REG_TM2CNT_H = TIMER_ENABLE | TIMER_INTR_ENABLE | TIMER_1024CLK;
@@ -390,6 +386,10 @@ top:
         gPersistentTestRunnerState.state = CURRENT_TEST_STATE_RUN;
         gPersistentTestRunnerState.expectCrash = FALSE;
         ResetGlobalVariables();
+        // A test that ends with sprites or palettes loaded (test/sprite.c's BuildOamBuffer
+        // benchmarks fill every slot) would leave the next test on this runner no room (#272).
+        ResetSpriteData();
+        FreeAllSpritePalettes();
         SeedRng(0);
         SeedRng2(0);
         FillGuardElements();
