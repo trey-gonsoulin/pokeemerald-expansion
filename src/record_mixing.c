@@ -223,6 +223,7 @@ static void PrepareExchangePacket(void)
 {
     SetPlayerSecretBaseParty();
     DeactivateAllNormalTVShows();
+    DeleteUnairableTVShows();
     SetSrcLookupPointers();
 
     if (Link_AnyPartnersPlayingRubyOrSapphire())

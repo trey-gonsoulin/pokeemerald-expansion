@@ -32,6 +32,7 @@ void TryPutTodaysRivalTrainerOnAir(void);
 void TryPutTrendWatcherOnAir(const u16 *words);
 void ReceivePokeNewsData(void *src, u32 size, u8 playersLinkId);
 void DeactivateAllNormalTVShows(void);
+void DeleteUnairableTVShows(void);
 void RecordFishingAttemptForTV(bool8 caughtFish);
 void IncrementDailySlotsUses(void);
 void IncrementDailyRouletteUses(void);
@@ -62,5 +63,9 @@ void ResetGabbyAndTy(void);
 u8 CheckForPlayersHouseNews(void);
 bool8 IsGabbyAndTyShowOnTheAir(void);
 void TryPutTrainerFanClubOnAir(void);
+
+#if TESTING
+s8 Test_FindInactiveShowInArray(TVShow *tvShows);
+#endif
 
 #endif //GUARD_TV_H
