@@ -104,3 +104,7 @@ jobs:
       # The scripts that write teachable_learnsets.h, tutor_moves.h and all_learnables.json
       - name: Learnset helper unit tests
         run: python3 -m unittest discover -s tools/learnset_helpers
+
+      # The script that writes wild_encounters.h and checks wild_encounters.json (#257)
+      - name: Wild encounter generator unit tests
+        run: python3 -m unittest discover -s tools/wild_encounters
