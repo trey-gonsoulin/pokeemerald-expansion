@@ -74,4 +74,8 @@ void UpdateSpinData(void);
 void ResetSpinTimer(void);
 bool32 CanTriggerSpinEvolution();
 
+#if TESTING
+void Test_SetFinishedSpin(u32 vblanks, bool32 clockwise);
+#endif
+
 #endif // GUARD_FIELD_PLAYER_AVATAR_H
