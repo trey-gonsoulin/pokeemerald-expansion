@@ -304,7 +304,7 @@ static EWRAM_DATA u8 sDebugRecentWarpsCount = 0;
 static EWRAM_DATA struct WarpData sDebugWarpBack = {0};
 // Set while the fly map that Fly to map… opened is up, so the real Fly's map records no warp back
 static EWRAM_DATA bool8 sDebugFlyMapOpen = FALSE;
-static EWRAM_DATA u16 sDebugLastEnabledSpecies = SPECIES_NONE; // set on first use
+static EWRAM_DATA u16 sDebugLastEnabledSpecies = SPECIES_NONE; // set on first use; EWRAM_DATA isn't loaded, so "unset" must stay 0
 EWRAM_DATA bool8 gIsDebugBattle = FALSE;
 EWRAM_DATA u64 gDebugAIFlags = 0;
 
