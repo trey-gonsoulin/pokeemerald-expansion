@@ -243,7 +243,7 @@ struct DebugMenuListData
     u16 iconPaletteTag;
     DebugFunc pendingInputFunc; // input handler that takes over from DebugTask_StartMenuInput
     struct ListMenuItem listItems[DEBUG_MAX_MENU_ITEMS + 1];
-    u8 itemNames[DEBUG_MAX_MENU_ITEMS + 1][26];
+    u8 itemNames[DEBUG_MAX_MENU_ITEMS + 1][32]; // room for a submenu label's font codes and arrow (#88)
     enum DebugMenuTypes menuType:3;
     u32 nameOrder:1; // Up/Down on a named selection step go A-Z instead of turning a digit
     u32 padding:28;
@@ -492,7 +492,6 @@ static const struct DebugSelection sPartnerSelection;
 
 // Text
 // General
-static const u8 sDebugText_Arrow[] =         _("{CLEAR_TO 110}{RIGHT_ARROW}");
 static const u8 sDebugText_True[] =          _("TRUE");
 static const u8 sDebugText_False[] =         _("FALSE");
 static const u8 sDebugText_Colored_True[] =  _("{COLOR GREEN}TRUE");
@@ -1021,8 +1020,9 @@ static u32 Debug_GenerateListBasicMenu(const struct DebugMenuOption *items)
         sDebugMenuListData->listItems[i].id = i;
         StringExpandPlaceholders(gStringVar4, items[i].text);
         if (IsSubMenuAction(items[i].action))
-            StringAppend(gStringVar4, sDebugText_Arrow);
-        StringCopy(&sDebugMenuListData->itemNames[i][0], gStringVar4);
+            Debug_CopySubMenuLabel(sDebugMenuListData->itemNames[i], ARRAY_COUNT(sDebugMenuListData->itemNames[i]), gStringVar4, DEBUG_MENU_FONT);
+        else
+            StringCopy(&sDebugMenuListData->itemNames[i][0], gStringVar4);
         sDebugMenuListData->listItems[i].name = &sDebugMenuListData->itemNames[i][0];
         totalItems++;
     }
