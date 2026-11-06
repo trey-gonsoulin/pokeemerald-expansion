@@ -196,6 +196,9 @@ class ValidateTest(unittest.TestCase):
         add_fishing(data, [70, 30, 60, 20, 20], {"old_rod": [0, 1], "good_rod": [2, 3, 4]})
         validate(data)
         data = sample()
+        add_fishing(data, [70, 30, 60, 20, 20], {"old_rod": [1, 0], "good_rod": [4, 2, 3]})
+        validate(data)
+        data = sample()
         add_fishing(data, [70, 30, 60, 20, 10], {"old_rod": [0, 1], "good_rod": [2, 3, 4]})
         self.assertRejected(data, "field fishing_mons group good_rod: encounter_rates add up to 90, expected 100")
 
@@ -206,8 +209,9 @@ class ValidateTest(unittest.TestCase):
             ({"old_rod": [0, 1], "good_rod": [2, 3, "4"]}, "slot index is '4'"),
             ({"old_rod": [0, 1], "good_rod": [1, 2, 3, 4]}, "group good_rod: slot 1 is also in group old_rod"),
             ({"old_rod": [0, 2], "good_rod": [1, 3, 4]}, "group old_rod: slots [0, 2] aren't consecutive"),
-            ({"old_rod": [1, 0], "good_rod": [2, 3, 4]}, "group old_rod: slots [1, 0] aren't consecutive"),
-            ({"old_rod": [0, 1], "good_rod": [2, 3, 4], "super_rod": []}, "group super_rod: no slots"),
+            ({"old_rod": [0, 1], "good_rod": [2, 3, 4], "super_rod": []}, "group super_rod: slots are [], expected a list of slot indices"),
+            ({"old_rod": 0, "good_rod": [1, 2, 3, 4]}, "group old_rod: slots are 0, expected a list"),
+            ([[0, 1], [2, 3, 4]], "field fishing_mons: groups is [[0, 1], [2, 3, 4]], expected an object of slot lists"),
         ):
             with self.subTest(groups=groups):
                 data = sample()
@@ -320,6 +324,14 @@ class MainTest(unittest.TestCase):
         result, wrote_header = self.run_generator(data)
         self.assertEqual(result.returncode, 1)
         self.assertIn("src/data/wild_encounters.json: gRoute101 land_mons: 2 mons", result.stderr)
+        self.assertFalse(wrote_header)
+
+    def test_repeated_label_fails_without_writing_the_header(self):
+        data = sample()
+        data["wild_encounter_groups"][0]["encounters"].append(dict(route101(data), base_label="gRoute101_Morning"))
+        result, wrote_header = self.run_generator(data)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("src/data/wild_encounters.json: gRoute101_Morning: same label and time of day", result.stderr)
         self.assertFalse(wrote_header)
 
     def test_good_data_writes_the_header(self):
