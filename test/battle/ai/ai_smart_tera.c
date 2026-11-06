@@ -87,3 +87,18 @@ AI_SINGLE_BATTLE_TEST("AI_FLAG_SMART_TERA: AI doesn't conserve tera for a party 
         MESSAGE("The opposing Wobbuffet terastallized into the Fire type!");
     }
 }
+
+AI_SINGLE_BATTLE_TEST("AI_FLAG_SMART_TERA: AI uses tera for any benefit when the rest of its party has no Tera Type")
+{
+    GIVEN {
+        ASSUME(GetMoveType(MOVE_EMBER) == TYPE_FIRE);
+        AI_FLAGS(AI_FLAG_CHECK_BAD_MOVE | AI_FLAG_CHECK_VIABILITY | AI_FLAG_TRY_TO_FAINT | AI_FLAG_SMART_TERA | AI_FLAG_OMNISCIENT );
+        PLAYER(SPECIES_WOBBUFFET) { Speed(100); Moves(MOVE_CELEBRATE); }
+        OPPONENT(SPECIES_WOBBUFFET) { Speed(1); Moves(MOVE_EMBER); TeraType(TYPE_FIRE); }
+        OPPONENT(SPECIES_WOBBUFFET) { Speed(1); TeraType(TYPE_MYSTERY); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_CELEBRATE); EXPECT_MOVE(opponent, MOVE_EMBER, gimmick: GIMMICK_TERA); }
+    } SCENE {
+        MESSAGE("The opposing Wobbuffet terastallized into the Fire type!");
+    }
+}
