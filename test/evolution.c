@@ -1,6 +1,7 @@
 #include "global.h"
 #include "item.h"
 #include "item_use.h"
+#include "party_menu.h"
 #include "pokemon.h"
 #include "test/test.h"
 
@@ -133,19 +134,13 @@ TEST("Linking Cord: trade held items are used from the bag like stones")
 static bool32 SpeciesLearnsMove(enum Species species, enum Move move)
 {
     const struct LevelUpMove *learnset = GetSpeciesLevelUpLearnset(species);
-    const u16 *eggMoves = GetSpeciesEggMoves(species);
 
     for (u32 i = 0; learnset[i].move != LEVEL_UP_MOVE_END; i++)
     {
         if (learnset[i].move == move)
             return TRUE;
     }
-    for (u32 i = 0; eggMoves[i] != MOVE_UNAVAILABLE; i++)
-    {
-        if (eggMoves[i] == move)
-            return TRUE;
-    }
-    return CanLearnTeachableMove(species, move);
+    return SpeciesHasEggMove(species, move) || CanLearnTeachableMove(species, move);
 }
 
 // The species, or one of its pre-evolutions, can learn the move by level up, as an egg move, or
@@ -191,20 +186,18 @@ TEST("Known-move evolution: every move an evolution needs can be learned by the 
 TEST("Known-move evolution: Dipplin learns Dragon Cheer on evolving and then evolves into Hydrapple")
 {
     struct Pokemon *dipplin = &gParties[B_TRAINER_PLAYER][0];
-    const struct LevelUpMove *learnset = GetSpeciesLevelUpLearnset(SPECIES_DIPPLIN);
-    enum Move move = MOVE_DRAGON_CHEER;
-    u32 evolutionLevel = MAX_LEVEL + 1;
+    enum Move move = MOVE_NONE;
 
-    for (u32 i = 0; learnset[i].move != LEVEL_UP_MOVE_END; i++)
-    {
-        if (learnset[i].move == MOVE_DRAGON_CHEER)
-            evolutionLevel = learnset[i].level;
-    }
-    EXPECT_EQ(evolutionLevel, 0);
-
+    ASSUME(IsSpeciesEnabled(SPECIES_DIPPLIN));
     ZeroPlayerPartyMons();
     CreatePartyMon(0, SPECIES_DIPPLIN, ITEM_NONE);
     EXPECT_EQ(GetEvolutionTargetSpecies(dipplin, EVO_MODE_NORMAL, ITEM_NONE, NULL, NULL, CHECK_EVO), SPECIES_NONE);
-    SetMonData(dipplin, MON_DATA_MOVE1, &move);
+
+    // The moves the evolution scene teaches on becoming Dipplin, into an empty moveset.
+    for (u32 i = 0; i < MAX_MON_MOVES; i++)
+        SetMonData(dipplin, MON_DATA_MOVE1 + i, &move);
+    for (bool32 firstMove = TRUE; MonTryLearningNewMoveEvolution(dipplin, firstMove) != 0; firstMove = FALSE)
+        ;
+    EXPECT(MonKnowsMove(dipplin, MOVE_DRAGON_CHEER));
     EXPECT_EQ(GetEvolutionTargetSpecies(dipplin, EVO_MODE_NORMAL, ITEM_NONE, NULL, NULL, CHECK_EVO), SPECIES_HYDRAPPLE);
 }
