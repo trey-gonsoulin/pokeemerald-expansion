@@ -23,13 +23,14 @@ on the full data run only once `fetch` has filled `.cache/`.
 `fetch` downloads the CSVs at a pinned PokeAPI commit, `POKEAPI_REF` in
 `area_archetypes.py` (master on 2026-10-24, which reproduces the committed
 `output/`); `fetch --ref <commit>` takes another. Each request times out after
-60 s, and each file goes through a `.tmp` and `os.replace`, so an interrupted
-fetch leaves the old file. It records the ref, the date and each CSV's sha256 in
-`.cache/pokeapi/provenance.json`. `build` stops before writing anything when
-that record is missing, a CSV no longer has its recorded hash, or a CSV is
-empty, has no rows or lacks a column the build reads (`CSV_FILES`); then it
-copies the record into `archetype_pools.json` and `emerald_maps.json` as
-`provenance`. To move to newer PokeAPI data, bump `POKEAPI_REF`, fetch, build,
+60 s. Every CSV is downloaded and checked (not empty, has rows and the columns
+the build reads, `CSV_FILES`) before any is written, each through a `.tmp` and
+`os.replace`, so a failed fetch leaves the old cache. It records the ref, the
+date and each CSV's sha256 in `.cache/pokeapi/provenance.json`. `build` stops
+before writing anything when that record is missing, a CSV no longer has its
+recorded hash, or a CSV fails the same checks, and warns when the ref isn't
+`POKEAPI_REF`; then it copies the record into `archetype_pools.json` and
+`emerald_maps.json` as `provenance`. To move to newer PokeAPI data, bump `POKEAPI_REF`, fetch, build,
 and commit `output/` with it (a test checks the committed outputs' ref). The
 fixture in `testdata/pokeapi/` has its own `provenance.json`, whose hashes have
 to follow any edit to its CSVs.

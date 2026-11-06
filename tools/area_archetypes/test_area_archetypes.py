@@ -121,7 +121,7 @@ class FixtureBuildTests(unittest.TestCase):
         cls.addClassCleanup(cls.out.cleanup)
         cls.log = io.StringIO()
         try:
-            with contextlib.redirect_stdout(cls.log):
+            with contextlib.redirect_stdout(cls.log), contextlib.redirect_stderr(cls.log):
                 _, cls.smap, tables, cls.pools, cls.emerald = AA.build(
                     os.path.join(TESTDATA, 'pokeapi'), cls.out.name, AA.REPO,
                     base=os.path.join(TESTDATA, 'wild_encounters.json'))
@@ -300,33 +300,47 @@ class CacheTests(unittest.TestCase):
         self.assertIn('/PokeAPI/pokeapi/abc123/data/v2/csv/encounters.csv', calls[0][0])
         self.assertEqual(sorted(os.listdir(cache)),
                          sorted([n + '.csv' for n in AA.CSV_FILES] + [AA.PROVENANCE_FILE]))
-        provenance = AA.load_provenance(cache)
+        with contextlib.redirect_stderr(io.StringIO()):
+            provenance = AA.load_provenance(cache)
         self.assertEqual(provenance['ref'], 'abc123')
         self.assertRegex(provenance['fetched'], r'^\d{4}-\d\d-\d\d$')
         # The fixture's own record has the same hashes: they are the same files.
         with open(os.path.join(self.cache, AA.PROVENANCE_FILE), encoding='utf-8') as f:
             self.assertEqual(provenance['csv_sha256'], json.load(f)['csv_sha256'])
 
-    def test_interrupted_fetch_keeps_the_old_files(self):
-        with open(self.csv_path('regions'), 'rb') as f:
-            regions = f.read()
-        with open(self.csv_path('pokemon'), 'w', encoding='utf-8') as f:
-            f.write('id,identifier,species_id\n1,old,1\n')
-        urlopen, _ = self.fake_urlopen(fail_on='pokemon')
+    def test_interrupted_fetch_keeps_the_old_cache(self):
+        before = {n: open(os.path.join(self.cache, n), 'rb').read() for n in os.listdir(self.cache)}
+        urlopen, calls = self.fake_urlopen(fail_on='pokemon')
         with self.assertRaises(OSError):
-            self.fetch(self.cache, urlopen)
-        with open(self.csv_path('pokemon'), encoding='utf-8') as f:
-            self.assertEqual(f.read(), 'id,identifier,species_id\n1,old,1\n')
-        with open(self.csv_path('regions'), 'rb') as f:
-            self.assertEqual(f.read(), regions)
-        self.assertFalse([n for n in os.listdir(self.cache) if n.endswith('.tmp')])
-        # The edited CSV no longer has the hash fetch recorded, so build refuses the cache.
-        self.assertExits(lambda: AA.load_provenance(self.cache), 'pokemon.csv is not the file fetch recorded')
+            self.fetch(self.cache, urlopen, 'abc123')
+        self.assertIn('pokemon', calls[-1][0])
+        # Nothing is written until every file is in, so the old cache still checks out.
+        self.assertEqual({n: open(os.path.join(self.cache, n), 'rb').read() for n in os.listdir(self.cache)},
+                         before)
+        with contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(AA.load_provenance(self.cache)['ref'], 'testdata')
 
-    def test_fetch_refuses_an_empty_response(self):
-        self.assertExits(lambda: self.fetch(self.cache, lambda url, timeout=None: FakeResponse(b'')),
-                         'returned no data')
-        self.assertGreater(os.path.getsize(self.csv_path('encounters')), 0)
+    def test_fetch_refuses_a_bad_response(self):
+        for body, msg in [(b'', 'is empty'), (b'<html>rate limited</html>\n', 'column')]:
+            with self.subTest(msg=msg):
+                self.assertExits(lambda: self.fetch(self.cache, lambda url, timeout=None: FakeResponse(body)),
+                                 'encounters.csv', msg)
+                self.assertGreater(os.path.getsize(self.csv_path('encounters')), 0)
+
+    def test_load_provenance_refuses_an_edited_cache(self):
+        with open(self.csv_path('pokemon'), 'a', encoding='utf-8') as f:
+            f.write('9999,edited,1\n')
+        self.assertExits(lambda: AA.load_provenance(self.cache), 'pokemon.csv is not the file fetch recorded')
+        for content in ['{"ref": "x"', '{"ref": "x"}', '{"ref": "x", "csv_sha256": []}']:
+            with self.subTest(content=content):
+                with open(os.path.join(self.cache, AA.PROVENANCE_FILE), 'w', encoding='utf-8') as f:
+                    f.write(content)
+                self.assertExits(lambda: AA.load_provenance(self.cache), 'is not a fetch record')
+
+    def test_load_provenance_warns_on_another_ref(self):
+        with contextlib.redirect_stderr(io.StringIO()) as err:
+            AA.load_provenance(self.cache)
+        self.assertIn(f'holds PokeAPI testdata, not POKEAPI_REF {AA.POKEAPI_REF}', err.getvalue())
 
     def test_read_csv_refuses_a_bad_file(self):
         for content, msg in [('', 'is empty'),
@@ -338,7 +352,7 @@ class CacheTests(unittest.TestCase):
                 self.assertExits(lambda: AA.read_csv(self.cache, 'pokemon'), 'pokemon.csv', msg)
 
     def build(self, out):
-        with contextlib.redirect_stdout(io.StringIO()):
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
             AA.build(self.cache, out, AA.REPO, base=os.path.join(TESTDATA, 'wild_encounters.json'))
 
     def test_build_writes_nothing_from_a_bad_cache(self):
@@ -395,8 +409,8 @@ class CommittedOutputTests(unittest.TestCase):
         self.assertEqual(set(recorded[0]['csv_sha256']), set(AA.CSV_FILES))
 
 
-@unittest.skipUnless(os.path.exists(os.path.join(AA.DEFAULT_CACHE, 'encounters.csv')),
-                     'PokeAPI cache missing; run area_archetypes.py fetch')
+@unittest.skipUnless(os.path.exists(os.path.join(AA.DEFAULT_CACHE, AA.PROVENANCE_FILE)),
+                     'PokeAPI cache missing, or fetched before #52; run area_archetypes.py fetch')
 class EndToEndTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
