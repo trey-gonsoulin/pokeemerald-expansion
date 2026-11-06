@@ -57,6 +57,43 @@ TEST("Out-of-battle type effectiveness: the type chart and Freeze-Dry still appl
     ClearStaleBattleState();
 }
 
+TEST("Out-of-battle type effectiveness: the Dome's absorbing abilities take the move")
+{
+    SetStaleBattleState(TYPE_NORMAL, 0);
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_THUNDERBOLT, SPECIES_JOLTEON, ABILITY_VOLT_ABSORB), UQ_4_12(0.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_THUNDER_WAVE, SPECIES_JOLTEON, ABILITY_VOLT_ABSORB), UQ_4_12(0.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_EARTHQUAKE, SPECIES_JOLTEON, ABILITY_VOLT_ABSORB), UQ_4_12(2.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_FLAMETHROWER, SPECIES_VULPIX, ABILITY_FLASH_FIRE), UQ_4_12(0.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_SURF, SPECIES_VULPIX, ABILITY_FLASH_FIRE), UQ_4_12(2.0));
+    ClearStaleBattleState();
+}
+
+TEST("Out-of-battle type effectiveness: the Dome's Lightning Rod takes Electric moves from Gen 5")
+{
+    ASSUME(GetConfig(B_REDIRECT_ABILITY_IMMUNITY) >= GEN_5);
+    SetStaleBattleState(TYPE_NORMAL, 0);
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_THUNDERBOLT, SPECIES_PIKACHU, ABILITY_LIGHTNING_ROD), UQ_4_12(0.0));
+    ClearStaleBattleState();
+}
+
+TEST("Out-of-battle type effectiveness: the Dome's absorbing abilities don't take a move on the user or the field")
+{
+    ASSUME(GetMoveTarget(MOVE_CHARGE) == TARGET_USER);
+    ASSUME(GetMoveTarget(MOVE_SUNNY_DAY) == TARGET_FIELD);
+    SetStaleBattleState(TYPE_NORMAL, 0);
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_CHARGE, SPECIES_JOLTEON, ABILITY_VOLT_ABSORB), UQ_4_12(0.5));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_SUNNY_DAY, SPECIES_VULPIX, ABILITY_FLASH_FIRE), UQ_4_12(0.5));
+    ClearStaleBattleState();
+}
+
+TEST("Out-of-battle type effectiveness: the Dome's other abilities leave the type chart alone")
+{
+    SetStaleBattleState(TYPE_NORMAL, 0);
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_THUNDERBOLT, SPECIES_JOLTEON, ABILITY_QUICK_FEET), UQ_4_12(0.5));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_FLAMETHROWER, SPECIES_VULPIX, ABILITY_DROUGHT), UQ_4_12(0.5));
+    ClearStaleBattleState();
+}
+
 TEST("Out-of-battle type effectiveness: the overworld's Ground check doesn't read the last battler")
 {
     struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][0];
