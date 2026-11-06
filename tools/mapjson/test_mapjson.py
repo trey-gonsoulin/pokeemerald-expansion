@@ -218,6 +218,24 @@ class MapjsonTest(unittest.TestCase):
         self.assert_succeeds(self.run_groups())
         self.assertIn('"respawn_npc": "0"', self.read("src/data/heal_locations.json"))
 
+    def add_removed_map_location_without_npc(self):
+        location = dict(HEAL_LOCATIONS["heal_locations"][0], id="HEAL_LOCATION_REMOVED", respawn_map="MAP_REMOVED")
+        del location["respawn_npc"]
+        data = json.loads(self.heal_locations)
+        data["heal_locations"].insert(0, location)
+        self.heal_locations = json.dumps(data, indent=2) + "\n"
+
+    def test_removed_map_without_npc_leaves_the_next_npc_alone(self):
+        self.add_removed_map_location_without_npc()
+        self.assert_succeeds(self.run_groups())
+        self.assertEqual(self.read("src/data/heal_locations.json"), self.heal_locations)
+
+    def test_respawn_map_after_a_removed_map_is_still_checked(self):
+        self.add_removed_map_location_without_npc()
+        self.heal_locations = self.heal_locations.replace('"MAP_B"', '"MAP_B_TYPO"')
+        self.assert_fails(self.run_groups(), "MAP_B_TYPO")
+        self.assertEqual(self.read("src/data/heal_locations.json"), self.heal_locations)
+
     # Layouts
 
     def test_missing_border_file_fails(self):
@@ -246,13 +264,14 @@ class MapjsonTest(unittest.TestCase):
 
     def test_local_id_with_two_values_fails(self):
         self.maps["MapA"]["object_events"] = [make_object(), make_object("LOCALID_B_NURSE")]
-        self.assert_fails(self.run_event_constants(), "LOCALID_B_NURSE", "MAP_A", "MAP_B")
+        self.assert_fails(self.run_event_constants(),
+                          "LOCALID_B_NURSE is 2 as MAP_A's local_id but 1 as MAP_B's local_id")
         self.assertFalse(os.path.exists(self.path("include/constants/map_event_ids.h")))
 
     def test_warp_id_with_two_values_fails(self):
         self.maps["MapA"]["warp_events"] = [make_warp("WARP_ID_DOOR")]
         self.maps["MapB"]["warp_events"] = [make_warp(), make_warp("WARP_ID_DOOR")]
-        self.assert_fails(self.run_event_constants(), "WARP_ID_DOOR", "MAP_A", "MAP_B")
+        self.assert_fails(self.run_event_constants(), "WARP_ID_DOOR is 0 as MAP_A's warp_id but 1 as MAP_B's warp_id")
 
     def test_shared_id_with_one_value_is_allowed(self):
         self.maps["MapA"]["object_events"] = [make_object("LOCALID_B_NURSE")]
@@ -264,6 +283,10 @@ class MapjsonTest(unittest.TestCase):
     def test_non_integer_number_fails(self):
         self.layouts["layouts"][0]["width"] = 3.5
         self.assert_fails(self.run_layouts(), "'width'", "3.5")
+
+    def test_number_past_the_int_range_fails(self):
+        self.layouts["layouts"][0]["width"] = 3000000000
+        self.assert_fails(self.run_layouts(), "'width'", "int range")
 
     def test_path_without_separator_works(self):
         self.write_tree()

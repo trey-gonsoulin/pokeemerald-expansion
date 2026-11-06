@@ -15,6 +15,10 @@ using std::sort; using std::find;
 #include <map>
 using std::map;
 
+#include <set>
+
+#include <cmath>
+
 #include <fstream>
 using std::ofstream; using std::ifstream;
 
@@ -76,10 +80,11 @@ string json_to_string(const Json &data, const string &field = "", bool silent = 
             output = value.string_value();
             break;
         case Json::Type::NUMBER:
-            // int_value() would cut 3.5 to 3, and misread a number past the int range.
-            if (value.number_value() != value.int_value()) {
+            // int_value() would cut 3.5 to 3, and casts a number past the int range out of range.
+            if (std::trunc(value.number_value()) != value.number_value()
+             || value.number_value() < numeric_limits<int>::min() || value.number_value() > numeric_limits<int>::max()) {
                 string s = !field.empty() ? ("Value for '" + field + "'") : "JSON field";
-                FATAL_ERROR("%s must be an integer, not %g.\n", s.c_str(), value.number_value());
+                FATAL_ERROR("%s must be an integer in the int range, not %g.\n", s.c_str(), value.number_value());
             }
             output = std::to_string(value.int_value());
             break;
@@ -225,13 +230,14 @@ Json parse_required_map_defines(void);
 // A map that required_map_defines.json lists keeps its MAP_ constant when it is taken out of
 // map_groups.json, so references to it are dropped (connections) or cleaned (heal locations).
 bool is_removed_required_map(const string &map_id) {
-    static vector<string> required_maps;
-    if (required_maps.empty()) {
+    static const std::set<string> required_maps = [] {
+        std::set<string> ids;
         Json required_map_defines = parse_required_map_defines();
         for (auto &required_map : required_map_defines["required_maps"].array_items())
-            required_maps.push_back(json_to_string(required_map[0]));
-    }
-    return find(required_maps.begin(), required_maps.end(), map_id) != required_maps.end();
+            ids.insert(json_to_string(required_map[0]));
+        return ids;
+    }();
+    return required_maps.count(map_id) > 0;
 }
 
 string generate_map_connections_text(Json map_data) {
@@ -464,10 +470,12 @@ void process_event_constants(const vector<string> &map_filepaths, string output_
 
     // Two maps may share a name only for the same value: gcc only warns on a redefinition, and the later one wins.
     map<string, std::pair<unsigned int, string>> defined_ids;
-    auto define_id = [&](ostringstream &text, const string &name, unsigned int value, const string &map_id) {
-        auto [it, inserted] = defined_ids.emplace(name, std::make_pair(value, map_id));
+    auto define_id = [&](ostringstream &text, const string &field, unsigned int value, const string &map_id, const Json &event) {
+        string name = json_to_string(event, field);
+        string where = map_id + "'s " + field;
+        auto [it, inserted] = defined_ids.emplace(name, std::make_pair(value, where));
         if (!inserted && it->second.first != value)
-            FATAL_ERROR("%s is %u in %s but %u in %s.\n", name.c_str(), it->second.first, it->second.second.c_str(), value, map_id.c_str());
+            FATAL_ERROR("%s is %u as %s but %u as %s.\n", name.c_str(), it->second.first, it->second.second.c_str(), value, where.c_str());
         text << "#define " << name << " " << value << "\n";
     };
 
@@ -486,14 +494,14 @@ void process_event_constants(const vector<string> &map_filepaths, string output_
         for (unsigned int i = 0; i < obj_events.size(); i++) {
             auto obj_event = obj_events[i];
             if (obj_event.object_items().find("local_id") != obj_event.object_items().end())
-                define_id(map_ids_text, json_to_string(obj_event, "local_id"), i + 1, map_id);
+                define_id(map_ids_text, "local_id", i + 1, map_id, obj_event);
         }
         // Get IDs from the warp events.
         auto warp_events = map_data["warp_events"].array_items();
         for (unsigned int i = 0; i < warp_events.size(); i++) {
             auto warp_event = warp_events[i];
             if (warp_event.object_items().find("warp_id") != warp_event.object_items().end())
-                define_id(map_ids_text, json_to_string(warp_event, "warp_id"), i, map_id);
+                define_id(map_ids_text, "warp_id", i, map_id, warp_event);
         }
         // Only output if we found any IDs
         string temp = map_ids_text.str();
@@ -561,8 +569,8 @@ string generate_connections_text(Json groups_data, vector<string> &invalid_maps,
     vector<Json> connections_include_order = groups_data["connections_include_order"].array_items();
 
     if (connections_include_order.size() > 0)
-        // A map missing from the order sorts after every listed one (its position is the list's size).
-        sort(map_names.begin(), map_names.end(), [connections_include_order](const Json &a, const Json &b) {
+        // A map missing from the order sorts after every listed one (its position is the list's size), in map_groups order.
+        std::stable_sort(map_names.begin(), map_names.end(), [connections_include_order](const Json &a, const Json &b) {
             auto pos_a = find(connections_include_order.begin(), connections_include_order.end(), a) - connections_include_order.begin();
             auto pos_b = find(connections_include_order.begin(), connections_include_order.end(), b) - connections_include_order.begin();
             return pos_a < pos_b;
@@ -743,16 +751,16 @@ string clean_heal_locations(vector<string> &valid_map_ids)
     string line;
     while (std::getline(infile, line))
     {
-        if (std::regex_search(line, map_match, map_regex) && !deleted_flag) {
+        // Every respawn_map is checked, and decides alone whether the NPC after it is cleared: a
+        // removed map's entry without a respawn_npc doesn't carry the clear over to the next entry.
+        if (std::regex_search(line, map_match, map_regex)) {
             string map_id = map_match[1];
             auto it = find(valid_map_ids.begin(), valid_map_ids.end(), map_id);
-            if (it == valid_map_ids.end()) {
-                // Anything else is a typo, which would lose the NPC ID for good.
-                if (!is_removed_required_map(map_id))
-                    FATAL_ERROR("%s: unknown respawn_map %s (not in data/maps/map_groups.json or tools/mapjson/required_map_defines.json).\n",
-                                heal_locations_filepath.c_str(), map_id.c_str());
-                deleted_flag = true;
-            }
+            deleted_flag = it == valid_map_ids.end();
+            // Anything else is a typo, which would lose the NPC ID for good.
+            if (deleted_flag && !is_removed_required_map(map_id))
+                FATAL_ERROR("%s: unknown respawn_map %s (not in data/maps/map_groups.json or tools/mapjson/required_map_defines.json).\n",
+                            heal_locations_filepath.c_str(), map_id.c_str());
         }
         if (deleted_flag && std::regex_search(line, npc_regex)) {
             deleted_flag = false;
@@ -851,9 +859,9 @@ void process_groups(string groups_filepath, vector<string> &map_filepaths, strin
     string debug_map_names_text = generate_debug_map_names_text(groups_data, invalid_maps);
     string heal_locations_text = clean_heal_locations(valid_map_ids);
 
-    // Nothing is written until every output is ready, so an error leaves the tracked heal_locations.json as it was.
+    // Nothing is written until every output is ready, and the tracked heal_locations.json (read and
+    // written from the working directory, as before) goes last, so an error leaves it as it was.
     string data_dir = file_parent(groups_filepath) + sep + ".." + sep + ".." + sep + "src" + sep + "data" + sep;
-    write_text_file("src/data/heal_locations.json", heal_locations_text);
     write_text_file(output_asm + sep + "groups.inc", groups_text);
     write_text_file(output_asm + sep + "connections.inc", connections_text);
     write_text_file(output_asm + sep + "headers.inc", headers_text);
@@ -862,6 +870,7 @@ void process_groups(string groups_filepath, vector<string> &map_filepaths, strin
     write_text_file(data_dir + "map_group_count.h", map_count_text);
     // Next to map_group_count.h, which the debug menu reads too
     write_text_file(data_dir + "debug_map_names.h", debug_map_names_text);
+    write_text_file("src/data/heal_locations.json", heal_locations_text);
 }
 
 // Whether a layout goes in the layout outputs. All three skip the same layouts, so the LAYOUT_ IDs
