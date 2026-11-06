@@ -24,10 +24,12 @@ MAX_RATES_TOTAL = 256
 PICKER_SLOT_COUNTS = {"land_mons": 12, "water_mons": 5, "rock_smash_mons": 5, "fishing_mons": 10, "hidden_mons": 3}
 PICKER_GROUPS = {"fishing_mons": {"old_rod": [0, 1], "good_rod": [2, 3, 4], "super_rod": [5, 6, 7, 8, 9]}}
 VERSION_SUFFIXES = {"_FireRed": "FIRERED", "_LeafGreen": "LEAFGREEN"}
-# Maps whose tables are labels of their own on one map: GetCurrentMapWildMonHeaderId adds
-# VAR_ALTERING_CAVE_WILD_SET to MAP_ALTERING_CAVE's first header. FRLG's Altering Cave has
-# its 9 tables the same way, though no C code rotates them yet (only the first is used).
-ROTATING_TABLE_MAPS = {"MAP_ALTERING_CAVE", "MAP_SIX_ISLAND_ALTERING_CAVE"}
+# Maps whose tables are labels of their own on one map, each with its table count: from the
+# map's first header, GetCurrentMapWildMonHeaderId takes the one VAR_ALTERING_CAVE_WILD_SET
+# (below NUM_ALTERING_CAVE_TABLES) further on, so the labels of each version have to be that
+# many and consecutive. FRLG's Altering Cave has its tables the same way, though no C code
+# rotates them yet (only the first is used).
+ROTATING_TABLE_MAPS = {"MAP_ALTERING_CAVE": 9, "MAP_SIX_ISLAND_ALTERING_CAVE": 9}
 
 
 class WildEncountersError(Exception):
@@ -174,12 +176,31 @@ def CheckVersionSuffixLast(label, times_of_day):
                 raise WildEncountersError(f"{label}: version suffix after the time of day suffix, expected {stem}{version_suffix}_{times_of_day[time]}")
 
 
+def CheckRotatingTables(label_maps):
+    """Each version's labels on a map of ROTATING_TABLE_MAPS number its table count and
+    sit together in header order (label_maps' order, each label's first encounter)."""
+    version_labels = {}
+    for shared_label, (map_name, first_where) in label_maps.items():
+        version_labels.setdefault(GetLabelVersion(shared_label), []).append((map_name, first_where))
+    for version, labels in version_labels.items():
+        for map_name, table_count in ROTATING_TABLE_MAPS.items():
+            indices = [index for index, (label_map, _) in enumerate(labels) if label_map == map_name]
+            if not indices:
+                continue
+            first_where = labels[indices[0]][1]
+            if len(indices) != table_count:
+                raise WildEncountersError(f"{first_where}: map {map_name} has {len(indices)} labels ({version}), expected {table_count}, one per table")
+            if indices[-1] - indices[0] + 1 != table_count:
+                raise WildEncountersError(f"{first_where}: map {map_name}'s labels ({version}) aren't consecutive, so its tables would read another map's")
+
+
 def ValidateLabels(json_data, times_of_day, time_fallback, time_encounters):
     """Raise WildEncountersError when two encounters of a group share a label and time
     of day, or two times of one label name different maps: WriteEncounters would keep
     only the later one's tables, or map, in the header. Also when two labels of one
-    version name one map (outside ROTATING_TABLE_MAPS), since GetCurrentMapWildMonHeaderId
-    takes the first; when a label's time of day suffix comes before its version suffix;
+    version name one map (outside ROTATING_TABLE_MAPS, which need their table count of
+    consecutive labels), since GetCurrentMapWildMonHeaderId takes the first; when a label's
+    time of day suffix comes before its version suffix;
     and, with time_encounters off, when a label has no time_fallback encounters, the only
     ones WritePokemonHeaders writes then."""
     for group in json_data["wild_encounter_groups"]:
@@ -202,6 +223,8 @@ def ValidateLabels(json_data, times_of_day, time_fallback, time_encounters):
                 map_label = map_labels.setdefault((map_name, version), shared_label)
                 if map_label != shared_label:
                     raise WildEncountersError(f"{where}: map {map_name} already has {map_label}'s encounters ({version})")
+
+        CheckRotatingTables(label_maps)
 
         if not time_encounters:
             for shared_label, (_, first_where) in label_maps.items():
@@ -236,6 +259,12 @@ class Config:
             raise Exception("OW_TIME_OF_DAY_DISABLE_FALLBACK not defined.")
         if self.time_fallback == None:
             raise Exception("OW_TIME_OF_DAY_FALLBACK not defined.")
+        default_time = next(iter(self.times_of_day))
+        if not self.time_encounters and self.time_fallback != default_time:
+            # GetTimeOfDayForEncounters then reads TIME_OF_DAY_DEFAULT (the first time), but
+            # WritePokemonHeaders writes only the fallback time's tables.
+            raise Exception(f"OW_TIME_OF_DAY_FALLBACK is {self.time_fallback}, but with OW_TIME_OF_DAY_ENCOUNTERS FALSE "
+                            f"src/wild_encounter.c reads only {default_time} encounters: set it to {default_time}.")
     
     def ParseTimeEnum(self, rtc_constants_file_name):
         with open(rtc_constants_file_name, 'r') as rtc_constants_file:
