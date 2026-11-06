@@ -736,41 +736,110 @@ string generate_map_constants_text(string groups_filepath, Json groups_data, vec
     return text.str();
 }
 
+// The text span (between the quotes) of each heal location's respawn_npc string, or npos for an
+// entry without one, in the order of the "heal_locations" array. json11 keeps no positions, so
+// this scans the text, which json11 has already parsed: strings, and the nesting of {} and [].
+using TextSpan = std::pair<size_t, size_t>; // start and length
+
+static vector<TextSpan> find_respawn_npc_values(const string &text)
+{
+    vector<TextSpan> spans;
+    vector<char> nesting;
+    bool in_locations = false; // in the "heal_locations" array
+    bool expect_key = false;   // the next string in an entry is a key
+    string last_string, key;
+    for (size_t i = 0; i < text.size(); i++) {
+        char c = text[i];
+        if (c == '"') {
+            size_t start = ++i;
+            while (i < text.size() && text[i] != '"')
+                i += text[i] == '\\' ? 2 : 1;
+            last_string = text.substr(start, i - start);
+            if (in_locations && nesting.size() == 3) {
+                if (expect_key)
+                    key = last_string;
+                else if (key == "respawn_npc")
+                    spans.back() = {start, i - start};
+            }
+        } else if (c == '{' || c == '[') {
+            if (c == '[' && nesting.size() == 1 && last_string == "heal_locations")
+                in_locations = true;
+            nesting.push_back(c);
+            if (in_locations && nesting.size() == 3) {
+                spans.push_back({string::npos, 0});
+                expect_key = true;
+            }
+        } else if (c == '}' || c == ']') {
+            nesting.pop_back();
+            if (nesting.size() == 1)
+                in_locations = false;
+        } else if (in_locations && nesting.size() == 3) {
+            if (c == ',')
+                expect_key = true;
+            else if (c == ':')
+                expect_key = false;
+        }
+    }
+    return spans;
+}
+
 // Returns heal_locations.json with the respawn NPC of each respawn map taken out of map_groups.json
 // set to 0 (its LOCALID_ is gone with the map), for process_groups to write once every output is ready.
+// Each entry's own respawn_map decides its own respawn_npc, whatever the order of the keys, and the
+// rest of the text is left as it is.
 string clean_heal_locations(vector<string> &valid_map_ids)
 {
-    std::stringstream new_json;
+    // Read as the old getline loop did (read_text_file's tellg size is past the text where
+    // the platform converts line endings), so write_text_file gives the same bytes back.
     std::ifstream infile(HEAL_LOCATIONS_FILEPATH);
     if (!infile.is_open())
         FATAL_ERROR("Cannot open file %s for reading.\n", HEAL_LOCATIONS_FILEPATH.c_str());
-    bool deleted_flag = false;
+    std::stringstream buffer;
+    buffer << infile.rdbuf();
+    string text = buffer.str();
 
-    std::regex map_regex("\"respawn_map\"\\s*:\\s*\"([^\"]*)\"");
-    std::regex npc_regex("LOCALID_\\w+");
-    std::smatch map_match;
-    string line;
-    while (std::getline(infile, line))
-    {
-        // Every respawn_map is checked, and decides alone whether the NPC after it is cleared: a
-        // removed map's entry without a respawn_npc doesn't carry the clear over to the next entry.
-        if (std::regex_search(line, map_match, map_regex)) {
-            string map_id = map_match[1];
-            deleted_flag = find(valid_map_ids.begin(), valid_map_ids.end(), map_id) == valid_map_ids.end();
-            // Anything else is a typo, which would lose the NPC ID for good.
-            if (deleted_flag && !is_removed_required_map(map_id))
-                FATAL_ERROR("%s: unknown respawn_map %s (not in data/maps/map_groups.json or tools/mapjson/required_map_defines.json).\n",
-                            HEAL_LOCATIONS_FILEPATH.c_str(), map_id.c_str());
-        }
-        if (deleted_flag && std::regex_search(line, npc_regex)) {
-            deleted_flag = false;
-            new_json << std::regex_replace(line, npc_regex, "0") << "\n";
-        } else {
-            new_json << line << "\n";
-        }
+    string err;
+    Json data = Json::parse(text, err);
+    if (data == Json())
+        FATAL_ERROR("%s: %s\n", HEAL_LOCATIONS_FILEPATH.c_str(), err.c_str());
+    if (!data["heal_locations"].is_array())
+        FATAL_ERROR("%s: no \"heal_locations\" array.\n", HEAL_LOCATIONS_FILEPATH.c_str());
+    const auto &locations = data["heal_locations"].array_items();
+
+    // The scan has to agree with json11 on every entry's NPC, or a clear could land on another's.
+    vector<TextSpan> npc_spans = find_respawn_npc_values(text);
+    bool spans_match = npc_spans.size() == locations.size();
+    for (size_t i = 0; spans_match && i < locations.size(); i++) {
+        const Json &npc = locations[i]["respawn_npc"];
+        spans_match = npc.is_string() ? npc_spans[i].first != string::npos
+                                        && text.compare(npc_spans[i].first, npc_spans[i].second, npc.string_value()) == 0
+                                      : npc_spans[i].first == string::npos;
+    }
+    if (!spans_match)
+        FATAL_ERROR("%s: can't find each heal location's respawn_npc in the text.\n", HEAL_LOCATIONS_FILEPATH.c_str());
+
+    vector<TextSpan> cleared_spans;
+    for (size_t i = 0; i < locations.size(); i++) {
+        const Json &respawn_map = locations[i]["respawn_map"];
+        if (!respawn_map.is_string())
+            continue;
+        string map_id = respawn_map.string_value();
+        if (find(valid_map_ids.begin(), valid_map_ids.end(), map_id) != valid_map_ids.end())
+            continue;
+        // Anything else is a typo, which would lose the NPC ID for good.
+        if (!is_removed_required_map(map_id))
+            FATAL_ERROR("%s: unknown respawn_map %s (not in data/maps/map_groups.json or tools/mapjson/required_map_defines.json).\n",
+                        HEAL_LOCATIONS_FILEPATH.c_str(), map_id.c_str());
+        if (npc_spans[i].first != string::npos)
+            cleared_spans.push_back(npc_spans[i]);
     }
 
-    return new_json.str();
+    // Backwards, so each edit leaves the earlier positions alone.
+    std::regex npc_regex("LOCALID_\\w+");
+    for (auto it = cleared_spans.rbegin(); it != cleared_spans.rend(); ++it)
+        text.replace(it->first, it->second, std::regex_replace(text.substr(it->first, it->second), npc_regex, "0"));
+
+    return text;
 }
 
 // Map and group name strings for the debug menu's Warp, indexed like gMapGroups:

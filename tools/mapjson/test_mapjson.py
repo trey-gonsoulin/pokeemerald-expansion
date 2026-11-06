@@ -230,6 +230,59 @@ class MapjsonTest(unittest.TestCase):
         self.assert_succeeds(self.run_groups())
         self.assertEqual(self.read("src/data/heal_locations.json"), self.heal_locations)
 
+    def put_npc_before_map(self):
+        # Each entry's respawn_npc before its respawn_map, as JSON allows (#301).
+        data = json.loads(self.heal_locations)
+        data["heal_locations"] = [{key: location[key] for key in sorted(location, key=lambda k: k != "respawn_npc")}
+                                  for location in data["heal_locations"]]
+        self.heal_locations = json.dumps(data, indent=2) + "\n"
+
+    def test_removed_map_clears_its_own_npc_before_it(self):
+        self.heal_locations = self.heal_locations.replace('"MAP_B"', '"MAP_REMOVED"')
+        self.put_npc_before_map()
+        expected = self.heal_locations.replace('"LOCALID_B_NURSE"', '"0"')
+        self.assertLess(self.heal_locations.index('"respawn_npc"'), self.heal_locations.index('"respawn_map"'))
+        self.assert_succeeds(self.run_groups())
+        self.assertEqual(self.read("src/data/heal_locations.json"), expected)
+
+    def test_removed_map_without_npc_leaves_the_next_npc_before_its_map_alone(self):
+        self.add_removed_map_location_without_npc()
+        self.put_npc_before_map()
+        self.assert_succeeds(self.run_groups())
+        self.assertEqual(self.read("src/data/heal_locations.json"), self.heal_locations)
+
+    def test_removed_map_with_npc_before_it_leaves_the_previous_npc_alone(self):
+        # The valid entry first, then a removed map's with its NPC before its map.
+        location = dict(HEAL_LOCATIONS["heal_locations"][0], id="HEAL_LOCATION_REMOVED", respawn_map="MAP_REMOVED",
+                        respawn_npc="LOCALID_REMOVED_NURSE")
+        data = json.loads(self.heal_locations)
+        data["heal_locations"].append(location)
+        self.heal_locations = json.dumps(data, indent=2) + "\n"
+        self.put_npc_before_map()
+        expected = self.heal_locations.replace('"LOCALID_REMOVED_NURSE"', '"0"')
+        self.assert_succeeds(self.run_groups())
+        self.assertEqual(self.read("src/data/heal_locations.json"), expected)
+
+    def test_heal_locations_formatting_is_kept(self):
+        # Not json11's output: the cleanup edits the NPC's text in place.
+        self.heal_locations = self.heal_locations.replace('"MAP_B"', '"MAP_REMOVED"').replace("  ", "\t")
+        self.heal_locations = self.heal_locations.replace('"x": 1,\n', '"x": 1, "note": "a \\"respawn_npc\\": x",\n')
+        expected = self.heal_locations.replace('"LOCALID_B_NURSE"', '"0"')
+        self.assert_succeeds(self.run_groups())
+        self.assertEqual(self.read("src/data/heal_locations.json"), expected)
+
+    def test_removed_map_with_a_number_npc_is_left_alone(self):
+        self.heal_locations = self.heal_locations.replace('"MAP_B"', '"MAP_REMOVED"')
+        self.heal_locations = self.heal_locations.replace('"LOCALID_B_NURSE"', '0')
+        self.assert_succeeds(self.run_groups())
+        self.assertEqual(self.read("src/data/heal_locations.json"), self.heal_locations)
+
+    def test_heal_locations_without_the_array_fails(self):
+        # Every respawn_map would go unchecked.
+        self.heal_locations = self.heal_locations.replace('"heal_locations"', '"heal_location"')
+        self.assert_fails(self.run_groups(), "src/data/heal_locations.json", "heal_locations")
+        self.assertEqual(self.read("src/data/heal_locations.json"), self.heal_locations)
+
     def test_respawn_map_after_a_removed_map_is_still_checked(self):
         self.add_removed_map_location_without_npc()
         self.heal_locations = self.heal_locations.replace('"MAP_B"', '"MAP_B_TYPO"')
