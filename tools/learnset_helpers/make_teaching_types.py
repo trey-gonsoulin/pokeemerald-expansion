@@ -15,8 +15,8 @@ import sys
 
 CONFIG_ENABLED_PAT = re.compile(r"^#define P_LEARNSET_HELPER_TEACHABLE[ \t]+(?P<cfg_val>\w+)", flags=re.MULTILINE)
 
-TEACHING_TYPE_PAT =  re.compile(r"\s*\.teachingType\s*=\s*(?P<teaching_type>[A-Z_]+)")
-SPECIES_START_PAT = re.compile(r"\s*(\[SPECIES_\w+\]\s*=|#define\s)")
+TEACHING_TYPE_PAT =  re.compile(r"\s*\.teachingType\s*=\s*(?P<teaching_type>[A-Z_]+)\s*(,|\\|$)")
+SPECIES_START_PAT = re.compile(r"\s*\[SPECIES_\w+\]\s*=|#define\s")
 LEARNSET_PAT = re.compile(r"\s*\.teachableLearnset\s*=\s*s(?P<name>\w+?)TeachableLearnset")
 PREPROC_START_PAT = re.compile(r"^#if(def)?\s+\w+", flags=re.MULTILINE)
 PREPROC_END_PAT = re.compile(r"^#endif\s*(//\s*\w+)?", flags=re.MULTILINE)
