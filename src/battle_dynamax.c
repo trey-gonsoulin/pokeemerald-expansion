@@ -198,8 +198,9 @@ static u32 UndoDynamaxPartyHP(enum BattlerId battler)
     return hp;
 }
 
-// A battle won by a move skips the end-of-turn revert, so the player's party mons of battlers
-// still Dynamaxed keep 1.5x HP. Reverts their party data only, as the battle state is discarded.
+// A battle that ends before the end-of-turn revert (won by a move, a foe that flees) leaves the
+// party mons of player battlers still Dynamaxed at 1.5x HP. Reverts their party data only, as the
+// battle state is discarded.
 void UndoDynamaxAtBattleEnd(void)
 {
     for (enum BattlerId battler = 0; battler < gBattlersCount; battler++)
