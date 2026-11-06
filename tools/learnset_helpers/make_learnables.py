@@ -17,11 +17,12 @@ import sys
 import unicodedata
 
 # za.json's entries that list one set of moves for forms the other games list apart (its SLOWBRO
-# holds Galarian Slowbro's moves too, its HOOPA both forms'), so no one form can take them.
+# holds Galarian Slowbro's moves too, its HOOPA both forms'), so no one form can take them. Not
+# ROTOM: its forms share one learnset.
 ZA_MERGED_FORMS = {
     "AVALUGG", "FARFETCHD", "FLOETTE", "GOODRA", "HOOPA", "INDEEDEE", "MAROWAK", "MEOWSTIC", "MEOWTH",
-    "MR_MIME", "PERSIAN", "QWILFISH", "RAICHU", "ROTOM", "SLIGGOO", "SLOWBRO", "SLOWKING", "SLOWPOKE",
-    "STUNFISK", "TOXTRICITY", "YAMASK",
+    "MR_MIME", "PERSIAN", "QWILFISH", "RAICHU", "SLIGGOO", "SLOWBRO", "SLOWKING", "SLOWPOKE", "STUNFISK",
+    "TOXTRICITY", "YAMASK",
 }
 
 

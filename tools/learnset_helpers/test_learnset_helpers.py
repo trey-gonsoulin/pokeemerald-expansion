@@ -253,7 +253,7 @@ class CommittedLearnablesTest(unittest.TestCase):
     def test_za_merged_forms_are_the_bare_names_of_other_games_forms(self):
         # A bare name in za.json whose forms za.json doesn't list but another game does. Older games
         # aren't checked: their bare names (rse's MAROWAK) predate the forms. PORYGON_Z is its own
-        # species, not a form of Porygon.
+        # species, not a form of Porygon. ROTOM is read: its forms share one learnset.
         keys = {}
         for fname in self.PORYMOVES_DIR.glob("*.json"):
             with open(fname, encoding="utf-8") as f:
@@ -262,7 +262,7 @@ class CommittedLearnablesTest(unittest.TestCase):
         others = set().union(*keys.values()) - {"PORYGON_Z"}
         merged = {key for key in za
                   if not any(k.startswith(key + "_") for k in za) and any(k.startswith(key + "_") for k in others)}
-        self.assertEqual(merged, make_learnables.ZA_MERGED_FORMS)
+        self.assertEqual(merged - {"ROTOM"}, make_learnables.ZA_MERGED_FORMS)
 
 
 if __name__ == "__main__":
