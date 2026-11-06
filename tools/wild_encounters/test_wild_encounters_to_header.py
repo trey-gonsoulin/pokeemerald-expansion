@@ -115,6 +115,25 @@ class ValidateTest(unittest.TestCase):
         data["wild_encounter_groups"][1]["for_map"] = True
         self.assertRejected(data, "gBattlePikeWildMonHeaders: unknown key(s) for_map")
 
+    def test_missing_keys(self):
+        data = sample()
+        del route101(data)["land_mons"]["mons"][0]["species"]
+        self.assertRejected(data, "gRoute101 land_mons slot 0: missing key(s) species")
+        data = sample()
+        del route101(data)["water_mons"]["encounter_rate"]
+        self.assertRejected(data, "gRoute101 water_mons: missing key(s) encounter_rate")
+        data = sample()
+        del route101(data)["map"]
+        self.assertRejected(data, "gRoute101: missing key(s) map")
+        data = sample()
+        del data["wild_encounter_groups"][1]["encounters"][0]["base_label"]
+        self.assertRejected(data, "gBattlePikeWildMonHeaders encounter 0: missing key(s) base_label")
+
+    def test_field_type_with_two_slot_counts(self):
+        data = sample()
+        data["wild_encounter_groups"][1]["fields"] = [{"type": "land_mons", "encounter_rates": [100]}]
+        self.assertRejected(data, "gBattlePikeWildMonHeaders field land_mons: 1 encounter_rates, but another group's has 3")
+
     def test_levels_out_of_range(self):
         for min_level, max_level, message in (
             (0, 5, "min_level is 0, expected 1 to 5"),

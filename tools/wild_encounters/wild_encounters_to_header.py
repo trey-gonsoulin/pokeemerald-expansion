@@ -2,13 +2,14 @@ import json
 import re
 import sys
 
-# The keys each object of wild_encounters.json may have. An encounter may also have
-# one key per field type (land_mons, water_mons, ...).
-GROUP_KEYS = {"label", "for_maps", "fields", "encounters"}
-FIELD_KEYS = {"type", "encounter_rates", "groups"}
-ENCOUNTER_KEYS = {"map", "base_label"}
-MONS_ENTRY_KEYS = {"encounter_rate", "mons"}
-MON_KEYS = {"species", "min_level", "max_level"}
+# The keys each object of wild_encounters.json must have, and the others it may have.
+# An encounter may also have one key per field type (land_mons, water_mons, ...), and
+# needs "map" in a group with for_maps.
+GROUP_KEYS = ({"label", "encounters"}, {"for_maps", "fields"})
+FIELD_KEYS = ({"type", "encounter_rates"}, {"groups"})
+ENCOUNTER_KEYS = ({"base_label"}, {"map"})
+MONS_ENTRY_KEYS = ({"encounter_rate", "mons"}, set())
+MON_KEYS = ({"species"}, {"min_level", "max_level"})
 
 DEFAULT_MIN_LEVEL = 2
 MIN_LEVEL = 1
@@ -20,8 +21,12 @@ class WildEncountersError(Exception):
     pass
 
 
-def CheckKeys(obj, allowed, where):
-    unknown = sorted(set(obj) - allowed)
+def CheckKeys(obj, keys, where, extra_required=(), extra_optional=()):
+    required = keys[0] | set(extra_required)
+    missing = sorted(required - set(obj))
+    if missing:
+        raise WildEncountersError(f"{where}: missing key(s) {', '.join(missing)}")
+    unknown = sorted(set(obj) - required - keys[1] - set(extra_optional))
     if unknown:
         raise WildEncountersError(f"{where}: unknown key(s) {', '.join(unknown)}")
 
@@ -34,18 +39,22 @@ def CheckInt(value, low, high, what, where):
 def ValidateEncounters(json_data):
     """Raise WildEncountersError on data the header would carry silently wrong: a
     table whose slot count differs from its field's encounter_rates, an unknown key,
-    a level outside 1-100 or above max_level, or an encounter rate past a u8."""
+    a missing key, a level outside 1-100 or above max_level, or an encounter rate past
+    a u8."""
     slot_counts = {}
     for group in json_data["wild_encounter_groups"]:
         CheckKeys(group, GROUP_KEYS, group.get("label", "wild encounter group"))
         for field in group.get("fields", []):
-            CheckKeys(field, FIELD_KEYS, f"field {field.get('type')}")
-            slot_counts[field["type"]] = len(field["encounter_rates"])
+            CheckKeys(field, FIELD_KEYS, f"{group['label']} field {field.get('type')}")
+            slot_count = len(field["encounter_rates"])
+            if slot_counts.setdefault(field["type"], slot_count) != slot_count:
+                raise WildEncountersError(f"{group['label']} field {field['type']}: {slot_count} encounter_rates, but another group's has {slot_counts[field['type']]}")
 
     for group in json_data["wild_encounter_groups"]:
-        for map_encounters in group["encounters"]:
-            where = map_encounters.get("base_label", group["label"])
-            CheckKeys(map_encounters, ENCOUNTER_KEYS | slot_counts.keys(), where)
+        map_key = {"map"} if group.get("for_maps") else set()
+        for idx, map_encounters in enumerate(group["encounters"]):
+            where = map_encounters.get("base_label", f"{group['label']} encounter {idx}")
+            CheckKeys(map_encounters, ENCOUNTER_KEYS, where, map_key, slot_counts.keys())
             for mon_type, slot_count in slot_counts.items():
                 if mon_type not in map_encounters:
                     continue
@@ -326,6 +335,7 @@ class WildEncounterAssembler:
 
 
 def ConvertToHeaderFile(json_data):
+    ValidateEncounters(json_data)
     with open('src/data/wild_encounters.h', 'w') as output_file:
         config = Config('include/config/overworld.h', 'include/constants/rtc.h', json_data)
         assembler = WildEncounterAssembler(output_file, json_data, config)
@@ -337,10 +347,9 @@ def main():
     with open('src/data/wild_encounters.json', 'r') as json_file:
         json_data = json.load(json_file)
     try:
-        ValidateEncounters(json_data)
+        ConvertToHeaderFile(json_data)
     except WildEncountersError as error:
         sys.exit(f"src/data/wild_encounters.json: {error}")
-    ConvertToHeaderFile(json_data)
 
 
 if __name__ == '__main__':
