@@ -398,7 +398,7 @@ class RestockTests(unittest.TestCase):
         deny = R.parse_species_list(['RATTATA,EKANS,KRABBY,ZUBAT,MAGIKARP,HOOTHOOT,POLIWAG'])
         for ratio in (0.5, 1.0):
             new, _ = R.restock(self.wild, self.maps, self.pools, self.info, R.Settings(ratio=ratio, deny=deny))
-            placed = {m['species'] for e in new['wild_encounter_groups'][0]['encounters']
+            placed = {m['species'] for e in AA.map_headers(new)['encounters']
                       if self.maps[e['base_label']]['region'] == 'hoenn'
                       for f in R.TABLE_FIELDS + ('fishing_mons',) if f in e for m in e[f]['mons']}
             self.assertFalse(placed & deny, ratio)
@@ -498,7 +498,7 @@ class CliTests(unittest.TestCase):
             wild = os.path.join(tmp, 'wild_encounters.json')
             out = os.path.join(tmp, 'out')
             edited = R.load_json(WILD)
-            edited['wild_encounter_groups'][0]['encounters'].pop()
+            AA.map_headers(edited)['encounters'].pop()
             R.dump_wild(edited, wild)
             with self.assertRaises(SystemExit):
                 run_quietly(['--wild', wild, '--out-dir', out, '--write'])
@@ -519,7 +519,7 @@ class CliTests(unittest.TestCase):
                 written, _ = run_quietly(['--wild', wild, '--out-dir', out, '--write', '--levels', levels])
                 self.assertEqual(written[AA.RESTOCK_STAMP]['level_offsets'], {'MAP_ROUTE101': {'land_mons': shift}})
             edited = R.load_json(wild)
-            enc = next(e for e in R.wild_headers(edited)['encounters'] if e.get('map') == 'MAP_ROUTE101')
+            enc = next(e for e in AA.map_headers(edited)['encounters'] if e.get('map') == 'MAP_ROUTE101')
             enc['land_mons']['mons'][0]['max_level'] += 1
             R.dump_wild(edited, wild)
             with self.assertRaises(SystemExit):

@@ -869,14 +869,10 @@ def tables_of(enc, emerald, field_defs):
                 yield 'fishing_mons', rod, idxs, emerald['fishing_mons'][rod]
 
 
-def wild_headers(wild):
-    return next(g for g in wild['wild_encounter_groups'] if g['label'] == 'gWildMonHeaders')
-
-
 def pooled_tables(wild, emerald_maps, pools, settings):
     """(encounter, field, rod, slot indices, archetype info, pool) for every table of the
     selected regions that has an archetype pool to draw from."""
-    group = wild_headers(wild)
+    group = AA.map_headers(wild)
     field_defs = {fd['type']: fd for fd in group['fields']}
     for enc in group['encounters']:
         em = emerald_maps.get(enc['base_label'])
@@ -891,7 +887,7 @@ def pooled_tables(wild, emerald_maps, pools, settings):
 def restock(wild, emerald_maps, pools, info, settings):
     """Restocked copy of wild_encounters.json, plus a list of changed tables."""
     wild = copy.deepcopy(wild)
-    group = wild_headers(wild)
+    group = AA.map_headers(wild)
     field_defs = {fd['type']: fd for fd in group['fields']}
     info.learn_gens(pools)
     changes = []
@@ -1009,7 +1005,7 @@ def shift_levels(wild, offsets, info):
     species), as tools/rebalance's shifted_slots models it. Returns the
     number of tables shifted."""
     shifted = 0
-    for enc in wild_headers(wild)['encounters']:
+    for enc in AA.map_headers(wild)['encounters']:
         for field, shift in offsets.get(enc.get('map'), {}).items():
             if not shift or field not in enc:
                 continue
@@ -1048,7 +1044,7 @@ def main(argv=None):
         sys.exit(f'unknown species: {", ".join(unknown)}')
     base, base_sha256 = AA.load_base(args.base, args.force)
     emerald_maps = load_json(args.maps)
-    unknown = sorted(set(settings.maps) - {e['base_label'] for e in wild_headers(base)['encounters']})
+    unknown = sorted(set(settings.maps) - {e['base_label'] for e in AA.map_headers(base)['encounters']})
     if unknown:
         p.error(f'maps: not a gWildMonHeaders base label in {args.base}: {", ".join(unknown)}')
     known = {m['region'] for m in emerald_maps.values() if m.get('region')}
