@@ -36,7 +36,7 @@ TEST("TV show: the dummied-out show ends the TV loop and goes off the air")
 
 // GetRandomActiveShowIdx picks the show EventScript_TryDoTVShow airs, and through
 // FindAnyTVShowOnTheAir decides whether the TV screens flash.
-static u32 PickShowWithOnlySlot0Active(u32 kind)
+static u32 PickShowWithOnlySlot0Active(u32 kind, bool32 *stillActive)
 {
     TVShow saved[TV_SHOWS_COUNT];
     u32 picked;
@@ -46,13 +46,15 @@ static u32 PickShowWithOnlySlot0Active(u32 kind)
     gSaveBlock1Ptr->tvShows[0].common.kind = kind;
     gSaveBlock1Ptr->tvShows[0].common.active = TRUE;
     picked = GetRandomActiveShowIdx();
+    *stillActive = gSaveBlock1Ptr->tvShows[0].common.active;
     memcpy(gSaveBlock1Ptr->tvShows, saved, sizeof(saved));
     return picked;
 }
 
-TEST("TV show: the picker skips an active slot with no show to air")
+TEST("TV show: the picker skips an active slot with no show to air and takes it off the air")
 {
     u32 kind = 0;
+    bool32 stillActive;
     PARAMETRIZE { kind = TVSHOW_OFF_AIR; }
     PARAMETRIZE { kind = TVSHOW_DUMMY; }
     PARAMETRIZE { kind = TVSHOW_LILYCOVE_CONTEST_LADY + 1; }
@@ -60,17 +62,20 @@ TEST("TV show: the picker skips an active slot with no show to air")
     PARAMETRIZE { kind = TVGROUP_RECORD_MIX_END; }
     PARAMETRIZE { kind = TVSHOW_MASS_OUTBREAK + 1; }
     PARAMETRIZE { kind = 0xFF; }
-    EXPECT_EQ(PickShowWithOnlySlot0Active(kind), 0xFF);
+    EXPECT_EQ(PickShowWithOnlySlot0Active(kind, &stillActive), 0xFF);
+    EXPECT_EQ(stillActive, FALSE);
 }
 
 TEST("TV show: the picker finds an active show that airs")
 {
     u32 kind = 0;
+    bool32 stillActive;
     PARAMETRIZE { kind = TVSHOW_FAN_CLUB_LETTER; }
     PARAMETRIZE { kind = TVSHOW_LILYCOVE_CONTEST_LADY; }
     PARAMETRIZE { kind = TVSHOW_POKEMON_TODAY_CAUGHT; }
     PARAMETRIZE { kind = TVSHOW_SAFARI_FAN_CLUB; }
-    EXPECT_EQ(PickShowWithOnlySlot0Active(kind), 0);
+    EXPECT_EQ(PickShowWithOnlySlot0Active(kind, &stillActive), 0);
+    EXPECT_EQ(stillActive, TRUE);
 }
 
 TEST("TV show: an active slot of an unknown kind ends the TV loop and goes off the air")
