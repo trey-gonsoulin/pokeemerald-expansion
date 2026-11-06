@@ -241,8 +241,12 @@ u32 LoadCompressedSpriteSheetByTemplate(const struct SpriteTemplate *template, s
         Free(buffer);
         return ret;
     }
-    return LoadSpriteSheetByTemplate(template, 0, offset);
-
+    // As above, the sheet's size covers the offset, so the whole frame is copied after it.
+    myImage = template->images[0];
+    myImage.size += offset;
+    myTemplate.images = &myImage;
+    myTemplate.tileTag = template->tileTag;
+    return LoadSpriteSheetByTemplate(&myTemplate, 0, offset);
 }
 
 void HandleLoadSpecialPokePic(bool32 isFrontPic, void *dest, enum Species species, u32 personality)
