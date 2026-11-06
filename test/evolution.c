@@ -210,7 +210,8 @@ TEST("Known-move evolution: Dipplin learns Dragon Cheer on evolving and then evo
 // evolution counts it as day: Sword and Shield evolve by day from 6:00 to 19:59 and by night
 // from 20:00 (Bulbapedia's Time-based Evolution), Sun and Moon by night from 18:00, and only
 // Dusk Lycanroc and Rainbow Swirl Alcremie take the evening itself. So a day evolution checks
-// NOT Night (which takes the morning too) and a night one the night alone (#290).
+// NOT Night (which takes the morning too) and a night one the night alone (#290). An upstream
+// sync that adds an IF_TIME Day or Morning entry fails here on purpose (#169 was one).
 TEST("Night evolution evening: every time condition counts the morning and the evening as day")
 {
     u32 species, i, j;
@@ -357,4 +358,5 @@ TEST("Milcery long spin: CanTriggerSpinEvolution keeps a 10-second spin's direct
     EXPECT_EQ(gSpecialVar_0x8000, SPIN_CW_SHORT);
     EXPECT_EQ(gSpecialVar_0x8001, SPIN_NONE);
     gSpecialVar_0x8000 = 0;
+    ResetSpinTimer();
 }
