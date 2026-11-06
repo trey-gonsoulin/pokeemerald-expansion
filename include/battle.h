@@ -719,7 +719,8 @@ struct BattleStruct
     u8 numSpreadTargets:3;
     u8 moldBreakerActive:1;
     u8 statMoveChangedNothing:1; // No stat could change and the move had no other effect
-    u8 unused4:3;
+    u8 bouncedStatMoveChangedNothing:1; // The same on a bouncer's pass, which only the Battle Arena judges
+    u8 unused4:2;
     struct MessageStatus slideMessageStatus;
     u8 trainerSlideSpriteIds[MAX_BATTLERS_COUNT];
     u8 hazardsQueue[NUM_BATTLE_SIDES][HAZARDS_MAX_COUNT];

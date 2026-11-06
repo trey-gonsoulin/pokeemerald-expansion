@@ -5215,6 +5215,7 @@ static enum MoveEndResult MoveEndClearBits(struct BattleCalcValues *cv)
         RestoreAttacker();
         RestoreTarget();
         gBattleStruct->bouncedMoveIsUsed = FALSE;
+        gBattleStruct->bouncedStatMoveChangedNothing = FALSE;
         gBattleScripting.moveendState = MOVEEND_BOUNCED_MOVE;
         for (enum BattlerId battler = B_BATTLER_0; battler < gBattlersCount; battler++)
             gBattleStruct->moveResultFlags[battler] = gBattleStruct->savedMoveResultFlags[battler];
@@ -5754,10 +5755,14 @@ static enum MoveResult StatChangeBeforeChange(struct BattleCalcValues *cv)
     if (resultFlags & MOVE_RESULT_HANDLE_FAILURE)
     {
         // No stat will change, so only the messages are left, unless Mirror Armor reflects a drop
-        if (!gBattleStruct->bouncedMoveIsUsed
-         && !(resultFlags & MOVE_RESULT_MIRROR_ARMOR_PENDING)
-         && !WillStatMoveSetVolatile(cv))
-            gBattleStruct->statMoveChangedNothing = TRUE;
+        if (!(resultFlags & MOVE_RESULT_MIRROR_ARMOR_PENDING) && !WillStatMoveSetVolatile(cv))
+        {
+            // Stomping Tantrum judges the original user, not the bouncer
+            if (gBattleStruct->bouncedMoveIsUsed)
+                gBattleStruct->bouncedStatMoveChangedNothing = TRUE;
+            else
+                gBattleStruct->statMoveChangedNothing = TRUE;
+        }
         return MOVE_RESULT_CONTINUE;
     }
     #undef MOVE_RESULT_HANDLE_FAILURE
