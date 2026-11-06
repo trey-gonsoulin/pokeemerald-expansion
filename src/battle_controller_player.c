@@ -1413,6 +1413,19 @@ static bool32 IsMonOnPartnerBattler(enum BattlerId battler, u32 monId)
         && IsMonOnBattler(partner, monId);
 }
 
+// Reapplies the Dynamax HP multiplier to a levelling mon still Dynamaxed on screen. The exp
+// controller is always battler 0, so the mon may be on its partner position instead.
+static void TryDynamaxModifyHPLevelUp(struct Pokemon *mon, enum BattlerId battler, u32 monId, u32 oldMaxHP)
+{
+    if (IsMonOnPartnerBattler(battler, monId))
+        battler = GetPartnerBattler(battler);
+    else if (!IsMonOnBattler(battler, monId))
+        return;
+
+    if (GetActiveGimmick(battler) == GIMMICK_DYNAMAX)
+        DynamaxModifyHPLevelUp(mon, battler, oldMaxHP);
+}
+
 static s32 GetTaskExpValue(u8 taskId)
 {
     return (u16)(gTasks[taskId].tExpTask_gainedExp_1) | (gTasks[taskId].tExpTask_gainedExp_2 << 16);
@@ -1441,8 +1454,7 @@ static void Task_GiveExpToMon(u8 taskId)
             CalculateMonStats(mon);
 
             // Reapply Dynamax HP multiplier after stats are recalculated.
-            if (GetActiveGimmick(battler) == GIMMICK_DYNAMAX && monId == gBattlerPartyIndexes[battler])
-                DynamaxModifyHPLevelUp(mon, battler, oldMaxHP);
+            TryDynamaxModifyHPLevelUp(mon, battler, monId, oldMaxHP);
 
             gainedExp -= nextLvlExp - currExp;
             BtlController_EmitTwoReturnValues(battler, B_COMM_TO_ENGINE, RET_VALUE_LEVELED_UP, (B_LEVEL_UP_NOTIFICATION >= GEN_9) ? 0 : gainedExp);
@@ -1527,8 +1539,7 @@ static void Task_GiveExpWithExpBar(u8 taskId)
                 CalculateMonStats(mon);
 
                 // Reapply Dynamax HP multiplier after stats are recalculated.
-                if (GetActiveGimmick(battler) == GIMMICK_DYNAMAX && monId == gBattlerPartyIndexes[battler])
-                    DynamaxModifyHPLevelUp(mon, battler, oldMaxHP);
+                TryDynamaxModifyHPLevelUp(mon, battler, monId, oldMaxHP);
 
                 gainedExp -= expOnNextLvl - currExp;
                 BtlController_EmitTwoReturnValues(battler, B_COMM_TO_ENGINE, RET_VALUE_LEVELED_UP, (B_LEVEL_UP_NOTIFICATION >= GEN_9) ? 0 : gainedExp);

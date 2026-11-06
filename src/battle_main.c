@@ -5285,6 +5285,8 @@ static void HandleEndTurn_FinishBattle(void)
         FadeOutMapMusic(5);
         TryRestoreHeldItems();
 
+        UndoDynamaxAtBattleEnd();
+
         for (u32 i = 0; i < PARTY_SIZE; i++)
         {
             bool32 changedForm = TryRevertPartyMonFormChange(i);
