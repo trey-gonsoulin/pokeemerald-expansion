@@ -387,3 +387,46 @@ TEST("Submenu label: text too long for the buffer is cut off before the arrow")
     EXPECT_EQ(length, ARRAY_COUNT(label) - 1);
     EXPECT_EQ(label[length - 1], CHAR_RIGHT_ARROW);
 }
+
+TEST("Bounded label: a label that fits is copied whole")
+{
+    static const u8 text[] = _("{COLOR GREEN}Toggle {STR_VAR_1}");
+    u8 label[32];
+    u8 *end;
+
+    end = Debug_CopyLabel(label, ARRAY_COUNT(label), text);
+    EXPECT_EQ(StringCompare(label, text), 0);
+    EXPECT_EQ(end, &label[StringLength(text)]);
+}
+
+TEST("Bounded label: a label too long for its row is cut off with its EOS inside the row")
+{
+    static const u8 text[] = _("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    u8 label[33];
+    u8 *end;
+
+    ASSUME(StringLength(text) > ARRAY_COUNT(label));
+    label[ARRAY_COUNT(label) - 1] = 0;
+    end = Debug_CopyLabel(label, ARRAY_COUNT(label) - 1, text);
+    EXPECT_EQ(StringLength(label), ARRAY_COUNT(label) - 2);
+    EXPECT_EQ(*end, EOS);
+    EXPECT_EQ(end, &label[ARRAY_COUNT(label) - 2]);
+    // The byte past the row is untouched
+    EXPECT_EQ(label[ARRAY_COUNT(label) - 1], 0);
+}
+
+TEST("Bounded label: a cut never splits a control code")
+{
+    // A color code (3 bytes) straddling the cut is left out whole
+    static const u8 text[] = _("aaaa{COLOR GREEN}bb");
+    u8 label[8];
+
+    ASSUME(text[4] == EXT_CTRL_CODE_BEGIN);
+    Debug_CopyLabel(label, 7, text);
+    EXPECT_EQ(StringLength(label), 4);
+    // One more byte takes the code whole, but not the letter after it
+    Debug_CopyLabel(label, ARRAY_COUNT(label), text);
+    EXPECT_EQ(StringLength(label), 7);
+    EXPECT_EQ(label[4], EXT_CTRL_CODE_BEGIN);
+    EXPECT_EQ(label[5], EXT_CTRL_CODE_COLOR);
+}
