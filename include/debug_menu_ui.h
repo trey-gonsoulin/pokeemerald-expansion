@@ -85,5 +85,8 @@ void Debug_RestoreMenuPosition(struct DebugMenuPosition *position, const struct 
 // Text
 void Debug_PrintLinesToFit(u32 windowId, u32 fontId, u32 lineHeight, const u8 *const *lines, u32 count);
 void Debug_CopyStringEndToFit(u8 *dest, u32 destSize, const u8 *src, u32 fontId, u32 widthPx);
+// A submenu's list label: its text, then the arrow at x DEBUG_SUBMENU_ARROW_X
+#define DEBUG_SUBMENU_ARROW_X 110
+void Debug_CopySubMenuLabel(u8 *dest, u32 destSize, const u8 *text, u32 fontId);
 
 #endif // GUARD_DEBUG_MENU_UI_H

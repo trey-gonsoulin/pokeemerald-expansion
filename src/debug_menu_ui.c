@@ -621,3 +621,21 @@ void Debug_CopyStringEndToFit(u8 *dest, u32 destSize, const u8 *src, u32 fontId,
     while (skip < length && GetStringWidth(fontId, dest, 0) > widthPx)
         StringCopy(&dest[1], &src[++skip]);
 }
+
+// Copies text, in a narrower font than fontId if it would run past DEBUG_SUBMENU_ARROW_X,
+// then the arrow at that x in fontId. The list fits a label by its whole width, which here
+// is at least the arrow's x plus the arrow, so it can't fit the text alone (#88).
+// Text that leaves too little room in dest for the font codes and the arrow is cut off, by bytes: labels are plain text.
+STATIC_ASSERT(DEBUG_SUBMENU_ARROW_X < 256, DebugSubMenuArrowXFitsClearTo);
+static const u8 sSubMenuArrow[] = {EXT_CTRL_CODE_BEGIN, EXT_CTRL_CODE_CLEAR_TO, DEBUG_SUBMENU_ARROW_X, CHAR_RIGHT_ARROW, EOS};
+// WrapFontIdToFit's two font codes, the arrow and the EOS
+#define SUBMENU_LABEL_EXTRA (6 + sizeof(sSubMenuArrow))
+
+void Debug_CopySubMenuLabel(u8 *dest, u32 destSize, const u8 *text, u32 fontId)
+{
+    u32 length = min(StringLength(text), destSize - SUBMENU_LABEL_EXTRA);
+
+    memcpy(dest, text, length);
+    dest[length] = EOS;
+    StringCopy(WrapFontIdToFit(dest, &dest[length], fontId, DEBUG_SUBMENU_ARROW_X), sSubMenuArrow);
+}
