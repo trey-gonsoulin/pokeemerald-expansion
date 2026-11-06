@@ -5178,7 +5178,7 @@ static bool32 ShouldSetStompingTantrumTimer(void)
 
     if (gBattleStruct->pledgeState == PLEDGE_COMBO_WAITING // Is the battler that uses the first Pledge move in the combo
      || gBattleStruct->unableToUseMove
-     || gBattleStruct->statMoveChangedNothing)
+     || gBattleStruct->statMoveChangedNothing & (1u << gBattlerAttacker))
         return TRUE;
 
     // A bounced move didn't fail: the bouncer's failure flag only kept the move off it
@@ -5215,7 +5215,6 @@ static enum MoveEndResult MoveEndClearBits(struct BattleCalcValues *cv)
         RestoreAttacker();
         RestoreTarget();
         gBattleStruct->bouncedMoveIsUsed = FALSE;
-        gBattleStruct->bouncedStatMoveChangedNothing = FALSE;
         gBattleScripting.moveendState = MOVEEND_BOUNCED_MOVE;
         for (enum BattlerId battler = B_BATTLER_0; battler < gBattlersCount; battler++)
             gBattleStruct->moveResultFlags[battler] = gBattleStruct->savedMoveResultFlags[battler];
@@ -5231,7 +5230,7 @@ static enum MoveEndResult MoveEndClearBits(struct BattleCalcValues *cv)
         gBattleStruct->battlerState[cv->battlerAtk].stompingTantrumTimer = 2;
     // A Dancer's copy is a move of its own
     gBattleStruct->bouncedBattlers = 0;
-    gBattleStruct->statMoveChangedNothing = FALSE;
+    gBattleStruct->statMoveChangedNothing = 0;
 
     if (gSpecialStatuses[cv->battlerAtk].backUpTarget)
         gBattleStruct->moveTarget[cv->battlerAtk] = gSpecialStatuses[cv->battlerAtk].backUpTarget - 1;
@@ -5755,14 +5754,9 @@ static enum MoveResult StatChangeBeforeChange(struct BattleCalcValues *cv)
     if (resultFlags & MOVE_RESULT_HANDLE_FAILURE)
     {
         // No stat will change, so only the messages are left, unless Mirror Armor reflects a drop
+        // A bouncer's pass marks the bouncer, which only the Battle Arena judges
         if (!(resultFlags & MOVE_RESULT_MIRROR_ARMOR_PENDING) && !WillStatMoveSetVolatile(cv))
-        {
-            // Stomping Tantrum judges the original user, not the bouncer
-            if (gBattleStruct->bouncedMoveIsUsed)
-                gBattleStruct->bouncedStatMoveChangedNothing = TRUE;
-            else
-                gBattleStruct->statMoveChangedNothing = TRUE;
-        }
+            gBattleStruct->statMoveChangedNothing |= 1u << cv->battlerAtk;
         return MOVE_RESULT_CONTINUE;
     }
     #undef MOVE_RESULT_HANDLE_FAILURE

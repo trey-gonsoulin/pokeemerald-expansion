@@ -5,16 +5,9 @@
 #include "move.h"
 #include "test/test.h"
 
-enum ArenaStatMove
-{
-    ARENA_NOT_STAT_MOVE_FAILURE,
-    ARENA_STAT_MOVE_CHANGED_NOTHING,         // statMoveChangedNothing, on the user's own pass
-    ARENA_BOUNCED_STAT_MOVE_CHANGED_NOTHING, // the same on the bouncer's pass
-    ARENA_BOUNCE_PASS,                       // the bouncer's pass, with only the user's own pass marked
-};
-
-// The Arena judges the attacker's move once, on its result against its target, as in Emerald
-static s32 Test_ArenaStatMoveSkillPoints(enum BattlerId target, u32 resultFlags, bool32 attackerProtected, enum ArenaStatMove statMove)
+// The Arena judges the attacker's (battler 0's) move once, on its result against its target, as in Emerald.
+// statMoveChangedNothing marks the battlers whose stat move changed nothing, as StatChangeBeforeChange does.
+static s32 Test_ArenaStatMoveSkillPoints(enum BattlerId target, u32 resultFlags, bool32 attackerProtected, u32 statMoveChangedNothing)
 {
     s32 points;
 
@@ -22,24 +15,9 @@ static s32 Test_ArenaStatMoveSkillPoints(enum BattlerId target, u32 resultFlags,
     memset(gProtectStructs, 0, sizeof(gProtectStructs));
     gBattlerTarget = target;
     gBattleStruct->moveResultFlags[target] = resultFlags;
+    gBattleStruct->statMoveChangedNothing = statMoveChangedNothing;
     if (attackerProtected)
         gProtectStructs[B_BATTLER_0].protected = PROTECT_NORMAL;
-    switch (statMove)
-    {
-    case ARENA_NOT_STAT_MOVE_FAILURE:
-        break;
-    case ARENA_STAT_MOVE_CHANGED_NOTHING:
-        gBattleStruct->statMoveChangedNothing = TRUE;
-        break;
-    case ARENA_BOUNCED_STAT_MOVE_CHANGED_NOTHING:
-        gBattleStruct->bouncedMoveIsUsed = TRUE;
-        gBattleStruct->bouncedStatMoveChangedNothing = TRUE;
-        break;
-    case ARENA_BOUNCE_PASS:
-        gBattleStruct->bouncedMoveIsUsed = TRUE;
-        gBattleStruct->statMoveChangedNothing = TRUE;
-        break;
-    }
 
     BattleArena_AddSkillPoints(B_BATTLER_0);
 
@@ -52,7 +30,7 @@ static s32 Test_ArenaStatMoveSkillPoints(enum BattlerId target, u32 resultFlags,
 
 static s32 Test_ArenaSkillPoints(enum BattlerId target, u32 resultFlags, bool32 attackerProtected)
 {
-    return Test_ArenaStatMoveSkillPoints(target, resultFlags, attackerProtected, ARENA_NOT_STAT_MOVE_FAILURE);
+    return Test_ArenaStatMoveSkillPoints(target, resultFlags, attackerProtected, 0);
 }
 
 TEST("Battle Arena skill: a hit scores 1")
@@ -93,8 +71,8 @@ TEST("Battle Arena skill: protecting itself scores nothing")
 TEST("Battle Arena skill: a stat move that changes nothing loses 2")
 {
     // Growl at -6, Swords Dance at +6
-    EXPECT_EQ(Test_ArenaStatMoveSkillPoints(B_BATTLER_1, MOVE_RESULT_STAT_CHANGE_PREVENTED, FALSE, ARENA_STAT_MOVE_CHANGED_NOTHING), -2);
-    EXPECT_EQ(Test_ArenaStatMoveSkillPoints(B_BATTLER_0, MOVE_RESULT_STAT_CHANGE_PREVENTED, FALSE, ARENA_STAT_MOVE_CHANGED_NOTHING), -2);
+    EXPECT_EQ(Test_ArenaStatMoveSkillPoints(B_BATTLER_1, MOVE_RESULT_STAT_CHANGE_PREVENTED, FALSE, 1u << B_BATTLER_0), -2);
+    EXPECT_EQ(Test_ArenaStatMoveSkillPoints(B_BATTLER_0, MOVE_RESULT_STAT_CHANGE_PREVENTED, FALSE, 1u << B_BATTLER_0), -2);
 }
 
 TEST("Battle Arena skill: a stat move whose other effect worked scores 1")
@@ -104,10 +82,11 @@ TEST("Battle Arena skill: a stat move whose other effect worked scores 1")
     EXPECT_EQ(Test_ArenaSkillPoints(B_BATTLER_0, MOVE_RESULT_STAT_CHANGE_PREVENTED, FALSE), 1);
 }
 
-TEST("Battle Arena skill: a bounced stat move that changes nothing loses 2 for the bouncer")
+TEST("Battle Arena skill: a stat move that changes nothing loses 2 only for the battler that used it")
 {
-    EXPECT_EQ(Test_ArenaStatMoveSkillPoints(B_BATTLER_1, MOVE_RESULT_STAT_CHANGE_PREVENTED, FALSE, ARENA_BOUNCED_STAT_MOVE_CHANGED_NOTHING), -2);
-    EXPECT_EQ(Test_ArenaStatMoveSkillPoints(B_BATTLER_1, MOVE_RESULT_STAT_CHANGE_PREVENTED, FALSE, ARENA_BOUNCE_PASS), 1);
+    // Battler 0 bounced battler 1's Growl back at -6, or battler 1's own stat move changed nothing
+    EXPECT_EQ(Test_ArenaStatMoveSkillPoints(B_BATTLER_1, MOVE_RESULT_STAT_CHANGE_PREVENTED, FALSE, 1u << B_BATTLER_0), -2);
+    EXPECT_EQ(Test_ArenaStatMoveSkillPoints(B_BATTLER_1, MOVE_RESULT_STAT_CHANGE_PREVENTED, FALSE, 1u << B_BATTLER_1), 1);
 }
 
 TEST("Battle Arena skill: a move on the user scores 1")
@@ -121,7 +100,7 @@ TEST("Battle Arena skill: a move on the user that fails loses 2")
 }
 
 // A move on every battler worked if it worked on anyone, so the Arena judges it on a battler it worked on
-static s32 Test_ArenaAllBattlersSkillPoints(enum Move move, u32 foeResultFlags, u32 userResultFlags, bool32 statMoveChangedNothing)
+static s32 Test_ArenaAllBattlersSkillPoints(enum Move move, u32 foeResultFlags, u32 userResultFlags, u32 statMoveChangedNothing)
 {
     s32 points;
 
@@ -148,23 +127,23 @@ static s32 Test_ArenaAllBattlersSkillPoints(enum Move move, u32 foeResultFlags, 
 TEST("Battle Arena skill: Perish Song that a Soundproof foe blocks scores 1")
 {
     ASSUME(GetMoveTarget(MOVE_PERISH_SONG) == TARGET_ALL_BATTLERS);
-    EXPECT_EQ(Test_ArenaAllBattlersSkillPoints(MOVE_PERISH_SONG, MOVE_RESULT_FAILED, 0, FALSE), 1);
+    EXPECT_EQ(Test_ArenaAllBattlersSkillPoints(MOVE_PERISH_SONG, MOVE_RESULT_FAILED, 0, 0), 1);
 }
 
 TEST("Battle Arena skill: Perish Song that fails loses 2")
 {
     ASSUME(GetMoveTarget(MOVE_PERISH_SONG) == TARGET_ALL_BATTLERS);
-    EXPECT_EQ(Test_ArenaAllBattlersSkillPoints(MOVE_PERISH_SONG, MOVE_RESULT_FAILED, MOVE_RESULT_FAILED, FALSE), -2);
+    EXPECT_EQ(Test_ArenaAllBattlersSkillPoints(MOVE_PERISH_SONG, MOVE_RESULT_FAILED, MOVE_RESULT_FAILED, 0), -2);
 }
 
 TEST("Battle Arena skill: Flower Shield that raises only the foe's Defense scores 1")
 {
     ASSUME(GetMoveTarget(MOVE_FLOWER_SHIELD) == TARGET_ALL_BATTLERS);
-    EXPECT_EQ(Test_ArenaAllBattlersSkillPoints(MOVE_FLOWER_SHIELD, MOVE_RESULT_ATTEMPT_STAT_CHANGE, MOVE_RESULT_STAT_CHANGE_PREVENTED, FALSE), 1);
+    EXPECT_EQ(Test_ArenaAllBattlersSkillPoints(MOVE_FLOWER_SHIELD, MOVE_RESULT_ATTEMPT_STAT_CHANGE, MOVE_RESULT_STAT_CHANGE_PREVENTED, 0), 1);
 }
 
 TEST("Battle Arena skill: Flower Shield that raises no one's Defense loses 2")
 {
     ASSUME(GetMoveTarget(MOVE_FLOWER_SHIELD) == TARGET_ALL_BATTLERS);
-    EXPECT_EQ(Test_ArenaAllBattlersSkillPoints(MOVE_FLOWER_SHIELD, MOVE_RESULT_STAT_CHANGE_PREVENTED, MOVE_RESULT_STAT_CHANGE_PREVENTED, TRUE), -2);
+    EXPECT_EQ(Test_ArenaAllBattlersSkillPoints(MOVE_FLOWER_SHIELD, MOVE_RESULT_STAT_CHANGE_PREVENTED, MOVE_RESULT_STAT_CHANGE_PREVENTED, 1u << B_BATTLER_0), -2);
 }

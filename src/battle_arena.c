@@ -394,10 +394,8 @@ void BattleArena_AddSkillPoints(enum BattlerId battlerAtk)
     // is singles only), as Stomping Tantrum's check does. A stat move that changes nothing missed in Emerald,
     // but one whose other effect worked (Defog's hazards, Defense Curl's curl) didn't.
     u32 resultFlags = gBattleStruct->moveResultFlags[GetMoveResultBattler(battlerAtk, gCurrentMove)];
-    bool32 statMoveChangedNothing = gBattleStruct->bouncedMoveIsUsed ? gBattleStruct->bouncedStatMoveChangedNothing
-                                                                     : gBattleStruct->statMoveChangedNothing;
 
-    if ((resultFlags & MOVE_RESULT_NO_EFFECT) || statMoveChangedNothing)
+    if ((resultFlags & MOVE_RESULT_NO_EFFECT) || (gBattleStruct->statMoveChangedNothing & (1u << battlerAtk)))
     {
         if (!(resultFlags & MOVE_RESULT_PROTECTED))
             skillPoints[battlerAtk] -= 2;
