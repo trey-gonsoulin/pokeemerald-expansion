@@ -304,6 +304,7 @@ static EWRAM_DATA u8 sDebugRecentWarpsCount = 0;
 static EWRAM_DATA struct WarpData sDebugWarpBack = {0};
 // Set while the fly map that Fly to map… opened is up, so the real Fly's map records no warp back
 static EWRAM_DATA bool8 sDebugFlyMapOpen = FALSE;
+static EWRAM_DATA u16 sDebugLastEnabledSpecies = SPECIES_NONE; // set on first use
 EWRAM_DATA bool8 gIsDebugBattle = FALSE;
 EWRAM_DATA u64 gDebugAIFlags = 0;
 
@@ -3310,12 +3311,17 @@ UPDATE_GENERIC_INPUT(OutbreakDaysLeft, Days Left)
 
 // Disabled species at the top of the list would hide max from the numeric input,
 // so dialing and R stop on the last enabled species
+// The step's input reads its max on every Up/Down repeat frame, so scan once: which species are enabled is fixed in ROM (#87)
 static u32 DebugSelectionStep_GetLastEnabledSpecies(u8 taskId)
 {
-    u32 species = NUM_SPECIES - 1;
-    while (species > 1 && !IsSpeciesEnabled(species))
-        species--;
-    return species;
+    if (sDebugLastEnabledSpecies == SPECIES_NONE)
+    {
+        u32 species = NUM_SPECIES - 1;
+        while (species > 1 && !IsSpeciesEnabled(species))
+            species--;
+        sDebugLastEnabledSpecies = species;
+    }
+    return sDebugLastEnabledSpecies;
 }
 
 static const struct DebugSelectionStep sSpeciesSelectionStep = {
