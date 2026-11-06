@@ -739,9 +739,11 @@ string generate_map_constants_text(string groups_filepath, Json groups_data, vec
 // The text span (between the quotes) of each heal location's respawn_npc string, or npos for an
 // entry without one, in the order of the "heal_locations" array. json11 keeps no positions, so
 // this scans the text, which json11 has already parsed: strings, and the nesting of {} and [].
-static vector<std::pair<size_t, size_t>> find_respawn_npc_values(const string &text)
+using TextSpan = std::pair<size_t, size_t>; // start and length
+
+static vector<TextSpan> find_respawn_npc_values(const string &text)
 {
-    vector<std::pair<size_t, size_t>> spans; // start and length
+    vector<TextSpan> spans;
     vector<char> nesting;
     bool in_locations = false; // in the "heal_locations" array
     bool expect_key = false;   // the next string in an entry is a key
@@ -805,7 +807,7 @@ string clean_heal_locations(vector<string> &valid_map_ids)
     const auto &locations = data["heal_locations"].array_items();
 
     // The scan has to agree with json11 on every entry's NPC, or a clear could land on another's.
-    vector<std::pair<size_t, size_t>> npc_spans = find_respawn_npc_values(text);
+    vector<TextSpan> npc_spans = find_respawn_npc_values(text);
     bool spans_match = npc_spans.size() == locations.size();
     for (size_t i = 0; spans_match && i < locations.size(); i++) {
         const Json &npc = locations[i]["respawn_npc"];
@@ -816,7 +818,7 @@ string clean_heal_locations(vector<string> &valid_map_ids)
     if (!spans_match)
         FATAL_ERROR("%s: can't find each heal location's respawn_npc in the text.\n", HEAL_LOCATIONS_FILEPATH.c_str());
 
-    vector<std::pair<size_t, size_t>> cleared_spans;
+    vector<TextSpan> cleared_spans;
     for (size_t i = 0; i < locations.size(); i++) {
         const Json &respawn_map = locations[i]["respawn_map"];
         if (!respawn_map.is_string())
