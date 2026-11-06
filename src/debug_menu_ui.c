@@ -622,14 +622,18 @@ void Debug_CopyStringEndToFit(u8 *dest, u32 destSize, const u8 *src, u32 fontId,
         StringCopy(&dest[1], &src[++skip]);
 }
 
-// The bytes of the character or code at s: a control code with its arguments, a placeholder or a two-byte symbol
+// The bytes of the character or code at s: a control code with its arguments, a placeholder or a two-byte character.
+// Arguments are copied as they are (a CLEAR_TO 255 is 0xFF), but a prefix right before the EOS counts alone.
 static u32 GetLabelCharSize(const u8 *s)
 {
+    if (s[1] == EOS)
+        return 1;
     switch (*s)
     {
     case EXT_CTRL_CODE_BEGIN:
         return 1 + max(GetExtCtrlCodeLength(s[1]), 1);
     case PLACEHOLDER_BEGIN:
+    case CHAR_DYNAMIC:
     case CHAR_EXTRA_SYMBOL:
     case CHAR_KEYPAD_ICON:
         return 2;
@@ -642,16 +646,20 @@ static u32 GetLabelCharSize(const u8 *s)
 // or a two-byte character, and returns the EOS (#280).
 u8 *Debug_CopyLabel(u8 *dest, u32 destSize, const u8 *src)
 {
-    const u8 *end = dest + destSize - 1;
+    u32 room = destSize - 1; // Bytes left before the EOS
 
+    if (destSize == 0)
+        return dest;
     while (*src != EOS)
     {
         u32 size = GetLabelCharSize(src);
 
-        if (dest + size > end)
+        if (size > room)
             break;
-        for (; size != 0 && *src != EOS; size--)
-            *dest++ = *src++;
+        room -= size;
+        memcpy(dest, src, size);
+        dest += size;
+        src += size;
     }
     *dest = EOS;
     return dest;
