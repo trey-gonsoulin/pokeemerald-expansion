@@ -188,7 +188,7 @@ bootstrap). The repo's `.gitignore` ignores `*.js`, so add new ones with
 - **Exp. Share curve** (#127): the share6 party on modern data before
   each story boss (`share_curve`), with `B_TRAINER_EXP_MULTIPLIER` at
   GEN_LATEST and at GEN_6 (`TRAINER_EXP`; `Cmd_getexp` gives the 1.5x for
-  GEN_7 and earlier), on a full and a half clear, in three affection
+  GEN_6 and earlier), on a full and a half clear, in three affection
   brackets (`AFFECTION`): none, modelled friendship, and 4 hearts from the
   start. Affection is `ApplyExperienceMultipliers`' 4915/4096 at 4+ hearts
   (friendship 220). The friendship model starts at 50

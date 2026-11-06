@@ -2212,7 +2212,7 @@ static void Cmd_getexp(void)
             else
                 calculatedExp /= 7;
 
-            if (GetConfig(B_TRAINER_EXP_MULTIPLIER) <= GEN_7 && gBattleTypeFlags & BATTLE_TYPE_TRAINER)
+            if (GetConfig(B_TRAINER_EXP_MULTIPLIER) <= GEN_6 && gBattleTypeFlags & BATTLE_TYPE_TRAINER)
                 calculatedExp = (calculatedExp * 150) / 100;
 
             if (GetConfig(B_SPLIT_EXP) < GEN_6)
