@@ -17,6 +17,8 @@ import wild_encounters_to_header as gen
 REPO = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 SCRIPT = os.path.join(REPO, "tools", "wild_encounters", "wild_encounters_to_header.py")
 REAL_JSON = os.path.join(REPO, "src", "data", "wild_encounters.json")
+JSONPROC = os.path.join(REPO, "tools", "jsonproc", "jsonproc")
+CONSTANTS_TEMPLATE = os.path.join(REPO, "src", "data", "wild_encounters.constants.json.txt")
 
 TIMES_OF_DAY = {"TIME_MORNING": "Morning", "TIME_DAY": "Day", "TIME_EVENING": "Evening", "TIME_NIGHT": "Night"}
 
@@ -146,7 +148,19 @@ class ValidateTest(unittest.TestCase):
         data = sample()
         add_field(data, "rock_smash_mons", [60, 30, 5, 4, 1])
         add_field(data, "hidden_mons", [50, 30, 20])
+        route101(data)["hidden_mons"]["encounter_rate"] = 1
         validate(data)
+
+    def test_hidden_encounter_rate_is_dexnavs_land_or_water_flag(self):
+        data = sample()
+        add_field(data, "hidden_mons", [50, 30, 20])
+        for flag in (0, 1):
+            route101(data)["hidden_mons"]["encounter_rate"] = flag
+            validate(data)
+        for rate in (2, 20, 255, -1):
+            with self.subTest(rate=rate):
+                route101(data)["hidden_mons"]["encounter_rate"] = rate
+                self.assertRejected(data, f"gRoute101 hidden_mons: encounter_rate is {rate}, expected 0 to 1")
 
     def test_field_type_without_a_picker(self):
         data = sample()
@@ -501,6 +515,27 @@ class MainTest(unittest.TestCase):
         result, wrote_header = self.run_generator(sample())
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertTrue(wrote_header)
+
+
+@unittest.skipUnless(os.path.exists(JSONPROC), "jsonproc isn't built")
+class ConstantsTemplateTest(unittest.TestCase):
+    """include/constants/wild_encounter.h as jsonproc writes it from the template."""
+
+    def slot_count_defines(self, data):
+        with tempfile.TemporaryDirectory() as root:
+            json_path = os.path.join(root, "wild_encounters.json")
+            header_path = os.path.join(root, "wild_encounter.h")
+            with open(json_path, "w") as json_file:
+                json.dump(data, json_file)
+            subprocess.run([JSONPROC, json_path, CONSTANTS_TEMPLATE, header_path], check=True, capture_output=True)
+            with open(header_path) as header:
+                return re.findall(r"#define NUM_HIDDEN_MONS_ENCOUNTER_SLOTS\s+(.*)", header.read())
+
+    def test_hidden_slot_count_is_defined_once(self):
+        self.assertEqual(self.slot_count_defines(sample()), ["3"])
+        data = sample()
+        add_field(data, "hidden_mons", [50, 30, 20])
+        self.assertEqual(self.slot_count_defines(data), ["(3)"])
 
 
 if __name__ == "__main__":
