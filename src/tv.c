@@ -3420,12 +3420,34 @@ static s8 FindInactiveShowInArray(TVShow *tvShows)
 
     for (i = 0; i < LAST_TVSHOW_IDX; i++)
     {
-        // Second check is to make sure its a valid show (not too high, not TVSHOW_OFF_AIR)
-        if (tvShows[i].common.active == FALSE && (u8)(tvShows[i].common.kind - 1) < TVGROUP_OUTBREAK_END)
+        // Only a show some game can air: not TVSHOW_OFF_AIR, a gap, the dummied-out or an unknown kind,
+        // which a partner's game without GetRandomActiveShowIdx's check would leave its TV waiting on
+        if (tvShows[i].common.active == FALSE && IsTVShowKindAirable(tvShows[i].common.kind))
             return i;
     }
     return -1;
 }
+
+// Record mixing sends the whole array, and a partner's game without FindInactiveShowInArray's check
+// mixes in any inactive slot of a kind from 1 to 60, so these leave the save before it is sent
+void DeleteUnairableTVShows(void)
+{
+    u8 i;
+
+    for (i = 0; i < LAST_TVSHOW_IDX; i++)
+    {
+        if (!IsTVShowKindAirable(gSaveBlock1Ptr->tvShows[i].common.kind))
+            DeleteTVShowInArrayByIdx(gSaveBlock1Ptr->tvShows, i);
+    }
+    CompactTVShowArray(gSaveBlock1Ptr->tvShows);
+}
+
+#if TESTING
+s8 Test_FindInactiveShowInArray(TVShow *tvShows)
+{
+    return FindInactiveShowInArray(tvShows);
+}
+#endif
 
 static void DeactivateShowsWithUnseenSpecies(void)
 {
