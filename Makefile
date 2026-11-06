@@ -559,7 +559,8 @@ TEACHABLE_DEPS := $(ALL_LEARNABLES_JSON) $(INCLUDE_DIRS)/constants/tms_hms.h $(I
 $(LEARNSET_HELPERS_BUILD_DIR):
 	@mkdir -p $@
 
-$(ALL_LEARNABLES_JSON):
+# Tracked, but made from the porymoves files: test_learnset_helpers.py checks it is up to date
+$(ALL_LEARNABLES_JSON): $(wildcard $(LEARNSET_HELPERS_DATA_DIR)/*.json) $(LEARNSET_HELPERS_DIR)/make_learnables.py $(call force_if_missing,$(ALL_LEARNABLES_JSON))
 	python3 $(LEARNSET_HELPERS_DIR)/make_learnables.py $(LEARNSET_HELPERS_DATA_DIR) $@
 
 # The files make_tutors.py globs

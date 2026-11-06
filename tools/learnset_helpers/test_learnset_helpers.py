@@ -174,5 +174,64 @@ class LearnablesOrderTest(RepoDirTest):
         self.assertEqual(list(json.loads(outputs[0])), sorted(species))
 
 
+class LearnablesKeyTest(RepoDirTest):
+    """Every species key comes out in the snake-case form make_teachables looks up (#274)."""
+
+    def learnables(self, inputs):
+        for name, species in inputs.items():
+            entries = {key: {"LevelMoves": [{"Move": move}], "TMMoves": [], "EggMoves": [], "TutorMoves": []}
+                       for key, move in species.items()}
+            self.write(f"inputs/{name}.json", json.dumps(entries))
+        result = subprocess.run([sys.executable, os.path.join(HELPERS_DIR, "make_learnables.py"),
+                                 "inputs", "out.json"], capture_output=True, text=True)
+        if result.returncode != 0:
+            return result
+        with open("out.json") as f:
+            return json.load(f)
+
+    def test_punctuated_names_become_snake_case(self):
+        out = self.learnables({"new": {"MR. MIME": "MOVE_A", "MIME JR.": "MOVE_B", "MR. RIME": "MOVE_C",
+                                       "PORYGON-Z": "MOVE_D", "FARFETCH'D": "MOVE_F"},
+                               "sv": {"MR_MIME": "MOVE_E"}})
+        self.assertEqual(out, {"MR_MIME": ["MOVE_A", "MOVE_E"], "MIME_JR": ["MOVE_B"], "MR_RIME": ["MOVE_C"],
+                               "PORYGON_Z": ["MOVE_D"], "FARFETCHD": ["MOVE_F"]})
+
+    def test_accented_and_misencoded_names_lose_their_accents(self):
+        out = self.learnables({"za": {"FLABÃ©BÃ©": "MOVE_A"},
+                               "xy": {"FLABÉBÉ": "MOVE_B"},
+                               "sv": {"FLABEBE": "MOVE_C"}})
+        self.assertEqual(out, {"FLABEBE": ["MOVE_A", "MOVE_B", "MOVE_C"]})
+
+    def test_merged_form_entries_are_skipped(self):
+        out = self.learnables({"za": {"SLOWBRO": "MOVE_A", "MR. MIME": "MOVE_B", "HOOPA": "MOVE_C",
+                                      "PIKACHU": "MOVE_D"},
+                               "sv": {"SLOWBRO": "MOVE_E", "SLOWBRO_GALAR": "MOVE_F", "HOOPA_UNBOUND": "MOVE_G"}})
+        self.assertEqual(out, {"SLOWBRO": ["MOVE_E"], "SLOWBRO_GALAR": ["MOVE_F"], "HOOPA_UNBOUND": ["MOVE_G"],
+                               "PIKACHU": ["MOVE_D"]})
+
+    def test_unreadable_key_stops_the_build(self):
+        result = self.learnables({"za": {"PIKACHU": "MOVE_A", "???": "MOVE_B"}})
+        self.assertIsInstance(result, subprocess.CompletedProcess)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("za.json", result.stderr)
+        self.assertIn("'???'", result.stderr)
+        self.assertFalse(os.path.exists("out.json"))
+
+
+class CommittedLearnablesTest(unittest.TestCase):
+    """The committed all_learnables.json is what make_learnables.py makes from porymoves_files (#274)."""
+
+    def test_committed_file_is_up_to_date(self):
+        repo = os.path.dirname(os.path.dirname(HELPERS_DIR))
+        committed = os.path.join(repo, "src", "data", "pokemon", "all_learnables.json")
+        with tempfile.TemporaryDirectory() as tmp:
+            out = os.path.join(tmp, "all_learnables.json")
+            subprocess.run([sys.executable, os.path.join(HELPERS_DIR, "make_learnables.py"),
+                            os.path.join(HELPERS_DIR, "porymoves_files"), out], check=True)
+            with open(out) as f, open(committed) as g:
+                self.assertTrue(f.read() == g.read(),
+                                "all_learnables.json is stale: run `make src/data/pokemon/all_learnables.json`")
+
+
 if __name__ == "__main__":
     unittest.main()
