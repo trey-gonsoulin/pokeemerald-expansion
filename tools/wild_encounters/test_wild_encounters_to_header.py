@@ -532,10 +532,12 @@ class ConstantsTemplateTest(unittest.TestCase):
                 return re.findall(r"#define NUM_HIDDEN_MONS_ENCOUNTER_SLOTS\s+(.*)", header.read())
 
     def test_hidden_slot_count_is_defined_once(self):
-        self.assertEqual(self.slot_count_defines(sample()), ["3"])
+        # The template's fixed count is the one the validator holds a hidden_mons field to.
+        count = gen.PICKER_SLOT_COUNTS["hidden_mons"]
+        self.assertEqual(self.slot_count_defines(sample()), [str(count)])
         data = sample()
         add_field(data, "hidden_mons", [50, 30, 20])
-        self.assertEqual(self.slot_count_defines(data), ["(3)"])
+        self.assertEqual(self.slot_count_defines(data), [f"({count})"])
 
 
 if __name__ == "__main__":
