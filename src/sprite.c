@@ -514,7 +514,7 @@ u32 CreateSpriteAt(u32 index, const struct SpriteTemplate *template, s16 x, s16 
     {
         s16 tileNum;
         sprite->images = template->images;
-        tileNum = AllocSpriteTiles((u8)(sprite->images->size / TILE_SIZE_4BPP));
+        tileNum = AllocSpriteTiles(SPRITE_SIZE_TO_TILE_COUNT(sprite->images->size));
         if (tileNum == -1)
         {
             ResetSprite(sprite);
@@ -573,7 +573,7 @@ void DestroySprite(struct Sprite *sprite)
         if (!sprite->usingSheet)
         {
             u16 i;
-            u16 tileEnd = (sprite->images->size / TILE_SIZE_4BPP) + sprite->oam.tileNum;
+            u16 tileEnd = SPRITE_SIZE_TO_TILE_COUNT(sprite->images->size) + sprite->oam.tileNum;
             for (i = sprite->oam.tileNum; i < tileEnd; i++)
                 FREE_SPRITE_TILE(i);
         }
@@ -656,7 +656,7 @@ s16 AllocSpriteTiles(u16 tileCount)
     s16 start;
     u16 numTilesFound;
 
-    // A count of 0 (a frame or sheet under one tile) used to free every unreserved tile and return 0.
+    // A count of 0 (an empty frame or sheet) used to free every unreserved tile and return 0.
     if (tileCount == 0)
         return -1;
 
@@ -1504,10 +1504,12 @@ void SetOamMatrixRotationScaling(u8 matrixNum, s16 xScale, s16 yScale, u16 rotat
 static u16 LoadSpriteSheetWithOffset(const struct SpriteSheet *sheet, u32 offset)
 {
     s16 tileStart = -1;
+    u16 tileCount = SPRITE_SIZE_TO_TILE_COUNT(sheet->size);
 
     // With every tile range slot taken, AllocSpriteTileRange would write past sSpriteTileRangeTags.
-    if (IndexOfSpriteTileTag(TAG_NONE) != 0xFF)
-        tileStart = AllocSpriteTiles(sheet->size / TILE_SIZE_4BPP);
+    // An offset past the sheet would copy sheet->size - offset bytes, wrapped to about 4 GB.
+    if (IndexOfSpriteTileTag(TAG_NONE) != 0xFF && offset <= sheet->size)
+        tileStart = AllocSpriteTiles(tileCount);
 
     if (tileStart < 0)
     {
@@ -1518,7 +1520,7 @@ static u16 LoadSpriteSheetWithOffset(const struct SpriteSheet *sheet, u32 offset
     }
     else
     {
-        AllocSpriteTileRange(sheet->tag, (u16)tileStart, sheet->size / TILE_SIZE_4BPP);
+        AllocSpriteTileRange(sheet->tag, (u16)tileStart, tileCount);
         CpuSmartCopy16(sheet->data, (u8 *)OBJ_VRAM0 + TILE_SIZE_4BPP * tileStart + offset, sheet->size - offset);
         return (u16)tileStart;
     }
