@@ -5067,7 +5067,6 @@ static void ResolveDomeRoundWinners(void)
     }
 }
 
-// Decides the winning move of an NPC vs NPC match
 // A species with one ability has it in both slots, as GetAbilityBySpecies gives in battle.
 static enum Ability GetDomeMonAbility(enum Species species, u32 abilityNum)
 {
@@ -5078,6 +5077,7 @@ static enum Ability GetDomeMonAbility(enum Species species, u32 abilityNum)
     return ability;
 }
 
+// Decides the winning move of an NPC vs NPC match
 static u16 GetWinningMove(int winnerTournamentId, int loserTournamentId, u8 roundId)
 {
     int i, j, k;
