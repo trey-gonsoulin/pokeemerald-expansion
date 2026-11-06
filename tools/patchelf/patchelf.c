@@ -112,7 +112,6 @@ int main(int argc, char *argv[])
     // The first pass checks every request and writes nothing, so a bad one leaves the file as it was.
     for (int pass = 0; pass < 2; pass++)
     {
-        bool write = pass == 1;
         for (int j = 2; j < argc; j += 2)
         {
             const char *arg_name = argv[j + 0];
@@ -125,7 +124,7 @@ int main(int argc, char *argv[])
                 char *value = find_symbol_data(arg_name, ehdr, shdrs, &symtab[i], f, st.st_size);
                 if (value == NULL)
                     goto error;
-                if (!try_patch_value(arg_name, write ? value : NULL, arg_value, symtab[i].st_size))
+                if (!try_patch_value(arg_name, pass == 1 ? value : NULL, arg_value, symtab[i].st_size))
                     goto error;
                 found = true;
             }
