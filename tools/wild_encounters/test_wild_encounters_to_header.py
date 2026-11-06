@@ -178,12 +178,19 @@ class ValidateTest(unittest.TestCase):
         route101(data)["land_mons"]["encounter_rate"] = -1
         self.assertRejected(data, "encounter_rate is -1")
 
-    def test_rates_must_add_up_to_100(self):
+    def test_rate_totals_up_to_256_pass(self):
+        for rates in ([50, 30, 19], [50, 30, 30], [1, 0, 0], [200, 50, 6]):
+            with self.subTest(rates=rates):
+                data = sample()
+                data["wild_encounter_groups"][0]["fields"][0]["encounter_rates"] = rates
+                validate(data)
+
+    def test_rate_totals_and_rates_out_of_range(self):
         for rates, message in (
-            ([50, 30, 19], "gWildMonHeaders field land_mons: encounter_rates add up to 99, expected 100"),
-            ([50, 30, 30], "add up to 110"),
-            ([0, 0, 0], "add up to 0"),
-            ([100, -10, 10], "encounter_rates[1] is -10, expected 0 to 100"),
+            ([0, 0, 0], "gWildMonHeaders field land_mons: the encounter_rates total is 0, expected 1 to 256"),
+            ([200, 50, 7], "the encounter_rates total is 257"),
+            ([100, -10, 10], "encounter_rates[1] is -10, expected 0 to 256"),
+            ([257, 0, 0], "encounter_rates[0] is 257"),
             ([50, 30, 20.0], "encounter_rates[2] is 20.0"),
         ):
             with self.subTest(rates=rates):
@@ -191,16 +198,22 @@ class ValidateTest(unittest.TestCase):
                 data["wild_encounter_groups"][0]["fields"][0]["encounter_rates"] = rates
                 self.assertRejected(data, message)
 
-    def test_grouped_rates_add_up_to_100_per_group(self):
-        data = sample()
-        add_fishing(data, [70, 30, 60, 20, 20], {"old_rod": [0, 1], "good_rod": [2, 3, 4]})
-        validate(data)
-        data = sample()
-        add_fishing(data, [70, 30, 60, 20, 20], {"old_rod": [1, 0], "good_rod": [4, 2, 3]})
-        validate(data)
+    def test_rod_groups_share_one_total(self):
+        for rates, groups in (
+            ([70, 30, 60, 20, 20], {"old_rod": [0, 1], "good_rod": [2, 3, 4]}),
+            ([70, 30, 60, 20, 20], {"old_rod": [1, 0], "good_rod": [4, 2, 3]}),
+            ([60, 30, 60, 20, 10], {"old_rod": [0, 1], "good_rod": [2, 3, 4]}),
+        ):
+            with self.subTest(rates=rates, groups=groups):
+                data = sample()
+                add_fishing(data, rates, groups)
+                validate(data)
         data = sample()
         add_fishing(data, [70, 30, 60, 20, 10], {"old_rod": [0, 1], "good_rod": [2, 3, 4]})
-        self.assertRejected(data, "field fishing_mons group good_rod: encounter_rates add up to 90, expected 100")
+        self.assertRejected(data, "gWildMonHeaders field fishing_mons: the groups' encounter_rates totals differ (old_rod 100, good_rod 90)")
+        data = sample()
+        add_fishing(data, [200, 57, 200, 50, 7], {"old_rod": [0, 1], "good_rod": [2, 3, 4]})
+        self.assertRejected(data, "field fishing_mons group old_rod: the encounter_rates total is 257")
 
     def test_group_indices(self):
         for groups, message in (
