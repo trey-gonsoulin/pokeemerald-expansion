@@ -105,6 +105,9 @@ jobs:
       - name: Learnset helper unit tests
         run: python3 -m unittest discover -s tools/learnset_helpers
 
-      # The script that writes wild_encounters.h and checks wild_encounters.json (#257)
+      # The script that writes wild_encounters.h and checks wild_encounters.json (#257), and
+      # the constants template, whose test needs jsonproc (#286)
       - name: Wild encounter generator unit tests
-        run: python3 -m unittest discover -s tools/wild_encounters
+        run: |
+          make -C tools/jsonproc
+          python3 -m unittest discover -s tools/wild_encounters
