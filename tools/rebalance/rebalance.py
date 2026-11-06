@@ -33,6 +33,7 @@ import sys
 import tempfile
 
 import gamedata as G
+import matchup as M
 import power as P
 
 DEFAULT_OUT_DIR = os.path.join(G.HERE, 'output')
@@ -1608,6 +1609,63 @@ def power_report(pw):
     return out
 
 
+def matchup_fight(bid, starters):
+    """A boss's name in the matchup tables: a rival fight's without the starter."""
+    for s in starters:
+        if bid.endswith('_' + s):
+            return short(bid[:-len(s) - 1])
+    return short(bid)
+
+
+def matchup_report(mu):
+    if not mu['fights']:
+        return []
+    starters = mu['starters']
+    names = [short('X_' + s) for s in starters]
+    out = ['## Matchup-relative strength', '',
+           '`matchup.py` (a prototype) puts each story boss against a stand-in for the player\'s team, with types: '
+           'the starter line at the Exp. Share lead\'s level and the best catches the wild tables offer by then, at the '
+           "bench's level, each with the attacks of its default moveset and the TMs found before the boss's stage that "
+           'cover the most types (`matchup_settings.json`). Each stand-in fights each boss Pokemon one-on-one on '
+           "`power.score` with the type chart: above 1, the stand-in is ahead (inf: the boss Pokemon can't damage it).",
+           '',
+           "Hardest: the boss Pokemon whose best answer on the team is lowest, with that answer and who gives it. "
+           f"Cover: the boss Pokemon with an answer of {M.ANSWERED:g} or more. Lead: the best answer to the boss's "
+           'first Pokemon. Every answer is a fresh one-on-one with free switching, so it flatters the team: read the '
+           'ranking more than the numbers. A double battle is scored as one-on-one fights too.', '']
+    rows = []
+    for f in mu['fights']:
+        row = [f['stage'], matchup_fight(f['boss'], starters) + (' (double)' if f['double'] else ''),
+               f['boss_ace'], f['bench']]
+        for s in starters:
+            x = f['starters'].get(s)
+            if x is None:
+                row += ['-', '-', '-']
+                continue
+            h = x['hardest']
+            row += [f"{short(h['species'])} {h['level']}: {h['answer']:.2f} ({short(h['by'] or '')})",
+                    f"{x['coverage']}/{len(x['answers'])}", f"{x['lead']['answer']:.2f}"]
+        rows.append(row)
+    out += [table(['stage', 'boss', 'ace', 'bench'] + [f'{n} {c}' for n in names for c in ('hardest', 'cover', 'lead')],
+                  rows), '']
+    hard = sorted(((x['hardest']['answer'], f, s) for f in mu['fights'] for s, x in f['starters'].items()
+                   if x['hardest']['answer'] < M.ANSWERED), key=lambda t: t[0])
+    if hard:
+        out += [f'Fights with a boss Pokemon the team has no answer of {M.ANSWERED:g} for, hardest first: '
+                + '; '.join(f"{matchup_fight(f['boss'], starters)} with {short('X_' + s)} "
+                            f"({short(f['starters'][s]['hardest']['species'])}, {a:.2f})" for a, f, s in hard) + '.',
+                '']
+    last = {}
+    for f in mu['fights']:
+        last[f['stage']] = f  # the stage's last boss
+    out += ["The stand-in teams at each stage's last boss, with their attacks:", '',
+            table(['stage', 'starter', 'team'],
+                  [[stage, short('X_' + s), '; '.join(f"{short(p['species'])} {p['level']} ({moves_str(p['moves'])})"
+                                                       for p in x['team'])]
+                   for stage, f in last.items() for s, x in f['starters'].items()]), '']
+    return out
+
+
 def write_report(path, res):
     c, d, h, curve = res['census'], res['defaults'], res['handwritten'], res['level_curve']
     out = ['# Rebalance measurements (#113)', '',
@@ -1724,6 +1782,7 @@ def write_report(path, res):
         out += [f'### {short(bid)}', ''] + (lines or ['- no change']) + ['']
 
     out += power_report(res['power'])
+    out += matchup_report(res['matchup'])
 
     out += ['## TMs by story stage', '',
             'First stage where each TM is on a stage map (ball, hidden item, mart list, script, or reward: a Trick House '
@@ -1818,6 +1877,16 @@ def analyze(repo, stages_path):
     share = share_curves(stages, trainers, gd['modern'], scaling, wilds['modern'])
     info = G.R.SpeciesInfo(repo)
     ladders = rematch_ladders(G.parse_rematches(repo), stages, trainers)
+    # The fixture repo has no learnset helpers, so its stand-ins learn no TMs.
+    helpers = os.path.isdir(os.path.join(repo, 'tools', 'learnset_helpers'))
+    teachables = G.move_lists(repo) if helpers else {}
+    m = gd['modern']
+
+    def evolve_on_time(species, level):
+        """The player's Pokemon evolve at their level: no EVOLVE_GRACE."""
+        out = info.evolve(species, level, grace=0)
+        return out if out in m.species else species
+    bench_rows = {r['boss']: r for r in share[POWER_BENCH[0]]['now'][POWER_BENCH[1]]}
     return {
         'census': census(trainers),
         'story_trainers': len(story),
@@ -1828,6 +1897,8 @@ def analyze(repo, stages_path):
         'handwritten_rows': changes,
         'matchups': boss_matchups(trainers, gd, boss_ids),
         'power': combat_power(trainers, gd['modern'], stages, share),
+        'matchup': M.matchups(trainers, m, stages, bench_rows, wilds['modern'], G.map_tms(repo), teachables,
+                              evolve_on_time),
         'split_fit': split_fit(gd, SPLIT_WATCH),
         'level_curve': {name: level_curve(stages, trainers, gd, scaling, wilds, clear, wild)
                         for name, (clear, wild) in SCENARIOS.items()},
