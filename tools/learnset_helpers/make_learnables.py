@@ -16,20 +16,17 @@ import re
 import sys
 import unicodedata
 
-# make_teachables looks species up by snake-case names such as MR_MIME; some inputs (za.json) name
-# a species with punctuation or accents.
-SPECIES_KEY_PAT = re.compile(r"[A-Z0-9]+(_[A-Z0-9]+)*")
-# Entries that list one set of moves for forms the other games list apart (za.json's SLOWBRO holds
-# Galarian Slowbro's moves too, and its HOOPA both forms'), so no one form can take them.
-MERGED_FORM_ENTRIES = {
-    "za.json": {
-        "AVALUGG", "FARFETCHD", "FLOETTE", "GOODRA", "HOOPA", "INDEEDEE", "MAROWAK", "MEOWSTIC", "MEOWTH",
-        "MR_MIME", "PERSIAN", "QWILFISH", "RAICHU", "ROTOM", "SLIGGOO", "SLOWBRO", "SLOWKING", "SLOWPOKE",
-        "STUNFISK", "TOXTRICITY", "YAMASK",
-    },
+# za.json's entries that list one set of moves for forms the other games list apart (its SLOWBRO
+# holds Galarian Slowbro's moves too, its HOOPA both forms'), so no one form can take them.
+ZA_MERGED_FORMS = {
+    "AVALUGG", "FARFETCHD", "FLOETTE", "GOODRA", "HOOPA", "INDEEDEE", "MAROWAK", "MEOWSTIC", "MEOWTH",
+    "MR_MIME", "PERSIAN", "QWILFISH", "RAICHU", "ROTOM", "SLIGGOO", "SLOWBRO", "SLOWKING", "SLOWPOKE",
+    "STUNFISK", "TOXTRICITY", "YAMASK",
 }
 
 
+# make_teachables looks species up by snake-case names such as MR_MIME; za.json names some with
+# punctuation or accents.
 def species_key(fname: pathlib.Path, species: str) -> str:
     name = species
     if not name.isascii():
@@ -40,7 +37,7 @@ def species_key(fname: pathlib.Path, species: str) -> str:
             pass
         name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode("ascii")
     key = re.sub(r"[^A-Z0-9]+", "_", name.upper().replace("'", "")).strip("_")
-    if not SPECIES_KEY_PAT.fullmatch(key):
+    if not key:
         print(f"{fname.name}: can't make a species name of {species!r}", file=sys.stderr)
         sys.exit(1)
     return key
@@ -48,18 +45,15 @@ def species_key(fname: pathlib.Path, species: str) -> str:
 
 def from_single(fname: pathlib.Path) -> dict[str, set[str]]:
     learnables: dict[str, set[str]] = {}
-    skipped = MERGED_FORM_ENTRIES.get(fname.name, set())
+    skipped = ZA_MERGED_FORMS if fname.name == "za.json" else set()
     with open(fname, "r", encoding="utf-8") as fp:
         for species, by_method in json.load(fp).items():
             key = species_key(fname, species)
             if key in skipped:
                 continue
-            learnables[key] = learnables.get(key, set()) | (
-                set([level_up["Move"] for level_up in by_method["LevelMoves"]])
-                | set([move for move in by_method["TMMoves"]])
-                | set([move for move in by_method["EggMoves"]])
-                | set([move for move in by_method["TutorMoves"]])
-            )
+            learnables.setdefault(key, set()).update(
+                [level_up["Move"] for level_up in by_method["LevelMoves"]],
+                by_method["TMMoves"], by_method["EggMoves"], by_method["TutorMoves"])
     return learnables
 
 

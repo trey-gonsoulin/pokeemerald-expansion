@@ -4,11 +4,13 @@ python3 -m unittest discover -s tools/learnset_helpers
 
 import json
 import os
+import pathlib
 import subprocess
 import sys
 import tempfile
 import unittest
 
+import make_learnables
 import make_teachables
 import make_teaching_types
 import make_tutors
@@ -154,19 +156,26 @@ class TeachingTypeTest(RepoDirTest):
         })
 
 
+def run_make_learnables(inputs_dir, out, **kwargs):
+    return subprocess.run([sys.executable, os.path.join(HELPERS_DIR, "make_learnables.py"), inputs_dir, out],
+                          **kwargs)
+
+
+def porymoves_entry(move):
+    return {"LevelMoves": [{"Move": move}], "TMMoves": [], "EggMoves": [], "TutorMoves": []}
+
+
 class LearnablesOrderTest(RepoDirTest):
     """all_learnables.json comes out the same under any hash seed (#258)."""
 
     def test_same_output_under_any_hash_seed(self):
         species = ["ZUBAT", "ABRA", "MEW", "KOFFING", "BULBASAUR", "PIDGEY", "ONIX", "EEVEE"]
-        entry = {"LevelMoves": [{"Move": "MOVE_TACKLE"}], "TMMoves": [], "EggMoves": [], "TutorMoves": []}
+        entry = porymoves_entry("MOVE_TACKLE")
         self.write("inputs/a.json", json.dumps({name: entry for name in species[:5]}))
         self.write("inputs/b.json", json.dumps({name: entry for name in species[3:]}))
         outputs = []
         for seed in ("1", "2", "3"):
-            subprocess.run([sys.executable, os.path.join(HELPERS_DIR, "make_learnables.py"),
-                            "inputs", f"out{seed}.json"],
-                           env={**os.environ, "PYTHONHASHSEED": seed}, check=True)
+            run_make_learnables("inputs", f"out{seed}.json", env={**os.environ, "PYTHONHASHSEED": seed}, check=True)
             with open(f"out{seed}.json") as f:
                 outputs.append(f.read())
         self.assertEqual(outputs[0], outputs[1])
@@ -177,15 +186,14 @@ class LearnablesOrderTest(RepoDirTest):
 class LearnablesKeyTest(RepoDirTest):
     """Every species key comes out in the snake-case form make_teachables looks up (#274)."""
 
-    def learnables(self, inputs):
+    def make(self, inputs):
         for name, species in inputs.items():
-            entries = {key: {"LevelMoves": [{"Move": move}], "TMMoves": [], "EggMoves": [], "TutorMoves": []}
-                       for key, move in species.items()}
+            entries = {key: porymoves_entry(move) for key, move in species.items()}
             self.write(f"inputs/{name}.json", json.dumps(entries))
-        result = subprocess.run([sys.executable, os.path.join(HELPERS_DIR, "make_learnables.py"),
-                                 "inputs", "out.json"], capture_output=True, text=True)
-        if result.returncode != 0:
-            return result
+        return run_make_learnables("inputs", "out.json", capture_output=True, text=True)
+
+    def learnables(self, inputs):
+        self.make(inputs).check_returncode()
         with open("out.json") as f:
             return json.load(f)
 
@@ -210,8 +218,7 @@ class LearnablesKeyTest(RepoDirTest):
                                "PIKACHU": ["MOVE_D"]})
 
     def test_unreadable_key_stops_the_build(self):
-        result = self.learnables({"za": {"PIKACHU": "MOVE_A", "???": "MOVE_B"}})
-        self.assertIsInstance(result, subprocess.CompletedProcess)
+        result = self.make({"za": {"PIKACHU": "MOVE_A", "???": "MOVE_B"}})
         self.assertEqual(result.returncode, 1)
         self.assertIn("za.json", result.stderr)
         self.assertIn("'???'", result.stderr)
@@ -221,16 +228,30 @@ class LearnablesKeyTest(RepoDirTest):
 class CommittedLearnablesTest(unittest.TestCase):
     """The committed all_learnables.json is what make_learnables.py makes from porymoves_files (#274)."""
 
+    PORYMOVES_DIR = pathlib.Path(HELPERS_DIR, "porymoves_files")
+
     def test_committed_file_is_up_to_date(self):
         repo = os.path.dirname(os.path.dirname(HELPERS_DIR))
         committed = os.path.join(repo, "src", "data", "pokemon", "all_learnables.json")
         with tempfile.TemporaryDirectory() as tmp:
             out = os.path.join(tmp, "all_learnables.json")
-            subprocess.run([sys.executable, os.path.join(HELPERS_DIR, "make_learnables.py"),
-                            os.path.join(HELPERS_DIR, "porymoves_files"), out], check=True)
+            run_make_learnables(str(self.PORYMOVES_DIR), out, check=True)
             with open(out) as f, open(committed) as g:
                 self.assertTrue(f.read() == g.read(),
                                 "all_learnables.json is stale: run `make src/data/pokemon/all_learnables.json`")
+
+    def test_za_merged_forms_are_the_bare_names_of_other_games_forms(self):
+        # A bare name in za.json whose forms za.json doesn't list but another game does. Older games
+        # aren't checked: their bare names (rse's MAROWAK) predate the forms.
+        keys = {}
+        for fname in self.PORYMOVES_DIR.glob("*.json"):
+            with open(fname, encoding="utf-8") as f:
+                keys[fname.name] = {make_learnables.species_key(fname, species) for species in json.load(f)}
+        za = keys.pop("za.json")
+        others = set().union(*keys.values())
+        merged = {key for key in za
+                  if not any(k.startswith(key + "_") for k in za) and any(k.startswith(key + "_") for k in others)}
+        self.assertEqual(merged, make_learnables.ZA_MERGED_FORMS)
 
 
 if __name__ == "__main__":
