@@ -5,6 +5,7 @@ python3 -m unittest discover -s tools/wild_encounters
 import io
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -356,6 +357,21 @@ class ValidateTest(unittest.TestCase):
             add_encounter(data, f"sAlteringCave{table}_LeafGreen", map="MAP_SIX_ISLAND_ALTERING_CAVE")
         validate(data)
 
+    def test_altering_cave_tables_are_all_there_and_together(self):
+        data = sample()
+        for table in range(1, 9):
+            add_encounter(data, f"gAlteringCave{table}", map="MAP_ALTERING_CAVE")
+        self.assertRejected(data, "gAlteringCave1: map MAP_ALTERING_CAVE has 8 labels (EMERALD), expected 9, one per table")
+        add_encounter(data, "gRoute102", map="MAP_ROUTE102")
+        add_encounter(data, "gAlteringCave9", map="MAP_ALTERING_CAVE")
+        self.assertRejected(data, "gAlteringCave1: map MAP_ALTERING_CAVE's labels (EMERALD) aren't consecutive")
+        data = sample()
+        for table in range(1, 10):
+            add_encounter(data, f"gAlteringCave{table}", map="MAP_ALTERING_CAVE")
+            add_encounter(data, f"gAlteringCave{table}_Night", map="MAP_ALTERING_CAVE")
+        add_encounter(data, "sAlteringCave1_FireRed", map="MAP_SIX_ISLAND_ALTERING_CAVE")
+        self.assertRejected(data, "sAlteringCave1_FireRed: map MAP_SIX_ISLAND_ALTERING_CAVE has 1 labels (FIRERED), expected 9")
+
     def test_label_without_its_fallback_time(self):
         data = sample()
         add_encounter(data, "gRoute102_Day", map="MAP_ROUTE102")
@@ -437,12 +453,13 @@ class VersionTest(unittest.TestCase):
 class MainTest(unittest.TestCase):
     """The generator as the Makefile runs it, from a copy of the repo's inputs."""
 
-    def run_generator(self, data):
+    def run_generator(self, data, overworld_edit=lambda text: text):
         with tempfile.TemporaryDirectory() as root:
             for path in ("include/config/overworld.h", "include/constants/rtc.h"):
                 os.makedirs(os.path.join(root, os.path.dirname(path)), exist_ok=True)
                 with open(os.path.join(REPO, path)) as src, open(os.path.join(root, path), "w") as dst:
-                    dst.write(src.read())
+                    text = src.read()
+                    dst.write(overworld_edit(text) if path.endswith("overworld.h") else text)
             os.makedirs(os.path.join(root, "src", "data"))
             with open(os.path.join(root, "src", "data", "wild_encounters.json"), "w") as json_file:
                 json.dump(data, json_file)
@@ -465,6 +482,20 @@ class MainTest(unittest.TestCase):
         self.assertEqual(result.returncode, 1)
         self.assertIn("src/data/wild_encounters.json: gRoute101_Morning: same label and time of day", result.stderr)
         self.assertFalse(wrote_header)
+
+    def test_fallback_other_than_the_default_time_fails_without_time_encounters(self):
+        def set_fallback(text, fallback="TIME_DAY", time_encounters="FALSE"):
+            text = re.sub(r"(#define OW_TIME_OF_DAY_FALLBACK\s+)\w+", rf"\g<1>{fallback}", text)
+            return re.sub(r"(#define OW_TIME_OF_DAY_ENCOUNTERS\s+)\w+", rf"\g<1>{time_encounters}", text)
+        result, wrote_header = self.run_generator(sample(), set_fallback)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("OW_TIME_OF_DAY_FALLBACK is TIME_DAY, but with OW_TIME_OF_DAY_ENCOUNTERS FALSE "
+                      "src/wild_encounter.c reads only TIME_MORNING encounters", result.stderr)
+        self.assertFalse(wrote_header)
+        result, wrote_header = self.run_generator(sample(), lambda text: set_fallback(text, time_encounters="TRUE"))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        result, wrote_header = self.run_generator(sample(), lambda text: set_fallback(text, fallback="TIME_MORNING"))
+        self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_good_data_writes_the_header(self):
         result, wrote_header = self.run_generator(sample())
