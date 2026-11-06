@@ -237,8 +237,7 @@ class FixtureBuildTests(unittest.TestCase):
 def map_labels(path):
     with open(path, encoding='utf-8') as f:
         wild = json.load(f)
-    group = next(g for g in wild['wild_encounter_groups'] if g['label'] == 'gWildMonHeaders')
-    return sorted(e['base_label'] for e in group['encounters'])
+    return sorted(e['base_label'] for e in AA.map_headers(wild)['encounters'])
 
 
 class CommittedOutputTests(unittest.TestCase):
