@@ -24,23 +24,33 @@ def mons(count, min_level=2, max_level=5):
     return [{"min_level": min_level, "max_level": max_level, "species": "SPECIES_ZIGZAGOON"} for _ in range(count)]
 
 
+LAND_RATES = [20, 20, 10, 10, 10, 10, 5, 5, 4, 4, 1, 1]
+ROD_GROUPS = {"old_rod": [0, 1], "good_rod": [2, 3, 4], "super_rod": [5, 6, 7, 8, 9]}
+ROD_RATES = [70, 30, 60, 20, 20, 40, 40, 15, 4, 1]
+
+
+def land_rates(*head):
+    """Land encounter_rates starting with head, the other slots 0."""
+    return list(head) + [0] * (len(LAND_RATES) - len(head))
+
+
 def sample():
-    """A two-field file: land with 3 slots, water with 2."""
+    """A two-field file with the pickers' slot counts: land 12, water 5."""
     return {
         "wild_encounter_groups": [
             {
                 "label": "gWildMonHeaders",
                 "for_maps": True,
                 "fields": [
-                    {"type": "land_mons", "encounter_rates": [50, 30, 20]},
-                    {"type": "water_mons", "encounter_rates": [60, 40]},
+                    {"type": "land_mons", "encounter_rates": list(LAND_RATES)},
+                    {"type": "water_mons", "encounter_rates": [60, 30, 5, 4, 1]},
                 ],
                 "encounters": [
                     {
                         "map": "MAP_ROUTE101",
                         "base_label": "gRoute101",
-                        "land_mons": {"encounter_rate": 20, "mons": mons(3)},
-                        "water_mons": {"encounter_rate": 4, "mons": mons(2)},
+                        "land_mons": {"encounter_rate": 20, "mons": mons(12)},
+                        "water_mons": {"encounter_rate": 4, "mons": mons(5)},
                     }
                 ],
             },
@@ -48,7 +58,7 @@ def sample():
                 "label": "gBattlePikeWildMonHeaders",
                 "for_maps": False,
                 "encounters": [
-                    {"base_label": "gBattlePike_1", "land_mons": {"encounter_rate": 10, "mons": mons(3)}}
+                    {"base_label": "gBattlePike_1", "land_mons": {"encounter_rate": 10, "mons": mons(12)}}
                 ],
             },
         ]
@@ -59,13 +69,18 @@ def route101(data):
     return data["wild_encounter_groups"][0]["encounters"][0]
 
 
-def validate(data):
+def add_encounter(data, base_label, **changes):
+    """A copy of gRoute101's encounter under another label."""
+    data["wild_encounter_groups"][0]["encounters"].append(dict(route101(data), base_label=base_label, **changes))
+
+
+def validate(data, time_encounters=False):
     """Both checks, as ConvertToHeaderFile runs them."""
     gen.ValidateEncounters(data)
-    gen.ValidateLabels(data, TIMES_OF_DAY, "TIME_MORNING")
+    gen.ValidateLabels(data, TIMES_OF_DAY, "TIME_MORNING", time_encounters)
 
 
-def add_fishing(data, rates, groups):
+def add_fishing(data, rates=ROD_RATES, groups=ROD_GROUPS):
     data["wild_encounter_groups"][0]["fields"].append({"type": "fishing_mons", "encounter_rates": rates, "groups": groups})
     route101(data)["fishing_mons"] = {"encounter_rate": 20, "mons": mons(len(rates))}
 
@@ -85,23 +100,70 @@ class ValidateTest(unittest.TestCase):
 
     def test_default_levels_pass(self):
         data = sample()
-        route101(data)["land_mons"]["mons"] = [{"species": "SPECIES_ZIGZAGOON"}] * 3
+        route101(data)["land_mons"]["mons"] = [{"species": "SPECIES_ZIGZAGOON"}] * 12
         validate(data)
 
     def test_too_few_slots(self):
         data = sample()
         route101(data)["land_mons"]["mons"].pop()
-        self.assertRejected(data, "gRoute101 land_mons: 2 mons, but the land_mons field has 3 encounter_rates")
+        self.assertRejected(data, "gRoute101 land_mons: 11 mons, but the land_mons field has 12 encounter_rates")
 
     def test_too_many_slots(self):
         data = sample()
         route101(data)["water_mons"]["mons"].append(mons(1)[0])
-        self.assertRejected(data, "gRoute101 water_mons: 3 mons")
+        self.assertRejected(data, "gRoute101 water_mons: 6 mons")
 
     def test_slot_count_checked_in_groups_without_fields(self):
         data = sample()
         data["wild_encounter_groups"][1]["encounters"][0]["land_mons"]["mons"].pop()
-        self.assertRejected(data, "gBattlePike_1 land_mons: 2 mons")
+        self.assertRejected(data, "gBattlePike_1 land_mons: 11 mons")
+
+    def test_field_slot_counts_match_the_pickers(self):
+        for field_type, count in (("land_mons", 11), ("land_mons", 13), ("water_mons", 4), ("rock_smash_mons", 6), ("hidden_mons", 4)):
+            with self.subTest(field_type=field_type, count=count):
+                data = sample()
+                rates = [1] * count
+                fields = data["wild_encounter_groups"][0]["fields"]
+                fields[:] = [field for field in fields if field["type"] != field_type]
+                fields.append({"type": field_type, "encounter_rates": rates})
+                for encounters in (route101(data), data["wild_encounter_groups"][1]["encounters"][0]):
+                    if field_type in encounters:
+                        encounters[field_type]["mons"] = mons(count)
+                expected = gen.PICKER_SLOT_COUNTS[field_type]
+                self.assertRejected(data, f"gWildMonHeaders field {field_type}: {count} encounter_rates, but src/wild_encounter.c picks from {expected} slots")
+
+    def test_rock_smash_and_hidden_fields_pass(self):
+        data = sample()
+        data["wild_encounter_groups"][0]["fields"].append({"type": "rock_smash_mons", "encounter_rates": [60, 30, 5, 4, 1]})
+        data["wild_encounter_groups"][0]["fields"].append({"type": "hidden_mons", "encounter_rates": [50, 30, 20]})
+        route101(data)["rock_smash_mons"] = {"encounter_rate": 20, "mons": mons(5)}
+        route101(data)["hidden_mons"] = {"encounter_rate": 20, "mons": mons(3)}
+        validate(data)
+
+    def test_field_type_without_a_picker(self):
+        data = sample()
+        data["wild_encounter_groups"][0]["fields"].append({"type": "headbutt_mons", "encounter_rates": [100]})
+        self.assertRejected(data, "gWildMonHeaders field headbutt_mons: no picker in src/wild_encounter.c reads this field type")
+
+    def test_rod_groups_match_the_picker(self):
+        for groups, rates in (
+            ({"old_rod": [0], "good_rod": [1, 2, 3, 4], "super_rod": [5, 6, 7, 8, 9]}, [100, 40, 30, 20, 10] + ROD_RATES[5:]),
+            ({"old_rod": [0, 1], "good_rod": [2, 3, 4, 5], "super_rod": [6, 7, 8, 9]}, [70, 30, 60, 20, 10, 10, 40, 40, 19, 1]),
+            ({"old": [0, 1], "good_rod": [2, 3, 4], "super_rod": [5, 6, 7, 8, 9]}, ROD_RATES),
+            ({"old_rod": [0, 1], "good_rod": [2, 3, 4, 5, 6, 7, 8, 9]}, [70, 30, 20, 20, 20, 10, 10, 10, 5, 5]),
+        ):
+            with self.subTest(groups=groups):
+                data = sample()
+                add_fishing(data, rates, groups)
+                self.assertRejected(data, "gWildMonHeaders field fishing_mons: groups are "
+                                    f"{groups}, but src/wild_encounter.c picks from {gen.PICKER_GROUPS['fishing_mons']}")
+        data = sample()
+        add_fishing(data, [10] * 10)
+        del data["wild_encounter_groups"][0]["fields"][-1]["groups"]
+        self.assertRejected(data, "field fishing_mons: groups are None")
+        data = sample()
+        data["wild_encounter_groups"][0]["fields"][1]["groups"] = {"water": [0, 1, 2, 3, 4]}
+        self.assertRejected(data, "field water_mons: groups are {'water': [0, 1, 2, 3, 4]}, but src/wild_encounter.c picks from None")
 
     def test_misspelled_level_keys(self):
         data = sample()
@@ -143,7 +205,7 @@ class ValidateTest(unittest.TestCase):
     def test_field_type_with_two_slot_counts(self):
         data = sample()
         data["wild_encounter_groups"][1]["fields"] = [{"type": "land_mons", "encounter_rates": [100]}]
-        self.assertRejected(data, "gBattlePikeWildMonHeaders field land_mons: 1 encounter_rates, but another group's has 3")
+        self.assertRejected(data, "gBattlePikeWildMonHeaders field land_mons: 1 encounter_rates, but src/wild_encounter.c picks from 12 slots")
 
     def test_levels_out_of_range(self):
         for min_level, max_level, message in (
@@ -179,7 +241,7 @@ class ValidateTest(unittest.TestCase):
         self.assertRejected(data, "encounter_rate is -1")
 
     def test_rate_totals_up_to_256_pass(self):
-        for rates in ([50, 30, 19], [50, 30, 30], [1, 0, 0], [200, 50, 6], [256, 0, 0]):
+        for rates in (land_rates(50, 30, 19), land_rates(50, 30, 30), land_rates(1), land_rates(200, 50, 6), land_rates(256)):
             with self.subTest(rates=rates):
                 data = sample()
                 data["wild_encounter_groups"][0]["fields"][0]["encounter_rates"] = rates
@@ -187,11 +249,11 @@ class ValidateTest(unittest.TestCase):
 
     def test_rate_totals_and_rates_out_of_range(self):
         for rates, message in (
-            ([0, 0, 0], "gWildMonHeaders field land_mons: the encounter_rates total is 0, expected 1 to 256"),
-            ([200, 50, 7], "the encounter_rates total is 257"),
-            ([100, -10, 10], "encounter_rates[1] is -10, expected 0 to 256"),
-            ([257, 0, 0], "encounter_rates[0] is 257"),
-            ([50, 30, 20.0], "encounter_rates[2] is 20.0"),
+            (land_rates(), "gWildMonHeaders field land_mons: the encounter_rates total is 0, expected 1 to 256"),
+            (land_rates(200, 50, 7), "the encounter_rates total is 257"),
+            (land_rates(100, -10, 10), "encounter_rates[1] is -10, expected 0 to 256"),
+            (land_rates(257), "encounter_rates[0] is 257"),
+            (land_rates(50, 30, 20.0), "encounter_rates[2] is 20.0"),
         ):
             with self.subTest(rates=rates):
                 data = sample()
@@ -200,42 +262,43 @@ class ValidateTest(unittest.TestCase):
 
     def test_rod_groups_share_one_total(self):
         for rates, groups in (
-            ([70, 30, 60, 20, 20], {"old_rod": [0, 1], "good_rod": [2, 3, 4]}),
-            ([70, 30, 60, 20, 20], {"old_rod": [1, 0], "good_rod": [4, 2, 3]}),
-            ([60, 30, 60, 20, 10], {"old_rod": [0, 1], "good_rod": [2, 3, 4]}),
+            (ROD_RATES, ROD_GROUPS),
+            (ROD_RATES, {"super_rod": [9, 5, 6, 8, 7], "old_rod": [1, 0], "good_rod": [4, 2, 3]}),
+            ([60, 30, 60, 20, 10, 50, 30, 5, 4, 1], ROD_GROUPS),
         ):
             with self.subTest(rates=rates, groups=groups):
                 data = sample()
                 add_fishing(data, rates, groups)
                 validate(data)
         data = sample()
-        add_fishing(data, [70, 30, 60, 20, 10], {"old_rod": [0, 1], "good_rod": [2, 3, 4]})
-        self.assertRejected(data, "gWildMonHeaders field fishing_mons: the groups' encounter_rates totals differ (old_rod 100, good_rod 90)")
+        add_fishing(data, [70, 30, 60, 20, 10] + ROD_RATES[5:])
+        self.assertRejected(data, "gWildMonHeaders field fishing_mons: the groups' encounter_rates totals differ (old_rod 100, good_rod 90, super_rod 100)")
         data = sample()
-        add_fishing(data, [200, 57, 200, 50, 7], {"old_rod": [0, 1], "good_rod": [2, 3, 4]})
+        add_fishing(data, [200, 57, 200, 50, 7, 200, 50, 4, 2, 1])
         self.assertRejected(data, "field fishing_mons group old_rod: the encounter_rates total is 257")
 
     def test_group_indices(self):
+        super_rod = [5, 6, 7, 8, 9]
         for groups, message in (
-            ({"old_rod": [0, 1], "good_rod": [2, 3, 5]}, "group good_rod: slot index is 5, expected 0 to 4"),
-            ({"old_rod": [0, 1], "good_rod": [2, 3, -1]}, "group good_rod: slot index is -1"),
-            ({"old_rod": [0, 1], "good_rod": [2, 3, "4"]}, "slot index is '4'"),
-            ({"old_rod": [0, 1], "good_rod": [1, 2, 3, 4]}, "group good_rod: slot 1 is also in group old_rod"),
-            ({"old_rod": [0, 2], "good_rod": [1, 3, 4]}, "group old_rod: slots [0, 2] aren't consecutive"),
+            ({"old_rod": [0, 1], "good_rod": [2, 3, 10], "super_rod": super_rod}, "group good_rod: slot index is 10, expected 0 to 9"),
+            ({"old_rod": [0, 1], "good_rod": [2, 3, -1], "super_rod": super_rod}, "group good_rod: slot index is -1"),
+            ({"old_rod": [0, 1], "good_rod": [2, 3, "4"], "super_rod": super_rod}, "slot index is '4'"),
+            ({"old_rod": [0, 1], "good_rod": [1, 2, 3, 4], "super_rod": super_rod}, "group good_rod: slot 1 is also in group old_rod"),
+            ({"old_rod": [0, 2], "good_rod": [1, 3, 4], "super_rod": super_rod}, "group old_rod: slots [0, 2] aren't consecutive"),
             ({"old_rod": [0, 1], "good_rod": [2, 3, 4], "super_rod": []}, "group super_rod: slots are [], expected a list of slot indices"),
-            ({"old_rod": 1, "good_rod": [1, 2, 3, 4]}, "group old_rod: slots are 1, expected a list"),
-            ({"old_rod": "01", "good_rod": [2, 3, 4]}, "group old_rod: slots are '01', expected a list"),
-            ([[0, 1], [2, 3, 4]], "field fishing_mons: groups is [[0, 1], [2, 3, 4]], expected an object of slot lists"),
+            ({"old_rod": 1, "good_rod": [1, 2, 3, 4], "super_rod": super_rod}, "group old_rod: slots are 1, expected a list"),
+            ({"old_rod": "01", "good_rod": [2, 3, 4], "super_rod": super_rod}, "group old_rod: slots are '01', expected a list"),
+            ([[0, 1], [2, 3, 4], super_rod], "field fishing_mons: groups is [[0, 1], [2, 3, 4], [5, 6, 7, 8, 9]], expected an object of slot lists"),
         ):
             with self.subTest(groups=groups):
                 data = sample()
-                add_fishing(data, [70, 30, 60, 20, 20], groups)
+                add_fishing(data, ROD_RATES, groups)
                 self.assertRejected(data, message)
 
     def test_slot_in_no_group(self):
         data = sample()
-        add_fishing(data, [70, 30, 80, 20, 0], {"old_rod": [0, 1], "good_rod": [2, 3]})
-        self.assertRejected(data, "gWildMonHeaders field fishing_mons: slot(s) 4 in no group")
+        add_fishing(data, ROD_RATES[:9] + [0], {"old_rod": [0, 1], "good_rod": [2, 3, 4], "super_rod": [5, 6, 7, 8]})
+        self.assertRejected(data, "gWildMonHeaders field fishing_mons: slot(s) 9 in no group")
 
     def test_same_label_and_time_twice(self):
         for second_label in ("gRoute101", "gRoute101_Morning"):
@@ -259,6 +322,56 @@ class ValidateTest(unittest.TestCase):
         night = dict(route101(data), base_label="gRoute101_Night", map="MAP_ROUTE102")
         data["wild_encounter_groups"][0]["encounters"].append(night)
         self.assertRejected(data, "gRoute101_Night: map MAP_ROUTE102, but gRoute101 has MAP_ROUTE101")
+
+    def test_one_map_under_two_labels(self):
+        for label in ("gRoute101Too", "gRoute101Too_Night"):
+            with self.subTest(label=label):
+                data = sample()
+                add_encounter(data, label)
+                self.assertRejected(data, f"{label}: map MAP_ROUTE101 already has gRoute101's encounters (EMERALD)")
+        data = sample()
+        add_encounter(data, "sRoute101_FireRed")
+        add_encounter(data, "sRoute101_LeafGreen")
+        add_encounter(data, "sRoute101Too_LeafGreen")
+        self.assertRejected(data, "sRoute101Too_LeafGreen: map MAP_ROUTE101 already has sRoute101_LeafGreen's encounters (LEAFGREEN)")
+
+    def test_one_map_under_one_label_per_version_passes(self):
+        data = sample()
+        add_encounter(data, "sRoute101_FireRed")
+        add_encounter(data, "sRoute101_LeafGreen")
+        data["wild_encounter_groups"][1]["encounters"].append(
+            dict(data["wild_encounter_groups"][1]["encounters"][0], base_label="gBattlePike_2"))
+        validate(data)
+
+    def test_altering_cave_takes_a_label_per_table(self):
+        data = sample()
+        for table in range(1, 10):
+            add_encounter(data, f"gAlteringCave{table}", map="MAP_ALTERING_CAVE")
+            add_encounter(data, f"sAlteringCave{table}_FireRed", map="MAP_SIX_ISLAND_ALTERING_CAVE")
+            add_encounter(data, f"sAlteringCave{table}_LeafGreen", map="MAP_SIX_ISLAND_ALTERING_CAVE")
+        validate(data)
+
+    def test_label_without_its_fallback_time(self):
+        data = sample()
+        add_encounter(data, "gRoute102_Day", map="MAP_ROUTE102")
+        add_encounter(data, "gRoute102_Night", map="MAP_ROUTE102")
+        self.assertRejected(data, "gRoute102_Day: with OW_TIME_OF_DAY_ENCOUNTERS FALSE only TIME_MORNING encounters are used, "
+                            "and gRoute102 has none (gRoute102 or gRoute102_Morning)")
+        validate(data, time_encounters=True)
+        add_encounter(data, "gRoute102_Morning", map="MAP_ROUTE102")
+        validate(data)
+
+    def test_version_suffix_after_a_time_suffix(self):
+        for label, renamed in (("sRoute1_Night_FireRed", "sRoute1_FireRed_Night"), ("sRoute1_Morning_LeafGreen", "sRoute1_LeafGreen_Morning")):
+            with self.subTest(label=label):
+                data = sample()
+                add_encounter(data, label, map="MAP_ROUTE1")
+                self.assertRejected(data, f"{label}: version suffix after the time of day suffix, expected {renamed}")
+        data = sample()
+        add_encounter(data, "sRoute1_FireRed", map="MAP_ROUTE1")
+        add_encounter(data, "sRoute1_FireRed_Night", map="MAP_ROUTE1")
+        add_encounter(data, "gSunDayRoad_FireRed", map="MAP_ROUTE2")
+        validate(data)
 
 
 def assembler(json_data, time_encounters=False):
@@ -337,7 +450,7 @@ class MainTest(unittest.TestCase):
         route101(data)["land_mons"]["mons"].pop()
         result, wrote_header = self.run_generator(data)
         self.assertEqual(result.returncode, 1)
-        self.assertIn("src/data/wild_encounters.json: gRoute101 land_mons: 2 mons", result.stderr)
+        self.assertIn("src/data/wild_encounters.json: gRoute101 land_mons: 11 mons", result.stderr)
         self.assertFalse(wrote_header)
 
     def test_repeated_label_fails_without_writing_the_header(self):
