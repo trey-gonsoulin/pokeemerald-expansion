@@ -2069,16 +2069,11 @@ u8 CreateObjectGraphicsSpriteWithTag(u16 graphicsId, void (*callback)(struct Spr
     }
     else if (spriteTemplate->paletteTag != TAG_NONE)
     {
-        u32 paletteIndex = FindObjectEventPaletteIndexByTag(spriteTemplate->paletteTag);
         // A caller's tag gets its own copy of the object's palette, so freeing by that tag frees it.
         // With no free palette slot, fall back to the object's own (perhaps already loaded) palette.
-        if (paletteTag != TAG_NONE && paletteIndex != 0xFF)
-        {
-            const struct SpritePalette palette = {sObjectEventSpritePalettes[paletteIndex].data, paletteTag};
-            if (LoadSpritePaletteIfTagExists(&palette) != 0xFF)
-                spriteTemplate->paletteTag = paletteTag;
-        }
-        if (spriteTemplate->paletteTag != paletteTag)
+        if (paletteTag != TAG_NONE && LoadObjectEventPaletteCopy(spriteTemplate->paletteTag, paletteTag) != 0xFF)
+            spriteTemplate->paletteTag = paletteTag;
+        else
             LoadObjectEventPalette(spriteTemplate->paletteTag);
     }
 
@@ -3371,8 +3366,10 @@ u8 LoadObjectEventPalette(u16 paletteTag)
 u8 LoadObjectEventPaletteCopy(u16 originalTag, u16 copyTag)
 {
     u32 i = FindObjectEventPaletteIndexByTag(originalTag);
+    if (i == 0xFF)
+        return i;
     const struct SpritePalette palette = {sObjectEventSpritePalettes[i].data, copyTag};
-    return LoadSpritePalette(&palette);
+    return LoadSpritePaletteIfTagExists(&palette);
 }
 
 u8 LoadPlayerObjectEventPalette(enum Gender gender)

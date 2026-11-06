@@ -2854,9 +2854,10 @@ static void Debug_CreateTrainerIcon(u8 taskId)
     const struct ObjectEventGraphicsInfo *graphicsInfo = GetObjectEventGraphicsInfo(graphicsId);
     u32 tileTag = TAG_NONE;
 
-    // CreateObjectGraphicsSpriteWithTag loads the palette under DEBUG_ICON_TAG, but a compressed sheet
-    // under the object's own tag, which NPCs on the map may share. Note whether it is about to load
-    // that sheet, so it gets freed with the icon only then. The sheet tag follows LoadSheetGraphicsInfo.
+    // CreateObjectGraphicsSpriteWithTag loads the palette under DEBUG_ICON_TAG (a dynamic follower one stays
+    // under its species tag and isn't freed, as before), but a compressed sheet under the object's own tag,
+    // which NPCs on the map may share. Note whether it is about to load that sheet, so it gets freed with
+    // the icon only then. The sheet tag follows LoadSheetGraphicsInfo.
     if (OW_GFX_COMPRESS && graphicsInfo->compressed)
     {
         tileTag = graphicsInfo->tileTag != TAG_NONE ? graphicsInfo->tileTag : COMP_OW_TILE_TAG_BASE + graphicsId;
