@@ -1890,6 +1890,23 @@ AI_SINGLE_BATTLE_TEST("Dynamax HP: a Pokemon still Dynamaxed when it wins with a
     }
 }
 
+WILD_BATTLE_TEST("Dynamax HP: a Pokemon still Dynamaxed when the wild foe flees leaves with its own HP")
+{
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET) { Level(50); HP(50); }
+        OPPONENT(SPECIES_GOLISOPOD) { Ability(ABILITY_EMERGENCY_EXIT); MaxHP(263); HP(132); Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_SCRATCH, gimmick: GIMMICK_DYNAMAX); }
+    } SCENE {
+        ANIMATION(ANIM_TYPE_GENERAL, B_ANIM_DYNAMAX_GROWTH, player);
+        HP_BAR(opponent);
+        ABILITY_POPUP(opponent, ABILITY_EMERGENCY_EXIT);
+    } THEN {
+        EXPECT_EQ(gBattleOutcome, B_OUTCOME_MON_TELEPORTED);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_HP), 50);
+    }
+}
+
 // The exp controller is always battler 0, so the level-up's Dynamax HP reapply has to find the battler the levelling mon is on (#106).
 // A full-HP mon that keeps its boost through the level-up is still full once the battle's end undoes the Dynamax (#105);
 // one that lost it leaves with two thirds of its HP.
