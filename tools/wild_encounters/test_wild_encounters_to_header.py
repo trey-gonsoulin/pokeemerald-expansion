@@ -59,23 +59,34 @@ def route101(data):
     return data["wild_encounter_groups"][0]["encounters"][0]
 
 
+def validate(data):
+    """Both checks, as ConvertToHeaderFile runs them."""
+    gen.ValidateEncounters(data)
+    gen.ValidateLabels(data, TIMES_OF_DAY, "TIME_MORNING")
+
+
+def add_fishing(data, rates, groups):
+    data["wild_encounter_groups"][0]["fields"].append({"type": "fishing_mons", "encounter_rates": rates, "groups": groups})
+    route101(data)["fishing_mons"] = {"encounter_rate": 20, "mons": mons(len(rates))}
+
+
 class ValidateTest(unittest.TestCase):
     def assertRejected(self, data, message):
         with self.assertRaises(gen.WildEncountersError) as context:
-            gen.ValidateEncounters(data)
+            validate(data)
         self.assertIn(message, str(context.exception))
 
     def test_sample_passes(self):
-        gen.ValidateEncounters(sample())
+        validate(sample())
 
     def test_real_data_passes(self):
         with open(REAL_JSON) as json_file:
-            gen.ValidateEncounters(json.load(json_file))
+            validate(json.load(json_file))
 
     def test_default_levels_pass(self):
         data = sample()
         route101(data)["land_mons"]["mons"] = [{"species": "SPECIES_ZIGZAGOON"}] * 3
-        gen.ValidateEncounters(data)
+        validate(data)
 
     def test_too_few_slots(self):
         data = sample()
@@ -156,16 +167,80 @@ class ValidateTest(unittest.TestCase):
         data = sample()
         route101(data)["land_mons"]["mons"][0] = mons(1, 1, 1)[0]
         route101(data)["land_mons"]["mons"][1] = mons(1, 100, 100)[0]
-        gen.ValidateEncounters(data)
+        validate(data)
 
     def test_encounter_rate_range(self):
         data = sample()
         route101(data)["land_mons"]["encounter_rate"] = 255
-        gen.ValidateEncounters(data)
+        validate(data)
         route101(data)["land_mons"]["encounter_rate"] = 400
         self.assertRejected(data, "gRoute101 land_mons: encounter_rate is 400, expected 0 to 255")
         route101(data)["land_mons"]["encounter_rate"] = -1
         self.assertRejected(data, "encounter_rate is -1")
+
+    def test_rates_must_add_up_to_100(self):
+        for rates, message in (
+            ([50, 30, 19], "gWildMonHeaders field land_mons: encounter_rates add up to 99, expected 100"),
+            ([50, 30, 30], "add up to 110"),
+            ([0, 0, 0], "add up to 0"),
+            ([100, -10, 10], "encounter_rates[1] is -10, expected 0 to 100"),
+            ([50, 30, 20.0], "encounter_rates[2] is 20.0"),
+        ):
+            with self.subTest(rates=rates):
+                data = sample()
+                data["wild_encounter_groups"][0]["fields"][0]["encounter_rates"] = rates
+                self.assertRejected(data, message)
+
+    def test_grouped_rates_add_up_to_100_per_group(self):
+        data = sample()
+        add_fishing(data, [70, 30, 60, 20, 20], {"old_rod": [0, 1], "good_rod": [2, 3, 4]})
+        validate(data)
+        data = sample()
+        add_fishing(data, [70, 30, 60, 20, 10], {"old_rod": [0, 1], "good_rod": [2, 3, 4]})
+        self.assertRejected(data, "field fishing_mons group good_rod: encounter_rates add up to 90, expected 100")
+
+    def test_group_indices(self):
+        for groups, message in (
+            ({"old_rod": [0, 1], "good_rod": [2, 3, 5]}, "group good_rod: slot index is 5, expected 0 to 4"),
+            ({"old_rod": [0, 1], "good_rod": [2, 3, -1]}, "group good_rod: slot index is -1"),
+            ({"old_rod": [0, 1], "good_rod": [2, 3, "4"]}, "slot index is '4'"),
+            ({"old_rod": [0, 1], "good_rod": [1, 2, 3, 4]}, "group good_rod: slot 1 is also in group old_rod"),
+            ({"old_rod": [0, 2], "good_rod": [1, 3, 4]}, "group old_rod: slots [0, 2] aren't consecutive"),
+            ({"old_rod": [1, 0], "good_rod": [2, 3, 4]}, "group old_rod: slots [1, 0] aren't consecutive"),
+            ({"old_rod": [0, 1], "good_rod": [2, 3, 4], "super_rod": []}, "group super_rod: no slots"),
+        ):
+            with self.subTest(groups=groups):
+                data = sample()
+                add_fishing(data, [70, 30, 60, 20, 20], groups)
+                self.assertRejected(data, message)
+
+    def test_slot_in_no_group(self):
+        data = sample()
+        add_fishing(data, [70, 30, 80, 20, 0], {"old_rod": [0, 1], "good_rod": [2, 3]})
+        self.assertRejected(data, "gWildMonHeaders field fishing_mons: slot(s) 4 in no group")
+
+    def test_same_label_and_time_twice(self):
+        for second_label in ("gRoute101", "gRoute101_Morning"):
+            with self.subTest(second_label=second_label):
+                data = sample()
+                second = dict(route101(data), base_label=second_label)
+                data["wild_encounter_groups"][0]["encounters"].append(second)
+                self.assertRejected(data, f"{second_label}: same label and time of day as gRoute101 (gRoute101, TIME_MORNING)")
+
+    def test_other_times_of_one_label_pass(self):
+        data = sample()
+        for label in ("gRoute101_Day", "gRoute101_Night"):
+            data["wild_encounter_groups"][0]["encounters"].append(dict(route101(data), base_label=label))
+        data["wild_encounter_groups"][0]["encounters"].append(dict(route101(data), base_label="gRoute101_FireRed"))
+        data["wild_encounter_groups"][1]["encounters"].append(
+            dict(data["wild_encounter_groups"][1]["encounters"][0], base_label="gBattlePike_1_Night"))
+        validate(data)
+
+    def test_times_of_one_label_name_one_map(self):
+        data = sample()
+        night = dict(route101(data), base_label="gRoute101_Night", map="MAP_ROUTE102")
+        data["wild_encounter_groups"][0]["encounters"].append(night)
+        self.assertRejected(data, "gRoute101_Night: map MAP_ROUTE102, but gRoute101 has MAP_ROUTE101")
 
 
 class TimeOfDayTest(unittest.TestCase):
@@ -179,7 +254,8 @@ class TimeOfDayTest(unittest.TestCase):
         return gen.WildEncounterAssembler(io.StringIO(), json_data, config)
 
     def test_suffix_is_matched_exactly(self):
-        split = self.assembler().SplitTimeOfDay
+        def split(label):
+            return gen.SplitTimeOfDay(label, TIMES_OF_DAY, "TIME_MORNING")
         self.assertEqual(split("gRoute101"), ("gRoute101", "TIME_MORNING"))
         self.assertEqual(split("gRoute101_Night"), ("gRoute101", "TIME_NIGHT"))
         self.assertEqual(split("gRoute101_Day"), ("gRoute101", "TIME_DAY"))
@@ -194,6 +270,32 @@ class TimeOfDayTest(unittest.TestCase):
         assembler.WriteEncounters()
         output = assembler.output_file.getvalue()
         self.assertIn(".landMonsInfo = &gSunDayRoad_Craft_LandMonsInfo,", output)
+
+
+class VersionTest(unittest.TestCase):
+    def test_version_suffix_is_matched_exactly(self):
+        for label, version in (
+            ("gRoute101", "EMERALD"),
+            ("sRoute1_FireRed", "FIRERED"),
+            ("sRoute1_LeafGreen", "LEAFGREEN"),
+            ("gFireRedRoad", "EMERALD"),
+            ("gLeafGreenGrove_Cave", "EMERALD"),
+            ("sRoute1_FireRedGate", "EMERALD"),
+        ):
+            with self.subTest(label=label):
+                self.assertEqual(gen.GetLabelVersion(label), version)
+
+    def test_label_containing_a_version_stays_emerald(self):
+        data = sample()
+        data["wild_encounter_groups"][0]["encounters"].append(dict(route101(data), base_label="gFireRedRoad", map="MAP_ROUTE102"))
+        data["wild_encounter_groups"][0]["encounters"].append(dict(route101(data), base_label="sRoute1_LeafGreen_Night", map="MAP_ROUTE103"))
+        config = SimpleNamespace(times_of_day=TIMES_OF_DAY, time_fallback="TIME_MORNING", time_encounters=True, mon_types=["land_mons", "water_mons"])
+        assembler = gen.WildEncounterAssembler(io.StringIO(), data, config)
+        assembler.WriteEncounters()
+        output = assembler.output_file.getvalue()
+        self.assertNotIn("#ifdef FIRERED", output)
+        self.assertEqual(output.count("#ifdef LEAFGREEN"), 2)  # its tables and its header entry
+        self.assertIn("#ifdef EMERALD\n    {\n        .mapGroup = MAP_GROUP(MAP_ROUTE102)", output)
 
 
 class MainTest(unittest.TestCase):
