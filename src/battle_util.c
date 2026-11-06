@@ -2331,8 +2331,8 @@ bool32 IsPowderMoveBlocked(struct DamageContext *ctx)
     return TRUE;
 }
 
-// Whether the ability absorbs moves of this type. Battler state plays no part, so the overworld
-// (GetOverworldTypeEffectiveness) reads it too.
+// Whether the ability absorbs moves of this type. Battler state plays no part, so the Battle Dome
+// and the overworld (CalcSpeciesTypeEffectivenessOutOfBattle) read it too.
 bool32 DoesAbilityAbsorbMoveType(enum Ability ability, enum Type moveType)
 {
     switch (ability)
@@ -8418,7 +8418,8 @@ uq4_12_t CalcTypeEffectivenessMultiplier(struct DamageContext *ctx)
 
 // Outside a battle (the Battle Dome's tourney tree, the overworld) there is no battler whose
 // volatiles, grounding, gimmick or field could apply: gBattleMons[0] is the last battle's and
-// gBattleStruct is NULL. So only the type chart and Freeze-Dry's own rule count.
+// gBattleStruct is NULL. So only the type chart and Freeze-Dry's own rule count, and the
+// defender's ability through CalcSpeciesTypeEffectivenessOutOfBattle.
 static void MulByTypeEffectivenessOutOfBattle(enum Move move, enum Type moveType, uq4_12_t *modifier, enum Type defType)
 {
     uq4_12_t mod = GetTypeModifier(moveType, defType);
@@ -8428,9 +8429,31 @@ static void MulByTypeEffectivenessOutOfBattle(enum Move move, enum Type moveType
     *modifier = uq4_12_multiply(*modifier, mod);
 }
 
+// Whether the move is aimed at a foe, so a foe's absorbing ability can take it: not a move on the
+// user, its ally or a side of the field (Charge, Rain Dance, Spikes).
+static bool32 IsMoveAimedAtFoe(enum Move move)
+{
+    switch (GetMoveTarget(move))
+    {
+    case TARGET_SELECTED:
+    case TARGET_SMART:
+    case TARGET_DEPENDS:
+    case TARGET_OPPONENT:
+    case TARGET_RANDOM:
+    case TARGET_BOTH:
+    case TARGET_FOES_AND_ALLY:
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+
 static uq4_12_t CalcSpeciesTypeEffectivenessOutOfBattle(enum Move move, enum Type moveType, enum Species speciesDef, enum Ability abilityDef)
 {
     uq4_12_t modifier = UQ_4_12(1.0);
+
+    if (IsMoveAimedAtFoe(move) && DoesAbilityAbsorbMoveType(abilityDef, moveType))
+        return UQ_4_12(0.0);
 
     MulByTypeEffectivenessOutOfBattle(move, moveType, &modifier, GetSpeciesType(speciesDef, 0));
     if (GetSpeciesType(speciesDef, 1) != GetSpeciesType(speciesDef, 0))
@@ -8475,12 +8498,7 @@ uq4_12_t GetOverworldTypeEffectiveness(struct Pokemon *mon, enum Type moveType)
     if (moveType == TYPE_MYSTERY)
         return UQ_4_12(1.0);
 
-    enum Ability ability = GetMonAbility(mon);
-
-    if (DoesAbilityAbsorbMoveType(ability, moveType))
-        return UQ_4_12(0.0);
-
-    return CalcSpeciesTypeEffectivenessOutOfBattle(MOVE_POUND, moveType, GetMonData(mon, MON_DATA_SPECIES), ability);
+    return CalcSpeciesTypeEffectivenessOutOfBattle(MOVE_POUND, moveType, GetMonData(mon, MON_DATA_SPECIES), GetMonAbility(mon));
 }
 
 uq4_12_t GetTypeModifier(enum Type atkType, enum Type defType)
