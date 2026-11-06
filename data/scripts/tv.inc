@@ -17,6 +17,7 @@ EventScript_TryDoTVShow::
 	goto_if_eq VAR_0x8004, 255, EventScript_MomDadMightLikeThis2
 	specialvar VAR_RESULT, GetSelectedTVShow
 	goto_if_ne VAR_RESULT, 0, EventScript_DoTVShow
+	releaseall
 	end
 
 EventScript_MomDadMightLikeThis1::
