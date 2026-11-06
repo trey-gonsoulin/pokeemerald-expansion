@@ -48,6 +48,27 @@ TEST("Object graphics sprite: a decoration icon's palette is freed by its tag")
     EXPECT_EQ(IndexOfSpritePaletteTag(objectTag), 0xFF);
 }
 
+TEST("Object graphics sprite: with no free palette slot a caller's tag falls back to the object's palette")
+{
+    u32 objectTag = GetObjectEventGraphicsInfo(OBJ_EVENT_GFX_PICHU_DOLL)->paletteTag;
+    u32 objectSpriteId = CreateObjectGraphicsSprite(OBJ_EVENT_GFX_PICHU_DOLL, SpriteCallbackDummy, 0, 0, 0);
+    u32 objectSlot = IndexOfSpritePaletteTag(objectTag);
+    u32 spriteId, i;
+
+    ASSUME(objectSpriteId != MAX_SPRITES);
+    ASSUME(objectSlot != 0xFF);
+    for (i = 0; IndexOfSpritePaletteTag(TAG_NONE) != 0xFF; i++)
+        LoadSpritePaletteWithTag(gPlttBufferUnfaded, TEST_PALETTE_TAG + 1 + i);
+
+    spriteId = CreateObjectGraphicsSpriteWithTag(OBJ_EVENT_GFX_PICHU_DOLL, SpriteCallbackDummy, 0, 0, 0, TEST_PALETTE_TAG);
+    EXPECT_NE(spriteId, MAX_SPRITES);
+    EXPECT_EQ(IndexOfSpritePaletteTag(TEST_PALETTE_TAG), 0xFF);
+    EXPECT_EQ((u32)gSprites[spriteId].oam.paletteNum, objectSlot);
+
+    DestroySprite(&gSprites[spriteId]);
+    DestroySprite(&gSprites[objectSpriteId]);
+}
+
 TEST("Object graphics sprite: no palette tag keeps the object's own")
 {
     u32 objectTag = GetObjectEventGraphicsInfo(OBJ_EVENT_GFX_PICHU_DOLL)->paletteTag;
