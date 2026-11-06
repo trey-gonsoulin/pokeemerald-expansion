@@ -9,6 +9,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+static bool is_section_in_file(const Elf32_Shdr *shdr, off_t file_size);
+static bool is_string_table_in_file(const Elf32_Shdr *shdr, const char *f, off_t file_size);
 static char *find_symbol_data(const char *sym, const Elf32_Ehdr *ehdr, const Elf32_Shdr *shdrs, const Elf32_Sym *symbol, char *f, off_t file_size);
 // With dest NULL, only checks that source fits in size bytes and is well formed.
 static bool try_patch_value(const char *sym, char *dest, const char *source, size_t size);
@@ -52,19 +54,31 @@ int main(int argc, char *argv[])
     }
 
     const Elf32_Ehdr *ehdr = (Elf32_Ehdr *)f;
+    if (st.st_size < (off_t)sizeof(Elf32_Ehdr) || ehdr->e_shoff > st.st_size
+     || (off_t)(ehdr->e_shnum * sizeof(Elf32_Shdr)) > st.st_size - ehdr->e_shoff)
+    {
+        fprintf(stderr, "section header table lies outside the file\n");
+        goto error;
+    }
     const Elf32_Shdr *shdrs = (Elf32_Shdr *)(f + ehdr->e_shoff);
 
-    if (ehdr->e_shstrndx == SHN_UNDEF)
+    if (ehdr->e_shstrndx == SHN_UNDEF || ehdr->e_shstrndx >= ehdr->e_shnum)
     {
         fprintf(stderr, "no section name string table\n");
         goto error;
     }
     const Elf32_Shdr *shdr_shstr = &shdrs[ehdr->e_shstrndx];
+    if (!is_string_table_in_file(shdr_shstr, f, st.st_size))
+    {
+        fprintf(stderr, "bad section name string table\n");
+        goto error;
+    }
     const char *shstr = (const char *)(f + shdr_shstr->sh_offset);
     const Elf32_Shdr *shdr_symtab = NULL;
     const Elf32_Shdr *shdr_strtab = NULL;
     for (int i = 0; i < ehdr->e_shnum; i++)
     {
+        if (shdrs[i].sh_name >= shdr_shstr->sh_size) continue;
         const char *sh_name = shstr + shdrs[i].sh_name;
         if (strcmp(sh_name, ".symtab") == 0)
             shdr_symtab = &shdrs[i];
@@ -79,6 +93,16 @@ int main(int argc, char *argv[])
     if (!shdr_strtab)
     {
         fprintf(stderr, "no .strtab section\n");
+        goto error;
+    }
+    if (shdr_symtab->sh_entsize != sizeof(Elf32_Sym) || !is_section_in_file(shdr_symtab, st.st_size))
+    {
+        fprintf(stderr, "bad .symtab section\n");
+        goto error;
+    }
+    if (!is_string_table_in_file(shdr_strtab, f, st.st_size))
+    {
+        fprintf(stderr, "bad .strtab section\n");
         goto error;
     }
 
@@ -96,7 +120,7 @@ int main(int argc, char *argv[])
             bool found = false;
             for (int i = 0; i < num_syms; i++)
             {
-                if (symtab[i].st_name == 0) continue;
+                if (symtab[i].st_name == 0 || symtab[i].st_name >= shdr_strtab->sh_size) continue;
                 if (strcmp(strtab + symtab[i].st_name, arg_name) != 0) continue;
                 char *value = find_symbol_data(arg_name, ehdr, shdrs, &symtab[i], f, st.st_size);
                 if (value == NULL)
@@ -142,6 +166,17 @@ error:
     return exit_code;
 }
 
+static bool is_section_in_file(const Elf32_Shdr *shdr, off_t file_size)
+{
+    return shdr->sh_offset <= file_size && shdr->sh_size <= file_size - shdr->sh_offset;
+}
+
+// A string table has to end in a NUL, so no name read from it runs past it.
+static bool is_string_table_in_file(const Elf32_Shdr *shdr, const char *f, off_t file_size)
+{
+    return is_section_in_file(shdr, file_size) && shdr->sh_size > 0 && f[shdr->sh_offset + shdr->sh_size - 1] == '\0';
+}
+
 // Returns where the symbol's bytes are in the file, or NULL (with a message) when it has none
 // there: no section, a section with no file data (.bss), or a range outside the section or file.
 static char *find_symbol_data(const char *sym, const Elf32_Ehdr *ehdr, const Elf32_Shdr *shdrs, const Elf32_Sym *symbol, char *f, off_t file_size)
@@ -164,7 +199,7 @@ static char *find_symbol_data(const char *sym, const Elf32_Ehdr *ehdr, const Elf
         fprintf(stderr, "%s: symbol lies outside its section\n", sym);
         return NULL;
     }
-    if (shdr->sh_offset > file_size || shdr->sh_size > file_size - shdr->sh_offset)
+    if (!is_section_in_file(shdr, file_size))
     {
         fprintf(stderr, "%s: symbol's section lies outside the file\n", sym);
         return NULL;
@@ -191,7 +226,7 @@ static bool try_patch_value(const char *sym, char *dest, const char *source, siz
     {
         if (i == size)
         {
-            fprintf(stderr, "%s: overflows size (%lu)\n", sym, size);
+            fprintf(stderr, "%s: overflows size (%zu)\n", sym, size);
             return false;
         }
         char c, value;
@@ -204,13 +239,13 @@ static bool try_patch_value(const char *sym, char *dest, const char *source, siz
                 value = 0;
                 break;
             case 'x':
-                if (!isxdigit((c = *source++)))
+                if (!isxdigit((unsigned char)(c = *source++)))
                 {
                     fprintf(stderr, "%s: illegal escape \\x%c\n", sym, c);
                     return false;
                 }
                 value = parsexdigit(c);
-                if (!isxdigit((c = *source++)))
+                if (!isxdigit((unsigned char)(c = *source++)))
                 {
                     fprintf(stderr, "%s: illegal escape \\x%c%c\n", sym, *(source - 2), c);
                     return false;

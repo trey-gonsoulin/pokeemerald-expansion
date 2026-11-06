@@ -35,7 +35,7 @@ def strtab(names):
     return table, offsets
 
 
-def build_elf():
+def build_elf(symtab_entsize=16, name_offsets=None):
     """An ELF with .data (8 bytes), .bss, a section past the end of the file and these symbols:
     gData (.data 0-3), gData2 (.data 4-7), gBss (.bss), gAbs (SHN_ABS), gBadIndex (section 7, the section count),
     gPastSection (.data 8-11) and gFar (in the section past the file)."""
@@ -53,7 +53,7 @@ def build_elf():
     sym_strtab, sym_offsets = strtab(name for name, *_ in symbols)
     symtab = b"\0" * 16
     for name, value, size, shndx in symbols:
-        symtab += struct.pack("<IIIBBH", sym_offsets[name], value, size, 0x11, 0, shndx)
+        symtab += struct.pack("<IIIBBH", (name_offsets or {}).get(name, sym_offsets[name]), value, size, 0x11, 0, shndx)
 
     body = DATA + symtab + sym_strtab + shstrtab
     data_off = 52
@@ -71,7 +71,7 @@ def build_elf():
         + shdr(".data", SHT_PROGBITS, DATA_ADDR, data_off, len(DATA))
         + shdr(".bss", SHT_NOBITS, 0x03000000, data_off, 16)
         + shdr(".far", SHT_PROGBITS, 0x09000000, 0x100000, 16)
-        + shdr(".symtab", SHT_SYMTAB, 0, symtab_off, len(symtab), 16)
+        + shdr(".symtab", SHT_SYMTAB, 0, symtab_off, len(symtab), symtab_entsize)
         + shdr(".strtab", SHT_STRTAB, 0, sym_strtab_off, len(sym_strtab))
         + shdr(".shstrtab", SHT_STRTAB, 0, shstrtab_off, len(shstrtab))
     )
@@ -85,8 +85,11 @@ class PatchelfTestCase(unittest.TestCase):
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
         self.path = pathlib.Path(directory.name) / "test.elf"
-        self.original = build_elf()
-        self.path.write_bytes(self.original)
+        self.use_elf(build_elf())
+
+    def use_elf(self, data):
+        self.original = data
+        self.path.write_bytes(data)
 
     def run_tool(self, *args):
         return subprocess.run([str(TOOL), str(self.path), *args], capture_output=True)
@@ -141,6 +144,20 @@ class Rejected(PatchelfTestCase):
 
     def test_value_too_long(self):
         self.assertRejected(["gData", "abcde"], "gData: overflows size (4)")
+
+
+class BadMetadata(PatchelfTestCase):
+    def test_section_header_table_past_the_file(self):
+        self.use_elf(build_elf()[:-1])
+        self.assertRejected(["gData", "x"], "section header table lies outside the file")
+
+    def test_symtab_entry_size(self):
+        self.use_elf(build_elf(symtab_entsize=0))
+        self.assertRejected(["gData", "x"], "bad .symtab section")
+
+    def test_symbol_name_past_the_string_table(self):
+        self.use_elf(build_elf(name_offsets={"gData": 0x10000}))
+        self.assertRejected(["gData", "x"], "gData: symbol not found")
 
 
 if __name__ == "__main__":
