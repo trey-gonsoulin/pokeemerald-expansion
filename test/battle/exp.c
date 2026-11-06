@@ -222,6 +222,27 @@ AI_ONE_VS_TWO_BATTLE_TEST("Both opponent's Pokemon give experience in battle aga
 #define EXP_YIELD(species, level) (gSpeciesInfo[species].expYield * (level) / 7)
 #define EXP_AT_LEVEL(species, level) (gExperienceTables[gSpeciesInfo[species].growthRate][level])
 
+AI_SINGLE_BATTLE_TEST("Exp award: a trainer's Pokemon gives 1.5x exp up to Gen 6 only (#140)")
+{
+    u32 gen = 0, expected = 0;
+    PARAMETRIZE { gen = GEN_6; expected = EXP_YIELD(SPECIES_TREECKO, 15) * 150 / 100; }
+    PARAMETRIZE { gen = GEN_7; expected = EXP_YIELD(SPECIES_TREECKO, 15); }
+    PARAMETRIZE { gen = GEN_8; expected = EXP_YIELD(SPECIES_TREECKO, 15); }
+    GIVEN {
+        WITH_EXP_AWARD_CONFIGS();
+        WITH_CONFIG(B_TRAINER_EXP_MULTIPLIER, gen);
+        PLAYER(SPECIES_WOBBUFFET) { Level(15); }
+        OPPONENT(SPECIES_TREECKO) { Level(15); HP(1); Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_SCRATCH); }
+    } SCENE {
+        MESSAGE("The opposing Treecko fainted!");
+        EXPERIENCE_BAR(player);
+    } THEN {
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WOBBUFFET, 15) + expected);
+    }
+}
+
 AI_SINGLE_BATTLE_TEST("Exp award: Pokemon gain experience once when the opponent's last Pokemon faints from end-of-turn damage")
 {
     u32 status, playerSpeed;
