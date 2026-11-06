@@ -144,13 +144,20 @@ int main(int argc, char **argv)
                 ? ""
                 : "\t@mkdir -p '" + target.substr(0, target_slash_pos) + "'\n";
 
-            std::string rule;
+            // The target also depends on the tool, so a rebuilt tool rewrites it.
+            std::string tool = "$(GFX)";
+            std::string tool_args = "$< $@ " + incgfx.arguments;
             if (incgfx.extensions == ".smol")
-                rule = mk_target_basedir + "\t$(SMOL) -w $< $@ " + incgfx.arguments + "\n";
+            {
+                tool = "$(SMOL)";
+                tool_args = "-w $< $@ " + incgfx.arguments;
+            }
             else if (incgfx.extensions == ".smolTM")
-                rule = mk_target_basedir + "\t$(SMOLTM) $< $@ \n";
-            else
-                rule = mk_target_basedir + "\t$(GFX) $< $@ " + incgfx.arguments + "\n";
+            {
+                tool = "$(SMOLTM)";
+                tool_args = "$< $@ ";
+            }
+            std::string rule = mk_target_basedir + "\t" + tool + " " + tool_args + "\n";
 
             dependencies.insert(target);
 
@@ -158,7 +165,7 @@ int main(int argc, char **argv)
             // ".smol" doesn't require any arguments.
             size_t dot_pos = incgfx.extensions.find_first_of('.', 1);
             auto firstTarget = gfx_root + incgfx.source + arguments_as_path + incgfx.extensions.substr(0, dot_pos);
-            dependencies_gfx_rules[firstTarget] = std::make_pair(incgfx.source, rule);
+            dependencies_gfx_rules[firstTarget] = std::make_pair(incgfx.source + " " + tool, rule);
         }
         for (auto include : file.GetIncludes())
         {
