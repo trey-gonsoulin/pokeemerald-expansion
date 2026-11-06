@@ -8448,11 +8448,52 @@ static bool32 IsMoveAimedAtFoe(enum Move move)
     }
 }
 
-static uq4_12_t CalcSpeciesTypeEffectivenessOutOfBattle(enum Move move, enum Type moveType, enum Species speciesDef, enum Ability abilityDef)
+// Whether the attacker's ability or the move gets past the defender's ability, as
+// moldBreakerActive does in battle (IsMoldBreakerTypeAbility, MoveIgnoresTargetAbility).
+static bool32 DoesMoveBreakAbilityOutOfBattle(enum Move move, enum Ability abilityAtk, enum Ability abilityDef)
+{
+    if (!gAbilitiesInfo[abilityDef].breakable)
+        return FALSE;
+
+    return abilityAtk == ABILITY_MOLD_BREAKER
+        || abilityAtk == ABILITY_TERAVOLT
+        || abilityAtk == ABILITY_TURBOBLAZE
+        || (abilityAtk == ABILITY_MYCELIUM_MIGHT && GetMoveCategory(move) == DAMAGE_CATEGORY_STATUS)
+        || MoveIgnoresTargetAbility(move);
+}
+
+// Whether the defender's ability stops a move aimed at it outright, as CanAbilityAbsorbMove
+// does in battle: an absorbed type, or Wind Rider, Soundproof, Bulletproof and Good as Gold.
+static bool32 DoesAbilityBlockMoveOutOfBattle(enum Move move, enum Type moveType, enum Ability abilityDef)
+{
+    if (!IsMoveAimedAtFoe(move))
+        return FALSE;
+    if (DoesAbilityAbsorbMoveType(abilityDef, moveType))
+        return TRUE;
+
+    switch (abilityDef)
+    {
+    case ABILITY_WIND_RIDER:
+        return IsWindMove(move);
+    case ABILITY_SOUNDPROOF:
+        return IsSoundMove(move);
+    case ABILITY_BULLETPROOF:
+        return IsBallisticMove(move);
+    case ABILITY_GOOD_AS_GOLD:
+        return GetMoveCategory(move) == DAMAGE_CATEGORY_STATUS;
+    default:
+        return FALSE;
+    }
+}
+
+static uq4_12_t CalcSpeciesTypeEffectivenessOutOfBattle(enum Move move, enum Type moveType, enum Ability abilityAtk, enum Species speciesDef, enum Ability abilityDef)
 {
     uq4_12_t modifier = UQ_4_12(1.0);
 
-    if (IsMoveAimedAtFoe(move) && DoesAbilityAbsorbMoveType(abilityDef, moveType))
+    if (DoesMoveBreakAbilityOutOfBattle(move, abilityAtk, abilityDef))
+        abilityDef = ABILITY_NONE;
+
+    if (DoesAbilityBlockMoveOutOfBattle(move, moveType, abilityDef))
         return UQ_4_12(0.0);
 
     MulByTypeEffectivenessOutOfBattle(move, moveType, &modifier, GetSpeciesType(speciesDef, 0));
@@ -8467,14 +8508,14 @@ static uq4_12_t CalcSpeciesTypeEffectivenessOutOfBattle(enum Move move, enum Typ
     return modifier;
 }
 
-uq4_12_t CalcPartyMonTypeEffectivenessMultiplier(enum Move move, enum Species speciesDef, enum Ability abilityDef)
+uq4_12_t CalcPartyMonTypeEffectivenessMultiplier(enum Move move, enum Ability abilityAtk, enum Species speciesDef, enum Ability abilityDef)
 {
     enum Type moveType = GetBattleMoveType(move);
 
     if (move == MOVE_STRUGGLE || moveType == TYPE_MYSTERY)
         return UQ_4_12(1.0);
 
-    return CalcSpeciesTypeEffectivenessOutOfBattle(move, moveType, speciesDef, abilityDef);
+    return CalcSpeciesTypeEffectivenessOutOfBattle(move, moveType, abilityAtk, speciesDef, abilityDef);
 }
 
 static uq4_12_t GetInverseTypeMultiplier(uq4_12_t multiplier)
@@ -8498,7 +8539,7 @@ uq4_12_t GetOverworldTypeEffectiveness(struct Pokemon *mon, enum Type moveType)
     if (moveType == TYPE_MYSTERY)
         return UQ_4_12(1.0);
 
-    return CalcSpeciesTypeEffectivenessOutOfBattle(MOVE_POUND, moveType, GetMonData(mon, MON_DATA_SPECIES), GetMonAbility(mon));
+    return CalcSpeciesTypeEffectivenessOutOfBattle(MOVE_POUND, moveType, ABILITY_NONE, GetMonData(mon, MON_DATA_SPECIES), GetMonAbility(mon));
 }
 
 uq4_12_t GetTypeModifier(enum Type atkType, enum Type defType)
