@@ -13,9 +13,10 @@ import pathlib
 import re
 import sys
 
-CONFIG_ENABLED_PAT = re.compile(r"^#define P_LEARNSET_HELPER_TEACHABLE\s+(?P<cfg_val>[^ ]*)", flags=re.MULTILINE)
+CONFIG_ENABLED_PAT = re.compile(r"^#define P_LEARNSET_HELPER_TEACHABLE[ \t]+(?P<cfg_val>\w+)", flags=re.MULTILINE)
 
-TEACHING_TYPE_PAT =  re.compile(r"\s*\.teachingType\s*=\s*(?P<teaching_type>[A-Z_]+),")
+TEACHING_TYPE_PAT =  re.compile(r"\s*\.teachingType\s*=\s*(?P<teaching_type>[A-Z_]+)\s*(,|\\|$)")
+SPECIES_START_PAT = re.compile(r"\s*\[SPECIES_\w+\]\s*=|#define\s")
 LEARNSET_PAT = re.compile(r"\s*\.teachableLearnset\s*=\s*s(?P<name>\w+?)TeachableLearnset")
 PREPROC_START_PAT = re.compile(r"^#if(def)?\s+\w+", flags=re.MULTILINE)
 PREPROC_END_PAT = re.compile(r"^#endif\s*(//\s*\w+)?", flags=re.MULTILINE)
@@ -41,7 +42,10 @@ def is_valid_preprocessor(line: str) -> bool:
 def extract_repo_species_data() -> list:
     species_data = []
     pokemon_list = []
+    # The teaching type and entry of the species block being parsed, so that a teachingType
+    # before or after its learnset line goes to that species alone.
     teaching_type = "DEFAULT_LEARNING"
+    species = None
     file_list = sorted(glob.glob("src/data/pokemon/species_info/*_families.h"))
     file_list.append("./src/data/pokemon/species_info.h")
     for families_fname in file_list:
@@ -57,21 +61,27 @@ def extract_repo_species_data() -> list:
                     species_data.append(line)
                 continue
 
+            if re.match(SPECIES_START_PAT, line):
+                teaching_type = "DEFAULT_LEARNING"
+                species = None
             match = re.match(LEARNSET_PAT, line)
             if match:
+                species = None
                 if match.group("name") == "None":
                     continue
                 if match.group("name") not in pokemon_list:
                     if not is_last_line_preprocessor:
                         species_data.append("\n")
                     is_last_line_preprocessor = False
-                    species_data.append({"name": match.group("name"), "teaching_type": teaching_type})
+                    species = {"name": match.group("name"), "teaching_type": teaching_type}
+                    species_data.append(species)
                     pokemon_list.append(match.group("name"))
-                teaching_type = "DEFAULT_LEARNING"
                 continue
             match = re.match(TEACHING_TYPE_PAT, line)
             if match:
                 teaching_type = match.group("teaching_type")
+                if species is not None:
+                    species["teaching_type"] = teaching_type
     return species_data
 
 def add_whitesspaces(parsed_list) -> list:
