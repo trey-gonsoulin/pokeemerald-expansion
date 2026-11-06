@@ -100,3 +100,7 @@ jobs:
       # The generator of the debug menu's flag and var names (src/data/debug_flag_var_names.h)
       - name: Debug name generator unit tests
         run: python3 -m unittest discover -s tools/misc
+
+      # The scripts that write teachable_learnsets.h, tutor_moves.h and all_learnables.json
+      - name: Learnset helper unit tests
+        run: python3 -m unittest discover -s tools/learnset_helpers
