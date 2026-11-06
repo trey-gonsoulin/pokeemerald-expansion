@@ -27,10 +27,15 @@ none: a species whose regular slots hold one ability (``certain_ability``)
 gets ABILITY_ATTACK's Attack or ABILITY_TURNS's turn cost (Slaking's Truant,
 Medicham's Pure Power).
 
-Left out: types (the reference has none, so every hit is neutral: that is the
-matchup-relative model, README "Matchup-relative strength"), other abilities,
-held items, natures and EVs (trainers.party sets none), status and stat moves,
-critical hits and fixed-damage moves other than Night Shade's and Psywave's.
+The reference has no type, so every hit on or by it is neutral. ``score``
+with a type chart (``chart``) counts types and ABILITY_IMMUNE's certain
+immunities instead: matchup.py's pairwise fights (README, "Matchup-relative
+strength").
+
+Left out: other abilities, held items, natures and EVs (trainers.party sets
+none), status and stat moves, critical hits, fixed-damage moves other than
+Night Shade's and Psywave's, and attacks that need a state of their own
+(CONDITIONAL_EFFECTS).
 Modern data only. Standard library only.
 """
 
@@ -57,6 +62,20 @@ HP_POWER_EFFECTS = frozenset(('EFFECT_POWER_BASED_ON_USER_HP',))
 # Abilities a trainer Pokemon is sure to have that the model scores.
 ABILITY_ATTACK = {'ABILITY_HUGE_POWER': 2, 'ABILITY_PURE_POWER': 2}  # Attack multiplier
 ABILITY_TURNS = {'ABILITY_TRUANT': 2}  # turns per attack
+# Move types a certain ability takes no damage from, counted when ``score``
+# has a type chart. Lightning Rod and Storm Drain since Gen 5
+# (B_REDIRECT_ABILITY_IMMUNITY).
+ABILITY_IMMUNE = {'ABILITY_LEVITATE': 'TYPE_GROUND', 'ABILITY_EARTH_EATER': 'TYPE_GROUND',
+                  'ABILITY_FLASH_FIRE': 'TYPE_FIRE', 'ABILITY_WELL_BAKED_BODY': 'TYPE_FIRE',
+                  'ABILITY_VOLT_ABSORB': 'TYPE_ELECTRIC', 'ABILITY_MOTOR_DRIVE': 'TYPE_ELECTRIC',
+                  'ABILITY_WATER_ABSORB': 'TYPE_WATER', 'ABILITY_DRY_SKIN': 'TYPE_WATER',
+                  'ABILITY_SAP_SIPPER': 'TYPE_GRASS'}
+REDIRECT_IMMUNE = {'ABILITY_LIGHTNING_ROD': 'TYPE_ELECTRIC', 'ABILITY_STORM_DRAIN': 'TYPE_WATER'}
+# Attacks that work only in some state a straight fight doesn't have
+# (Focus Punch: not hit this turn; Dream Eater: an asleep target; Fake Out:
+# the first turn), scored as no attack.
+CONDITIONAL_EFFECTS = frozenset(('EFFECT_FOCUS_PUNCH', 'EFFECT_DREAM_EATER', 'EFFECT_SNORE', 'EFFECT_FIRST_TURN_ONLY',
+                                 'EFFECT_LAST_RESORT', 'EFFECT_SYNCHRONOISE', 'EFFECT_BELCH', 'EFFECT_POLTERGEIST'))
 LEVEL_DAMAGE_EFFECTS = frozenset(('EFFECT_LEVEL_DAMAGE', 'EFFECT_PSYWAVE'))  # Psywave's mean is the level
 # Turns of first strike: a side gets SPEED_BONUS times its chance to move
 # first, which rises smoothly with the speed ratio (SPEED_STEEPNESS: 10%
@@ -74,7 +93,9 @@ MIN_REFERENCE_POWER = 20
 class Fighter:
     level: float
     stats: dict  # hp, atk, def, spa, spd, spe
-    attacks: list  # (move name, or None for the reference's attack; expected power per turn; kind)
+    attacks: list  # (move name, or None for the reference's attack; expected power per turn; kind; move type)
+    types: tuple = ()  # none: every hit on it is neutral
+    immune: frozenset = frozenset()  # move types it takes nothing from (ABILITY_IMMUNE)
 
 
 def stats(base, ivs, level):
@@ -92,8 +113,8 @@ def stats(base, ivs, level):
 def move_power(gd, mv, types):
     """A move's expected power per turn before the attacking and defending
     stats: power, STAB, accuracy, strikes and turn cost. 0 for a move this
-    model doesn't score (status, fixed damage, faints the user)."""
-    if not mv.attacking or mv.explosion or mv.fixed_damage:
+    model doesn't score (status, fixed damage, faints the user, CONDITIONAL_EFFECTS)."""
+    if not mv.attacking or mv.explosion or mv.fixed_damage or mv.effect in CONDITIONAL_EFFECTS:
         return 0
     power = mv.power * (STAB if mv.type in types else 1)
     power *= MULTI_HIT_MEAN[bool(gd.flag('B_MULTI_HIT_CHANCE >= GEN_5'))] if mv.multi_hit else mv.strikes
@@ -124,31 +145,49 @@ def fighter(gd, species, level, moves, ivs):
     for name in moves:
         mv = gd.move(name, ivs)
         if mv.attacking and mv.effect in LEVEL_DAMAGE_EFFECTS:
-            attacks.append((name, level * accuracy(mv) / turns, 'fixed'))
+            attacks.append((name, level * accuracy(mv) / turns, 'fixed', mv.type))
         elif move_power(gd, mv, sp.types):
             attacks.append((name, move_power(gd, mv, sp.types) / turns,
-                            'physical' if mv.category == 'DAMAGE_CATEGORY_PHYSICAL' else 'special'))
+                            'physical' if mv.category == 'DAMAGE_CATEGORY_PHYSICAL' else 'special', mv.type))
     st = stats(sp.stats, ivs, level)
     st['atk'] *= ABILITY_ATTACK.get(ability, 1)
-    return Fighter(level, st, attacks)
+    immune = ABILITY_IMMUNE.get(ability) or (
+        REDIRECT_IMMUNE.get(ability) if gd.flag('B_REDIRECT_ABILITY_IMMUNITY >= GEN_5') else None)
+    return Fighter(level, st, attacks, tuple(sp.types), frozenset((immune,)) if immune else frozenset())
 
 
 def reference(level, power_fn):
     base = dict.fromkeys(('baseHP', 'baseAttack', 'baseDefense', 'baseSpAttack', 'baseSpDefense', 'baseSpeed'),
                          REFERENCE_BASE)
     ivs = dict.fromkeys(('HP', 'Atk', 'Def', 'SpA', 'SpD', 'Spe'), REFERENCE_IV)
-    return Fighter(level, stats(base, ivs, level), [(None, power_fn(level), 'mixed')])
+    return Fighter(level, stats(base, ivs, level), [(None, power_fn(level), 'mixed', None)])
 
 
 def formula(level, power, attack, defense):
     return ((2 * level / 5 + 2) * power * attack / defense / 50 + 2) * RANDOM_MEAN
 
 
-def expected_damage(att, dfn):
-    """``att``'s best expected damage per turn on ``dfn``."""
+def type_multiplier(chart, move_type, dfn):
+    """The type chart's multiplier for ``move_type`` on ``dfn`` (1 without a
+    chart or a move type), 0 for a type its ability is immune to."""
+    if chart is None or move_type is None:
+        return 1.0
+    if move_type in dfn.immune:
+        return 0.0
+    return G.effectiveness(chart, move_type, dfn.types)
+
+
+def expected_damage(att, dfn, chart=None):
+    """``att``'s best expected damage per turn on ``dfn``, with ``chart``
+    (gamedata's type chart) counting types."""
     best = 0
-    for _, power, kind in att.attacks:
-        if kind == 'fixed':
+    for _, power, kind, move_type in att.attacks:
+        mult = type_multiplier(chart, move_type, dfn)
+        if not mult:
+            continue
+        if kind == 'fixed':  # immunity only: Night Shade does its level to anything it can hit
+            dmg = power
+            mult = 1
             dmg = power
         elif kind == 'physical':
             dmg = formula(att.level, power, att.stats['atk'], dfn.stats['def'])
@@ -157,15 +196,15 @@ def expected_damage(att, dfn):
         else:
             dmg = (formula(att.level, power, att.stats['atk'], dfn.stats['def'])
                    + formula(att.level, power, att.stats['spa'], dfn.stats['spd'])) / 2
-        best = max(best, dmg)
+        best = max(best, dmg * mult)
     return best
 
 
-def score(a, b):
+def score(a, b, chart=None):
     """How far ``a`` is ahead of ``b``: turns ``b`` needs to KO it over turns
     it needs to KO ``b``, the faster side SPEED_BONUS turns longer. 0 when
-    ``a`` can't damage ``b``."""
-    hit_a, hit_b = expected_damage(a, b), expected_damage(b, a)
+    ``a`` can't damage ``b``. ``chart``: count types (expected_damage)."""
+    hit_a, hit_b = expected_damage(a, b, chart), expected_damage(b, a, chart)
     if not hit_a:
         return 0.0
     if not hit_b:
@@ -206,7 +245,7 @@ def effective_level(mon, power_fn):
 def best_power(gd, species, level, moves, ivs):
     """A Pokemon's best expected power per turn (``move_power``; the level
     for Night Shade), 0 with no scored attack."""
-    return max((p for _, p, _ in fighter(gd, species, level, moves, ivs).attacks), default=0)
+    return max((p for _, p, *_ in fighter(gd, species, level, moves, ivs).attacks), default=0)
 
 
 def fit_reference_power(gd, mons):

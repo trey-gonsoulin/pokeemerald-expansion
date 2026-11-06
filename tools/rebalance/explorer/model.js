@@ -5,11 +5,12 @@
 export const PYODIDE_URL = 'https://cdn.jsdelivr.net/pyodide/v314.0.7/full/';
 
 // Pyodide path -> path relative to this directory. rebalance imports
-// gamedata and power, and gamedata imports area_archetypes' restock (and
-// its imports).
+// gamedata, matchup and power, and gamedata imports area_archetypes'
+// restock (and its imports).
 export const FILES = {
     '/tools/rebalance/rebalance.py': '../rebalance.py',
     '/tools/rebalance/gamedata.py': '../gamedata.py',
+    '/tools/rebalance/matchup.py': '../matchup.py',
     '/tools/rebalance/power.py': '../power.py',
     '/tools/rebalance/output/curve_data.json': '../output/curve_data.json',
     '/tools/area_archetypes/restock.py': '../../area_archetypes/restock.py',

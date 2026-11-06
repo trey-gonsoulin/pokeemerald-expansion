@@ -18,6 +18,7 @@ import unittest
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import gamedata as G  # noqa: E402
+import matchup as M  # noqa: E402
 import power as P  # noqa: E402
 import rebalance as RB  # noqa: E402
 
@@ -560,10 +561,142 @@ class Power(unittest.TestCase):
                                  'MOVE_TACKLE': {'power': 40}})
 
 
+def matchup_regime(species, moves, defaults, chart):
+    """power_regime plus what matchup.py reads: the type chart, the moves and default movesets."""
+    gd = power_regime(species, moves)
+    gd.chart, gd.moves = chart, moves
+    gd.default_moves = lambda sp, level: list(defaults.get(sp, ()))
+    return gd
+
+
+class Matchup(unittest.TestCase):
+    """matchup.py's stand-in team and fights, and power.py's typed score."""
+
+    CHART = {'TYPE_WATER': {'TYPE_FIRE': 2.0, 'TYPE_GRASS': 0.5},
+             'TYPE_GRASS': {'TYPE_WATER': 2.0, 'TYPE_FIRE': 0.5},
+             'TYPE_FIRE': {'TYPE_GRASS': 2.0, 'TYPE_WATER': 0.5},
+             'TYPE_GHOST': {'TYPE_NORMAL': 0.0}}
+    MOVES = {
+        'MOVE_SURF': G.Move('TYPE_WATER', 80, 100, 'DAMAGE_CATEGORY_SPECIAL'),
+        'MOVE_WATER_GUN': G.Move('TYPE_WATER', 40, 100, 'DAMAGE_CATEGORY_SPECIAL'),
+        'MOVE_LEAF': G.Move('TYPE_GRASS', 80, 100, 'DAMAGE_CATEGORY_SPECIAL'),
+        'MOVE_EMBER': G.Move('TYPE_FIRE', 80, 100, 'DAMAGE_CATEGORY_SPECIAL'),
+        'MOVE_QUAKE': G.Move('TYPE_GROUND', 100, 100, 'DAMAGE_CATEGORY_PHYSICAL'),
+        'MOVE_NIGHT_SHADE': G.Move('TYPE_GHOST', 1, 100, 'DAMAGE_CATEGORY_SPECIAL', effect='EFFECT_LEVEL_DAMAGE'),
+        'MOVE_GROWL': G.Move('TYPE_NORMAL', 0, 100, 'DAMAGE_CATEGORY_STATUS'),
+    }
+    IVS = dict.fromkeys(G.IV_STATS, 15)
+
+    def regime(self, species, defaults=None):
+        return matchup_regime(species, self.MOVES, defaults or {}, self.CHART)
+
+    def test_the_typed_score_counts_the_chart_and_certain_immunities(self):
+        gd = self.regime({'SPECIES_WATER': power_species(80, ('TYPE_WATER',)),
+                          'SPECIES_FIRE': power_species(80, ('TYPE_FIRE',)),
+                          'SPECIES_NORMAL': power_species(80, ('TYPE_NORMAL',)),
+                          'SPECIES_FLOAT': power_species(80, ('TYPE_FIRE',), ('ABILITY_LEVITATE', 'ABILITY_NONE'))})
+        water = P.fighter(gd, 'SPECIES_WATER', 50, ['MOVE_SURF'], self.IVS)
+        fire = P.fighter(gd, 'SPECIES_FIRE', 50, ['MOVE_EMBER'], self.IVS)
+        self.assertAlmostEqual(P.expected_damage(water, fire, self.CHART), 2 * P.expected_damage(water, fire))
+        self.assertGreater(P.score(water, fire, self.CHART), P.score(water, fire))
+        # Levitate is certain, so Ground does nothing to it, but only with the chart.
+        quake = P.fighter(gd, 'SPECIES_NORMAL', 50, ['MOVE_QUAKE'], self.IVS)
+        floater = P.fighter(gd, 'SPECIES_FLOAT', 50, ['MOVE_EMBER'], self.IVS)
+        self.assertEqual(floater.immune, {'TYPE_GROUND'})
+        self.assertEqual(P.expected_damage(quake, floater, self.CHART), 0)
+        self.assertGreater(P.expected_damage(quake, floater), 0)
+        # Night Shade does its level to anything it can hit, and nothing to a Normal type.
+        shade = P.fighter(gd, 'SPECIES_FIRE', 50, ['MOVE_NIGHT_SHADE'], self.IVS)
+        self.assertEqual(P.expected_damage(shade, water, self.CHART), 50)
+        self.assertEqual(P.expected_damage(shade, quake, self.CHART), 0)
+
+    def test_attacks_that_need_a_state_of_their_own_score_nothing(self):
+        punch = G.Move('TYPE_FIGHTING', 150, 100, 'DAMAGE_CATEGORY_PHYSICAL', effect='EFFECT_FOCUS_PUNCH')
+        self.assertEqual(P.move_power(fake_regime(), punch, ('TYPE_FIGHTING',)), 0)
+
+    def test_moves_are_picked_for_coverage(self):
+        gd = self.regime({'SPECIES_WATER': power_species(80, ('TYPE_WATER',))},
+                         {'SPECIES_WATER': ['MOVE_WATER_GUN', 'MOVE_SURF', 'MOVE_GROWL']})
+        targets = ['TYPE_FIRE', 'TYPE_GRASS', 'TYPE_WATER']
+        # Surf (STAB) first; then Ember, which gains more on Grass than Leaf gains on Water.
+        self.assertEqual(M.pick_moves(gd, 'SPECIES_WATER', 50, self.IVS, ['MOVE_LEAF', 'MOVE_EMBER'], 2, targets),
+                         ['MOVE_SURF', 'MOVE_EMBER'])
+        # No status moves, and never more than the attacks there are.
+        self.assertEqual(sorted(M.pick_moves(gd, 'SPECIES_WATER', 50, self.IVS, [], 4, targets)),
+                         ['MOVE_SURF', 'MOVE_WATER_GUN'])
+
+    def team_regime(self):
+        species = {'SPECIES_SEED': power_species(60, ('TYPE_GRASS',)),
+                   'SPECIES_TREE': power_species(90, ('TYPE_GRASS',)),
+                   'SPECIES_PUDDLE': power_species(40, ('TYPE_WATER',)),
+                   'SPECIES_LAKE': power_species(85, ('TYPE_WATER',)),
+                   'SPECIES_FIRE': power_species(70, ('TYPE_FIRE',)),
+                   'SPECIES_GRASSY': power_species(100, ('TYPE_GRASS',)),
+                   'SPECIES_BANNED': power_species(120, ('TYPE_NORMAL',)),
+                   'SPECIES_MUTE': power_species(110, ('TYPE_NORMAL',))}
+        defaults = {'SPECIES_TREE': ['MOVE_LEAF'], 'SPECIES_LAKE': ['MOVE_SURF'], 'SPECIES_FIRE': ['MOVE_EMBER'],
+                    'SPECIES_GRASSY': ['MOVE_LEAF'], 'SPECIES_BANNED': ['MOVE_QUAKE'], 'SPECIES_MUTE': ['MOVE_GROWL']}
+        return self.regime(species, defaults)
+
+    @staticmethod
+    def evolve(species, level):
+        return {'SPECIES_SEED': 'SPECIES_TREE', 'SPECIES_PUDDLE': 'SPECIES_LAKE'}.get(species, species) \
+            if level >= 16 else species
+
+    def team(self, stage_index, **settings):
+        settings = {'team_size': 6, 'catches_per_stage': 1, 'ivs': 15, 'moves': 4, 'exclude': ['SPECIES_BANNED'],
+                    **settings}
+        seen = {'SPECIES_PUDDLE', 'SPECIES_FIRE', 'SPECIES_GRASSY', 'SPECIES_BANNED', 'SPECIES_MUTE'}
+        team = M.stand_in_team(self.team_regime(), settings, stage_index, [20, 18, 18, 18, 18, 18], 'SPECIES_SEED',
+                               seen, [], {}, self.evolve, ['TYPE_FIRE', 'TYPE_GRASS', 'TYPE_WATER'])
+        return [(p['species'], p['level']) for p in team]
+
+    def test_the_stand_in_team_takes_new_types_first(self):
+        # The starter at the lead's level, evolved; catches_per_stage per earlier stage, at the bench's.
+        self.assertEqual(self.team(0), [('SPECIES_TREE', 20)])
+        self.assertEqual(self.team(1), [('SPECIES_TREE', 20), ('SPECIES_LAKE', 18)])
+        # Excluded and attackless species never go in; a type the team has waits for the fill-up.
+        self.assertEqual(self.team(2), [('SPECIES_TREE', 20), ('SPECIES_LAKE', 18), ('SPECIES_FIRE', 18)])
+        self.assertEqual(self.team(1, catches_per_stage=3),
+                         [('SPECIES_TREE', 20), ('SPECIES_LAKE', 18), ('SPECIES_FIRE', 18), ('SPECIES_GRASSY', 18)])
+        self.assertEqual(len(self.team(5, catches_per_stage=3, team_size=3)), 3)
+
+    def test_fight_readings(self):
+        gd = self.team_regime()
+        team = [M.stand_in(gd, 'SPECIES_LAKE', 50, self.IVS, [], {}, 4, ['TYPE_FIRE'])]
+        trainer = G.Trainer('TRAINER_X', 'X', 'Leader', [], False,
+                            [G.TrainerMon('SPECIES_FIRE', 50, ['MOVE_EMBER']),
+                             G.TrainerMon('SPECIES_TREE', 50, ['MOVE_LEAF'])])
+        out = M.fight(gd, team, trainer)
+        fire, tree = out['answers']
+        self.assertGreater(fire['answer'], M.ANSWERED)
+        self.assertLess(tree['answer'], M.ANSWERED)
+        self.assertEqual((out['hardest'], out['lead'], out['coverage']), (tree, fire, 1))
+        self.assertEqual(fire['by'], 'SPECIES_LAKE')
+
+    def test_rival_teams_follow_the_starter(self):
+        trainers = dict.fromkeys(('TRAINER_MAY_X_MUDKIP', 'TRAINER_MAY_X_TREECKO', 'TRAINER_LEADER'))
+        starters = ('TREECKO', 'TORCHIC', 'MUDKIP')
+        self.assertEqual(M.starter_boss('TRAINER_MAY_X_MUDKIP', 'TREECKO', starters, trainers), 'TRAINER_MAY_X_TREECKO')
+        self.assertIsNone(M.starter_boss('TRAINER_MAY_X_MUDKIP', 'TORCHIC', starters, trainers))
+        self.assertEqual(M.starter_boss('TRAINER_LEADER', 'TORCHIC', starters, trainers), 'TRAINER_LEADER')
+
+    def test_open_tms_are_those_of_earlier_stages(self):
+        map_tms = {'RouteA': [('ITEM_TM_LEAF', 'ball')], 'TownB': [('ITEM_TM_EMBER', 'script')],
+                   'TownB_Corner': [('ITEM_TM_QUAKE', 'script')]}
+        stages = [{'maps': ['RouteA']}, {'maps': ['TownB*']}, {'maps': ['Later']}]
+        self.assertEqual(M.open_tms(map_tms, stages, 0, ()), [])
+        self.assertEqual(M.open_tms(map_tms, stages, 1, ()), ['MOVE_LEAF'])
+        self.assertEqual(M.open_tms(map_tms, stages, 2, ('TownB_Corner',)), ['MOVE_EMBER', 'MOVE_LEAF'])
+
+
 class Analysis(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.res = RB.analyze(FIXTURE, FIXTURE_STAGES)
+
+    def test_matchup_skips_starters_the_data_lacks(self):
+        self.assertEqual(self.res['matchup'], {'starters': [], 'fights': []})
 
     def test_census_skips_comment_paragraphs(self):
         c = self.res['census']
@@ -983,6 +1116,15 @@ class RealRepo(unittest.TestCase):
                     self.assertTrue(d.learnset(mon.species), (regime, mon.species))
                     for mv in mon.moves + d.default_moves(mon.species, mon.level):
                         self.assertIn(mv, d.moves, (regime, t.id, mv))
+
+    def test_every_rival_fight_has_a_team_per_starter(self):
+        """matchup.py swaps the starter suffix of the staged rival teams."""
+        trainers = G.parse_trainers(os.path.join(G.REPO, 'src', 'data', 'trainers.party'))
+        stages = RB.load_stages(RB.DEFAULT_STAGES, trainers, G.REPO)
+        starters = M.load_settings()['starters']
+        for bid in (b for st in stages for b in st['bosses']):
+            for s in starters:
+                self.assertIsNotNone(M.starter_boss(bid, s, starters, trainers), (bid, s))
 
     def test_move_and_item_details(self):
         gd = G.load(G.REPO)
