@@ -297,6 +297,7 @@ TEST("LoadCompressedSpriteSheetByTemplate loads an uncompressed sheet whole afte
     tileStart = LoadCompressedSpriteSheetByTemplate(&template, TILE_SIZE_4BPP);
     EXPECT_EQ(gLoadFail, FALSE);
     EXPECT_EQ(tileStart, 0);
+    EXPECT(memcmp((const u8 *)OBJ_VRAM0, sTestTile, TILE_SIZE_4BPP) == 0);
     EXPECT(memcmp(sheetTiles, sFilledTiles, sizeof(sFilledTiles)) == 0);
     EXPECT_EQ(LoadTestSheet(1), 3);
     ResetSpriteData();
