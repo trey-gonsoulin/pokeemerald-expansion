@@ -224,6 +224,12 @@ class LearnablesKeyTest(RepoDirTest):
         self.assertIn("'???'", result.stderr)
         self.assertFalse(os.path.exists("out.json"))
 
+    def test_symbol_in_a_name_stops_the_build(self):
+        # Dropping the symbol would merge both Nidoran into one key no lookup reads
+        result = self.make({"za": {"NIDORAN♀": "MOVE_A", "NIDORAN♂": "MOVE_B"}})
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("NIDORAN", result.stderr)
+
 
 class CommittedLearnablesTest(unittest.TestCase):
     """The committed all_learnables.json is what make_learnables.py makes from porymoves_files (#274)."""
@@ -237,18 +243,23 @@ class CommittedLearnablesTest(unittest.TestCase):
             out = os.path.join(tmp, "all_learnables.json")
             run_make_learnables(str(self.PORYMOVES_DIR), out, check=True)
             with open(out) as f, open(committed) as g:
-                self.assertTrue(f.read() == g.read(),
-                                "all_learnables.json is stale: run `make src/data/pokemon/all_learnables.json`")
+                made, kept = f.read(), g.read()
+        if made != kept:
+            made, kept = json.loads(made), json.loads(kept)
+            differ = sorted(k for k in made.keys() | kept.keys() if made.get(k) != kept.get(k))
+            self.fail(f"all_learnables.json is stale for {len(differ)} species ({', '.join(differ[:10])}): "
+                      "run `make src/data/pokemon/all_learnables.json`")
 
     def test_za_merged_forms_are_the_bare_names_of_other_games_forms(self):
         # A bare name in za.json whose forms za.json doesn't list but another game does. Older games
-        # aren't checked: their bare names (rse's MAROWAK) predate the forms.
+        # aren't checked: their bare names (rse's MAROWAK) predate the forms. PORYGON_Z is its own
+        # species, not a form of Porygon.
         keys = {}
         for fname in self.PORYMOVES_DIR.glob("*.json"):
             with open(fname, encoding="utf-8") as f:
                 keys[fname.name] = {make_learnables.species_key(fname, species) for species in json.load(f)}
         za = keys.pop("za.json")
-        others = set().union(*keys.values())
+        others = set().union(*keys.values()) - {"PORYGON_Z"}
         merged = {key for key in za
                   if not any(k.startswith(key + "_") for k in za) and any(k.startswith(key + "_") for k in others)}
         self.assertEqual(merged, make_learnables.ZA_MERGED_FORMS)
