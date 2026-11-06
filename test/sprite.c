@@ -225,6 +225,29 @@ TEST("LoadSpriteSheet gives a partial last tile a whole tile")
     ResetSpriteData();
 }
 
+TEST("LoadSpriteSheet leaves the tile after a partial last tile alone")
+{
+    static const u8 ALIGNED(4) filledTiles[2 * TILE_SIZE_4BPP] = { [0 ... 2 * TILE_SIZE_4BPP - 1] = 0xFF };
+    const struct SpriteSheet partialSheet = { .data = filledTiles, .size = TILE_SIZE_4BPP * 3 / 2, .tag = TAG_TEST_SHEET + 2 };
+    const u8 *nextTile = (const u8 *)OBJ_VRAM0 + TILE_SIZE_4BPP;
+    u32 i, tileStart, changedBytes = 0;
+    ResetSpriteData();
+    LoadTestSheet(0);
+    LoadTestSheet(1);
+    FreeSpriteTilesByTag(TAG_TEST_SHEET);
+
+    // The sheet took the one free tile, 0, and its last half tile went into the zeroed tile 1.
+    tileStart = LoadSpriteSheet(&partialSheet);
+    for (i = 0; i < TILE_SIZE_4BPP; i++)
+    {
+        if (nextTile[i] != 0)
+            changedBytes++;
+    }
+    EXPECT_EQ(changedBytes, 0);
+    EXPECT_EQ(tileStart, 2);
+    ResetSpriteData();
+}
+
 TEST("LoadSpriteSheetByTemplate fails on an offset past the sheet")
 {
     static const struct SpriteFrameImage image[] = { { sTestTile, TILE_SIZE_4BPP } };
@@ -242,6 +265,7 @@ TEST("LoadSpriteSheetByTemplate fails on an offset past the sheet")
     EXPECT_EQ(GetSpriteTileStartByTag(TAG_TEST_SHEET), TAG_NONE);
 
     // A negative offset is past the sheet too, once the u32 parameter takes it.
+    gLoadFail = FALSE;
     tileStart = LoadSpriteSheetByTemplate(&template, 0, -1);
     EXPECT_EQ(gLoadFail, TRUE);
     EXPECT_EQ(GetSpriteTileStartByTag(TAG_TEST_SHEET), TAG_NONE);
