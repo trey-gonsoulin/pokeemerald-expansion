@@ -1781,7 +1781,7 @@ static s16 ReallocSpriteTiles(struct Sprite *sprite, u32 byteSize)
     if (i < MAX_SPRITES)
     {
         DestroySprite(&gSprites[i]);
-        i = AllocSpriteTiles(byteSize / TILE_SIZE_4BPP);
+        i = AllocSpriteTiles(SPRITE_SIZE_TO_TILE_COUNT(byteSize));
         if (i >= 0)
         {
             // Fill the allocated area with zeroes
