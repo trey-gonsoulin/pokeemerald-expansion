@@ -593,10 +593,10 @@ $(LIBAGBSYSCALL): FORCE
 # The ELF's name doesn't say which objects it was linked from (make debug writes pokeemerald.elf
 # from build/emerald-debug), so this stamp records the object directory and link flags, and the
 # ELF relinks when they change.
-ELF_MODE_STAMP := $(BUILD_DIR)/$(notdir $(ELF)).mode
+ELF_MODE_STAMP := $(BUILD_DIR)/$(ELF).mode
+ELF_MODE = $(OBJ_DIR) $(LDFLAGS)
 $(ELF_MODE_STAMP): FORCE
-	@mkdir -p $(@D)
-	@(echo '$(OBJ_DIR) $(LDFLAGS)' | cmp -s $@ -) || echo '$(OBJ_DIR) $(LDFLAGS)' > $@
+	@(echo '$(ELF_MODE)' | cmp -s $@ -) || echo '$(ELF_MODE)' > $@
 
 # Enable LTO LDFLAGS if set
 ifneq ($(LTO),0)
