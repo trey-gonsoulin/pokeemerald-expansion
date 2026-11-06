@@ -6,6 +6,7 @@
 #include "main.h"
 #include "malloc.h"
 #include "random.h"
+#include "sprite.h"
 #include "task.h"
 #include "union_room_chat.h"
 #include "constants/characters.h"
@@ -385,6 +386,10 @@ top:
         gPersistentTestRunnerState.state = CURRENT_TEST_STATE_RUN;
         gPersistentTestRunnerState.expectCrash = FALSE;
         ResetGlobalVariables();
+        // A test that ends with sprites or palettes loaded (test/sprite.c's BuildOamBuffer
+        // benchmarks fill every slot) would leave the next test on this runner no room (#272).
+        ResetSpriteData();
+        FreeAllSpritePalettes();
         SeedRng(0);
         SeedRng2(0);
         FillGuardElements();

@@ -78,6 +78,18 @@ TEST("BuildOamBuffer faster with no sprites")
     BenchmarkBuildOamBuffer(FALSE);
 }
 
+// A file's tests run bottom up, so on one runner (`make check -j1 TESTS="BuildOamBuffer"`)
+// this runs right after the next test, which ends with every sprite slot in use. The runner
+// resets the sprites before each test (#272).
+TEST("BuildOamBuffer: the next test starts with no sprite in use")
+{
+    u32 i, inUse = 0;
+
+    for (i = 0; i < MAX_SPRITES; i++)
+        inUse += gSprites[i].inUse;
+    EXPECT_EQ(inUse, 0);
+}
+
 TEST("BuildOamBuffer faster with max sprites (equal y/subpriority)")
 {
     u32 i;
