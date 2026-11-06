@@ -129,3 +129,82 @@ TEST("Linking Cord: trade held items are used from the bag like stones")
     CreatePartyMon(0, SPECIES_ONIX, ITEM_NONE);
     EXPECT_EQ(GetEvolutionTargetSpecies(onix, EVO_MODE_ITEM_USE, ITEM_METAL_COAT, NULL, NULL, CHECK_EVO), SPECIES_STEELIX);
 }
+
+static bool32 SpeciesLearnsMove(enum Species species, enum Move move)
+{
+    const struct LevelUpMove *learnset = GetSpeciesLevelUpLearnset(species);
+    const u16 *eggMoves = GetSpeciesEggMoves(species);
+
+    for (u32 i = 0; learnset[i].move != LEVEL_UP_MOVE_END; i++)
+    {
+        if (learnset[i].move == move)
+            return TRUE;
+    }
+    for (u32 i = 0; eggMoves[i] != MOVE_UNAVAILABLE; i++)
+    {
+        if (eggMoves[i] == move)
+            return TRUE;
+    }
+    return CanLearnTeachableMove(species, move);
+}
+
+// The species, or one of its pre-evolutions, can learn the move by level up, as an egg move, or
+// from a TM or tutor of this build.
+static bool32 LineLearnsMove(enum Species species, enum Move move)
+{
+    for (; species != SPECIES_NONE; species = GetSpeciesPreEvolution(species))
+    {
+        if (SpeciesLearnsMove(species, move))
+            return TRUE;
+    }
+    return FALSE;
+}
+
+// Dipplin evolves while it knows Dragon Cheer, which Scarlet and Violet teach only by TM (#167).
+TEST("Known-move evolution: every move an evolution needs can be learned by the line")
+{
+    enum Species unreachable = SPECIES_NONE;
+
+    for (enum Species species = SPECIES_NONE + 1; species < NUM_SPECIES && unreachable == SPECIES_NONE; species++)
+    {
+        if (!IsSpeciesEnabled(species))
+            continue;
+
+        const struct Evolution *evolutions = GetSpeciesEvolutions(species);
+
+        if (evolutions == NULL)
+            continue;
+        for (u32 i = 0; evolutions[i].method != EVOLUTIONS_END; i++)
+        {
+            const struct EvolutionParam *params = evolutions[i].params;
+
+            for (u32 j = 0; params != NULL && params[j].condition != CONDITIONS_END; j++)
+            {
+                if (params[j].condition == IF_KNOWS_MOVE && !LineLearnsMove(species, params[j].arg1))
+                    unreachable = species;
+            }
+        }
+    }
+    EXPECT_EQ(unreachable, SPECIES_NONE);
+}
+
+TEST("Known-move evolution: Dipplin learns Dragon Cheer on evolving and then evolves into Hydrapple")
+{
+    struct Pokemon *dipplin = &gParties[B_TRAINER_PLAYER][0];
+    const struct LevelUpMove *learnset = GetSpeciesLevelUpLearnset(SPECIES_DIPPLIN);
+    enum Move move = MOVE_DRAGON_CHEER;
+    u32 evolutionLevel = MAX_LEVEL + 1;
+
+    for (u32 i = 0; learnset[i].move != LEVEL_UP_MOVE_END; i++)
+    {
+        if (learnset[i].move == MOVE_DRAGON_CHEER)
+            evolutionLevel = learnset[i].level;
+    }
+    EXPECT_EQ(evolutionLevel, 0);
+
+    ZeroPlayerPartyMons();
+    CreatePartyMon(0, SPECIES_DIPPLIN, ITEM_NONE);
+    EXPECT_EQ(GetEvolutionTargetSpecies(dipplin, EVO_MODE_NORMAL, ITEM_NONE, NULL, NULL, CHECK_EVO), SPECIES_NONE);
+    SetMonData(dipplin, MON_DATA_MOVE1, &move);
+    EXPECT_EQ(GetEvolutionTargetSpecies(dipplin, EVO_MODE_NORMAL, ITEM_NONE, NULL, NULL, CHECK_EVO), SPECIES_HYDRAPPLE);
+}
