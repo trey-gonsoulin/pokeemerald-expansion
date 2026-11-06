@@ -40,6 +40,8 @@ using json11::Json;
 string version;
 // System directory separator
 string sep;
+// Read and rewritten from the working directory (the repo root, where make runs mapjson)
+const string HEAL_LOCATIONS_FILEPATH = "src/data/heal_locations.json";
 
 string read_text_file(string filepath) {
     ifstream in_file(filepath);
@@ -738,11 +740,10 @@ string generate_map_constants_text(string groups_filepath, Json groups_data, vec
 // set to 0 (its LOCALID_ is gone with the map), for process_groups to write once every output is ready.
 string clean_heal_locations(vector<string> &valid_map_ids)
 {
-    const string heal_locations_filepath = "src/data/heal_locations.json";
     std::stringstream new_json;
-    std::ifstream infile(heal_locations_filepath);
+    std::ifstream infile(HEAL_LOCATIONS_FILEPATH);
     if (!infile.is_open())
-        FATAL_ERROR("Cannot open file %s for reading.\n", heal_locations_filepath.c_str());
+        FATAL_ERROR("Cannot open file %s for reading.\n", HEAL_LOCATIONS_FILEPATH.c_str());
     bool deleted_flag = false;
 
     std::regex map_regex("\"respawn_map\"\\s*:\\s*\"([^\"]*)\"");
@@ -755,12 +756,11 @@ string clean_heal_locations(vector<string> &valid_map_ids)
         // removed map's entry without a respawn_npc doesn't carry the clear over to the next entry.
         if (std::regex_search(line, map_match, map_regex)) {
             string map_id = map_match[1];
-            auto it = find(valid_map_ids.begin(), valid_map_ids.end(), map_id);
-            deleted_flag = it == valid_map_ids.end();
+            deleted_flag = find(valid_map_ids.begin(), valid_map_ids.end(), map_id) == valid_map_ids.end();
             // Anything else is a typo, which would lose the NPC ID for good.
             if (deleted_flag && !is_removed_required_map(map_id))
                 FATAL_ERROR("%s: unknown respawn_map %s (not in data/maps/map_groups.json or tools/mapjson/required_map_defines.json).\n",
-                            heal_locations_filepath.c_str(), map_id.c_str());
+                            HEAL_LOCATIONS_FILEPATH.c_str(), map_id.c_str());
         }
         if (deleted_flag && std::regex_search(line, npc_regex)) {
             deleted_flag = false;
@@ -859,8 +859,8 @@ void process_groups(string groups_filepath, vector<string> &map_filepaths, strin
     string debug_map_names_text = generate_debug_map_names_text(groups_data, invalid_maps);
     string heal_locations_text = clean_heal_locations(valid_map_ids);
 
-    // Nothing is written until every output is ready, and the tracked heal_locations.json (read and
-    // written from the working directory, as before) goes last, so an error leaves it as it was.
+    // Nothing is written until every output is ready, and the tracked heal_locations.json goes last,
+    // so an error leaves it as it was.
     string data_dir = file_parent(groups_filepath) + sep + ".." + sep + ".." + sep + "src" + sep + "data" + sep;
     write_text_file(output_asm + sep + "groups.inc", groups_text);
     write_text_file(output_asm + sep + "connections.inc", connections_text);
@@ -870,7 +870,7 @@ void process_groups(string groups_filepath, vector<string> &map_filepaths, strin
     write_text_file(data_dir + "map_group_count.h", map_count_text);
     // Next to map_group_count.h, which the debug menu reads too
     write_text_file(data_dir + "debug_map_names.h", debug_map_names_text);
-    write_text_file("src/data/heal_locations.json", heal_locations_text);
+    write_text_file(HEAL_LOCATIONS_FILEPATH, heal_locations_text);
 }
 
 // Whether a layout goes in the layout outputs. All three skip the same layouts, so the LAYOUT_ IDs
