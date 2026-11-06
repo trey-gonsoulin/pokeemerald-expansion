@@ -356,14 +356,14 @@ make pokeemerald-test.elf TESTS="Lucky Egg" TOOLCHAIN=/opt/devkitpro/devkitARM  
 Area archetypes tool (standard library only, run from the repo root):
 
 ```sh
-python3 tools/area_archetypes/area_archetypes.py fetch     # once: PokeAPI CSVs -> .cache/
+python3 tools/area_archetypes/area_archetypes.py fetch     # once: PokeAPI CSVs at POKEAPI_REF (--ref) -> .cache/
 python3 tools/area_archetypes/area_archetypes.py build     # classify areas, write output/
 python3 tools/area_archetypes/area_archetypes.py restock   # preview a restocked src/data/wild_encounters.json
 python3 tools/area_archetypes/area_archetypes.py baseline --wild <upstream copy>  # refresh output/wild_encounters.vanilla.json after upstream changes it (README)
 python3 -m unittest discover -s tools/area_archetypes      # tests
 ```
 
-`tools/area_archetypes/README.md` documents the archetype rules and the restock options. The committed wild species are vanilla: `src/data/wild_encounters.json` is the restock with `tools/area_archetypes/restock_settings.json` (`{"ratio": 0}`, so only the level offsets apply), which `rebalance.py apply` and the pinning unittest pass as `--config` too. #28 had committed the default 0.5 restock (Gen 4-9 species such as Frillish on Route 110), and the owner turned it back for now; to restock again, edit that file and rerun `restock --write --config tools/area_archetypes/restock_settings.json`. `build` and `restock` read the committed vanilla snapshot, never the live `src/data/wild_encounters.json`, so `restock --write` reruns don't compound. Restock also applies the wild level offsets in `tools/area_archetypes/level_offsets.json` (#150), which `rebalance.py apply` writes.
+`tools/area_archetypes/README.md` documents the archetype rules and the restock options. `fetch` pins a PokeAPI commit (`POKEAPI_REF`) and records it, the date and each CSV's sha256 in the cache's `provenance.json`, which `build` checks (and stops on an empty or column-short CSV) before copying it into `archetype_pools.json` and `emerald_maps.json` as `provenance` (#52). The committed wild species are vanilla: `src/data/wild_encounters.json` is the restock with `tools/area_archetypes/restock_settings.json` (`{"ratio": 0}`, so only the level offsets apply), which `rebalance.py apply` and the pinning unittest pass as `--config` too. #28 had committed the default 0.5 restock (Gen 4-9 species such as Frillish on Route 110), and the owner turned it back for now; to restock again, edit that file and rerun `restock --write --config tools/area_archetypes/restock_settings.json`. `build` and `restock` read the committed vanilla snapshot, never the live `src/data/wild_encounters.json`, so `restock --write` reruns don't compound. Restock also applies the wild level offsets in `tools/area_archetypes/level_offsets.json` (#150), which `rebalance.py apply` writes.
 
 ## Architecture
 

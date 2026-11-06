@@ -983,8 +983,7 @@ def write_report(path, changes, settings):
 
 
 def dump_wild(wild, path):
-    with open(path, 'w', encoding='utf-8') as f:
-        f.write(json.dumps(wild, indent=2, ensure_ascii=False) + '\n')
+    AA.write_atomic(path, (json.dumps(wild, indent=2, ensure_ascii=False) + '\n').encode('utf-8'))
 
 
 # ---------------------------------------------------------------------------
@@ -994,6 +993,13 @@ def dump_wild(wild, path):
 def load_json(path):
     with open(path, encoding='utf-8') as f:
         return json.load(f)
+
+
+def load_maps(path):
+    """emerald_maps.json's maps, without the PokeAPI provenance build records beside them."""
+    maps = load_json(path)
+    maps.pop(AA.PROVENANCE_KEY, None)
+    return maps
 
 
 def skeleton(wild):
@@ -1047,7 +1053,7 @@ def main(argv=None):
     if unknown:
         sys.exit(f'unknown species: {", ".join(unknown)}')
     base, base_sha256 = AA.load_base(args.base, args.force)
-    emerald_maps = load_json(args.maps)
+    emerald_maps = load_maps(args.maps)
     unknown = sorted(set(settings.maps) - {e['base_label'] for e in wild_headers(base)['encounters']})
     if unknown:
         p.error(f'maps: not a gWildMonHeaders base label in {args.base}: {", ".join(unknown)}')
