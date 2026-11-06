@@ -109,6 +109,10 @@ jobs:
       - name: Trainerproc unit tests
         run: python3 -m unittest discover -s tools/trainerproc
 
+      # patchelf's symbol checks (#261), which `make check` uses on the test ELF; the tests build it
+      - name: patchelf unit tests
+        run: python3 -m unittest discover -s tools/patchelf
+
       # The script that writes wild_encounters.h and checks wild_encounters.json (#257), and
       # the constants template, whose test needs jsonproc (#286)
       - name: Wild encounter generator unit tests
