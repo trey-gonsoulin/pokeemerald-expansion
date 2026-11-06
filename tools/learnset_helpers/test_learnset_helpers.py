@@ -46,8 +46,21 @@ class ConfigTest(RepoDirTest):
         for module in (make_teachables, make_tutors, make_teaching_types):
             self.assertFalse(module.enabled(), module.__name__)
 
+    def test_enabled_with_comment_against_value(self):
+        self.write("include/config/pokemon.h", "#define P_LEARNSET_HELPER_TEACHABLE TRUE// on\n")
+        for module in (make_teachables, make_tutors, make_teaching_types):
+            self.assertTrue(module.enabled(), module.__name__)
+
+    def test_empty_value_does_not_read_next_line(self):
+        self.write("include/config/pokemon.h",
+                   "#define P_LEARNSET_HELPER_TEACHABLE\n#define TRUE 1\n"
+                   "#define P_TM_LITERACY\nGEN_7\n")
+        for module in (make_teachables, make_tutors, make_teaching_types):
+            self.assertFalse(module.enabled(), module.__name__)
+        self.assertFalse(make_teachables.extract_tm_litteracy_config())
+
     def test_tm_literacy_without_comment(self):
-        for value, literate in (("GEN_6", False), ("GEN_7", True), ("GEN_LATEST", True)):
+        for value, literate in (("GEN_6", False), ("GEN_7", True), ("GEN_LATEST", True), ("GEN_7//x", True)):
             self.write("include/config/pokemon.h",
                        f"#define P_TM_LITERACY {value}\n#define P_OTHER TRUE\n")
             self.assertEqual(make_teachables.extract_tm_litteracy_config(), literate, value)
