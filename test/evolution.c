@@ -1,5 +1,6 @@
 #include "global.h"
 #include "event_data.h"
+#include "field_player_avatar.h"
 #include "item.h"
 #include "item_use.h"
 #include "overworld.h"
@@ -205,10 +206,65 @@ TEST("Known-move evolution: Dipplin learns Dragon Cheer on evolving and then evo
     EXPECT_EQ(GetEvolutionTargetSpecies(dipplin, EVO_MODE_NORMAL, ITEM_NONE, NULL, NULL, CHECK_EVO), SPECIES_HYDRAPPLE);
 }
 
-// Milcery's day spins checked IF_TIME TIME_DAY, so no entry matched in the morning
-// (6-10 under the Gen 8+ times), though Sword and Shield count it as day (#169). They
-// now match anything but the night and the evening, which Rainbow Swirl keeps.
-static enum Species GetMilcerySpinEvolution(enum Item sweet, u32 hours, u16 spin)
+// Under the Gen 7 and Gen 8+ times the evening is its own time of day, but a time-based
+// evolution counts it as day: Sword and Shield evolve by day from 6:00 to 19:59 and by night
+// from 20:00 (Bulbapedia's Time-based Evolution), Sun and Moon by night from 18:00, and only
+// Dusk Lycanroc and Rainbow Swirl Alcremie take the evening itself. So a day evolution checks
+// NOT Night (which takes the morning too) and a night one the night alone (#290). An upstream
+// sync that adds an IF_TIME Day or Morning entry fails here on purpose (#169 was one).
+TEST("Night evolution evening: every time condition counts the morning and the evening as day")
+{
+    u32 species, i, j;
+
+    for (species = 0; species < NUM_SPECIES; species++)
+    {
+        const struct Evolution *evolutions = gSpeciesInfo[species].evolutions;
+
+        for (i = 0; evolutions != NULL && evolutions[i].method != EVOLUTIONS_END; i++)
+        {
+            for (j = 0; evolutions[i].params != NULL && evolutions[i].params[j].condition != CONDITIONS_END; j++)
+            {
+                if (evolutions[i].params[j].condition == IF_TIME)
+                    EXPECT(evolutions[i].params[j].arg1 == TIME_NIGHT || evolutions[i].params[j].arg1 == TIME_EVENING);
+                else if (evolutions[i].params[j].condition == IF_NOT_TIME)
+                    EXPECT_EQ(evolutions[i].params[j].arg1, TIME_NIGHT);
+            }
+        }
+    }
+}
+
+TEST("Night evolution evening: Eevee and Sneasel evolve by day in the evening and by night after it")
+{
+    struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][0];
+    u32 friendship = MAX_FRIENDSHIP;
+
+    ASSUME(EVENING_HOUR_BEGIN != EVENING_HOUR_END);
+    ZeroPlayerPartyMons();
+    CreatePartyMon(0, SPECIES_EEVEE, ITEM_NONE);
+    SetMonData(mon, MON_DATA_FRIENDSHIP, &friendship);
+    SetMonMoveSlot(mon, MOVE_TACKLE, 0);
+    for (u32 i = 1; i < MAX_MON_MOVES; i++)
+        SetMonMoveSlot(mon, MOVE_NONE, i);
+
+    SetTimeOfDay(EVENING_HOUR_BEGIN);
+    EXPECT_EQ(GetTimeOfDay(), TIME_EVENING);
+    EXPECT_EQ(GetEvolutionTargetSpecies(mon, EVO_MODE_NORMAL, ITEM_NONE, NULL, NULL, CHECK_EVO), SPECIES_ESPEON);
+    SetTimeOfDay(MORNING_HOUR_BEGIN);
+    EXPECT_EQ(GetEvolutionTargetSpecies(mon, EVO_MODE_NORMAL, ITEM_NONE, NULL, NULL, CHECK_EVO), SPECIES_ESPEON);
+    SetTimeOfDay(NIGHT_HOUR_BEGIN);
+    EXPECT_EQ(GetEvolutionTargetSpecies(mon, EVO_MODE_NORMAL, ITEM_NONE, NULL, NULL, CHECK_EVO), SPECIES_UMBREON);
+
+    CreatePartyMon(0, SPECIES_SNEASEL, ITEM_NONE);
+    SetTimeOfDay(EVENING_HOUR_BEGIN);
+    EXPECT_EQ(GetEvolutionTargetSpecies(mon, EVO_MODE_ITEM_USE, ITEM_RAZOR_CLAW, NULL, NULL, CHECK_EVO), SPECIES_NONE);
+    SetTimeOfDay(NIGHT_HOUR_BEGIN);
+    EXPECT_EQ(GetEvolutionTargetSpecies(mon, EVO_MODE_ITEM_USE, ITEM_RAZOR_CLAW, NULL, NULL, CHECK_EVO), SPECIES_WEAVILE);
+    SetTimeOfDay(0);
+}
+
+// gSpecialVar_0x8001 is the long spin in the direction of a 10-second spin (SPIN_EITHER),
+// which CanTriggerSpinEvolution sets and GetEvolutionTargetSpecies falls back to (#289).
+static enum Species GetMilcerySpinEvolutionWithFallback(enum Item sweet, u32 hours, u16 spin, u16 longSpin)
 {
     struct Pokemon *milcery = &gParties[B_TRAINER_PLAYER][0];
     enum Species targetSpecies;
@@ -217,13 +273,24 @@ static enum Species GetMilcerySpinEvolution(enum Item sweet, u32 hours, u16 spin
     CreatePartyMon(0, SPECIES_MILCERY, sweet);
     SetTimeOfDay(hours);
     gSpecialVar_0x8000 = spin;
+    gSpecialVar_0x8001 = longSpin;
     targetSpecies = GetEvolutionTargetSpecies(milcery, EVO_MODE_OVERWORLD_SPECIAL, ITEM_NONE, NULL, NULL, CHECK_EVO);
+    EXPECT_EQ(gSpecialVar_0x8000, spin);
     gSpecialVar_0x8000 = 0;
+    gSpecialVar_0x8001 = 0;
     SetTimeOfDay(0);
     return targetSpecies;
 }
 
-TEST("Milcery morning: every day spin evolves Milcery in the morning too")
+static enum Species GetMilcerySpinEvolution(enum Item sweet, u32 hours, u16 spin)
+{
+    return GetMilcerySpinEvolutionWithFallback(sweet, hours, spin, SPIN_NONE);
+}
+
+// Milcery's day spins checked IF_TIME TIME_DAY, so no entry matched in the morning
+// (6-10 under the Gen 8+ times), though Sword and Shield count it as day (#169). They
+// now check NOT Night, as the other day evolutions do, which takes the evening too (#290).
+TEST("Milcery morning: every day spin evolves Milcery in the morning and the evening too")
 {
     static const u16 daySpins[] = { SPIN_CW_SHORT, SPIN_CCW_SHORT, SPIN_CW_LONG, SPIN_CCW_LONG };
     enum Item sweet = ITEM_NONE;
@@ -234,6 +301,7 @@ TEST("Milcery morning: every day spin evolves Milcery in the morning too")
         PARAMETRIZE { sweet = i; }
 
     ASSUME(MORNING_HOUR_BEGIN != MORNING_HOUR_END);
+    ASSUME(EVENING_HOUR_BEGIN != EVENING_HOUR_END);
     SetTimeOfDay(MORNING_HOUR_BEGIN);
     timeOfDay = GetTimeOfDay();
     SetTimeOfDay(0);
@@ -244,56 +312,51 @@ TEST("Milcery morning: every day spin evolves Milcery in the morning too")
         enum Species daySpecies = GetMilcerySpinEvolution(sweet, DAY_HOUR_BEGIN, daySpins[i]);
 
         EXPECT_NE(daySpecies, SPECIES_NONE);
+        EXPECT_NE(daySpecies, GetMilcerySpinEvolution(sweet, NIGHT_HOUR_BEGIN, daySpins[i]));
         EXPECT_EQ(GetMilcerySpinEvolution(sweet, MORNING_HOUR_BEGIN, daySpins[i]), daySpecies);
+        EXPECT_EQ(GetMilcerySpinEvolution(sweet, EVENING_HOUR_BEGIN, daySpins[i]), daySpecies);
     }
 }
 
-TEST("Milcery morning: the day spins leave the evening and the night alone")
+TEST("Milcery evening: a 10-second spin gives Rainbow Swirl in the evening alone")
 {
     ASSUME(EVENING_HOUR_BEGIN != EVENING_HOUR_END);
     EXPECT_EQ(GetMilcerySpinEvolution(ITEM_STRAWBERRY_SWEET, EVENING_HOUR_BEGIN, SPIN_EITHER), SPECIES_ALCREMIE_STRAWBERRY_RAINBOW_SWIRL);
-    EXPECT_NE(GetMilcerySpinEvolution(ITEM_STRAWBERRY_SWEET, EVENING_HOUR_BEGIN, SPIN_CW_SHORT), SPECIES_ALCREMIE_STRAWBERRY_VANILLA_CREAM);
-    EXPECT_EQ(GetMilcerySpinEvolution(ITEM_STRAWBERRY_SWEET, NIGHT_HOUR_BEGIN + 1, SPIN_CW_SHORT), SPECIES_ALCREMIE_STRAWBERRY_MATCHA_CREAM);
-    EXPECT_EQ(GetMilcerySpinEvolution(ITEM_STRAWBERRY_SWEET, NIGHT_HOUR_BEGIN + 1, SPIN_CCW_LONG), SPECIES_ALCREMIE_STRAWBERRY_MINT_CREAM);
-}
-
-// Milcery's night spins checked IF_TIME TIME_NIGHT, so in the evening (19-20 under the
-// Gen 8+ times) only the 10-second Rainbow Swirl spin evolved it, though Sword and Shield
-// count that hour as night (#276). They now match anything but the day and the morning.
-TEST("Milcery evening: every night spin evolves Milcery in the evening too")
-{
-    static const u16 nightSpins[] = { SPIN_CW_SHORT, SPIN_CCW_SHORT, SPIN_CW_LONG, SPIN_CCW_LONG };
-    enum Item sweet = ITEM_NONE;
-    enum TimeOfDay timeOfDay;
-    u32 i;
-
-    for (i = ITEM_STRAWBERRY_SWEET; i <= ITEM_RIBBON_SWEET; i++)
-        PARAMETRIZE { sweet = i; }
-
-    ASSUME(EVENING_HOUR_BEGIN != EVENING_HOUR_END);
-    SetTimeOfDay(EVENING_HOUR_BEGIN);
-    timeOfDay = GetTimeOfDay();
-    SetTimeOfDay(0);
-    EXPECT_EQ(timeOfDay, TIME_EVENING);
-
-    for (i = 0; i < ARRAY_COUNT(nightSpins); i++)
-    {
-        enum Species nightSpecies = GetMilcerySpinEvolution(sweet, NIGHT_HOUR_BEGIN + 1, nightSpins[i]);
-
-        EXPECT_NE(nightSpecies, SPECIES_NONE);
-        EXPECT_NE(nightSpecies, GetMilcerySpinEvolution(sweet, DAY_HOUR_BEGIN, nightSpins[i]));
-        EXPECT_EQ(GetMilcerySpinEvolution(sweet, EVENING_HOUR_BEGIN, nightSpins[i]), nightSpecies);
-    }
-}
-
-TEST("Milcery evening: a 10-second spin still gives Rainbow Swirl in the evening alone")
-{
-    ASSUME(EVENING_HOUR_BEGIN != EVENING_HOUR_END);
-    EXPECT_EQ(GetMilcerySpinEvolution(ITEM_STRAWBERRY_SWEET, EVENING_HOUR_BEGIN, SPIN_EITHER), SPECIES_ALCREMIE_STRAWBERRY_RAINBOW_SWIRL);
-    EXPECT_EQ(GetMilcerySpinEvolution(ITEM_STRAWBERRY_SWEET, EVENING_HOUR_BEGIN, SPIN_CCW_LONG), SPECIES_ALCREMIE_STRAWBERRY_MINT_CREAM);
-    EXPECT_EQ(GetMilcerySpinEvolution(ITEM_STRAWBERRY_SWEET, NIGHT_HOUR_BEGIN + 1, SPIN_EITHER), SPECIES_NONE);
+    EXPECT_EQ(GetMilcerySpinEvolutionWithFallback(ITEM_STRAWBERRY_SWEET, EVENING_HOUR_BEGIN, SPIN_EITHER, SPIN_CCW_LONG), SPECIES_ALCREMIE_STRAWBERRY_RAINBOW_SWIRL);
+    EXPECT_EQ(GetMilcerySpinEvolution(ITEM_STRAWBERRY_SWEET, EVENING_HOUR_BEGIN, SPIN_CCW_LONG), SPECIES_ALCREMIE_STRAWBERRY_RUBY_SWIRL);
+    EXPECT_EQ(GetMilcerySpinEvolution(ITEM_STRAWBERRY_SWEET, EVENING_HOUR_BEGIN, SPIN_CW_SHORT), SPECIES_ALCREMIE_STRAWBERRY_VANILLA_CREAM);
+    EXPECT_EQ(GetMilcerySpinEvolution(ITEM_STRAWBERRY_SWEET, NIGHT_HOUR_BEGIN, SPIN_CW_SHORT), SPECIES_ALCREMIE_STRAWBERRY_MATCHA_CREAM);
+    EXPECT_EQ(GetMilcerySpinEvolution(ITEM_STRAWBERRY_SWEET, NIGHT_HOUR_BEGIN, SPIN_EITHER), SPECIES_NONE);
     EXPECT_EQ(GetMilcerySpinEvolution(ITEM_STRAWBERRY_SWEET, DAY_HOUR_BEGIN, SPIN_EITHER), SPECIES_NONE);
-    EXPECT_EQ(GetMilcerySpinEvolution(ITEM_STRAWBERRY_SWEET, MORNING_HOUR_BEGIN, SPIN_EITHER), SPECIES_NONE);
-    EXPECT_EQ(GetMilcerySpinEvolution(ITEM_STRAWBERRY_SWEET, MORNING_HOUR_BEGIN, SPIN_CW_SHORT), SPECIES_ALCREMIE_STRAWBERRY_VANILLA_CREAM);
-    EXPECT_EQ(GetMilcerySpinEvolution(ITEM_STRAWBERRY_SWEET, DAY_HOUR_BEGIN, SPIN_CCW_SHORT), SPECIES_ALCREMIE_STRAWBERRY_RUBY_CREAM);
+}
+
+// A 10-second spin was SPIN_EITHER alone, which only Rainbow Swirl takes, so outside the
+// evening it evolved nothing, where a 5-second spin the same way gave the long-spin form;
+// Serebii gives Rainbow Swirl as the one rule past 10 s, so the others take any spin past 5 s.
+TEST("Milcery long spin: a 10-second spin gives the long-spin form outside the evening")
+{
+    EXPECT_EQ(GetMilcerySpinEvolutionWithFallback(ITEM_STRAWBERRY_SWEET, DAY_HOUR_BEGIN, SPIN_EITHER, SPIN_CCW_LONG), SPECIES_ALCREMIE_STRAWBERRY_RUBY_SWIRL);
+    EXPECT_EQ(GetMilcerySpinEvolutionWithFallback(ITEM_STRAWBERRY_SWEET, MORNING_HOUR_BEGIN, SPIN_EITHER, SPIN_CW_LONG), SPECIES_ALCREMIE_STRAWBERRY_CARAMEL_SWIRL);
+    EXPECT_EQ(GetMilcerySpinEvolutionWithFallback(ITEM_STRAWBERRY_SWEET, NIGHT_HOUR_BEGIN, SPIN_EITHER, SPIN_CCW_LONG), SPECIES_ALCREMIE_STRAWBERRY_MINT_CREAM);
+    EXPECT_EQ(GetMilcerySpinEvolutionWithFallback(ITEM_STRAWBERRY_SWEET, NIGHT_HOUR_BEGIN, SPIN_EITHER, SPIN_CW_LONG), SPECIES_ALCREMIE_STRAWBERRY_LEMON_CREAM);
+}
+
+TEST("Milcery long spin: CanTriggerSpinEvolution keeps a 10-second spin's direction")
+{
+    Test_SetFinishedSpin(60 * 10, FALSE);
+    EXPECT(CanTriggerSpinEvolution());
+    EXPECT_EQ(gSpecialVar_0x8000, SPIN_EITHER);
+    EXPECT_EQ(gSpecialVar_0x8001, SPIN_CCW_LONG);
+
+    Test_SetFinishedSpin(60 * 10 - 1, TRUE);
+    EXPECT(CanTriggerSpinEvolution());
+    EXPECT_EQ(gSpecialVar_0x8000, SPIN_CW_LONG);
+    EXPECT_EQ(gSpecialVar_0x8001, SPIN_NONE);
+
+    Test_SetFinishedSpin(60 * 5 - 1, TRUE);
+    EXPECT(CanTriggerSpinEvolution());
+    EXPECT_EQ(gSpecialVar_0x8000, SPIN_CW_SHORT);
+    EXPECT_EQ(gSpecialVar_0x8001, SPIN_NONE);
+    gSpecialVar_0x8000 = 0;
+    ResetSpinTimer();
 }
