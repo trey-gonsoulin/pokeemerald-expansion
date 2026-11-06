@@ -171,9 +171,11 @@ TEST("LoadSpriteSheet fails once every tile range slot is taken")
     ResetSpriteData();
 }
 
-TEST("LoadSpriteSheet fails on a sheet smaller than one tile")
+static const u8 ALIGNED(4) sTestTiles[2 * TILE_SIZE_4BPP] = {0};
+
+TEST("LoadSpriteSheet fails on an empty sheet")
 {
-    const struct SpriteSheet subTileSheet = { .data = sTestTile, .size = TILE_SIZE_4BPP / 2, .tag = TAG_TEST_SHEET + 1 };
+    const struct SpriteSheet emptySheet = { .data = sTestTile, .size = 0, .tag = TAG_TEST_SHEET + 1 };
     u32 tileStart;
     ResetSpriteData();
     tileStart = LoadTestSheet(0);
@@ -181,7 +183,7 @@ TEST("LoadSpriteSheet fails on a sheet smaller than one tile")
 
     // AllocSpriteTiles(0) freed every tile, and the sheet registered the range {0, 0}.
     gLoadFail = FALSE;
-    tileStart = LoadSpriteSheet(&subTileSheet);
+    tileStart = LoadSpriteSheet(&emptySheet);
     EXPECT_EQ(gLoadFail, TRUE);
     EXPECT_EQ(tileStart, 0);
     EXPECT_EQ(GetSpriteTileStartByTag(TAG_TEST_SHEET + 1), TAG_NONE);
@@ -194,13 +196,96 @@ TEST("LoadSpriteSheet fails on a sheet smaller than one tile")
     ResetSpriteData();
 }
 
-TEST("CreateSpriteUnchecked fails on an untagged frame smaller than one tile")
+TEST("LoadSpriteSheet gives a partial last tile a whole tile")
 {
-    static const struct SpriteFrameImage subTileImage[] = { { sTestTile, TILE_SIZE_4BPP / 2 } };
+    const struct SpriteSheet subTileSheet = { .data = sTestTiles, .size = TILE_SIZE_4BPP / 2, .tag = TAG_TEST_SHEET + 1 };
+    const struct SpriteSheet partialSheet = { .data = sTestTiles, .size = TILE_SIZE_4BPP * 3 / 2, .tag = TAG_TEST_SHEET + 2 };
+    const struct SpriteSheet twoTileSheet = { .data = sTestTiles, .size = 2 * TILE_SIZE_4BPP, .tag = TAG_TEST_SHEET + 4 };
+    u32 tileStart;
+    ResetSpriteData();
+
+    // A sheet of half a tile takes one tile (it failed through AllocSpriteTiles(0)).
+    gLoadFail = FALSE;
+    tileStart = LoadSpriteSheet(&subTileSheet);
+    EXPECT_EQ(gLoadFail, FALSE);
+    EXPECT_EQ(tileStart, 0);
+
+    // A sheet of a tile and a half took one tile and copied its last half tile into the next sheet's.
+    tileStart = LoadSpriteSheet(&partialSheet);
+    EXPECT_EQ(gLoadFail, FALSE);
+    EXPECT_EQ(tileStart, 1);
+    tileStart = LoadTestSheet(3);
+    EXPECT_EQ(tileStart, 3);
+
+    // Freeing the sheet frees both of its tiles.
+    FreeSpriteTilesByTag(TAG_TEST_SHEET + 2);
+    tileStart = LoadSpriteSheet(&twoTileSheet);
+    EXPECT_EQ(gLoadFail, FALSE);
+    EXPECT_EQ(tileStart, 1);
+    ResetSpriteData();
+}
+
+TEST("LoadSpriteSheet leaves the tile after a partial last tile alone")
+{
+    static const u8 ALIGNED(4) filledTiles[2 * TILE_SIZE_4BPP] = { [0 ... 2 * TILE_SIZE_4BPP - 1] = 0xFF };
+    const struct SpriteSheet partialSheet = { .data = filledTiles, .size = TILE_SIZE_4BPP * 3 / 2, .tag = TAG_TEST_SHEET + 2 };
+    const u8 *nextTile = (const u8 *)OBJ_VRAM0 + TILE_SIZE_4BPP;
+    u32 i, tileStart, changedBytes = 0;
+    ResetSpriteData();
+    LoadTestSheet(0);
+    LoadTestSheet(1);
+    FreeSpriteTilesByTag(TAG_TEST_SHEET);
+
+    // The sheet took the one free tile, 0, and its last half tile went into the zeroed tile 1.
+    tileStart = LoadSpriteSheet(&partialSheet);
+    for (i = 0; i < TILE_SIZE_4BPP; i++)
+    {
+        if (nextTile[i] != 0)
+            changedBytes++;
+    }
+    EXPECT_EQ(changedBytes, 0);
+    EXPECT_EQ(tileStart, 2);
+    ResetSpriteData();
+}
+
+TEST("LoadSpriteSheetByTemplate fails on an offset past the sheet")
+{
+    static const struct SpriteFrameImage image[] = { { sTestTile, TILE_SIZE_4BPP } };
+    struct SpriteTemplate template = gDummySpriteTemplate;
+    u32 tileStart;
+    template.tileTag = TAG_TEST_SHEET;
+    template.images = image;
+    ResetSpriteData();
+
+    // The copy's size, sheet size less offset, wrapped to about 4 GB.
+    gLoadFail = FALSE;
+    tileStart = LoadSpriteSheetByTemplate(&template, 0, TILE_SIZE_4BPP + 1);
+    EXPECT_EQ(gLoadFail, TRUE);
+    EXPECT_EQ(tileStart, 0);
+    EXPECT_EQ(GetSpriteTileStartByTag(TAG_TEST_SHEET), TAG_NONE);
+
+    // A negative offset is past the sheet too, once the u32 parameter takes it.
+    gLoadFail = FALSE;
+    tileStart = LoadSpriteSheetByTemplate(&template, 0, -1);
+    EXPECT_EQ(gLoadFail, TRUE);
+    EXPECT_EQ(GetSpriteTileStartByTag(TAG_TEST_SHEET), TAG_NONE);
+
+    // An offset of the whole sheet copies nothing but still loads it.
+    gLoadFail = FALSE;
+    tileStart = LoadSpriteSheetByTemplate(&template, 0, TILE_SIZE_4BPP);
+    EXPECT_EQ(gLoadFail, FALSE);
+    EXPECT_EQ(tileStart, 0);
+    EXPECT_EQ(GetSpriteTileStartByTag(TAG_TEST_SHEET), 0);
+    ResetSpriteData();
+}
+
+TEST("CreateSpriteUnchecked fails on an empty untagged frame")
+{
+    static const struct SpriteFrameImage emptyImage[] = { { sTestTile, 0 } };
     struct SpriteTemplate template = gDummySpriteTemplate;
     u32 spriteId, tileStart;
     template.tileTag = TAG_NONE;
-    template.images = subTileImage;
+    template.images = emptyImage;
     ResetSpriteData();
     tileStart = LoadTestSheet(0);
     EXPECT_EQ(tileStart, 0);
@@ -212,6 +297,34 @@ TEST("CreateSpriteUnchecked fails on an untagged frame smaller than one tile")
 
     tileStart = LoadTestSheet(1);
     EXPECT_EQ(tileStart, 1);
+    ResetSpriteData();
+}
+
+TEST("CreateSpriteUnchecked gives an untagged frame's partial last tile a whole tile")
+{
+    static const struct SpriteFrameImage partialImage[] = { { sTestTiles, TILE_SIZE_4BPP * 3 / 2 } };
+    struct SpriteTemplate template = gDummySpriteTemplate;
+    u32 spriteId, tileStart;
+    template.tileTag = TAG_NONE;
+    template.images = partialImage;
+    ResetSpriteData();
+    tileStart = LoadTestSheet(0);
+    EXPECT_EQ(tileStart, 0);
+
+    // The frame took one tile, and its copy ran half a tile into the next sheet's.
+    spriteId = CreateSpriteUnchecked(&template, 0, 0, 0);
+    EXPECT_LT(spriteId, MAX_SPRITES);
+    tileStart = gSprites[spriteId].oam.tileNum;
+    EXPECT_EQ(tileStart, 1);
+    tileStart = LoadTestSheet(1);
+    EXPECT_EQ(tileStart, 3);
+
+    // DestroySprite frees both of its tiles.
+    DestroySprite(&gSprites[spriteId]);
+    tileStart = LoadTestSheet(2);
+    EXPECT_EQ(tileStart, 1);
+    tileStart = LoadTestSheet(3);
+    EXPECT_EQ(tileStart, 2);
     ResetSpriteData();
 }
 

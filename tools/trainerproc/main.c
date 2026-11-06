@@ -21,6 +21,24 @@
 #define MAX_MON_TAGS 32
 #define STARTING_STATUS_COUNT 64
 
+// The game's limits (include/constants/global.h and pokemon.h), which the
+// generated fields don't enforce: 'partySize' is 3 bits and 'iv' packs 5-bit
+// fields, so a value past these builds a wrong ROM without a compiler error.
+#define GAME_PARTY_SIZE 6
+#define MIN_LEVEL 1
+#define MAX_LEVEL 100
+#define MAX_DYNAMAX_LEVEL 10
+#define MAX_FRIENDSHIP 255
+#define MAX_PER_STAT_IVS 31
+// The game's MAX_PER_STAT_EVS is 252 from P_EV_CAP GEN_6 and 255 before, a
+// config the tool can't read: 253-255 give the same stat as 252 (EV / 4).
+#define MAX_PER_STAT_EVS 255
+
+#define STR(x) #x
+#define XSTR(x) STR(x)
+#define LEVEL_RANGE_ERROR "level must be from " XSTR(MIN_LEVEL) " to " XSTR(MAX_LEVEL)
+#define IVS_RANGE_ERROR "IVs must be from 0 to " XSTR(MAX_PER_STAT_IVS)
+
 struct String
 {
     const unsigned char *string;
@@ -437,7 +455,11 @@ static bool match_int(struct Parser *p, int *i)
             break;
         if (!('0' <= c && c <= '9'))
             break;
-        *i = *i * 10 + (c - '0');
+        // Saturate rather than overflow; callers range-check the result.
+        if (*i <= (INT_MAX - 9) / 10)
+            *i = *i * 10 + (c - '0');
+        else
+            *i = INT_MAX;
         if (!pop_char(&p_, &c))
             assert(false);
     }
@@ -916,7 +938,7 @@ static bool token_multi_team_type(struct Parser *p, const struct Token *t, enum 
     }
 }
 
-static bool token_stats(struct Parser *p, const struct Token *t, struct Stats *stats, bool require_all)
+static bool token_stats(struct Parser *p, const struct Token *t, struct Stats *stats, bool require_all, int max_per_stat, const char *range_error)
 {
     struct Source source = {
         .path = p->source->path,
@@ -933,8 +955,11 @@ static bool token_stats(struct Parser *p, const struct Token *t, struct Stats *s
     {
         int value;
         skip_whitespace(&p_);
+        struct SourceLocation value_location = p_.location;
         if (!match_int(&p_, &value))
             return set_parse_error(p, p_.location, "expected integer");
+        if (value > max_per_stat)
+            return set_parse_error(p, value_location, range_error);
 
         struct Token stat;
         skip_whitespace(&p_);
@@ -988,7 +1013,7 @@ static bool token_stats(struct Parser *p, const struct Token *t, struct Stats *s
 }
 
 // '/'-separated strings.
-static bool token_human_identifiers(struct Parser *p, const struct Token *t, struct String *ids, int *ids_n, int max_ids_n)
+static bool token_human_identifiers(struct Parser *p, const struct Token *t, struct String *ids, int *ids_n, int max_ids_n, const char *too_many_error)
 {
     struct Source source = {
         .path = p->source->path,
@@ -1001,12 +1026,14 @@ static bool token_human_identifiers(struct Parser *p, const struct Token *t, str
         .offset = t->begin,
     };
     int n = 0;
-    while (*ids_n < max_ids_n)
+    for (;;)
     {
         skip_whitespace(&p_);
         struct Token id;
         if (!match_human_identifier(&p_, &id))
             return set_parse_error(p, p_.location, "expected identifier");
+        if (n == max_ids_n)
+            return set_parse_error(p, id.location, too_many_error);
         ids[n++] = token_string(&id);
         skip_whitespace(&p_);
         if (match_eof(&p_))
@@ -1018,15 +1045,27 @@ static bool token_human_identifiers(struct Parser *p, const struct Token *t, str
     return true;
 }
 
-static bool token_int(struct Parser *p, const struct Token *t, int *i)
+// Digits only (no sign), from 'min' to 'max'. Reads only the token's own
+// bytes: the buffer isn't NUL-terminated, so a value on the last line with
+// no newline would send strtol past its end.
+static bool token_int(struct Parser *p, const struct Token *t, int *i, int min, int max, const char *range_error)
 {
-    char *end;
-    long l = strtol((const char *)&t->source->buffer[t->begin], &end, 10);
-    if ((unsigned char *)end != &t->source->buffer[t->end])
+    struct Source source = {
+        .path = p->source->path,
+        .buffer = p->source->buffer,
+        .buffer_n = t->end,
+    };
+    struct Parser p_ = {
+        .source = &source,
+        .location = t->location,
+        .offset = t->begin,
+    };
+    int value;
+    if (!match_int(&p_, &value) || !match_eof(&p_))
         return set_parse_error(p, t->location, "invalid integer");
-    if (!(INT_MIN <= l && l <= INT_MAX))
-        return set_parse_error(p, t->location, "integer too large");
-    *i = l;
+    if (!(min <= value && value <= max))
+        return set_parse_error(p, t->location, range_error);
+    *i = value;
     return true;
 }
 
@@ -1079,7 +1118,7 @@ static bool parse_pragma(struct Parser *p, struct Parsed *parsed)
         match_until_eol(&p_, &t);
         if (is_literal_token(&t, "explicit"))
             parsed->default_ivs_off = true;
-        else if (!token_stats(p, &t, &parsed->default_ivs, true))
+        else if (!token_stats(p, &t, &parsed->default_ivs, true, MAX_PER_STAT_IVS, IVS_RANGE_ERROR))
             return show_parse_error(p);
     }
     else if (is_literal_token(&id, "level"))
@@ -1092,7 +1131,7 @@ static bool parse_pragma(struct Parser *p, struct Parsed *parsed)
         match_until_eol(&p_, &t);
         if (is_literal_token(&t, "explicit"))
             parsed->default_level_off = true;
-        else if (!token_int(p, &t, &parsed->default_level))
+        else if (!token_int(p, &t, &parsed->default_level, MIN_LEVEL, MAX_LEVEL, LEVEL_RANGE_ERROR))
             return show_parse_error(p);
     }
     else
@@ -1200,7 +1239,7 @@ static bool parse_trainer(struct Parser *p, const struct Parsed *parsed, struct 
             if (trainer->ai_flags_line)
                 any_error = !set_show_parse_error(p, key.location, "duplicate 'AI'");
             trainer->ai_flags_line = value.location.line;
-            if (!token_human_identifiers(p, &value, trainer->ai_flags, &trainer->ai_flags_n, MAX_TRAINER_AI_FLAGS))
+            if (!token_human_identifiers(p, &value, trainer->ai_flags, &trainer->ai_flags_n, MAX_TRAINER_AI_FLAGS, "too many AI flags (at most " XSTR(MAX_TRAINER_AI_FLAGS) ")"))
                 any_error = !show_parse_error(p);
         }
         else if (is_literal_token(&key, "Items"))
@@ -1208,7 +1247,7 @@ static bool parse_trainer(struct Parser *p, const struct Parsed *parsed, struct 
             if (trainer->items_line)
                 any_error = !set_show_parse_error(p, key.location, "duplicate 'Items'");
             trainer->items_line = value.location.line;
-            if (!token_human_identifiers(p, &value, trainer->items, &trainer->items_n, MAX_TRAINER_ITEMS))
+            if (!token_human_identifiers(p, &value, trainer->items, &trainer->items_n, MAX_TRAINER_ITEMS, "too many items (at most " XSTR(MAX_TRAINER_ITEMS) ")"))
                 any_error = !show_parse_error(p);
         }
         else if (is_literal_token(&key, "Class"))
@@ -1276,7 +1315,7 @@ static bool parse_trainer(struct Parser *p, const struct Parsed *parsed, struct 
             if (trainer->starting_status_line)
                 any_error = !set_show_parse_error(p, key.location, "duplicate 'Starting Status'");
             trainer->starting_status_line = value.location.line;
-            if (!token_human_identifiers(p, &value, trainer->starting_status, &trainer->starting_status_n, STARTING_STATUS_COUNT))
+            if (!token_human_identifiers(p, &value, trainer->starting_status, &trainer->starting_status_n, STARTING_STATUS_COUNT, "too many starting statuses (at most " XSTR(STARTING_STATUS_COUNT) ")"))
                 any_error = !show_parse_error(p);
         }
         else if (is_literal_token(&key, "Difficulty"))
@@ -1291,7 +1330,7 @@ static bool parse_trainer(struct Parser *p, const struct Parsed *parsed, struct 
             if (trainer->party_size_line)
                 any_error = !set_show_parse_error(p, key.location, "duplicate 'Party Size'");
             trainer->party_size_line = value.location.line;
-            if (!token_int(p, &value, &trainer->party_size))
+            if (!token_int(p, &value, &trainer->party_size, 1, GAME_PARTY_SIZE, "party size must be from 1 to " XSTR(GAME_PARTY_SIZE)))
                 any_error = !show_parse_error(p);
         }
         else if (is_literal_token(&key, "Pool Rules"))
@@ -1378,6 +1417,12 @@ static bool parse_trainer(struct Parser *p, const struct Parsed *parsed, struct 
         }
         trainer->pokemon_n++;
 
+        // Only a pool ('Party Size' picks from it) may hold more Pokemon
+        // than a party: 'partySize' would take a 7th, and
+        // CreateNPCTrainerPartyFromTrainer would write it past gEnemyParty.
+        if (trainer->pokemon_n == GAME_PARTY_SIZE + 1 && !trainer->party_size_line)
+            any_error = !set_show_parse_error(p, species.location, "more than " XSTR(GAME_PARTY_SIZE) " Pokemon without 'Party Size'");
+
         if (!is_empty_string(trainer->copy_pool))
         {
             set_show_parse_error(p, p->location, "trainer is set to copy mons from other trainer, but defines their own party");
@@ -1431,7 +1476,7 @@ static bool parse_trainer(struct Parser *p, const struct Parsed *parsed, struct 
                 if (pokemon->evs_line)
                     any_error = !set_show_parse_error(p, key.location, "duplicate 'EVs'");
                 pokemon->evs_line = value.location.line;
-                if (!token_stats(p, &value, &pokemon->evs, false))
+                if (!token_stats(p, &value, &pokemon->evs, false, MAX_PER_STAT_EVS, "EVs must be from 0 to " XSTR(MAX_PER_STAT_EVS)))
                     any_error = !show_parse_error(p);
             }
             else if (is_literal_token(&key, "IVs"))
@@ -1440,7 +1485,7 @@ static bool parse_trainer(struct Parser *p, const struct Parsed *parsed, struct 
                     any_error = !set_show_parse_error(p, key.location, "duplicate 'IVs'");
                 pokemon->ivs_line = value.location.line;
                 pokemon->ivs = parsed->default_ivs;
-                if (!token_stats(p, &value, &pokemon->ivs, parsed->default_ivs_off))
+                if (!token_stats(p, &value, &pokemon->ivs, parsed->default_ivs_off, MAX_PER_STAT_IVS, IVS_RANGE_ERROR))
                     any_error = !show_parse_error(p);
             }
             else if (is_literal_token(&key, "Ability"))
@@ -1455,7 +1500,7 @@ static bool parse_trainer(struct Parser *p, const struct Parsed *parsed, struct 
                 if (pokemon->level_line)
                     any_error = !set_show_parse_error(p, key.location, "duplicate 'Level'");
                 pokemon->level_line = value.location.line;
-                if (!token_int(p, &value, &pokemon->level))
+                if (!token_int(p, &value, &pokemon->level, MIN_LEVEL, MAX_LEVEL, LEVEL_RANGE_ERROR))
                     any_error = !show_parse_error(p);
             }
             else if (is_literal_token(&key, "Ball"))
@@ -1470,7 +1515,7 @@ static bool parse_trainer(struct Parser *p, const struct Parsed *parsed, struct 
                 if (pokemon->friendship_line)
                     any_error = !set_show_parse_error(p, key.location, "duplicate 'Happiness'");
                 pokemon->friendship_line = value.location.line;
-                if (!token_int(p, &value, &pokemon->friendship))
+                if (!token_int(p, &value, &pokemon->friendship, 0, MAX_FRIENDSHIP, "happiness must be from 0 to " XSTR(MAX_FRIENDSHIP)))
                     any_error = !show_parse_error(p);
             }
             else if (is_literal_token(&key, "Nature"))
@@ -1493,7 +1538,7 @@ static bool parse_trainer(struct Parser *p, const struct Parsed *parsed, struct 
                 if (pokemon->dynamax_level_line)
                     any_error = !set_show_parse_error(p, key.location, "duplicate 'Dynamax Level'");
                 pokemon->dynamax_level_line = value.location.line;
-                if (!token_int(p, &value, &pokemon->dynamax_level))
+                if (!token_int(p, &value, &pokemon->dynamax_level, 0, MAX_DYNAMAX_LEVEL, "Dynamax level must be from 0 to " XSTR(MAX_DYNAMAX_LEVEL)))
                     any_error = !show_parse_error(p);
             }
             else if (is_literal_token(&key, "Gigantamax"))
@@ -1516,7 +1561,7 @@ static bool parse_trainer(struct Parser *p, const struct Parsed *parsed, struct 
                 if (pokemon->tags_line)
                     any_error = !set_show_parse_error(p, key.location, "duplicate 'Tags'");
                 pokemon->tags_line = value.location.line;
-                if (!token_human_identifiers(p, &value, pokemon->tags, &pokemon->tags_n, MAX_MON_TAGS))
+                if (!token_human_identifiers(p, &value, pokemon->tags, &pokemon->tags_n, MAX_MON_TAGS, "too many tags (at most " XSTR(MAX_MON_TAGS) ")"))
                     any_error = !show_parse_error(p);
             }
             else
@@ -1524,6 +1569,10 @@ static bool parse_trainer(struct Parser *p, const struct Parsed *parsed, struct 
                 any_error = !set_show_parse_error(p, key.location, "expected one of 'EVs', 'IVs', 'Ability', 'Level', 'Ball', 'Happiness', 'Nature', 'Shiny', 'Dynamax Level', 'Gigantamax', or 'Tera Type'");
             }
         }
+
+        // The output writes one gimmick: 'Tera Type' would be dropped.
+        if (pokemon->tera_type_line && (pokemon->dynamax_level_line || pokemon->gigantamax_factor_line))
+            any_error = !set_show_parse_error(p, (struct SourceLocation) { .line = pokemon->tera_type_line, .column = 1 }, "'Tera Type' can't go with 'Dynamax Level' or 'Gigantamax'");
 
         if (!pokemon->level_line)
         {
@@ -2292,7 +2341,7 @@ int main(int argc, char *argv[])
 
     if (strcmp(output_path, "-") == 0)
     {
-        source_file = stdout;
+        output_file = stdout;
         output_path = "<stdout>";
     }
     else
@@ -2309,7 +2358,7 @@ int main(int argc, char *argv[])
     status = 0;
 
 exit:
-    if (output_file) fclose(output_file);
+    if (output_file && output_file != stdout) fclose(output_file);
     if (parsed.trainers) free(parsed.trainers);
     if (source_buffer) free(source_buffer);
     if (source_file) fclose(source_file);

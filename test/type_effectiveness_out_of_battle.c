@@ -25,17 +25,17 @@ static void ClearStaleBattleState(void)
 TEST("Out-of-battle type effectiveness: a Ground move doesn't affect a Flying type whatever the last battler was")
 {
     SetStaleBattleState(TYPE_NORMAL, 0);
-    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_EARTHQUAKE, SPECIES_PIDGEY, ABILITY_KEEN_EYE), UQ_4_12(0.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_EARTHQUAKE, ABILITY_NONE, SPECIES_PIDGEY, ABILITY_KEEN_EYE), UQ_4_12(0.0));
     gBattleMons[B_BATTLER_0].volatiles.smackDown = TRUE;
-    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_EARTHQUAKE, SPECIES_PIDGEY, ABILITY_KEEN_EYE), UQ_4_12(0.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_EARTHQUAKE, ABILITY_NONE, SPECIES_PIDGEY, ABILITY_KEEN_EYE), UQ_4_12(0.0));
     ClearStaleBattleState();
 }
 
 TEST("Out-of-battle type effectiveness: leftover Gravity grounds neither a Flying type nor Levitate")
 {
     SetStaleBattleState(TYPE_FLYING, STATUS_FIELD_GRAVITY);
-    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_EARTHQUAKE, SPECIES_PIDGEY, ABILITY_KEEN_EYE), UQ_4_12(0.0));
-    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_EARTHQUAKE, SPECIES_GASTLY, ABILITY_LEVITATE), UQ_4_12(0.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_EARTHQUAKE, ABILITY_NONE, SPECIES_PIDGEY, ABILITY_KEEN_EYE), UQ_4_12(0.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_EARTHQUAKE, ABILITY_NONE, SPECIES_GASTLY, ABILITY_LEVITATE), UQ_4_12(0.0));
     ClearStaleBattleState();
 }
 
@@ -43,28 +43,28 @@ TEST("Out-of-battle type effectiveness: the last battler's Foresight doesn't let
 {
     SetStaleBattleState(TYPE_NORMAL, 0);
     gBattleMons[B_BATTLER_0].volatiles.foresight = TRUE;
-    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_TACKLE, SPECIES_GASTLY, ABILITY_LEVITATE), UQ_4_12(0.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_TACKLE, ABILITY_NONE, SPECIES_GASTLY, ABILITY_LEVITATE), UQ_4_12(0.0));
     ClearStaleBattleState();
 }
 
 TEST("Out-of-battle type effectiveness: the type chart and Freeze-Dry still apply")
 {
     SetStaleBattleState(TYPE_NORMAL, 0);
-    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_EARTHQUAKE, SPECIES_SQUIRTLE, ABILITY_TORRENT), UQ_4_12(1.0));
-    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_ICE_BEAM, SPECIES_SQUIRTLE, ABILITY_TORRENT), UQ_4_12(0.5));
-    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_FREEZE_DRY, SPECIES_SQUIRTLE, ABILITY_TORRENT), UQ_4_12(2.0));
-    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_ICE_BEAM, SPECIES_PIDGEY, ABILITY_KEEN_EYE), UQ_4_12(2.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_EARTHQUAKE, ABILITY_NONE, SPECIES_SQUIRTLE, ABILITY_TORRENT), UQ_4_12(1.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_ICE_BEAM, ABILITY_NONE, SPECIES_SQUIRTLE, ABILITY_TORRENT), UQ_4_12(0.5));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_FREEZE_DRY, ABILITY_NONE, SPECIES_SQUIRTLE, ABILITY_TORRENT), UQ_4_12(2.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_ICE_BEAM, ABILITY_NONE, SPECIES_PIDGEY, ABILITY_KEEN_EYE), UQ_4_12(2.0));
     ClearStaleBattleState();
 }
 
 TEST("Out-of-battle type effectiveness: the Dome's absorbing abilities take the move")
 {
     SetStaleBattleState(TYPE_NORMAL, 0);
-    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_THUNDERBOLT, SPECIES_JOLTEON, ABILITY_VOLT_ABSORB), UQ_4_12(0.0));
-    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_THUNDER_WAVE, SPECIES_JOLTEON, ABILITY_VOLT_ABSORB), UQ_4_12(0.0));
-    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_EARTHQUAKE, SPECIES_JOLTEON, ABILITY_VOLT_ABSORB), UQ_4_12(2.0));
-    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_FLAMETHROWER, SPECIES_VULPIX, ABILITY_FLASH_FIRE), UQ_4_12(0.0));
-    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_SURF, SPECIES_VULPIX, ABILITY_FLASH_FIRE), UQ_4_12(2.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_THUNDERBOLT, ABILITY_NONE, SPECIES_JOLTEON, ABILITY_VOLT_ABSORB), UQ_4_12(0.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_THUNDER_WAVE, ABILITY_NONE, SPECIES_JOLTEON, ABILITY_VOLT_ABSORB), UQ_4_12(0.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_EARTHQUAKE, ABILITY_NONE, SPECIES_JOLTEON, ABILITY_VOLT_ABSORB), UQ_4_12(2.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_FLAMETHROWER, ABILITY_NONE, SPECIES_VULPIX, ABILITY_FLASH_FIRE), UQ_4_12(0.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_SURF, ABILITY_NONE, SPECIES_VULPIX, ABILITY_FLASH_FIRE), UQ_4_12(2.0));
     ClearStaleBattleState();
 }
 
@@ -72,7 +72,7 @@ TEST("Out-of-battle type effectiveness: the Dome's Lightning Rod takes Electric 
 {
     ASSUME(GetConfig(B_REDIRECT_ABILITY_IMMUNITY) >= GEN_5);
     SetStaleBattleState(TYPE_NORMAL, 0);
-    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_THUNDERBOLT, SPECIES_PIKACHU, ABILITY_LIGHTNING_ROD), UQ_4_12(0.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_THUNDERBOLT, ABILITY_NONE, SPECIES_PIKACHU, ABILITY_LIGHTNING_ROD), UQ_4_12(0.0));
     ClearStaleBattleState();
 }
 
@@ -81,16 +81,16 @@ TEST("Out-of-battle type effectiveness: the Dome's absorbing abilities don't tak
     ASSUME(GetMoveTarget(MOVE_CHARGE) == TARGET_USER);
     ASSUME(GetMoveTarget(MOVE_SUNNY_DAY) == TARGET_FIELD);
     SetStaleBattleState(TYPE_NORMAL, 0);
-    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_CHARGE, SPECIES_JOLTEON, ABILITY_VOLT_ABSORB), UQ_4_12(0.5));
-    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_SUNNY_DAY, SPECIES_VULPIX, ABILITY_FLASH_FIRE), UQ_4_12(0.5));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_CHARGE, ABILITY_NONE, SPECIES_JOLTEON, ABILITY_VOLT_ABSORB), UQ_4_12(0.5));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_SUNNY_DAY, ABILITY_NONE, SPECIES_VULPIX, ABILITY_FLASH_FIRE), UQ_4_12(0.5));
     ClearStaleBattleState();
 }
 
 TEST("Out-of-battle type effectiveness: the Dome's other abilities leave the type chart alone")
 {
     SetStaleBattleState(TYPE_NORMAL, 0);
-    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_THUNDERBOLT, SPECIES_JOLTEON, ABILITY_QUICK_FEET), UQ_4_12(0.5));
-    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_FLAMETHROWER, SPECIES_VULPIX, ABILITY_DROUGHT), UQ_4_12(0.5));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_THUNDERBOLT, ABILITY_NONE, SPECIES_JOLTEON, ABILITY_QUICK_FEET), UQ_4_12(0.5));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_FLAMETHROWER, ABILITY_NONE, SPECIES_VULPIX, ABILITY_DROUGHT), UQ_4_12(0.5));
     ClearStaleBattleState();
 }
 
@@ -172,4 +172,72 @@ TEST("Out-of-battle type effectiveness: the overworld's Ground check counts Levi
     EXPECT_EQ(GetOverworldTypeEffectiveness(mon, TYPE_GROUND), UQ_4_12(0.0));
     EXPECT_EQ(GetOverworldTypeEffectiveness(mon, TYPE_PSYCHIC), UQ_4_12(2.0));
     ZeroMonData(mon);
+}
+
+TEST("Out-of-battle type effectiveness: the Dome's Soundproof, Bulletproof and Wind Rider block their moves")
+{
+    ASSUME(IsSoundMove(MOVE_HYPER_VOICE));
+    ASSUME(IsBallisticMove(MOVE_SLUDGE_BOMB));
+    ASSUME(IsWindMove(MOVE_HURRICANE));
+    SetStaleBattleState(TYPE_NORMAL, 0);
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_HYPER_VOICE, ABILITY_NONE, SPECIES_VOLTORB, ABILITY_SOUNDPROOF), UQ_4_12(0.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_TACKLE, ABILITY_NONE, SPECIES_VOLTORB, ABILITY_SOUNDPROOF), UQ_4_12(1.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_SLUDGE_BOMB, ABILITY_NONE, SPECIES_CHESPIN, ABILITY_BULLETPROOF), UQ_4_12(0.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_SLUDGE_BOMB, ABILITY_NONE, SPECIES_CHESPIN, ABILITY_OVERGROW), UQ_4_12(2.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_HURRICANE, ABILITY_NONE, SPECIES_BRAMBLEGHAST, ABILITY_WIND_RIDER), UQ_4_12(0.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_AIR_SLASH, ABILITY_NONE, SPECIES_BRAMBLEGHAST, ABILITY_WIND_RIDER), UQ_4_12(2.0));
+    ClearStaleBattleState();
+}
+
+TEST("Out-of-battle type effectiveness: the Dome's Good as Gold blocks status moves aimed at it")
+{
+    ASSUME(GetMoveCategory(MOVE_THUNDER_WAVE) == DAMAGE_CATEGORY_STATUS);
+    ASSUME(GetMoveTarget(MOVE_CHARGE) == TARGET_USER);
+    SetStaleBattleState(TYPE_NORMAL, 0);
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_THUNDER_WAVE, ABILITY_NONE, SPECIES_GHOLDENGO, ABILITY_GOOD_AS_GOLD), UQ_4_12(0.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_THUNDERBOLT, ABILITY_NONE, SPECIES_GHOLDENGO, ABILITY_GOOD_AS_GOLD), UQ_4_12(1.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_CHARGE, ABILITY_NONE, SPECIES_GHOLDENGO, ABILITY_GOOD_AS_GOLD), UQ_4_12(1.0));
+    ClearStaleBattleState();
+}
+
+TEST("Out-of-battle type effectiveness: the Dome's Mold Breaker, Teravolt and Turboblaze get past the target's ability")
+{
+    SetStaleBattleState(TYPE_NORMAL, 0);
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_EARTHQUAKE, ABILITY_MOLD_BREAKER, SPECIES_GASTLY, ABILITY_LEVITATE), UQ_4_12(2.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_THUNDERBOLT, ABILITY_TERAVOLT, SPECIES_JOLTEON, ABILITY_VOLT_ABSORB), UQ_4_12(0.5));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_HYPER_VOICE, ABILITY_TURBOBLAZE, SPECIES_VOLTORB, ABILITY_SOUNDPROOF), UQ_4_12(1.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_X_SCISSOR, ABILITY_MOLD_BREAKER, SPECIES_SHEDINJA, ABILITY_WONDER_GUARD), UQ_4_12(0.5));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_X_SCISSOR, ABILITY_NONE, SPECIES_SHEDINJA, ABILITY_WONDER_GUARD), UQ_4_12(0.0));
+    ClearStaleBattleState();
+}
+
+TEST("Out-of-battle type effectiveness: the Dome's Mycelium Might gets past the target's ability on status moves only")
+{
+    ASSUME(GetMoveCategory(MOVE_THUNDER_WAVE) == DAMAGE_CATEGORY_STATUS);
+    SetStaleBattleState(TYPE_NORMAL, 0);
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_THUNDER_WAVE, ABILITY_MYCELIUM_MIGHT, SPECIES_GHOLDENGO, ABILITY_GOOD_AS_GOLD), UQ_4_12(1.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_HYPER_VOICE, ABILITY_MYCELIUM_MIGHT, SPECIES_VOLTORB, ABILITY_SOUNDPROOF), UQ_4_12(0.0));
+    ClearStaleBattleState();
+}
+
+TEST("Out-of-battle type effectiveness: the Dome's moves that ignore abilities get past the target's ability")
+{
+    ASSUME(MoveIgnoresTargetAbility(MOVE_SUNSTEEL_STRIKE));
+    SetStaleBattleState(TYPE_NORMAL, 0);
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_SUNSTEEL_STRIKE, ABILITY_NONE, SPECIES_SHEDINJA, ABILITY_WONDER_GUARD), UQ_4_12(1.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_IRON_HEAD, ABILITY_NONE, SPECIES_SHEDINJA, ABILITY_WONDER_GUARD), UQ_4_12(0.0));
+    ClearStaleBattleState();
+}
+
+TEST("Out-of-battle type effectiveness: the Dome's move on every battler reaches the target's ability, except Good as Gold")
+{
+    ASSUME(GetMoveTarget(MOVE_PERISH_SONG) == TARGET_ALL_BATTLERS);
+    ASSUME(IsSoundMove(MOVE_PERISH_SONG));
+    ASSUME(GetMoveTarget(MOVE_FLOWER_SHIELD) == TARGET_ALL_BATTLERS);
+    ASSUME(GetMoveCategory(MOVE_FLOWER_SHIELD) == DAMAGE_CATEGORY_STATUS);
+    SetStaleBattleState(TYPE_NORMAL, 0);
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_PERISH_SONG, ABILITY_NONE, SPECIES_VOLTORB, ABILITY_SOUNDPROOF), UQ_4_12(0.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_PERISH_SONG, ABILITY_NONE, SPECIES_VOLTORB, ABILITY_STATIC), UQ_4_12(1.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_FLOWER_SHIELD, ABILITY_NONE, SPECIES_GHOLDENGO, ABILITY_GOOD_AS_GOLD), UQ_4_12(0.5));
+    ClearStaleBattleState();
 }

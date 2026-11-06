@@ -929,14 +929,14 @@ static u32 GetNumberOfSpawnAnimTiles(s32 x, s32 y)
     enum SpawnDespawnTypeOWE spawnAnimType = GetOWESpawnDespawnAnimType(metatileBehavior);
     u32 visual = gOverworldWildEncounterFieldEffectInfo[spawnAnimType].visual;
 
-    return gFieldEffectObjectTemplatePointers[visual]->images->size / TILE_SIZE_4BPP;
+    return SPRITE_SIZE_TO_TILE_COUNT(gFieldEffectObjectTemplatePointers[visual]->images->size);
 }
 
 static bool32 CheckCanLoadOWE_Tiles(enum Species speciesId, bool32 isFemale, bool32 isShiny, s32 x, s32 y)
 {
     u32 graphicsId = GetGraphicsIdForMon(speciesId, isShiny, isFemale);
     const struct ObjectEventGraphicsInfo *graphicsInfo = GetObjectEventGraphicsInfo(graphicsId);
-    u32 tileCount = graphicsInfo->size / TILE_SIZE_4BPP;
+    u32 tileCount = SPRITE_SIZE_TO_TILE_COUNT(graphicsInfo->size);
     if (OW_GFX_COMPRESS)
     {
         u32 tag = graphicsInfo->tileTag;
