@@ -3,11 +3,10 @@ import re
 import sys
 
 # The keys each object of wild_encounters.json must have, and the others it may have.
-# An encounter may also have one key per field type (land_mons, water_mons, ...), and
-# needs "map" in a group with for_maps.
+# An encounter's are built in ValidateEncounters: base_label, "map" in a group with
+# for_maps, and one key per field type (land_mons, water_mons, ...).
 GROUP_KEYS = ({"label", "encounters"}, {"for_maps", "fields"})
 FIELD_KEYS = ({"type", "encounter_rates"}, {"groups"})
-ENCOUNTER_KEYS = ({"base_label"}, {"map"})
 MONS_ENTRY_KEYS = ({"encounter_rate", "mons"}, set())
 MON_KEYS = ({"species"}, {"min_level", "max_level"})
 
@@ -21,12 +20,11 @@ class WildEncountersError(Exception):
     pass
 
 
-def CheckKeys(obj, keys, where, extra_required=(), extra_optional=()):
-    required = keys[0] | set(extra_required)
+def CheckKeys(obj, required, optional, where):
     missing = sorted(required - set(obj))
     if missing:
         raise WildEncountersError(f"{where}: missing key(s) {', '.join(missing)}")
-    unknown = sorted(set(obj) - required - keys[1] - set(extra_optional))
+    unknown = sorted(set(obj) - required - optional)
     if unknown:
         raise WildEncountersError(f"{where}: unknown key(s) {', '.join(unknown)}")
 
@@ -43,31 +41,31 @@ def ValidateEncounters(json_data):
     a u8."""
     slot_counts = {}
     for group in json_data["wild_encounter_groups"]:
-        CheckKeys(group, GROUP_KEYS, group.get("label", "wild encounter group"))
+        CheckKeys(group, *GROUP_KEYS, group.get("label", "wild encounter group"))
         for field in group.get("fields", []):
-            CheckKeys(field, FIELD_KEYS, f"{group['label']} field {field.get('type')}")
+            CheckKeys(field, *FIELD_KEYS, f"{group['label']} field {field.get('type')}")
             slot_count = len(field["encounter_rates"])
             if slot_counts.setdefault(field["type"], slot_count) != slot_count:
                 raise WildEncountersError(f"{group['label']} field {field['type']}: {slot_count} encounter_rates, but another group's has {slot_counts[field['type']]}")
 
     for group in json_data["wild_encounter_groups"]:
-        map_key = {"map"} if group.get("for_maps") else set()
+        required = {"base_label", "map"} if group.get("for_maps") else {"base_label"}
         for idx, map_encounters in enumerate(group["encounters"]):
             where = map_encounters.get("base_label", f"{group['label']} encounter {idx}")
-            CheckKeys(map_encounters, ENCOUNTER_KEYS, where, map_key, slot_counts.keys())
+            CheckKeys(map_encounters, required, {"map"} | slot_counts.keys(), where)
             for mon_type, slot_count in slot_counts.items():
                 if mon_type not in map_encounters:
                     continue
                 mons_entry = map_encounters[mon_type]
                 type_where = f"{where} {mon_type}"
-                CheckKeys(mons_entry, MONS_ENTRY_KEYS, type_where)
+                CheckKeys(mons_entry, *MONS_ENTRY_KEYS, type_where)
                 CheckInt(mons_entry["encounter_rate"], 0, MAX_ENCOUNTER_RATE, "encounter_rate", type_where)
                 mons = mons_entry["mons"]
                 if len(mons) != slot_count:
                     raise WildEncountersError(f"{type_where}: {len(mons)} mons, but the {mon_type} field has {slot_count} encounter_rates")
-                for idx, mon in enumerate(mons):
-                    mon_where = f"{type_where} slot {idx}"
-                    CheckKeys(mon, MON_KEYS, mon_where)
+                for slot, mon in enumerate(mons):
+                    mon_where = f"{type_where} slot {slot}"
+                    CheckKeys(mon, *MON_KEYS, mon_where)
                     min_level = mon.get("min_level", DEFAULT_MIN_LEVEL)
                     max_level = mon.get("max_level", MAX_LEVEL)
                     CheckInt(max_level, MIN_LEVEL, MAX_LEVEL, "max_level", mon_where)
