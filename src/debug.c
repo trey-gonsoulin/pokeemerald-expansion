@@ -1012,6 +1012,12 @@ static bool32 IsSubMenuAction(const void *action)
         || action == DebugAction_OpenSubMenuRecentWarps;
 }
 
+// Copies a list label into its row, cut off to fit (#280)
+static void Debug_SetItemName(u32 i, const u8 *text)
+{
+    Debug_CopyLabel(sDebugMenuListData->itemNames[i], ARRAY_COUNT(sDebugMenuListData->itemNames[i]), text);
+}
+
 static u32 Debug_GenerateListBasicMenu(const struct DebugMenuOption *items)
 {
     u32 totalItems = 0;
@@ -1022,7 +1028,7 @@ static u32 Debug_GenerateListBasicMenu(const struct DebugMenuOption *items)
         if (IsSubMenuAction(items[i].action))
             Debug_CopySubMenuLabel(sDebugMenuListData->itemNames[i], ARRAY_COUNT(sDebugMenuListData->itemNames[i]), gStringVar4, DEBUG_MENU_FONT);
         else
-            StringCopy(&sDebugMenuListData->itemNames[i][0], gStringVar4);
+            Debug_SetItemName(i, gStringVar4);
         sDebugMenuListData->listItems[i].name = &sDebugMenuListData->itemNames[i][0];
         totalItems++;
     }
@@ -1716,7 +1722,7 @@ static u32 Debug_GenerateListTrainerMenu(const struct DebugMenuOption *items)
         }
 
         StringExpandPlaceholders(gStringVar4, sDebugMenu_Actions_Trainers[i].text);
-        StringCopy(&sDebugMenuListData->itemNames[i][0], gStringVar4);
+        Debug_SetItemName(i, gStringVar4);
 
         if (noDraw)
         {
@@ -1767,7 +1773,7 @@ static u32 Debug_GenerateListOutbreakMenu(const struct DebugMenuOption *items)
         }
 
         StringExpandPlaceholders(gStringVar4, sDebugMenu_Actions_MassOutbreak[i].text);
-        StringCopy(&sDebugMenuListData->itemNames[i][0], gStringVar4);
+        Debug_SetItemName(i, gStringVar4);
 
         if (noDraw)
         {
@@ -1925,19 +1931,19 @@ static u32 Debug_GenerateListFlagsMenu(const struct DebugMenuOption *items)
 
         if (flagResult == DEBUG_OPTION_CANT_BE_TOGGLED)
         {
-            StringCopy(&sDebugMenuListData->itemNames[i][0], name);
+            Debug_SetItemName(i, name);
         }
         else if (flagResult)
         {
             StringCopy(gStringVar1, sColor_Green);
             StringExpandPlaceholders(gStringVar4, name);
-            StringCopy(&sDebugMenuListData->itemNames[i][0], gStringVar4);
+            Debug_SetItemName(i, gStringVar4);
         }
         else
         {
             StringCopy(gStringVar1, sColor_Red);
             StringExpandPlaceholders(gStringVar4, name);
-            StringCopy(&sDebugMenuListData->itemNames[i][0], gStringVar4);
+            Debug_SetItemName(i, gStringVar4);
         }
 
         sDebugMenuListData->listItems[i].name = &sDebugMenuListData->itemNames[i][0];

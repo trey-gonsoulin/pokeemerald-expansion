@@ -622,10 +622,45 @@ void Debug_CopyStringEndToFit(u8 *dest, u32 destSize, const u8 *src, u32 fontId,
         StringCopy(&dest[1], &src[++skip]);
 }
 
+// The bytes of the character or code at s: a control code with its arguments, a placeholder or a two-byte symbol
+static u32 GetLabelCharSize(const u8 *s)
+{
+    switch (*s)
+    {
+    case EXT_CTRL_CODE_BEGIN:
+        return 1 + max(GetExtCtrlCodeLength(s[1]), 1);
+    case PLACEHOLDER_BEGIN:
+    case CHAR_EXTRA_SYMBOL:
+    case CHAR_KEYPAD_ICON:
+        return 2;
+    default:
+        return 1;
+    }
+}
+
+// Copies as much of src as fits in destSize bytes with its EOS, never splitting a control code
+// or a two-byte character, and returns the EOS (#280).
+u8 *Debug_CopyLabel(u8 *dest, u32 destSize, const u8 *src)
+{
+    const u8 *end = dest + destSize - 1;
+
+    while (*src != EOS)
+    {
+        u32 size = GetLabelCharSize(src);
+
+        if (dest + size > end)
+            break;
+        for (; size != 0 && *src != EOS; size--)
+            *dest++ = *src++;
+    }
+    *dest = EOS;
+    return dest;
+}
+
 // Copies text, in a narrower font than fontId if it would run past DEBUG_SUBMENU_ARROW_X,
 // then the arrow at that x in fontId. The list fits a label by its whole width, which here
 // is at least the arrow's x plus the arrow, so it can't fit the text alone (#88).
-// Text that leaves too little room in dest for the font codes and the arrow is cut off, by bytes: labels are plain text.
+// Text that leaves too little room in dest for the font codes and the arrow is cut off (Debug_CopyLabel).
 STATIC_ASSERT(DEBUG_SUBMENU_ARROW_X < 256, DebugSubMenuArrowXFitsClearTo);
 static const u8 sSubMenuArrow[] = {EXT_CTRL_CODE_BEGIN, EXT_CTRL_CODE_CLEAR_TO, DEBUG_SUBMENU_ARROW_X, CHAR_RIGHT_ARROW, EOS};
 // WrapFontIdToFit's two font codes, the arrow and the EOS
@@ -633,9 +668,8 @@ static const u8 sSubMenuArrow[] = {EXT_CTRL_CODE_BEGIN, EXT_CTRL_CODE_CLEAR_TO, 
 
 void Debug_CopySubMenuLabel(u8 *dest, u32 destSize, const u8 *text, u32 fontId)
 {
-    u32 length = min(StringLength(text), destSize - SUBMENU_LABEL_EXTRA);
+    // SUBMENU_LABEL_EXTRA counts the EOS that Debug_CopyLabel's size counts too
+    u8 *end = Debug_CopyLabel(dest, destSize - SUBMENU_LABEL_EXTRA + 1, text);
 
-    memcpy(dest, text, length);
-    dest[length] = EOS;
-    StringCopy(WrapFontIdToFit(dest, &dest[length], fontId, DEBUG_SUBMENU_ARROW_X), sSubMenuArrow);
+    StringCopy(WrapFontIdToFit(dest, end, fontId, DEBUG_SUBMENU_ARROW_X), sSubMenuArrow);
 }
