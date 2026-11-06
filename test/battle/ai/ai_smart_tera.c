@@ -69,3 +69,21 @@ AI_SINGLE_BATTLE_TEST("AI_FLAG_SMART_TERA: AI might tera if it gets saved from a
         MESSAGE("The opposing Wobbuffet terastallized into the Fire type!");
     }
 }
+
+// TYPE_MYSTERY is the Tera Type that marks a trainer mon that won't Terastallize (BlockTrainerMonGimmicks).
+AI_SINGLE_BATTLE_TEST("AI_FLAG_SMART_TERA: AI doesn't conserve tera for a party mon with no Tera Type")
+{
+    PASSES_RANDOMLY(100, 100, RNG_AI_CONSERVE_TERA);
+    GIVEN {
+        ASSUME(GetMovePower(MOVE_SEED_BOMB) == 80);
+        AI_FLAGS(AI_FLAG_CHECK_BAD_MOVE | AI_FLAG_CHECK_VIABILITY | AI_FLAG_TRY_TO_FAINT | AI_FLAG_SMART_TERA | AI_FLAG_OMNISCIENT );
+        PLAYER(SPECIES_WOBBUFFET) { HP(47); Speed(100); Moves(MOVE_SEED_BOMB); }
+        PLAYER(SPECIES_WOBBUFFET) { Speed(100); }
+        OPPONENT(SPECIES_WOBBUFFET) { Speed(100); HP(30); Moves(MOVE_SEED_BOMB); TeraType(TYPE_FIRE); }
+        OPPONENT(SPECIES_WOBBUFFET) { Speed(100); TeraType(TYPE_MYSTERY); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_SEED_BOMB); }
+    } SCENE {
+        MESSAGE("The opposing Wobbuffet terastallized into the Fire type!");
+    }
+}
