@@ -15,6 +15,7 @@ TEST("OWE battle start: an unspawned last talked-to object despawns nothing")
     // ResetObjectEvents creates the two reflection sprites, which a runner's earlier test
     // can leave no slot for (test/sprite.c's BuildOamBuffer tests leave every slot in use).
     ResetSpriteData();
+    FreeAllSpritePalettes();
     ResetObjectEvents();
     gSpecialVar_LastTalked = 1;
     EXPECT_EQ(GetObjectEventIdByLocalId(gSpecialVar_LastTalked), OBJECT_EVENTS_COUNT);

@@ -68,6 +68,24 @@ TEST("Out-of-battle type effectiveness: the Dome's absorbing abilities take the 
     ClearStaleBattleState();
 }
 
+TEST("Out-of-battle type effectiveness: the Dome's Lightning Rod takes Electric moves from Gen 5")
+{
+    ASSUME(GetConfig(B_REDIRECT_ABILITY_IMMUNITY) >= GEN_5);
+    SetStaleBattleState(TYPE_NORMAL, 0);
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_THUNDERBOLT, SPECIES_PIKACHU, ABILITY_LIGHTNING_ROD), UQ_4_12(0.0));
+    ClearStaleBattleState();
+}
+
+TEST("Out-of-battle type effectiveness: the Dome's absorbing abilities don't take a move on the user or the field")
+{
+    ASSUME(GetMoveTarget(MOVE_CHARGE) == TARGET_USER);
+    ASSUME(GetMoveTarget(MOVE_SUNNY_DAY) == TARGET_FIELD);
+    SetStaleBattleState(TYPE_NORMAL, 0);
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_CHARGE, SPECIES_JOLTEON, ABILITY_VOLT_ABSORB), UQ_4_12(0.5));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_SUNNY_DAY, SPECIES_VULPIX, ABILITY_FLASH_FIRE), UQ_4_12(0.5));
+    ClearStaleBattleState();
+}
+
 TEST("Out-of-battle type effectiveness: the Dome's other abilities leave the type chart alone")
 {
     SetStaleBattleState(TYPE_NORMAL, 0);
