@@ -105,6 +105,10 @@ jobs:
       - name: Learnset helper unit tests
         run: python3 -m unittest discover -s tools/learnset_helpers
 
+      # trainerproc's range and size checks on the .party files (#255); the tests build it
+      - name: Trainerproc unit tests
+        run: python3 -m unittest discover -s tools/trainerproc
+
       # The script that writes wild_encounters.h and checks wild_encounters.json (#257), and
       # the constants template, whose test needs jsonproc (#286)
       - name: Wild encounter generator unit tests
