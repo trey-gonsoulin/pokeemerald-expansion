@@ -560,7 +560,8 @@ $(LEARNSET_HELPERS_BUILD_DIR):
 	@mkdir -p $@
 
 # Tracked, but made from the porymoves files: test_learnset_helpers.py checks it is up to date
-$(ALL_LEARNABLES_JSON): $(wildcard $(LEARNSET_HELPERS_DATA_DIR)/*.json) $(LEARNSET_HELPERS_DIR)/make_learnables.py $(call force_if_missing,$(ALL_LEARNABLES_JSON))
+# (and the directory, whose time changes when a file is added, removed or renamed)
+$(ALL_LEARNABLES_JSON): $(LEARNSET_HELPERS_DATA_DIR) $(wildcard $(LEARNSET_HELPERS_DATA_DIR)/*.json) $(LEARNSET_HELPERS_DIR)/make_learnables.py $(call force_if_missing,$(ALL_LEARNABLES_JSON))
 	python3 $(LEARNSET_HELPERS_DIR)/make_learnables.py $(LEARNSET_HELPERS_DATA_DIR) $@
 
 # The files make_tutors.py globs
