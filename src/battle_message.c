@@ -3221,8 +3221,8 @@ u32 BattleStringExpandPlaceholders(const u8 *src, u8 *dst, u32 dstSize)
                 break;
             case B_TXT_LAST_MOVE: // originally used move name
                 if (gBattleMsgDataPtr->originallyUsedMove >= MOVES_COUNT
-                 && !IsZMove(gBattleMsgDataPtr->currentMove)
-                 && !IsMaxMove(gBattleMsgDataPtr->currentMove))
+                 && !IsZMove(gBattleMsgDataPtr->originallyUsedMove)
+                 && !IsMaxMove(gBattleMsgDataPtr->originallyUsedMove))
                     toCpy = gTypesInfo[gBattleStruct->stringMoveType].generic;
                 else
                     toCpy = GetMoveName(gBattleMsgDataPtr->originallyUsedMove);
