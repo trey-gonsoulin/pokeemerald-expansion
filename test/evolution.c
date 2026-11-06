@@ -256,3 +256,44 @@ TEST("Milcery morning: the day spins leave the evening and the night alone")
     EXPECT_EQ(GetMilcerySpinEvolution(ITEM_STRAWBERRY_SWEET, NIGHT_HOUR_BEGIN + 1, SPIN_CW_SHORT), SPECIES_ALCREMIE_STRAWBERRY_MATCHA_CREAM);
     EXPECT_EQ(GetMilcerySpinEvolution(ITEM_STRAWBERRY_SWEET, NIGHT_HOUR_BEGIN + 1, SPIN_CCW_LONG), SPECIES_ALCREMIE_STRAWBERRY_MINT_CREAM);
 }
+
+// Milcery's night spins checked IF_TIME TIME_NIGHT, so in the evening (19-20 under the
+// Gen 8+ times) only the 10-second Rainbow Swirl spin evolved it, though Sword and Shield
+// count that hour as night (#276). They now match anything but the day and the morning.
+TEST("Milcery evening: every night spin evolves Milcery in the evening too")
+{
+    static const u16 nightSpins[] = { SPIN_CW_SHORT, SPIN_CCW_SHORT, SPIN_CW_LONG, SPIN_CCW_LONG };
+    enum Item sweet = ITEM_NONE;
+    enum TimeOfDay timeOfDay;
+    u32 i;
+
+    for (i = ITEM_STRAWBERRY_SWEET; i <= ITEM_RIBBON_SWEET; i++)
+        PARAMETRIZE { sweet = i; }
+
+    ASSUME(EVENING_HOUR_BEGIN != EVENING_HOUR_END);
+    SetTimeOfDay(EVENING_HOUR_BEGIN);
+    timeOfDay = GetTimeOfDay();
+    SetTimeOfDay(0);
+    EXPECT_EQ(timeOfDay, TIME_EVENING);
+
+    for (i = 0; i < ARRAY_COUNT(nightSpins); i++)
+    {
+        enum Species nightSpecies = GetMilcerySpinEvolution(sweet, NIGHT_HOUR_BEGIN + 1, nightSpins[i]);
+
+        EXPECT_NE(nightSpecies, SPECIES_NONE);
+        EXPECT_NE(nightSpecies, GetMilcerySpinEvolution(sweet, DAY_HOUR_BEGIN, nightSpins[i]));
+        EXPECT_EQ(GetMilcerySpinEvolution(sweet, EVENING_HOUR_BEGIN, nightSpins[i]), nightSpecies);
+    }
+}
+
+TEST("Milcery evening: a 10-second spin still gives Rainbow Swirl in the evening alone")
+{
+    ASSUME(EVENING_HOUR_BEGIN != EVENING_HOUR_END);
+    EXPECT_EQ(GetMilcerySpinEvolution(ITEM_STRAWBERRY_SWEET, EVENING_HOUR_BEGIN, SPIN_EITHER), SPECIES_ALCREMIE_STRAWBERRY_RAINBOW_SWIRL);
+    EXPECT_EQ(GetMilcerySpinEvolution(ITEM_STRAWBERRY_SWEET, EVENING_HOUR_BEGIN, SPIN_CCW_LONG), SPECIES_ALCREMIE_STRAWBERRY_MINT_CREAM);
+    EXPECT_EQ(GetMilcerySpinEvolution(ITEM_STRAWBERRY_SWEET, NIGHT_HOUR_BEGIN + 1, SPIN_EITHER), SPECIES_NONE);
+    EXPECT_EQ(GetMilcerySpinEvolution(ITEM_STRAWBERRY_SWEET, DAY_HOUR_BEGIN, SPIN_EITHER), SPECIES_NONE);
+    EXPECT_EQ(GetMilcerySpinEvolution(ITEM_STRAWBERRY_SWEET, MORNING_HOUR_BEGIN, SPIN_EITHER), SPECIES_NONE);
+    EXPECT_EQ(GetMilcerySpinEvolution(ITEM_STRAWBERRY_SWEET, MORNING_HOUR_BEGIN, SPIN_CW_SHORT), SPECIES_ALCREMIE_STRAWBERRY_VANILLA_CREAM);
+    EXPECT_EQ(GetMilcerySpinEvolution(ITEM_STRAWBERRY_SWEET, DAY_HOUR_BEGIN, SPIN_CCW_SHORT), SPECIES_ALCREMIE_STRAWBERRY_RUBY_CREAM);
+}
