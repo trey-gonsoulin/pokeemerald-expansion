@@ -5067,6 +5067,16 @@ static void ResolveDomeRoundWinners(void)
     }
 }
 
+// A species with one ability has it in both slots, as GetAbilityBySpecies gives in battle.
+static enum Ability GetDomeMonAbility(enum Species species, u32 abilityNum)
+{
+    enum Ability ability = GetSpeciesAbility(species, abilityNum);
+
+    if (ability == ABILITY_NONE)
+        ability = GetSpeciesAbility(species, 0);
+    return ability;
+}
+
 // Decides the winning move of an NPC vs NPC match
 static u16 GetWinningMove(int winnerTournamentId, int loserTournamentId, u8 roundId)
 {
@@ -5081,6 +5091,17 @@ static u16 GetWinningMove(int winnerTournamentId, int loserTournamentId, u8 roun
     // Calc move points of all 4 moves for all 3 Pokémon hitting all 3 target mons.
     for (i = 0; i < FRONTIER_PARTY_SIZE; i++)
     {
+        enum Species attackerSpecies;
+        enum Ability attackerAbility;
+
+        if (DOME_TRAINERS[winnerTournamentId].trainerId == TRAINER_FRONTIER_BRAIN)
+            attackerSpecies = GetFrontierBrainMonSpecies(i);
+        else
+            attackerSpecies = gFacilityTrainerMons[DOME_MONS[winnerTournamentId][i]].species;
+        // Mold Breaker and the like get past the target's ability. Like the target's, the
+        // attacker's ability is one of its two, at random.
+        attackerAbility = GetDomeMonAbility(attackerSpecies, Random() & 1);
+
         for (j = 0; j < MAX_MON_MOVES; j++)
         {
             u32 moveIndex = i * MAX_MON_MOVES + j;
@@ -5114,12 +5135,9 @@ static u16 GetWinningMove(int winnerTournamentId, int loserTournamentId, u8 roun
 
                 targetSpecies = gFacilityTrainerMons[DOME_MONS[loserTournamentId][k]].species;
 
-                if (personality & 1)
-                    targetAbility = GetSpeciesAbility(targetSpecies, 1);
-                else
-                    targetAbility = GetSpeciesAbility(targetSpecies, 0);
+                targetAbility = GetDomeMonAbility(targetSpecies, personality & 1);
 
-                typeMultiplier = CalcPartyMonTypeEffectivenessMultiplier(moves[i * 4 + j], targetSpecies, targetAbility);
+                typeMultiplier = CalcPartyMonTypeEffectivenessMultiplier(moves[i * 4 + j], attackerAbility, targetSpecies, targetAbility);
                 if (typeMultiplier == UQ_4_12(0))
                     moveScores[moveIndex] += 0;
                 else if (typeMultiplier >= UQ_4_12(2.0))
