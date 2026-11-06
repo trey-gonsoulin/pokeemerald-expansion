@@ -1413,16 +1413,22 @@ static bool32 IsMonOnPartnerBattler(enum BattlerId battler, u32 monId)
         && IsMonOnBattler(partner, monId);
 }
 
-// Reapplies the Dynamax HP multiplier to a levelling mon still Dynamaxed on screen. The exp
-// controller is always battler 0, so the mon may be on its partner position instead.
+// The battler on screen with the player's monId: battler (the exp controller, always battler 0)
+// or its partner, else MAX_BATTLERS_COUNT.
+static enum BattlerId GetBattlerWithExpMon(enum BattlerId battler, u32 monId)
+{
+    if (IsMonOnBattler(battler, monId))
+        return battler;
+    if (IsMonOnPartnerBattler(battler, monId))
+        return GetPartnerBattler(battler);
+    return MAX_BATTLERS_COUNT;
+}
+
+// Reapplies the Dynamax HP multiplier to a levelling mon still Dynamaxed on screen.
 static void TryDynamaxModifyHPLevelUp(struct Pokemon *mon, enum BattlerId battler, u32 monId, u32 oldMaxHP)
 {
-    if (IsMonOnPartnerBattler(battler, monId))
-        battler = GetPartnerBattler(battler);
-    else if (!IsMonOnBattler(battler, monId))
-        return;
-
-    if (GetActiveGimmick(battler) == GIMMICK_DYNAMAX)
+    battler = GetBattlerWithExpMon(battler, monId);
+    if (battler != MAX_BATTLERS_COUNT && GetActiveGimmick(battler) == GIMMICK_DYNAMAX)
         DynamaxModifyHPLevelUp(mon, battler, oldMaxHP);
 }
 
@@ -1560,10 +1566,9 @@ static void Task_GiveExpWithExpBar(u8 taskId)
 static enum BattlerId GetLvlUpAnimBattler(u8 taskId)
 {
     enum BattlerId battler = gTasks[taskId].tExpTask_battler;
+    enum BattlerId monBattler = GetBattlerWithExpMon(battler, gTasks[taskId].tExpTask_monId);
 
-    if (IsMonOnPartnerBattler(battler, gTasks[taskId].tExpTask_monId))
-        return GetPartnerBattler(battler);
-    return battler;
+    return monBattler == MAX_BATTLERS_COUNT ? battler : monBattler;
 }
 
 static void Task_LaunchLvlUpAnim(u8 taskId)
