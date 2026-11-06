@@ -139,7 +139,8 @@ def ValidateEncounters(json_data):
                 mons_entry = map_encounters[mon_type]
                 type_where = f"{where} {mon_type}"
                 CheckKeys(mons_entry, *MONS_ENTRY_KEYS, type_where)
-                CheckInt(mons_entry["encounter_rate"], *ENCOUNTER_RATE_RANGES.get(mon_type, (0, MAX_ENCOUNTER_RATE)), "encounter_rate", type_where)
+                low, high = ENCOUNTER_RATE_RANGES.get(mon_type, (0, MAX_ENCOUNTER_RATE))
+                CheckInt(mons_entry["encounter_rate"], low, high, "encounter_rate", type_where)
                 mons = mons_entry["mons"]
                 if len(mons) != slot_count:
                     raise WildEncountersError(f"{type_where}: {len(mons)} mons, but the {mon_type} field has {slot_count} encounter_rates")
