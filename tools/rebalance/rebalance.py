@@ -33,6 +33,7 @@ import sys
 import tempfile
 
 import gamedata as G
+import power as P
 
 DEFAULT_OUT_DIR = os.path.join(G.HERE, 'output')
 DEFAULT_STAGES = os.path.join(G.HERE, 'story_stages.json')
@@ -1563,6 +1564,50 @@ def nonlevel_report(rows):
                    for (sp, to), lv in sorted(regular.items(), key=lambda kv: (-len(kv[1]), kv[0]))]), '']
 
 
+def power_report(pw):
+    fit = pw['fit']
+    out = ['## Combat power estimate', '',
+           '`power.py` scores each Pokemon one-on-one against a reference Pokemon of its own level (base '
+           f'{P.REFERENCE_BASE} in every stat, IV {P.REFERENCE_IV}, no type) on turns to KO, with its best '
+           'expected damage per turn (STAB, accuracy, strikes, half for recharge and two-turn moves) and up to '
+           f'{P.SPEED_BONUS} turn for the faster side. Its effective level is the level at which the reference '
+           'itself would score the same: what level of typical Pokemon it fights like. Types, abilities, items, '
+           'status and stat moves are left out (README, "Matchup-relative strength").', '',
+           "The reference's expected power is fitted to every trainer Pokemon's best move: "
+           f"{fit['intercept']} + {fit['slope']} ln(level), "
+           + ', '.join(f'{p} at {lv}' for lv, p in fit['power'].items()) + '.', '',
+           f'Bench: the Exp. Share bench before the fight ({POWER_BENCH[0]}, {POWER_BENCH[1]}, the Exp. Share '
+           "curve's). Strongest: the highest effective level on the team.", '']
+    rows = []
+    for b in pw['bosses']:
+        team = [m for m in b['team'] if m['effective'] is not None]
+        level_mean = sum(m['level'] for m in b['team']) / len(b['team'])
+        row = [b['stage'], short(b['boss']), max(m['level'] for m in b['team'])]
+        if not team:  # no scored attack on the team
+            rows.append(row + ['-', f'{level_mean:.1f}', '-', b['bench'], ''])
+            continue
+        top = max(team, key=lambda m: m['effective'])
+        eff_mean = sum(m['effective'] for m in team) / len(team)
+        rows.append(row + [f"{short(top['species'])} {top['level']} -> {top['effective']}",
+                           f'{level_mean:.1f}', f'{eff_mean:.1f}', b['bench'],
+                           '' if b['bench'] is None else f"{top['effective'] - b['bench']:+.1f}"])
+    out += [table(['stage', 'boss', 'ace level', 'strongest (level -> effective)', 'mean level', 'mean effective',
+                   'bench', 'strongest - bench'], rows), '']
+    odd = sorted(((m['effective'] / m['level'] - 1, b, m) for b in pw['bosses'] for m in b['team']
+                  if m['effective'] is not None and abs(m['effective'] / m['level'] - 1) * 100 >= POWER_OUTLIER),
+                 key=lambda x: -x[0])
+    out += [f'Boss Pokemon at least {POWER_OUTLIER}% from their level, strongest first (best move; '
+            '"default" for a default moveset):', '',
+            table(['boss', 'Pokemon', 'level', 'effective', 'off', 'best move'],
+                  [[short(b['boss']), short(m['species']), m['level'], m['effective'], f'{d * 100:+.0f}%',
+                    short(m['best_move']) + ('' if m['set_moves'] else ' (default)')] for d, b, m in odd]), '']
+    no_attack = [f"{short(b['boss'])}'s {short(m['species'])}" for b in pw['bosses'] for m in b['team']
+                 if m['effective'] is None]
+    if no_attack:
+        out += ['No scored attack: ' + ', '.join(no_attack) + '.', '']
+    return out
+
+
 def write_report(path, res):
     c, d, h, curve = res['census'], res['defaults'], res['handwritten'], res['level_curve']
     out = ['# Rebalance measurements (#113)', '',
@@ -1678,6 +1723,8 @@ def write_report(path, res):
                 lines.append(f"- {short(r['species'])} {r['level']}{moves}: " + '; '.join(parts))
         out += [f'### {short(bid)}', ''] + (lines or ['- no change']) + ['']
 
+    out += power_report(res['power'])
+
     out += ['## TMs by story stage', '',
             'First stage where each TM is on a stage map (ball, hidden item, mart list, script, or reward: a Trick House '
             'puzzle prize, filed under that puzzle). Hidden Power\'s type comes from the IVs. '
@@ -1734,6 +1781,29 @@ def load_wilds(repo, stages):
     return wilds
 
 
+# Combat power estimate (power.py): boss Pokemon whose effective level is
+# this far (percent of their level) from their level are listed.
+POWER_OUTLIER = 10
+# The share curve the power table compares the bosses with: the report's
+# main one (full clear, modelled friendship, 1.5x off).
+POWER_BENCH = ('1.5x off', 'full / friendship')
+
+
+def combat_power(trainers, gd, stages, share):
+    """Each story boss's Pokemon with power.py's effective level, against a
+    reference fitted to every trainer Pokemon, and the Exp. Share bench
+    (POWER_BENCH) before the fight."""
+    power_fn, intercept, slope = P.fit_reference_power(
+        gd, [(mon, P.team_moves(gd, mon)) for t in trainers.values() for mon in t.mons])
+    curve, bracket = POWER_BENCH
+    bench = {r['boss']: r['bench'] for r in share[curve]['now'][bracket]}
+    bosses = [{'stage': st['name'], 'boss': b, 'bench': bench.get(b), 'team': P.team_power(gd, trainers[b], power_fn)}
+              for st in stages for b in st['bosses']]
+    return {'fit': {'intercept': round(intercept, 2), 'slope': round(slope, 2),
+                    'power': {lv: round(power_fn(lv)) for lv in (5, 25, 50, 75, 100)}},
+            'bosses': bosses}
+
+
 def analyze(repo, stages_path):
     gd = G.load(repo)
     trainers = G.parse_trainers(os.path.join(repo, 'src', 'data', 'trainers.party'))
@@ -1757,6 +1827,7 @@ def analyze(repo, stages_path):
         'handwritten': summarize_handwritten(changes, trainers),
         'handwritten_rows': changes,
         'matchups': boss_matchups(trainers, gd, boss_ids),
+        'power': combat_power(trainers, gd['modern'], stages, share),
         'split_fit': split_fit(gd, SPLIT_WATCH),
         'level_curve': {name: level_curve(stages, trainers, gd, scaling, wilds, clear, wild)
                         for name, (clear, wild) in SCENARIOS.items()},

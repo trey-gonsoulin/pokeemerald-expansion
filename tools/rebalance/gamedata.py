@@ -151,12 +151,15 @@ def _brace_delta(line):
     return code.count('{') - code.count('}')
 
 
-def parse_table(path, defines, prefix, fields):
+def parse_table(path, defines, prefix, fields, nested=()):
     """``[PREFIX_X] = { .field = value, ... }`` -> {PREFIX_X: {field: value}}.
 
     Only the entry's own fields (one brace level inside it) are read, so
     nested structs are skipped, whatever the indent of a field inside an
     #if branch. The file's own object-like #defines are visible to later values.
+    Each ``nested`` token found on an active line anywhere inside an entry
+    (an additional effect's ``MOVE_EFFECT_RECHARGE``) is recorded as
+    ``{token: True}``.
     """
     local = dict(defines)
     out = {}
@@ -173,6 +176,8 @@ def parse_table(path, defines, prefix, fields):
             m = re.match(r'\s*\.(\w+)\s*=\s*(.*)', line)
             if m and m[1] in fields and m[1] not in out[current]:
                 out[current][m[1]] = c_value(field_value(m[2]), local)
+        if current:
+            out[current].update((token, True) for token in nested if re.search(r'\b%s\b' % token, line))
         delta = _brace_delta(line)
         depth += delta
         if current and delta < 0 and depth <= base:  # the entry's closing brace
@@ -193,6 +198,7 @@ class Species:
     learnset: str
     teachables: str = 'sNoneTeachableLearnset'
     egg_moves: str = 'sNoneEggMoveLearnset'
+    abilities: tuple = ()  # the .abilities slots, ABILITY_NONE included
 
 
 def parse_species(repo, defines):
@@ -209,7 +215,10 @@ def parse_species(repo, defines):
         def field(name, default=0):
             f = re.search(r'\.%s\s*=\s*(.*)' % name, text)
             return c_value(field_value(f[1]), defines) if f else default
-        out[sp] = Species(types=types, stats={s: field(s) for s in STAT_FIELDS},
+        m = re.search(r'\.abilities\s*=\s*', text)
+        abilities = (tuple(c_value(a, defines) for a in R.split_args(field_value(text[m.end():]).strip('{} ')))
+                     if m else ())
+        out[sp] = Species(types=types, stats={s: field(s) for s in STAT_FIELDS}, abilities=abilities,
                           exp_yield=field('expYield'), growth=field('growthRate', 'GROWTH_MEDIUM_FAST'),
                           learnset=field('levelUpLearnset', 'sNoneLevelUpLearnset'),
                           teachables=field('teachableLearnset', 'sNoneTeachableLearnset'),
@@ -293,6 +302,10 @@ class Move:
     accuracy: int
     category: str  # DAMAGE_CATEGORY_PHYSICAL / SPECIAL / STATUS, as the battle engine resolves it
     effect: str = 'EFFECT_HIT'
+    strikes: int = 1  # strikeCount
+    multi_hit: bool = False  # multiHit: 2-5 strikes
+    explosion: bool = False  # faints the user
+    recharge: bool = False  # MOVE_EFFECT_RECHARGE on the user (Hyper Beam)
 
     @property
     def attacking(self):
@@ -313,7 +326,8 @@ FIXED_DAMAGE_EFFECTS = frozenset((
 
 def parse_moves(repo, defines, type_categories):
     raw = parse_table(os.path.join(repo, 'src', 'data', 'moves_info.h'), defines, 'MOVE',
-                      ('type', 'power', 'accuracy', 'category', 'effect'))
+                      ('type', 'power', 'accuracy', 'category', 'effect', 'strikeCount', 'multiHit', 'explosion'),
+                      nested=('MOVE_EFFECT_RECHARGE',))
     split = R.c_eval('B_PHYSICAL_SPECIAL_SPLIT >= GEN_4', defines)
     out = {}
     for move, f in raw.items():
@@ -321,7 +335,9 @@ def parse_moves(repo, defines, type_categories):
         typ = f.get('type', 'TYPE_NORMAL')
         if not split and cat != 'DAMAGE_CATEGORY_STATUS':
             cat = type_categories.get(typ, cat)  # GetBattleMoveCategory before Gen 4
-        out[move] = Move(typ, _int(f.get('power', 0)), _int(f.get('accuracy', 0)), cat, f.get('effect', 'EFFECT_HIT'))
+        out[move] = Move(typ, _int(f.get('power', 0)), _int(f.get('accuracy', 0)), cat, f.get('effect', 'EFFECT_HIT'),
+                         max(_int(f.get('strikeCount', 1)), 1), f.get('multiHit') in (True, 'TRUE', 1),
+                         f.get('explosion') in (True, 'TRUE', 1), f.get('MOVE_EFFECT_RECHARGE', False))
     return out
 
 

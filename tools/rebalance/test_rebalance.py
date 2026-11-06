@@ -18,6 +18,7 @@ import unittest
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import gamedata as G  # noqa: E402
+import power as P  # noqa: E402
 import rebalance as RB  # noqa: E402
 
 FIXTURE = os.path.join(G.HERE, 'testdata', 'repo')
@@ -435,6 +436,128 @@ class Exp(unittest.TestCase):
     def test_cleared_share(self):
         self.assertEqual(len(RB.cleared(list(range(10)), 0.5)), 5)
         self.assertEqual(RB.cleared(['a', 'b'], 1.0), ['a', 'b'])
+
+
+def power_regime(species, moves):
+    """An object with what power.py reads of GameData: species, move and flag."""
+    return types.SimpleNamespace(species=species, move=lambda name, ivs=None: moves[name],
+                                 flag=fake_regime().flag)
+
+
+def power_species(base, types_=(), abilities=()):
+    stats = dict.fromkeys(G.STAT_FIELDS, base) if isinstance(base, int) else base
+    return G.Species(tuple(types_), stats, 0, '', '', abilities=tuple(abilities))
+
+
+class Power(unittest.TestCase):
+    """power.py's combat power estimate."""
+
+    MOVES = {
+        'MOVE_HIT': G.Move('TYPE_NORMAL', 80, 100, 'DAMAGE_CATEGORY_PHYSICAL'),
+        'MOVE_SPECIAL': G.Move('TYPE_NORMAL', 80, 100, 'DAMAGE_CATEGORY_SPECIAL'),
+        'MOVE_GROWL': G.Move('TYPE_NORMAL', 0, 100, 'DAMAGE_CATEGORY_STATUS'),
+    }
+
+    @staticmethod
+    def flat(level):
+        return 80
+
+    def test_the_reference_fights_at_its_own_level(self):
+        for level in (5, 30, 70, 100):
+            self.assertAlmostEqual(P.effective_level(P.reference(level, self.flat), self.flat), level, places=3)
+
+    def test_stats_follow_the_formula_unrounded(self):
+        st = P.stats(dict.fromkeys(G.STAT_FIELDS, 80), dict.fromkeys(G.IV_STATS, 15), 50)
+        self.assertEqual(st['hp'], 147.5)  # (2 * 80 + 15) * 50 / 100 + 50 + 10
+        self.assertEqual(st['atk'], 92.5)
+
+    def test_move_power_counts_stab_accuracy_strikes_and_turns(self):
+        gd = fake_regime()
+        hit = G.Move('TYPE_FIRE', 100, 100, 'DAMAGE_CATEGORY_SPECIAL')
+        replace = G.dataclasses.replace
+        self.assertEqual(P.move_power(gd, hit, ('TYPE_WATER',)), 100)
+        self.assertEqual(P.move_power(gd, hit, ('TYPE_FIRE',)), 150)
+        self.assertEqual(P.move_power(gd, replace(hit, accuracy=80), ()), 80)
+        self.assertEqual(P.move_power(gd, replace(hit, accuracy=0), ()), 100)  # never misses
+        self.assertEqual(P.move_power(gd, replace(hit, strikes=2), ()), 200)
+        self.assertAlmostEqual(P.move_power(fake_regime(B_MULTI_HIT_CHANCE='GEN_5'), replace(hit, multi_hit=True), ()), 310)
+        self.assertEqual(P.move_power(fake_regime(B_MULTI_HIT_CHANCE='GEN_3'), replace(hit, multi_hit=True), ()), 300)
+        self.assertEqual(P.move_power(gd, replace(hit, recharge=True), ()), 50)
+        self.assertEqual(P.move_power(gd, replace(hit, effect='EFFECT_SOLAR_BEAM'), ()), 50)
+        self.assertAlmostEqual(P.move_power(gd, replace(hit, effect='EFFECT_FUTURE_SIGHT'), ()), 100 / 3)
+        self.assertAlmostEqual(P.move_power(gd, replace(hit, effect='EFFECT_POWER_BASED_ON_USER_HP'), ()), 60)
+        self.assertEqual(P.move_power(gd, replace(hit, explosion=True), ()), 0)
+        self.assertEqual(P.move_power(gd, replace(hit, effect='EFFECT_OHKO'), ()), 0)
+
+    def test_better_stats_and_moves_raise_the_effective_level(self):
+        species = {'SPECIES_WEAK': power_species(50), 'SPECIES_REF': power_species(80),
+                   'SPECIES_STRONG': power_species(110)}
+        gd = power_regime(species, self.MOVES)
+        ivs = dict.fromkeys(G.IV_STATS, 15)
+
+        def eff(sp, moves=('MOVE_HIT',)):
+            return P.effective_level(P.fighter(gd, sp, 40, list(moves), ivs), self.flat)
+        self.assertAlmostEqual(eff('SPECIES_REF'), 40, places=3)
+        self.assertLess(eff('SPECIES_WEAK'), 40)
+        self.assertGreater(eff('SPECIES_STRONG'), 40)
+        self.assertIsNone(eff('SPECIES_REF', ['MOVE_GROWL']))
+
+    def test_certain_abilities_change_the_fight(self):
+        species = {'SPECIES_PLAIN': power_species(80, abilities=('ABILITY_NONE',)),
+                   'SPECIES_LOAFS': power_species(80, abilities=('ABILITY_TRUANT', 'ABILITY_NONE', 'ABILITY_NONE')),
+                   'SPECIES_STRONG': power_species(80, abilities=('ABILITY_PURE_POWER', 'ABILITY_NONE', 'ABILITY_X')),
+                   'SPECIES_MAYBE': power_species(80, abilities=('ABILITY_THICK_FAT', 'ABILITY_HUGE_POWER'))}
+        gd = power_regime(species, self.MOVES)
+        ivs = dict.fromkeys(G.IV_STATS, 15)
+        self.assertIsNone(P.certain_ability(species['SPECIES_MAYBE']))  # the hidden slot doesn't count
+        plain = P.fighter(gd, 'SPECIES_PLAIN', 40, ['MOVE_HIT'], ivs)
+        self.assertEqual(P.fighter(gd, 'SPECIES_LOAFS', 40, ['MOVE_HIT'], ivs).attacks[0][1], plain.attacks[0][1] / 2)
+        self.assertEqual(P.fighter(gd, 'SPECIES_STRONG', 40, ['MOVE_HIT'], ivs).stats['atk'], plain.stats['atk'] * 2)
+        self.assertEqual(P.fighter(gd, 'SPECIES_STRONG', 40, ['MOVE_SPECIAL'], ivs).stats['spa'], plain.stats['spa'])
+        self.assertEqual(P.fighter(gd, 'SPECIES_MAYBE', 40, ['MOVE_HIT'], ivs).stats, plain.stats)
+
+    def test_first_strike_is_even_at_equal_speed_and_smooth(self):
+        self.assertEqual(P.first_strike(100, 100), 0.5)
+        self.assertAlmostEqual(P.first_strike(110, 100) + P.first_strike(100, 110), 1)
+        self.assertTrue(0.5 < P.first_strike(101, 100) < P.first_strike(110, 100) < 1)
+
+    def test_the_reference_power_fit_recovers_a_log_line(self):
+        species = {'SPECIES_X': power_species(80)}
+        moves = {f'MOVE_{lv}': G.Move('TYPE_NORMAL', round(10 + 20 * P.math.log(lv)), 100, 'DAMAGE_CATEGORY_PHYSICAL')
+                 for lv in (5, 20, 50, 90)}
+        mons = [(G.TrainerMon('SPECIES_X', lv, [f'MOVE_{lv}']), [f'MOVE_{lv}']) for lv in (5, 20, 50, 90)]
+        power_fn, intercept, slope = P.fit_reference_power(power_regime(species, moves), mons)
+        self.assertAlmostEqual(intercept, 10, delta=0.5)
+        self.assertAlmostEqual(slope, 20, delta=0.2)
+        self.assertEqual(power_fn(1), P.MIN_REFERENCE_POWER)
+
+    def test_the_explorer_loads_every_local_module(self):
+        """The explorer copies a fixed list of files into Pyodide (model.js
+        FILES), so each local module rebalance.py imports must be in it."""
+        with open(os.path.join(G.HERE, 'explorer', 'model.js'), encoding='utf-8') as f:
+            listed = set(re.findall(r"'/tools/rebalance/(\w+)\.py'", f.read()))
+        pending, seen = ['rebalance'], set()
+        while pending:
+            name = pending.pop()
+            seen.add(name)
+            with open(os.path.join(G.HERE, name + '.py'), encoding='utf-8') as f:
+                for mod in re.findall(r'^import (\w+)', f.read(), re.M):
+                    if os.path.exists(os.path.join(G.HERE, mod + '.py')) and mod not in seen:
+                        pending.append(mod)
+        self.assertLessEqual(seen, listed)
+
+    def test_nested_tokens_are_flagged(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, 'moves_info.h')
+            with open(path, 'w', encoding='utf-8') as f:
+                f.write('    [MOVE_BEAM] =\n    {\n        .power = 150,\n'
+                        '        .additionalEffects = ADDITIONAL_EFFECTS({\n'
+                        '            .moveEffect = MOVE_EFFECT_RECHARGE,\n        }),\n    },\n'
+                        '    [MOVE_TACKLE] =\n    {\n        .power = 40,\n    },\n')
+            table = G.parse_table(path, G.regime_defines(FIXTURE)['modern'], 'MOVE', ('power',),
+                                  nested=('MOVE_EFFECT_RECHARGE',))
+        self.assertEqual(table, {'MOVE_BEAM': {'power': 150, 'MOVE_EFFECT_RECHARGE': True},
+                                 'MOVE_TACKLE': {'power': 40}})
 
 
 class Analysis(unittest.TestCase):
@@ -873,6 +996,14 @@ class RealRepo(unittest.TestCase):
         self.assertEqual(G.hidden_power(G.DEFAULT_IVS, v), ('TYPE_DARK', 70))
         self.assertEqual(G.hidden_power(zero, m), ('TYPE_FIGHTING', 60))
         self.assertEqual(v.move('MOVE_HIDDEN_POWER', zero).category, 'DAMAGE_CATEGORY_PHYSICAL')
+        # The move and species fields power.py reads.
+        self.assertTrue(m.moves['MOVE_HYPER_BEAM'].recharge)
+        self.assertFalse(m.moves['MOVE_TACKLE'].recharge)
+        self.assertEqual(m.moves['MOVE_DOUBLE_KICK'].strikes, 2)
+        self.assertTrue(m.moves['MOVE_FURY_ATTACK'].multi_hit)
+        self.assertTrue(m.moves['MOVE_EXPLOSION'].explosion)
+        self.assertEqual(P.certain_ability(m.species['SPECIES_SLAKING']), 'ABILITY_TRUANT')
+        self.assertIsNone(P.certain_ability(m.species['SPECIES_AZUMARILL']))
         # Fixed-damage moves are attacks but never STAB.
         self.assertTrue(RB.attacks(m, ['MOVE_SEISMIC_TOSS']))
         self.assertFalse(RB.has_stab(m, 'SPECIES_HARIYAMA', ['MOVE_SEISMIC_TOSS']))

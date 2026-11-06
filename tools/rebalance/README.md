@@ -244,6 +244,9 @@ bootstrap). The repo's `.gitignore` ignores `*.js`, so add new ones with
   level-up STAB moves.
 - **Boss type matchups**: per boss Pokemon, retypings, changed defensive
   multipliers and changed best offensive multipliers against single types.
+- **Combat power estimate**: each story boss Pokemon's effective level
+  (below), the team's strongest and mean against the Exp. Share bench, and
+  the boss Pokemon `POWER_OUTLIER` (10%) or more off their level.
 - **TMs by stage**: the first story stage where each TM sits on a map
   (item ball, hidden item, mart list, script, or reward: a Trick House
   puzzle's prize, which the entrance and end rooms hand out, filed under
@@ -261,6 +264,106 @@ bootstrap). The repo's `.gitignore` ignores `*.js`, so add new ones with
 - FRLG maps (`*_Frlg` folders) never belong to a stage.
 - **Economy**: prices, sell values and healing of a basket of items, and the
   prize money of a full clear of each stage.
+
+## Combat power estimate (prototype)
+
+Level is a weak proxy for strength: at one level, base stats differ by
+up to 3x, and a Pokemon stuck on 40-power moves fights far below one with
+a strong same-type attack. `power.py` turns base stats, IVs and moves into
+an **effective level**, the level of a typical Pokemon that would fare as
+well one-on-one. It's a diagnostic in the report: nothing (`apply`, the
+explorer, the curve's targets) reads it yet.
+
+- **Reference** (`reference`): base `REFERENCE_BASE` (80) in every stat,
+  IV `REFERENCE_IV` (15, a typical caught Pokemon), neutral nature, no
+  EVs, no type. Its one attack hits the mean of the physical and the
+  special damage, with an expected power (STAB, accuracy and strikes
+  folded in) fitted by `fit_reference_power` to every trainer Pokemon's
+  best move: `a + b ln(level)`, since move power climbs fast early and
+  flattens late (about 43 at level 5, 94 at 25, 116 at 50, 133 at 85).
+  The fit is in the report.
+- **Trainer Pokemon** (`fighter`): its species' base stats and its
+  `IVs:` line (trainerproc's 31s by default), neutral nature and no EVs
+  (`trainers.party` sets none), and its set moves or default moveset.
+- **Damage** (`expected_damage`, `move_power`): the damage formula
+  without rounding, at the mean roll (0.925). Each side uses its best
+  expected damage per turn, counting:
+  - STAB, accuracy (0 never misses), and `strikeCount`, or 3.1 strikes for
+    `multiHit` (3.0 before `B_MULTI_HIT_CHANCE` GEN_5);
+  - the turns a move takes (`TURN_COST`): 2 for recharge (Hyper Beam, read
+    from its nested `MOVE_EFFECT_RECHARGE`) and charging moves, 3 for
+    Future Sight;
+  - 60% of Water Spout's and Eruption's power (`HP_POWER_MEAN`);
+  - Night Shade and Psywave as the user's level. Other fixed damage
+    scores 0, as do moves that faint the user.
+- **Abilities**: `trainers.party` sets none, so only an ability the
+  Pokemon is sure to have counts (`certain_ability`: both regular slots
+  hold it). Huge Power and Pure Power double Attack, and Truant halves
+  every attack.
+- **Score** (`score`): the turns the foe needs to KO the Pokemon over the
+  turns it needs to KO the foe, so 1 is an even fight. Each side's
+  survival gets `SPEED_BONUS` (0.5) turns times its chance to move first.
+  That chance rises smoothly with the speed ratio (`first_strike`: 10%
+  faster is 72%), so the score has no jump at equal speed.
+- **Effective level** (`effective_level`): bisection on the reference's
+  level, against a reference foe at the Pokemon's own level, until the
+  reference scores what the Pokemon does. The reference itself gets back
+  exactly its own level. The range is 1-300, and a Pokemon with no scored
+  attack gets none.
+
+Left out: types (the matchup model below), other abilities, held items,
+status and stat moves, priority, critical hits and switching. The bench it
+compares with is in levels, so it counts the player's party as typical
+Pokemon (`findings.md` section 15).
+
+## Matchup-relative strength (not built)
+
+The next step: score a fight against the player's likely team, with types
+in play, rather than against a typeless reference. The design:
+
+- **The player's team per stage.** The model has none: the Exp. Share
+  curve tracks levels only. Build a stand-in party per stage and per
+  starter:
+  - the starter line, evolved by level;
+  - a handful of picks from what the stage's wild tables offer so far
+    (`load_wilds`, `stage_of`), with the bench's level from the Exp.
+    Share curve and the evolutions the curve already applies
+    (`restock.SpeciesInfo.evolve`).
+
+  Pick them by a rule, such as the highest base stat total per type, so
+  that a team covers several types, and keep the rule in
+  `story_stages.json` or a new JSON next to it, so the owner can change
+  it. Their moves would be the default moveset at that level plus the TMs
+  open by that stage (`tm_availability`), taking the best STAB and
+  coverage moves.
+- **Pairwise fights.** Use the `power.score` above with the type chart
+  (`G.effectiveness`, already parsed), between each player Pokemon and
+  each boss Pokemon. Each side picks its best move against that foe, and
+  the defender's types and the attacker's STAB come from the species.
+  That gives a matrix per fight: rows the player's team, columns the
+  boss's.
+- **Fight scores** from the matrix. Several readings, all cheap:
+  - **best answer**: for each boss Pokemon, the player's best score
+    against it; the fight's difficulty is the weakest such answer (the
+    boss Pokemon nothing handles);
+  - **coverage**: how many boss Pokemon the team has an answer of score
+    1 or more for;
+  - **lead game**: the boss's lead against the player's best response,
+    as a two-player matrix game (minimax over pure picks, since the AI
+    doesn't randomise its lead).
+- **Per starter.** The rivals already branch on the starter, so run it
+  for each of the three teams, and report the starter whose fights are
+  hardest.
+- **Output.** A report section per boss, with the hardest boss Pokemon
+  and the team's best answer to it, and the boss teams whose difficulty
+  ranks far from their level order. It would be a diagnostic first, like
+  the effective level, before anything (the explorer's targets, `apply`)
+  reads it.
+- **Limits.** The stand-in team is a guess, and the real player's team
+  varies more than any rule. Abilities beyond the certain ones, items,
+  status, setup and the AI's switching still stay out. Simulating battles
+  (headless test-ROM battles, or Pokemon Showdown's damage calc) would
+  cover them, at far more cost.
 
 ## Story stages
 
