@@ -114,21 +114,24 @@ TEST("TV show: record mixing finds an inactive show that airs")
 TEST("TV show: record mixing deletes the slots with no show to air before sending")
 {
     TVShow saved[TV_SHOWS_COUNT];
-    TVShow *shows = gSaveBlock1Ptr->tvShows;
+    TVShow shows[TV_SHOWS_COUNT];
+    TVShow *save = gSaveBlock1Ptr->tvShows;
 
-    memcpy(saved, shows, sizeof(saved));
-    memset(shows, 0, sizeof(saved));
-    shows[0].common.kind = TVSHOW_DUMMY;
-    shows[1].common.kind = TVSHOW_FAN_CLUB_LETTER;
-    shows[1].common.active = TRUE;
-    shows[2].common.active = TRUE; // kind 0 still on the air
-    shows[NUM_NORMAL_TVSHOW_SLOTS].common.kind = TVGROUP_RECORD_MIX_END;
-    shows[NUM_NORMAL_TVSHOW_SLOTS].common.active = TRUE;
-    shows[NUM_NORMAL_TVSHOW_SLOTS + 1].common.kind = TVSHOW_MASS_OUTBREAK + 1;
-    shows[NUM_NORMAL_TVSHOW_SLOTS + 2].common.kind = TVSHOW_BRAVO_TRAINER_BATTLE_TOWER_PROFILE;
-    shows[NUM_NORMAL_TVSHOW_SLOTS + 3].common.kind = TVSHOW_MASS_OUTBREAK;
-    shows[TV_SHOWS_COUNT - 1].common.kind = TVSHOW_DUMMY; // the show being made isn't sent as a show
+    memcpy(saved, save, sizeof(saved));
+    memset(save, 0, sizeof(saved));
+    save[0].common.kind = TVSHOW_DUMMY;
+    save[1].common.kind = TVSHOW_FAN_CLUB_LETTER;
+    save[1].common.active = TRUE;
+    save[2].common.active = TRUE; // kind 0 still on the air
+    save[NUM_NORMAL_TVSHOW_SLOTS].common.kind = TVGROUP_RECORD_MIX_END;
+    save[NUM_NORMAL_TVSHOW_SLOTS].common.active = TRUE;
+    save[NUM_NORMAL_TVSHOW_SLOTS + 1].common.kind = TVSHOW_MASS_OUTBREAK + 1;
+    save[NUM_NORMAL_TVSHOW_SLOTS + 2].common.kind = TVSHOW_BRAVO_TRAINER_BATTLE_TOWER_PROFILE;
+    save[NUM_NORMAL_TVSHOW_SLOTS + 3].common.kind = TVSHOW_MASS_OUTBREAK;
+    save[TV_SHOWS_COUNT - 1].common.kind = TVSHOW_DUMMY; // the show being made isn't sent as a show
     DeleteUnairableTVShows();
+    memcpy(shows, save, sizeof(shows));
+    memcpy(save, saved, sizeof(saved)); // before any EXPECT can end the test
     // What's left is compacted, as GetRandomActiveShowIdx stops at the first empty mix slot
     EXPECT_EQ(shows[0].common.kind, TVSHOW_FAN_CLUB_LETTER);
     EXPECT_EQ(shows[0].common.active, TRUE);
@@ -140,7 +143,6 @@ TEST("TV show: record mixing deletes the slots with no show to air before sendin
     EXPECT_EQ(shows[NUM_NORMAL_TVSHOW_SLOTS + 2].common.kind, TVSHOW_OFF_AIR);
     EXPECT_EQ(shows[NUM_NORMAL_TVSHOW_SLOTS + 3].common.kind, TVSHOW_OFF_AIR);
     EXPECT_EQ(shows[TV_SHOWS_COUNT - 1].common.kind, TVSHOW_DUMMY);
-    memcpy(shows, saved, sizeof(saved));
 }
 
 TEST("TV show: an active slot of an unknown kind ends the TV loop and goes off the air")
