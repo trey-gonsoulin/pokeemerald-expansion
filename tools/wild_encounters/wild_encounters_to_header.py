@@ -14,6 +14,9 @@ DEFAULT_MIN_LEVEL = 2
 MIN_LEVEL = 1
 MAX_LEVEL = 100
 MAX_ENCOUNTER_RATE = 255 # struct WildPokemonInfo's u8 encounterRate
+# Field types whose encounter_rate isn't a rate: a hidden_mons table's is DexNav's flag for
+# where its Pokémon hide, 0 on land and 1 in water (src/dexnav.c handles no other value).
+ENCOUNTER_RATE_RANGES = {"hidden_mons": (0, 1)}
 # The most a field's encounter_rates (each group's, in a field with groups) can add up to:
 # the pickers in src/wild_encounter.c draw a u8 below that total. The fishing picker draws
 # one number below the largest rod's total for every rod, so the rods' totals must match.
@@ -108,7 +111,7 @@ def ValidateEncounters(json_data):
     differs from its field's encounter_rates, encounter_rates whose total is 0 or
     past MAX_RATES_TOTAL (or differs between groups), a bad groups index, an unknown
     key, a missing key, a level outside 1-100 or above max_level, or an encounter
-    rate past a u8."""
+    rate past a u8 (or a hidden_mons table's other than 0 or 1)."""
     field_types = []
     for group in json_data["wild_encounter_groups"]:
         CheckKeys(group, *GROUP_KEYS, group.get("label", "wild encounter group"))
@@ -136,7 +139,7 @@ def ValidateEncounters(json_data):
                 mons_entry = map_encounters[mon_type]
                 type_where = f"{where} {mon_type}"
                 CheckKeys(mons_entry, *MONS_ENTRY_KEYS, type_where)
-                CheckInt(mons_entry["encounter_rate"], 0, MAX_ENCOUNTER_RATE, "encounter_rate", type_where)
+                CheckInt(mons_entry["encounter_rate"], *ENCOUNTER_RATE_RANGES.get(mon_type, (0, MAX_ENCOUNTER_RATE)), "encounter_rate", type_where)
                 mons = mons_entry["mons"]
                 if len(mons) != slot_count:
                     raise WildEncountersError(f"{type_where}: {len(mons)} mons, but the {mon_type} field has {slot_count} encounter_rates")
