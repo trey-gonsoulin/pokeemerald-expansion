@@ -187,18 +187,34 @@ void ActivateDynamax(enum BattlerId battler)
     BattleScriptPushCursorAndCallback(BattleScript_DynamaxBegins);
 }
 
+// Reverts a Dynamaxed battler's party mon to its non-Dynamax HP and max HP, and returns the HP.
+static u32 UndoDynamaxPartyHP(enum BattlerId battler)
+{
+    struct Pokemon *mon = GetBattlerMon(battler);
+    uq4_12_t mult = GetDynamaxLevelHPMultiplier(GetMonData(mon, MON_DATA_DYNAMAX_LEVEL), TRUE);
+    u32 hp = UQ_4_12_TO_INT((GetMonData(mon, MON_DATA_HP) * mult + 1) + UQ_4_12_ROUND); // round up
+    SetMonData(mon, MON_DATA_HP, &hp);
+    CalculateMonStats(mon);
+    return hp;
+}
+
+// A battle won by a move skips the end-of-turn revert, so the player's party mons of battlers
+// still Dynamaxed keep 1.5x HP. Reverts their party data only, as the battle state is discarded.
+void UndoDynamaxAtBattleEnd(void)
+{
+    for (enum BattlerId battler = 0; battler < gBattlersCount; battler++)
+    {
+        if (IsOnPlayerSide(battler) && GetActiveGimmick(battler) == GIMMICK_DYNAMAX)
+            UndoDynamaxPartyHP(battler);
+    }
+}
+
 // Unsets the flags used for Dynamaxing and reverts max HP if needed.
 void UndoDynamax(enum BattlerId battler)
 {
     // Revert HP if battler is still Dynamaxed.
     if (GetActiveGimmick(battler) == GIMMICK_DYNAMAX)
-    {
-        struct Pokemon *mon = GetBattlerMon(battler);
-        uq4_12_t mult = GetDynamaxLevelHPMultiplier(GetMonData(mon, MON_DATA_DYNAMAX_LEVEL), TRUE);
-        gBattleMons[battler].hp = UQ_4_12_TO_INT((GetMonData(mon, MON_DATA_HP) * mult + 1) + UQ_4_12_ROUND); // round up
-        SetMonData(mon, MON_DATA_HP, &gBattleMons[battler].hp);
-        CalculateMonStats(mon);
-    }
+        gBattleMons[battler].hp = UndoDynamaxPartyHP(battler);
 
     // Makes sure there are no Dynamax flags set, including on switch / faint.
     SetActiveGimmick(battler, GIMMICK_NONE);

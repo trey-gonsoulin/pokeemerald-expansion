@@ -10,6 +10,7 @@ void ActivateDynamax(enum BattlerId battler);
 u32 GetNonDynamaxHP(enum BattlerId battler);
 u32 GetNonDynamaxMaxHP(enum BattlerId battler);
 void UndoDynamax(enum BattlerId battler);
+void UndoDynamaxAtBattleEnd(void);
 
 enum Move GetMaxMove(enum BattlerId battler, enum Move baseMove);
 u32 GetMaxMovePower(enum Move baseMove, enum Move move);
