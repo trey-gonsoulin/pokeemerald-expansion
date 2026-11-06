@@ -271,6 +271,18 @@ class MapjsonTest(unittest.TestCase):
         self.assert_succeeds(self.run_groups())
         self.assertEqual(self.read("src/data/heal_locations.json"), expected)
 
+    def test_removed_map_with_a_number_npc_is_left_alone(self):
+        self.heal_locations = self.heal_locations.replace('"MAP_B"', '"MAP_REMOVED"')
+        self.heal_locations = self.heal_locations.replace('"LOCALID_B_NURSE"', '0')
+        self.assert_succeeds(self.run_groups())
+        self.assertEqual(self.read("src/data/heal_locations.json"), self.heal_locations)
+
+    def test_heal_locations_without_the_array_fails(self):
+        # Every respawn_map would go unchecked.
+        self.heal_locations = self.heal_locations.replace('"heal_locations"', '"heal_location"')
+        self.assert_fails(self.run_groups(), "src/data/heal_locations.json", "heal_locations")
+        self.assertEqual(self.read("src/data/heal_locations.json"), self.heal_locations)
+
     def test_respawn_map_after_a_removed_map_is_still_checked(self):
         self.add_removed_map_location_without_npc()
         self.heal_locations = self.heal_locations.replace('"MAP_B"', '"MAP_B_TYPO"')

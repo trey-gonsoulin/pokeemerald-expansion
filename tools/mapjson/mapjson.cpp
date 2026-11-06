@@ -787,17 +787,34 @@ static vector<std::pair<size_t, size_t>> find_respawn_npc_values(const string &t
 // rest of the text is left as it is.
 string clean_heal_locations(vector<string> &valid_map_ids)
 {
-    string text = read_text_file(HEAL_LOCATIONS_FILEPATH);
+    // Read as the old getline loop did (read_text_file's tellg size is past the text where
+    // the platform converts line endings), so write_text_file gives the same bytes back.
+    std::ifstream infile(HEAL_LOCATIONS_FILEPATH);
+    if (!infile.is_open())
+        FATAL_ERROR("Cannot open file %s for reading.\n", HEAL_LOCATIONS_FILEPATH.c_str());
+    std::stringstream buffer;
+    buffer << infile.rdbuf();
+    string text = buffer.str();
+
     string err;
     Json data = Json::parse(text, err);
     if (data == Json())
         FATAL_ERROR("%s: %s\n", HEAL_LOCATIONS_FILEPATH.c_str(), err.c_str());
+    if (!data["heal_locations"].is_array())
+        FATAL_ERROR("%s: no \"heal_locations\" array.\n", HEAL_LOCATIONS_FILEPATH.c_str());
     const auto &locations = data["heal_locations"].array_items();
 
+    // The scan has to agree with json11 on every entry's NPC, or a clear could land on another's.
     vector<std::pair<size_t, size_t>> npc_spans = find_respawn_npc_values(text);
-    if (npc_spans.size() != locations.size())
-        FATAL_ERROR("%s: found %zu heal locations in the text, but the JSON has %zu.\n",
-                    HEAL_LOCATIONS_FILEPATH.c_str(), npc_spans.size(), locations.size());
+    bool spans_match = npc_spans.size() == locations.size();
+    for (size_t i = 0; spans_match && i < locations.size(); i++) {
+        const Json &npc = locations[i]["respawn_npc"];
+        spans_match = npc.is_string() ? npc_spans[i].first != string::npos
+                                        && text.compare(npc_spans[i].first, npc_spans[i].second, npc.string_value()) == 0
+                                      : npc_spans[i].first == string::npos;
+    }
+    if (!spans_match)
+        FATAL_ERROR("%s: can't find each heal location's respawn_npc in the text.\n", HEAL_LOCATIONS_FILEPATH.c_str());
 
     vector<std::pair<size_t, size_t>> cleared_spans;
     for (size_t i = 0; i < locations.size(); i++) {
