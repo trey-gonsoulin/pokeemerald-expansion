@@ -454,3 +454,49 @@ TEST("Bounded label: a control code's 0xFF argument is copied, not read as the e
     EXPECT_EQ(label[2], 0xFF);
     EXPECT_EQ(label[3], CHAR_a);
 }
+
+TEST("Recent warp row: a cut by length starts after a control code, not inside it")
+{
+    // Cutting by bytes would start the row on the color code's second byte
+    static const u8 text[] = {CHAR_a, EXT_CTRL_CODE_BEGIN, EXT_CTRL_CODE_COLOR, 2, CHAR_b, CHAR_c, EOS};
+    static const u8 expected[] = {CHAR_ELLIPSIS, CHAR_b, CHAR_c, EOS};
+    u8 row[6];
+
+    Debug_CopyStringEndToFit(row, ARRAY_COUNT(row), text, FONT_NORMAL, DISPLAY_WIDTH);
+    EXPECT_EQ(StringCompare(row, expected), 0);
+}
+
+TEST("Recent warp row: a cut by length starts after a two-byte character, not inside it")
+{
+    static const u8 text[] = {CHAR_a, CHAR_DYNAMIC, 1, CHAR_b, CHAR_c, EOS};
+    static const u8 expected[] = {CHAR_ELLIPSIS, CHAR_b, CHAR_c, EOS};
+    u8 row[5];
+
+    Debug_CopyStringEndToFit(row, ARRAY_COUNT(row), text, FONT_NORMAL, DISPLAY_WIDTH);
+    EXPECT_EQ(StringCompare(row, expected), 0);
+}
+
+TEST("Recent warp row: a cut by width skips a control code whole")
+{
+    static const u8 text[] = _("{COLOR GREEN}abcdef");
+    static const u8 expected[] = _("…ef");
+    u8 row[32];
+
+    ASSUME(text[0] == EXT_CTRL_CODE_BEGIN);
+    ASSUME(expected[0] == CHAR_ELLIPSIS);
+    Debug_CopyStringEndToFit(row, ARRAY_COUNT(row), text, FONT_NORMAL, GetStringWidth(FONT_NORMAL, expected, 0));
+    EXPECT_EQ(StringCompare(row, expected), 0);
+}
+
+TEST("Recent warp row: a row that fits keeps a control code's 0xFF argument")
+{
+    static const u8 text[] = {EXT_CTRL_CODE_BEGIN, EXT_CTRL_CODE_CLEAR_TO, 0xFF, CHAR_a, EOS};
+    u8 row[8];
+
+    // CLEAR_TO 255 runs the text past the screen's width, so give it its own
+    Debug_CopyStringEndToFit(row, ARRAY_COUNT(row), text, FONT_NORMAL, GetStringWidth(FONT_NORMAL, text, 0));
+    EXPECT_EQ(row[0], EXT_CTRL_CODE_BEGIN);
+    EXPECT_EQ(row[2], 0xFF);
+    EXPECT_EQ(row[3], CHAR_a);
+    EXPECT_EQ(row[4], EOS);
+}
