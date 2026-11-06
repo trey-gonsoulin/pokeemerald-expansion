@@ -723,8 +723,9 @@ u8 GetRandomActiveShowIdx(void)
     {
         if (!IsTVShowKindAirable(gSaveBlock1Ptr->tvShows[j].common.kind))
         {
-            // Skip a slot DoTVShow can't air (kind 0, a gap, the dummied-out or an unknown kind):
-            // it would leave the TV waiting for a button with no message, and flash the TV screens
+            // DoTVShow can't air it (kind 0, a gap, the dummied-out or an unknown kind): picked, it would
+            // leave the TV waiting for a button with no message, and it would flash the TV screens
+            gSaveBlock1Ptr->tvShows[j].common.active = FALSE;
         }
         else if (GetTVGroupByShowId(gSaveBlock1Ptr->tvShows[j].common.kind) != TVGROUP_OUTBREAK)
         {
@@ -4039,7 +4040,7 @@ void DoTVShow(void)
     if (IsTVShowKindAirable(show->common.kind))
         sTVShowAirFuncs[show->common.kind]();
     else
-        TVShowDone(); // GetRandomActiveShowIdx skips it, so take it off the air
+        TVShowDone(); // GetRandomActiveShowIdx takes these off the air without picking them
 }
 
 static void DoTVShowBravoTrainerPokemonProfile(void)
