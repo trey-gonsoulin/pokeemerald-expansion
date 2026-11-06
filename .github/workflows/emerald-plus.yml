@@ -111,3 +111,9 @@ jobs:
         run: |
           make -C tools/jsonproc
           python3 -m unittest discover -s tools/wild_encounters
+
+      # mapjson's checks on the map, layout and heal location data (#256), which run the built tool
+      - name: mapjson unit tests
+        run: |
+          make -C tools/mapjson
+          python3 -m unittest discover -s tools/mapjson
