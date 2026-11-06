@@ -8,6 +8,7 @@ void TryPutBreakingNewsOnAir(void);
 void TryPutBattleSeminarOnAir(enum Species foeSpecies, enum Species species, u8 moveIndex, const u16 *movePtr, enum Move betterMove);
 void TryPutFrontierTVShowOnAir(u16 winStreak, u8 facilityAndMode);
 void DoTVShow(void);
+u8 GetRandomActiveShowIdx(void);
 void DoTVShowInSearchOfTrainers(void);
 void TryPutTreasureInvestigatorsOnAir(void);
 void TryPutLotteryWinnerReportOnAir(void);
