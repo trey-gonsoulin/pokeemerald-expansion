@@ -4602,6 +4602,16 @@ enum Species GetEvolutionTargetSpecies(struct Pokemon *mon, enum EvolutionMode m
                 break;
             }
         }
+        // A spin of 10 s or more (SPIN_EITHER, which only Rainbow Swirl takes, in the evening)
+        // is also the long spin in its direction, gSpecialVar_0x8001, so it gives that form
+        // when no entry takes SPIN_EITHER (#289).
+        if (targetSpecies == SPECIES_NONE && gSpecialVar_0x8000 == SPIN_EITHER && gSpecialVar_0x8001 != SPIN_NONE)
+        {
+            u16 spin = gSpecialVar_0x8000;
+            gSpecialVar_0x8000 = gSpecialVar_0x8001;
+            targetSpecies = GetEvolutionTargetSpecies(mon, mode, evolutionItem, tradePartner, canStopEvo, evoState);
+            gSpecialVar_0x8000 = spin;
+        }
         break;
     case EVO_MODE_SCRIPT_TRIGGER:
         for (i = 0; evolutions[i].method != EVOLUTIONS_END; i++)

@@ -809,21 +809,25 @@ bool32 CanTriggerSpinEvolution()
     if (gPlayerSpinData.triggerEvo)
     {
         gSpecialVar_0x8000 = SPIN_NONE;
+        gSpecialVar_0x8001 = SPIN_NONE;
         u32 seconds = gPlayerSpinData.VBlanksSpinning / 60;
         u32 direction = gPlayerSpinData.spinDirection;
-        if (seconds >= 10)
-        {
-            gSpecialVar_0x8000 = SPIN_EITHER;
-        }
-
-        else if (seconds >= 5 && seconds < 10)
+        if (seconds >= 5)
         {
             if (direction == SPIN_DIRECTION_CLOCKWISE)
                 gSpecialVar_0x8000 = SPIN_CW_LONG;
             else if (direction == SPIN_DIRECTION_COUNTER_CLOCKWISE)
                 gSpecialVar_0x8000 = SPIN_CCW_LONG;
+
+            // A spin of 10 s or more is still a long spin in its direction, which
+            // GetEvolutionTargetSpecies falls back to when no entry takes SPIN_EITHER (#289).
+            if (seconds >= 10)
+            {
+                gSpecialVar_0x8001 = gSpecialVar_0x8000;
+                gSpecialVar_0x8000 = SPIN_EITHER;
+            }
         }
-        else if (seconds < 5)
+        else
         {
             if (direction == SPIN_DIRECTION_CLOCKWISE)
                 gSpecialVar_0x8000 = SPIN_CW_SHORT;
@@ -2243,3 +2247,13 @@ bool8 ObjectMovingOnRockStairs(struct ObjectEvent *objectEvent, enum Direction d
         return FALSE;
     #endif
 }
+
+#if TESTING
+// A spin of vblanks frames that has just ended, for CanTriggerSpinEvolution (#289).
+void Test_SetFinishedSpin(u32 vblanks, bool32 clockwise)
+{
+    gPlayerSpinData.triggerEvo = TRUE;
+    gPlayerSpinData.VBlanksSpinning = vblanks;
+    gPlayerSpinData.spinDirection = clockwise ? SPIN_DIRECTION_CLOCKWISE : SPIN_DIRECTION_COUNTER_CLOCKWISE;
+}
+#endif
