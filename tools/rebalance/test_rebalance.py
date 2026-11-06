@@ -388,10 +388,10 @@ class Exp(unittest.TestCase):
         self.assertEqual(RB.REFERENCES['bench'](levels, 6), 24)
         self.assertEqual(RB.REFERENCES['bench']([30, 25, 25, 25, 25, 25], 1), 25)
 
-    def test_trainer_bonus_up_to_gen7(self):
-        # Cmd_getexp checks B_TRAINER_EXP_MULTIPLIER <= GEN_7.
+    def test_trainer_bonus_up_to_gen6(self):
+        # Cmd_getexp checks B_TRAINER_EXP_MULTIPLIER <= GEN_6 (#140).
         calc = 98 * 20 // 7
-        for value, expected in (('GEN_6', calc * 150 // 100), ('GEN_7', calc * 150 // 100), ('GEN_8', calc)):
+        for value, expected in (('GEN_6', calc * 150 // 100), ('GEN_7', calc), ('GEN_8', calc)):
             d = fake_regime(B_SCALED_EXP='GEN_3', B_SPLIT_EXP='GEN_6', B_TRAINER_EXP_MULTIPLIER=value)
             self.assertEqual(RB.exp_award(d, self.scaling, 98, 20, 20, True, 1), expected, value)
 
@@ -503,8 +503,8 @@ class Analysis(unittest.TestCase):
         self.assertGreater(curve(catches=100)[0]["bench"], base)
         self.assertEqual(curve(RB.with_configs(gd, B_EXP_CATCH='GEN_5'), catches=100)[0]['bench'], base)
         on_cfg = RB.with_configs(gd, B_TRAINER_EXP_MULTIPLIER='GEN_6')
-        self.assertTrue(on_cfg.flag('B_TRAINER_EXP_MULTIPLIER <= GEN_7'))
-        self.assertFalse(gd.flag('B_TRAINER_EXP_MULTIPLIER <= GEN_7'))  # the original is untouched
+        self.assertTrue(on_cfg.flag('B_TRAINER_EXP_MULTIPLIER <= GEN_6'))
+        self.assertFalse(gd.flag('B_TRAINER_EXP_MULTIPLIER <= GEN_6'))  # the original is untouched
         # Margin raises: each boss's ace ends margin above the bench, never lowered.
         rows = curve(margin=2)
         for r in rows:
