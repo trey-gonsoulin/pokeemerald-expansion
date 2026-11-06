@@ -1,0 +1,11 @@
+{
+  "comment": "matchup.py's stand-in for the player's team (README, \"Matchup-relative strength\"). Per story boss and starter: the starter line at the Exp. Share lead's level, and up to catches_per_stage catches per stage before the boss's (team_size in all), from the fields of the wild tables met by then, at the bench's level. Each candidate is its species evolved by level at that level; they are picked by base stat total, highest first, first skipping any that shares a type with the team, then filling up. ivs: every stand-in's IVs (a typical caught Pokemon). moves: how many attacks it keeps from its default moveset and the TMs on the maps of the stages before the boss's (its own stage's come with or after the fight), picked for coverage of every defending type; tm_exclude_maps: maps whose TMs don't count (the Game Corner's are a coin grind). exclude: species never picked.",
+  "starters": {"TREECKO": "SPECIES_TREECKO", "TORCHIC": "SPECIES_TORCHIC", "MUDKIP": "SPECIES_MUDKIP"},
+  "team_size": 6,
+  "catches_per_stage": 3,
+  "fields": ["land_mons", "water_mons"],
+  "ivs": 15,
+  "moves": 4,
+  "tm_exclude_maps": ["MauvilleCity_GameCorner"],
+  "exclude": []
+}

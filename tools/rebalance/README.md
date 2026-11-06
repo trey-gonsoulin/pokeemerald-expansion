@@ -244,6 +244,11 @@ bootstrap). The repo's `.gitignore` ignores `*.js`, so add new ones with
   level-up STAB moves.
 - **Boss type matchups**: per boss Pokemon, retypings, changed defensive
   multipliers and changed best offensive multipliers against single types.
+- **Combat power estimate**: each story boss Pokemon's effective level
+  (below), the team's strongest and mean against the Exp. Share bench, and
+  the boss Pokemon `POWER_OUTLIER` (10%) or more off their level.
+- **Matchup-relative strength**: each story boss against a stand-in for
+  the player's team, per starter, with types (below).
 - **TMs by stage**: the first story stage where each TM sits on a map
   (item ball, hidden item, mart list, script, or reward: a Trick House
   puzzle's prize, which the entrance and end rooms hand out, filed under
@@ -261,6 +266,121 @@ bootstrap). The repo's `.gitignore` ignores `*.js`, so add new ones with
 - FRLG maps (`*_Frlg` folders) never belong to a stage.
 - **Economy**: prices, sell values and healing of a basket of items, and the
   prize money of a full clear of each stage.
+
+## Combat power estimate (prototype)
+
+Level is a weak proxy for strength: at one level, base stats differ by
+up to 3x, and a Pokemon stuck on 40-power moves fights far below one with
+a strong same-type attack. `power.py` turns base stats, IVs and moves into
+an **effective level**, the level of a typical Pokemon that would fare as
+well one-on-one. It's a diagnostic in the report: nothing (`apply`, the
+explorer, the curve's targets) reads it yet.
+
+- **Reference** (`reference`): base `REFERENCE_BASE` (80) in every stat,
+  IV `REFERENCE_IV` (15, a typical caught Pokemon), neutral nature, no
+  EVs, no type. Its one attack hits the mean of the physical and the
+  special damage, with an expected power (STAB, accuracy and strikes
+  folded in) fitted by `fit_reference_power` to every trainer Pokemon's
+  best move: `a + b ln(level)`, since move power climbs fast early and
+  flattens late (about 51 at level 5, 92 at 25, 110 at 50, 124 at 85).
+  The fit is in the report.
+- **Trainer Pokemon** (`fighter`): its species' base stats and its
+  `IVs:` line (trainerproc's 31s by default), neutral nature and no EVs
+  (`trainers.party` sets none), and its set moves or default moveset.
+- **Damage** (`expected_damage`, `move_power`): the damage formula
+  without rounding, at the mean roll (0.925). Each side uses its best
+  expected damage per turn, counting:
+  - STAB, accuracy (0 never misses), and `strikeCount`, or 3.1 strikes for
+    `multiHit` (3.0 before `B_MULTI_HIT_CHANCE` GEN_5);
+  - the turns a move takes (`TURN_COST`): 2 for recharge (Hyper Beam, read
+    from its nested `MOVE_EFFECT_RECHARGE`) and charging moves, 3 for
+    Future Sight;
+  - 60% of Water Spout's and Eruption's power (`HP_POWER_MEAN`);
+  - Night Shade and Psywave as the user's level. Other fixed damage
+    scores 0, as do moves that faint the user and attacks that need a
+    state a straight fight doesn't have (`CONDITIONAL_EFFECTS`: Focus
+    Punch, Dream Eater, Fake Out and the like).
+- **Abilities**: `trainers.party` sets none, so only an ability the
+  Pokemon is sure to have counts (`certain_ability`: both regular slots
+  hold it). Huge Power and Pure Power double Attack, and Truant halves
+  every attack.
+- **Score** (`score`): the turns the foe needs to KO the Pokemon over the
+  turns it needs to KO the foe, so 1 is an even fight. Each side's
+  survival gets `SPEED_BONUS` (0.5) turns times its chance to move first.
+  That chance rises smoothly with the speed ratio (`first_strike`: 10%
+  faster is 72%), so the score has no jump at equal speed.
+- **Effective level** (`effective_level`): bisection on the reference's
+  level, against a reference foe at the Pokemon's own level, until the
+  reference scores what the Pokemon does. The reference itself gets back
+  exactly its own level. The range is 1-300, and a Pokemon with no scored
+  attack gets none.
+
+Left out: types (`score` counts them when given the type chart, for the
+matchup model below), other abilities, held items,
+status and stat moves, priority, critical hits and switching. The bench it
+compares with is in levels, so it counts the player's party as typical
+Pokemon (`findings.md` section 15).
+
+## Matchup-relative strength (prototype)
+
+The effective level scores a boss Pokemon against a typeless reference,
+and the bench counts the player's team as typical Pokemon. `matchup.py`
+scores each story boss against a stand-in for the team the player could
+have by then, with types in play. Like the effective level, it's a
+diagnostic in the report: nothing (`apply`, the explorer) reads it.
+
+- **The stand-in team** (`stand_in_team`), per boss and starter, from
+  `matchup_settings.json` (the owner's to change):
+  - the starter line at the Exp. Share lead's level (the share curve's
+    party before the boss, `POWER_BENCH`), evolved by level on time
+    (`restock.SpeciesInfo.evolve` with no `EVOLVE_GRACE`);
+  - up to `catches_per_stage` (3) catches per earlier stage, `team_size`
+    (6) in all, at the bench's levels. The candidates are the species of
+    the `fields` (land and water: the rods and Rock Smash aren't gated by
+    stage yet) of the wild tables of the stages up to the boss's, each
+    evolved by level for the bench's level. They're picked by base stat
+    total, highest first, skipping any that shares a type with the team,
+    then filling up with the rest; `exclude` drops species, and one with
+    no scored attack (Abra, Wobbuffet) is skipped;
+  - IVs `ivs` (15) in every stat, and up to `moves` (4) attacks
+    (`pick_moves`) from its default moveset and the TMs on the maps of
+    the stages before the boss's (`open_tms`: a boss's own stage hands
+    its TMs out with the fight or after it) that its teachables hold,
+    minus `tm_exclude_maps` (the Game Corner's, a coin grind). They're
+    picked one at a time for the largest gain in its best damage summed
+    over every defending type.
+- **The rival teams follow the starter** (`starter_boss`):
+  `TRAINER_MAY_RUSTBORO_TREECKO` is the team met after choosing Treecko.
+- **The matrix** (`fight`): `power.score` with the type chart for every
+  stand-in against every boss Pokemon, each side on its best move against
+  that foe. Types also bring certain abilities' immunities
+  (`ABILITY_IMMUNE`: Levitate, Flash Fire, Volt Absorb and the like, and
+  Lightning Rod and Storm Drain from `B_REDIRECT_ABILITY_IMMUNITY` GEN_5).
+  Night Shade keeps its fixed damage but misses a Normal type.
+- **The readings**, per fight and starter:
+  - **hardest**: the boss Pokemon whose best answer (the team's highest
+    score against it) is lowest, with that answer and the stand-in that
+    gives it;
+  - **cover**: the boss Pokemon with an answer of `ANSWERED` (1) or more;
+  - **lead**: the best answer to the boss's first Pokemon, which the AI
+    always leads with, so no lead-choice game is needed;
+  - and the fights with a boss Pokemon nothing answers, hardest first.
+  The report also lists each stage's stand-in teams with their attacks.
+- **Limits.** Every answer is a fresh one-on-one with free switching, so a
+  stand-in that answers three boss Pokemon is counted three times at full
+  HP: the readings flatter the team, and the ranking says more than the
+  numbers. A double battle (Tate and Liza) is scored the same way. The
+  stand-in is a guess: a real team varies more than any rule, and
+  catching the strongest of every new type on every stage overstates a
+  casual one. Everything `power.py` leaves out still stays out: other
+  abilities, items, status, setup, stat drops after Overheat or Leaf
+  Storm, and the AI's switching. Simulating battles (headless test-ROM
+  battles, or Pokemon Showdown's damage calc) would cover them, at far
+  more cost.
+- **Next steps**, if it proves useful: gate the rods, Rock Smash and
+  HM-only areas by stage; a reading that spends HP across the fight (an
+  assignment of stand-ins to boss Pokemon); and a knob in the explorer
+  or a target for `apply` once the owner trusts it.
 
 ## Story stages
 
