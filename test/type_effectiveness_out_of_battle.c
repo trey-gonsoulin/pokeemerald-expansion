@@ -228,3 +228,16 @@ TEST("Out-of-battle type effectiveness: the Dome's moves that ignore abilities g
     EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_IRON_HEAD, ABILITY_NONE, SPECIES_SHEDINJA, ABILITY_WONDER_GUARD), UQ_4_12(0.0));
     ClearStaleBattleState();
 }
+
+TEST("Out-of-battle type effectiveness: the Dome's move on every battler reaches the target's ability, except Good as Gold")
+{
+    ASSUME(GetMoveTarget(MOVE_PERISH_SONG) == TARGET_ALL_BATTLERS);
+    ASSUME(IsSoundMove(MOVE_PERISH_SONG));
+    ASSUME(GetMoveTarget(MOVE_FLOWER_SHIELD) == TARGET_ALL_BATTLERS);
+    ASSUME(GetMoveCategory(MOVE_FLOWER_SHIELD) == DAMAGE_CATEGORY_STATUS);
+    SetStaleBattleState(TYPE_NORMAL, 0);
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_PERISH_SONG, ABILITY_NONE, SPECIES_VOLTORB, ABILITY_SOUNDPROOF), UQ_4_12(0.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_PERISH_SONG, ABILITY_NONE, SPECIES_VOLTORB, ABILITY_STATIC), UQ_4_12(1.0));
+    EXPECT_EQ(CalcPartyMonTypeEffectivenessMultiplier(MOVE_FLOWER_SHIELD, ABILITY_NONE, SPECIES_GHOLDENGO, ABILITY_GOOD_AS_GOLD), UQ_4_12(0.5));
+    ClearStaleBattleState();
+}
