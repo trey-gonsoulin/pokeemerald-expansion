@@ -179,7 +179,7 @@ class ValidateTest(unittest.TestCase):
         self.assertRejected(data, "encounter_rate is -1")
 
     def test_rate_totals_up_to_256_pass(self):
-        for rates in ([50, 30, 19], [50, 30, 30], [1, 0, 0], [200, 50, 6]):
+        for rates in ([50, 30, 19], [50, 30, 30], [1, 0, 0], [200, 50, 6], [256, 0, 0]):
             with self.subTest(rates=rates):
                 data = sample()
                 data["wild_encounter_groups"][0]["fields"][0]["encounter_rates"] = rates
