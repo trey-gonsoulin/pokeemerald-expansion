@@ -173,6 +173,7 @@ TEST("LoadSpriteSheet fails once every tile range slot is taken")
 }
 
 static const u8 ALIGNED(4) sTestTiles[2 * TILE_SIZE_4BPP] = {0};
+static const u8 ALIGNED(4) sFilledTiles[2 * TILE_SIZE_4BPP] = { [0 ... 2 * TILE_SIZE_4BPP - 1] = 0xFF };
 
 TEST("LoadSpriteSheet fails on an empty sheet")
 {
@@ -228,8 +229,7 @@ TEST("LoadSpriteSheet gives a partial last tile a whole tile")
 
 TEST("LoadSpriteSheet leaves the tile after a partial last tile alone")
 {
-    static const u8 ALIGNED(4) filledTiles[2 * TILE_SIZE_4BPP] = { [0 ... 2 * TILE_SIZE_4BPP - 1] = 0xFF };
-    const struct SpriteSheet partialSheet = { .data = filledTiles, .size = TILE_SIZE_4BPP * 3 / 2, .tag = TAG_TEST_SHEET + 2 };
+    const struct SpriteSheet partialSheet = { .data = sFilledTiles, .size = TILE_SIZE_4BPP * 3 / 2, .tag = TAG_TEST_SHEET + 2 };
     const u8 *nextTile = (const u8 *)OBJ_VRAM0 + TILE_SIZE_4BPP;
     u32 i, tileStart, changedBytes = 0;
     ResetSpriteData();
@@ -283,11 +283,10 @@ TEST("LoadSpriteSheetByTemplate fails on an offset past the sheet")
 TEST("LoadCompressedSpriteSheetByTemplate loads an uncompressed sheet whole after its offset")
 {
     // 0xFF reads as smol mode 15, which IsCompressedData takes as uncompressed.
-    static const u8 ALIGNED(4) filledTiles[2 * TILE_SIZE_4BPP] = { [0 ... 2 * TILE_SIZE_4BPP - 1] = 0xFF };
-    static const struct SpriteFrameImage image[] = { { filledTiles, sizeof(filledTiles) } };
+    static const struct SpriteFrameImage image[] = { { sFilledTiles, sizeof(sFilledTiles) } };
     struct SpriteTemplate template = gDummySpriteTemplate;
     const u8 *sheetTiles = (const u8 *)OBJ_VRAM0 + TILE_SIZE_4BPP;
-    u32 i, tileStart, filledBytes = 0;
+    u32 tileStart;
     template.tileTag = TAG_TEST_SHEET;
     template.images = image;
     ResetSpriteData();
@@ -298,12 +297,7 @@ TEST("LoadCompressedSpriteSheetByTemplate loads an uncompressed sheet whole afte
     tileStart = LoadCompressedSpriteSheetByTemplate(&template, TILE_SIZE_4BPP);
     EXPECT_EQ(gLoadFail, FALSE);
     EXPECT_EQ(tileStart, 0);
-    for (i = 0; i < sizeof(filledTiles); i++)
-    {
-        if (sheetTiles[i] == 0xFF)
-            filledBytes++;
-    }
-    EXPECT_EQ(filledBytes, sizeof(filledTiles));
+    EXPECT(memcmp(sheetTiles, sFilledTiles, sizeof(sFilledTiles)) == 0);
     EXPECT_EQ(LoadTestSheet(1), 3);
     ResetSpriteData();
 }
