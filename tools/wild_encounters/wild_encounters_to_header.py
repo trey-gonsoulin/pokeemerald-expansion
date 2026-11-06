@@ -79,13 +79,13 @@ def ValidateEncounters(json_data):
         for field in group.get("fields", []):
             field_where = f"{group['label']} field {field.get('type')}"
             CheckKeys(field, *FIELD_KEYS, field_where)
+            slot_count = len(field["encounter_rates"])
             if "groups" in field:
                 CheckGroups(field, field_where)
             else:
-                CheckRates(field["encounter_rates"], range(len(field["encounter_rates"])), field_where)
-            slot_count = len(field["encounter_rates"])
+                CheckRates(field["encounter_rates"], range(slot_count), field_where)
             if slot_counts.setdefault(field["type"], slot_count) != slot_count:
-                raise WildEncountersError(f"{group['label']} field {field['type']}: {slot_count} encounter_rates, but another group's has {slot_counts[field['type']]}")
+                raise WildEncountersError(f"{field_where}: {slot_count} encounter_rates, but another group's has {slot_counts[field['type']]}")
 
     for group in json_data["wild_encounter_groups"]:
         required = {"base_label", "map"} if group.get("for_maps") else {"base_label"}
