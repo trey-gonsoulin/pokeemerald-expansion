@@ -210,7 +210,8 @@ class ValidateTest(unittest.TestCase):
             ({"old_rod": [0, 1], "good_rod": [1, 2, 3, 4]}, "group good_rod: slot 1 is also in group old_rod"),
             ({"old_rod": [0, 2], "good_rod": [1, 3, 4]}, "group old_rod: slots [0, 2] aren't consecutive"),
             ({"old_rod": [0, 1], "good_rod": [2, 3, 4], "super_rod": []}, "group super_rod: slots are [], expected a list of slot indices"),
-            ({"old_rod": 0, "good_rod": [1, 2, 3, 4]}, "group old_rod: slots are 0, expected a list"),
+            ({"old_rod": 1, "good_rod": [1, 2, 3, 4]}, "group old_rod: slots are 1, expected a list"),
+            ({"old_rod": "01", "good_rod": [2, 3, 4]}, "group old_rod: slots are '01', expected a list"),
             ([[0, 1], [2, 3, 4]], "field fishing_mons: groups is [[0, 1], [2, 3, 4]], expected an object of slot lists"),
         ):
             with self.subTest(groups=groups):

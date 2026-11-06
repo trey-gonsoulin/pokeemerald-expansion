@@ -47,8 +47,8 @@ def CheckRates(rates, slots, where):
 
 
 def CheckGroups(field, where):
-    """Each slot in exactly one group, each group's slots consecutive (WriteMacros sums
-    them in order), and each group's rates adding up to RATES_TOTAL."""
+    """Each slot in exactly one group, each group's slots consecutive in any
+    order (WriteMacros sums them by slot), and each group's rates adding up to RATES_TOTAL."""
     slot_count = len(field["encounter_rates"])
     slot_groups = {}
     if type(field["groups"]) is not dict:
