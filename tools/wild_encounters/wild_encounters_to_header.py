@@ -14,9 +14,10 @@ DEFAULT_MIN_LEVEL = 2
 MIN_LEVEL = 1
 MAX_LEVEL = 100
 MAX_ENCOUNTER_RATE = 255 # struct WildPokemonInfo's u8 encounterRate
-# A field's encounter_rates (each group's, in a field with groups) are percentages. The
-# fishing picker draws one number for every rod, so a group that falls short misses slots.
-RATES_TOTAL = 100
+# The most a field's encounter_rates (each group's, in a field with groups) can add up to:
+# the pickers in src/wild_encounter.c draw a u8 below that total. The fishing picker draws
+# one number below the largest rod's total for every rod, so the rods' totals must match.
+MAX_RATES_TOTAL = 256
 VERSION_SUFFIXES = {"_FireRed": "FIRERED", "_LeafGreen": "LEAFGREEN"}
 
 
@@ -39,18 +40,21 @@ def CheckInt(value, low, high, what, where):
 
 
 def CheckRates(rates, slots, where):
+    """Return the slots' total, which has to be 1 to MAX_RATES_TOTAL."""
     for slot in slots:
-        CheckInt(rates[slot], 0, RATES_TOTAL, f"encounter_rates[{slot}]", where)
+        CheckInt(rates[slot], 0, MAX_RATES_TOTAL, f"encounter_rates[{slot}]", where)
     total = sum(rates[slot] for slot in slots)
-    if total != RATES_TOTAL:
-        raise WildEncountersError(f"{where}: encounter_rates add up to {total}, expected {RATES_TOTAL}")
+    CheckInt(total, 1, MAX_RATES_TOTAL, "the encounter_rates total", where)
+    return total
 
 
 def CheckGroups(field, where):
     """Each slot in exactly one group, each group's slots consecutive in any
-    order (WriteMacros sums them by slot), and each group's rates adding up to RATES_TOTAL."""
+    order (WriteMacros sums them by slot), and every group's rates adding up to
+    the same total."""
     slot_count = len(field["encounter_rates"])
     slot_groups = {}
+    group_totals = {}
     if type(field["groups"]) is not dict:
         raise WildEncountersError(f"{where}: groups is {field['groups']!r}, expected an object of slot lists")
     for name, slots in field["groups"].items():
@@ -64,16 +68,20 @@ def CheckGroups(field, where):
             slot_groups[slot] = name
         if sorted(slots) != list(range(min(slots), min(slots) + len(slots))):
             raise WildEncountersError(f"{group_where}: slots {slots} aren't consecutive")
-        CheckRates(field["encounter_rates"], slots, group_where)
+        group_totals[name] = CheckRates(field["encounter_rates"], slots, group_where)
     ungrouped = [str(slot) for slot in range(slot_count) if slot not in slot_groups]
     if ungrouped:
         raise WildEncountersError(f"{where}: slot(s) {', '.join(ungrouped)} in no group")
+    if len(set(group_totals.values())) > 1:
+        totals = ", ".join(f"{name} {total}" for name, total in group_totals.items())
+        raise WildEncountersError(f"{where}: the groups' encounter_rates totals differ ({totals})")
 
 
 def ValidateEncounters(json_data):
     """Raise WildEncountersError on data the header would carry silently wrong: a
     table whose slot count differs from its field's encounter_rates, encounter_rates
-    that don't add up to RATES_TOTAL, a bad groups index, an unknown key, a missing
+    whose total is 0 or past MAX_RATES_TOTAL (or differs between groups), a bad
+    groups index, an unknown key, a missing
     key, a level outside 1-100 or above max_level, or an encounter rate past a u8."""
     slot_counts = {}
     for group in json_data["wild_encounter_groups"]:
