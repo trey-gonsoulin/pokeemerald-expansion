@@ -243,6 +243,23 @@ AI_SINGLE_BATTLE_TEST("Exp award: a trainer's Pokemon gives 1.5x exp up to Gen 6
     }
 }
 
+WILD_BATTLE_TEST("Exp award: a wild Pokemon gives no 1.5x exp in Gen 6 (#140)")
+{
+    GIVEN {
+        WITH_EXP_AWARD_CONFIGS();
+        WITH_CONFIG(B_TRAINER_EXP_MULTIPLIER, GEN_6);
+        PLAYER(SPECIES_WOBBUFFET) { Level(15); }
+        OPPONENT(SPECIES_TREECKO) { Level(15); HP(1); Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_SCRATCH); }
+    } SCENE {
+        MESSAGE("The wild Treecko fainted!");
+        EXPERIENCE_BAR(player);
+    } THEN {
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_EXP), EXP_AT_LEVEL(SPECIES_WOBBUFFET, 15) + EXP_YIELD(SPECIES_TREECKO, 15));
+    }
+}
+
 AI_SINGLE_BATTLE_TEST("Exp award: Pokemon gain experience once when the opponent's last Pokemon faints from end-of-turn damage")
 {
     u32 status, playerSpeed;
