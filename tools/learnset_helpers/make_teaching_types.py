@@ -42,9 +42,9 @@ def is_valid_preprocessor(line: str) -> bool:
 def extract_repo_species_data() -> list:
     species_data = []
     pokemon_list = []
+    # The teaching type and entry of the species block being parsed, so that a teachingType
+    # before or after its learnset line goes to that species alone.
     teaching_type = "DEFAULT_LEARNING"
-    # The entry of the species being parsed, once its learnset line is read, so that a
-    # teachingType after that line still goes to it.
     species = None
     file_list = sorted(glob.glob("src/data/pokemon/species_info/*_families.h"))
     file_list.append("./src/data/pokemon/species_info.h")
@@ -76,14 +76,12 @@ def extract_repo_species_data() -> list:
                     species = {"name": match.group("name"), "teaching_type": teaching_type}
                     species_data.append(species)
                     pokemon_list.append(match.group("name"))
-                teaching_type = "DEFAULT_LEARNING"
                 continue
             match = re.match(TEACHING_TYPE_PAT, line)
             if match:
+                teaching_type = match.group("teaching_type")
                 if species is not None:
-                    species["teaching_type"] = match.group("teaching_type")
-                else:
-                    teaching_type = match.group("teaching_type")
+                    species["teaching_type"] = teaching_type
     return species_data
 
 def add_whitesspaces(parsed_list) -> list:
