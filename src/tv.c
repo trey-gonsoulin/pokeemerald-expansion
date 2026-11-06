@@ -3429,7 +3429,8 @@ static s8 FindInactiveShowInArray(TVShow *tvShows)
 }
 
 // Record mixing sends the whole array, and a partner's game without FindInactiveShowInArray's check
-// mixes in any inactive slot of a kind from 1 to 60, so these leave the save before it is sent
+// mixes in any inactive slot of a kind from 1 to 60, so these leave the save before it is sent.
+// Active and empty ones go too: none can air, and this clears a kind-0 slot left active
 void DeleteUnairableTVShows(void)
 {
     u8 i;
