@@ -3790,6 +3790,16 @@ static void PrintEvolutionTargetSpeciesAndMethod(u8 taskId, enum Species species
                     }
                     break;
                 case IF_NOT_TIME:
+                    // Milcery's night spins are NOT Day and NOT Morning (#276): "Night" covers both
+                    // (the evening counts as night, as in Sword and Shield), as "Day" does below.
+                    if (evolutions[i].params[j].arg1 == TIME_DAY
+                     && evolutions[i].params[j + 1].condition == IF_NOT_TIME
+                     && evolutions[i].params[j + 1].arg1 == TIME_MORNING)
+                    {
+                        StringAppend(gStringVar4, COMPOUND_STRING("Night"));
+                        j++;
+                        break;
+                    }
                     switch (evolutions[i].params[j].arg1)
                     {
                     case TIME_MORNING: StringAppend(gStringVar4, COMPOUND_STRING("NOT Morning")); break;
