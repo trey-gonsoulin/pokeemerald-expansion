@@ -2042,6 +2042,7 @@ static u32 LoadDynamicFollowerPaletteFromGraphicsId(u16 graphicsId, struct Sprit
 }
 
 // Used to create a sprite using a graphicsId associated with object events.
+// A paletteTag other than TAG_NONE loads the object's palette under that tag, except a dynamic (follower) one.
 u8 CreateObjectGraphicsSpriteWithTag(u16 graphicsId, void (*callback)(struct Sprite *), s16 x, s16 y, u8 subpriority, u16 paletteTag)
 {
     struct SpriteTemplate *spriteTemplate;
@@ -2068,7 +2069,12 @@ u8 CreateObjectGraphicsSpriteWithTag(u16 graphicsId, void (*callback)(struct Spr
     }
     else if (spriteTemplate->paletteTag != TAG_NONE)
     {
-        LoadObjectEventPalette(spriteTemplate->paletteTag);
+        // A caller's tag gets its own copy of the object's palette, so freeing by that tag frees it.
+        // With no free palette slot, fall back to the object's own (perhaps already loaded) palette.
+        if (paletteTag != TAG_NONE && LoadObjectEventPaletteCopy(spriteTemplate->paletteTag, paletteTag) != 0xFF)
+            spriteTemplate->paletteTag = paletteTag;
+        else
+            LoadObjectEventPalette(spriteTemplate->paletteTag);
     }
 
     spriteId = CreateSprite(spriteTemplate, x, y, subpriority);
@@ -3360,8 +3366,10 @@ u8 LoadObjectEventPalette(u16 paletteTag)
 u8 LoadObjectEventPaletteCopy(u16 originalTag, u16 copyTag)
 {
     u32 i = FindObjectEventPaletteIndexByTag(originalTag);
+    if (i == 0xFF)
+        return i;
     const struct SpritePalette palette = {sObjectEventSpritePalettes[i].data, copyTag};
-    return LoadSpritePalette(&palette);
+    return LoadSpritePaletteIfTagExists(&palette);
 }
 
 u8 LoadPlayerObjectEventPalette(enum Gender gender)

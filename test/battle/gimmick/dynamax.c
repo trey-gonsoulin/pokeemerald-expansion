@@ -1872,5 +1872,66 @@ SINGLE_BATTLE_TEST("Dynamax: Gravity does not prevent a Max Move derived from a 
     }
 }
 
+// A win by a move skips the end-of-turn Dynamax revert, so the battle's end undoes it (#105).
+// Player Dynamax is off in-game (B_FLAG_DYNAMAX_BATTLE is 0 and there is no Dynamax Band), but tests skip those checks.
+AI_SINGLE_BATTLE_TEST("Dynamax HP: a Pokemon still Dynamaxed when it wins with a move leaves with its own HP")
+{
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET) { Level(50); HP(50); Speed(100); }
+        OPPONENT(SPECIES_TREECKO) { Level(15); HP(1); Speed(50); Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_SCRATCH, gimmick: GIMMICK_DYNAMAX); }
+    } SCENE {
+        ANIMATION(ANIM_TYPE_GENERAL, B_ANIM_DYNAMAX_GROWTH, player);
+        MESSAGE("The opposing Treecko fainted!");
+    } THEN {
+        EXPECT_EQ(gBattleOutcome, B_OUTCOME_WON);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_HP), 50);
+    }
+}
+
+WILD_BATTLE_TEST("Dynamax HP: a Pokemon still Dynamaxed when the wild foe flees leaves with its own HP")
+{
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET) { Level(50); HP(50); }
+        OPPONENT(SPECIES_GOLISOPOD) { Ability(ABILITY_EMERGENCY_EXIT); MaxHP(263); HP(132); Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_SCRATCH, gimmick: GIMMICK_DYNAMAX); }
+    } SCENE {
+        ANIMATION(ANIM_TYPE_GENERAL, B_ANIM_DYNAMAX_GROWTH, player);
+        HP_BAR(opponent);
+        ABILITY_POPUP(opponent, ABILITY_EMERGENCY_EXIT);
+    } THEN {
+        EXPECT_EQ(gBattleOutcome, B_OUTCOME_MON_TELEPORTED);
+        EXPECT_EQ(GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_HP), 50);
+    }
+}
+
+// The exp controller is always battler 0, so the level-up's Dynamax HP reapply has to find the battler the levelling mon is on (#106).
+// A full-HP mon that keeps its boost through the level-up is still full once the battle's end undoes the Dynamax (#105);
+// one that lost it leaves with two thirds of its HP.
+AI_DOUBLE_BATTLE_TEST("Dynamax HP: a Dynamaxed Pokemon keeps its boost when it levels up on either side")
+{
+    u32 dynamaxRight;
+    PARAMETRIZE { dynamaxRight = FALSE; }
+    PARAMETRIZE { dynamaxRight = TRUE; }
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET) { Level(5); Speed(100); Moves(MOVE_SCRATCH); }
+        PLAYER(SPECIES_WOBBUFFET) { Level(5); Speed(90); Moves(MOVE_SCRATCH); }
+        OPPONENT(SPECIES_TREECKO) { Level(30); HP(1); Speed(50); Moves(MOVE_CELEBRATE); }
+        OPPONENT(SPECIES_TREECKO) { Level(30); HP(1); Speed(40); Moves(MOVE_CELEBRATE); }
+    } WHEN {
+        TURN {
+            MOVE(playerLeft, MOVE_SCRATCH, target: opponentLeft, gimmick: dynamaxRight ? GIMMICK_NONE : GIMMICK_DYNAMAX);
+            MOVE(playerRight, MOVE_SCRATCH, target: opponentRight, gimmick: dynamaxRight ? GIMMICK_DYNAMAX : GIMMICK_NONE);
+        }
+    } THEN {
+        struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][dynamaxRight ? 1 : 0];
+        EXPECT_EQ(gBattleOutcome, B_OUTCOME_WON);
+        EXPECT_GT(GetMonData(mon, MON_DATA_LEVEL), 5);
+        EXPECT_EQ(GetMonData(mon, MON_DATA_HP), GetMonData(mon, MON_DATA_MAX_HP));
+    }
+}
+
 TO_DO_BATTLE_TEST("Dynamax: Contrary inverts stat-lowering Max Moves, without showing a message")
 TO_DO_BATTLE_TEST("Dynamax: Contrary inverts stat-increasing Max Moves, without showing a message")

@@ -238,9 +238,8 @@ struct DebugMenuListData
     u8 scrollArrowsTaskId;
     s16 titleWindowId;
     u16 scrollArrowsOffset;
-    // Object tile and palette tags the trainer icon loaded itself (TAG_NONE if they were already loaded)
+    // Object tile tag the trainer icon loaded itself (TAG_NONE if it was already loaded)
     u16 iconTileTag;
-    u16 iconPaletteTag;
     DebugFunc pendingInputFunc; // input handler that takes over from DebugTask_StartMenuInput
     struct ListMenuItem listItems[DEBUG_MAX_MENU_ITEMS + 1];
     u8 itemNames[DEBUG_MAX_MENU_ITEMS + 1][32]; // room for a submenu label's font codes and arrow (#88)
@@ -250,6 +249,9 @@ struct DebugMenuListData
     struct DebugNameOrder sortedNames[DEBUG_STEP_NAMES_COUNT]; // built on a step's first Start, freed with this data
     s16 data[8];
     s16 savedData[8]; // data as Choose trainer from map found it, restored when B cancels the picker
+    // The sound test's song ID range, found once when it opens (#37)
+    u16 firstSong;
+    u16 lastSong;
 };
 
 struct DebugSelectionStep
@@ -919,7 +921,6 @@ void Debug_ShowMainMenu(void)
     sDebugMenuListData = AllocZeroed(sizeof(*sDebugMenuListData));
     sDebugMenuListData->menuType = DEBUG_BASIC_MENU;
     sDebugMenuListData->iconTileTag = TAG_NONE;
-    sDebugMenuListData->iconPaletteTag = TAG_NONE;
     sDebugMenuListData->positions[0] = sDebugMainMenuPosition;
     // AllocZeroed leaves the rematch id at 0, a valid gRematchTable index
     Debug_Trainers_ResetTrainersData();
@@ -1180,15 +1181,12 @@ static void DestroyDebugIcon(u8 taskId)
         if (gTasks[taskId].tSpriteId < MAX_SPRITES)
             DestroySprite(&gSprites[gTasks[taskId].tSpriteId]);
         gTasks[taskId].tSpriteId = SPRITE_NONE;
-        // Native party-menu tasks run without sDebugMenuListData. Only the trainer icon, a menu one, sets these tags.
+        // Native party-menu tasks run without sDebugMenuListData. Only the trainer icon, a menu one, sets this tag.
         if (sDebugMenuListData != NULL)
         {
             if (sDebugMenuListData->iconTileTag != TAG_NONE)
                 FreeSpriteTilesByTag(sDebugMenuListData->iconTileTag);
-            if (sDebugMenuListData->iconPaletteTag != TAG_NONE)
-                FreeSpritePaletteByTag(sDebugMenuListData->iconPaletteTag);
             sDebugMenuListData->iconTileTag = TAG_NONE;
-            sDebugMenuListData->iconPaletteTag = TAG_NONE;
         }
     }
 }
@@ -1322,13 +1320,13 @@ static bool32 Debug_IsSong(enum SongType type, u32 songId)
 }
 
 // Same input as the other numeric screens. Returns whether the ID or the highlighted digit changed.
-static bool32 Debug_HandleInput_SongId(u8 taskId, enum SongType type)
+static bool32 Debug_HandleInput_SongId(u8 taskId)
 {
     s16 oldInput = gTasks[taskId].tInput;
     s16 oldDigit = gTasks[taskId].tDigit;
-    u32 max = Debug_GetLastSong(type);
+    u32 max = sDebugMenuListData->lastSong;
 
-    Debug_HandleInput_Numeric(taskId, Debug_GetFirstSong(type), max, Debug_CountDigits(max), FALSE);
+    Debug_HandleInput_Numeric(taskId, sDebugMenuListData->firstSong, max, Debug_CountDigits(max), FALSE);
     return gTasks[taskId].tInput != oldInput || gTasks[taskId].tDigit != oldDigit;
 }
 
@@ -2857,12 +2855,12 @@ static void Debug_CreateTrainerIcon(u8 taskId)
     DestroyDebugIcon(taskId);
     u32 graphicsId = gMapHeader.events->objectEvents[gTasks[taskId].tInput - 1].graphicsId;
     const struct ObjectEventGraphicsInfo *graphicsInfo = GetObjectEventGraphicsInfo(graphicsId);
-    u32 paletteTag = graphicsInfo->paletteTag;
     u32 tileTag = TAG_NONE;
 
-    // CreateObjectGraphicsSpriteWithTag loads the sheet and palette under the object's own tags, which
-    // NPCs on the map may share. Note the ones it is about to load, so only those get freed with the icon.
-    // The sheet tag follows LoadSheetGraphicsInfo.
+    // CreateObjectGraphicsSpriteWithTag loads the palette under DEBUG_ICON_TAG (a dynamic follower one stays
+    // under its species tag and isn't freed, as before), but a compressed sheet under the object's own tag,
+    // which NPCs on the map may share. Note whether it is about to load that sheet, so it gets freed with
+    // the icon only then. The sheet tag follows LoadSheetGraphicsInfo.
     if (OW_GFX_COMPRESS && graphicsInfo->compressed)
     {
         tileTag = graphicsInfo->tileTag != TAG_NONE ? graphicsInfo->tileTag : COMP_OW_TILE_TAG_BASE + graphicsId;
@@ -2870,10 +2868,6 @@ static void Debug_CreateTrainerIcon(u8 taskId)
             tileTag = TAG_NONE;
     }
     sDebugMenuListData->iconTileTag = tileTag;
-    if (paletteTag != OBJ_EVENT_PAL_TAG_DYNAMIC && IndexOfSpritePaletteTag(paletteTag) == 0xFF)
-        sDebugMenuListData->iconPaletteTag = paletteTag;
-    else
-        sDebugMenuListData->iconPaletteTag = TAG_NONE;
 
     gTasks[taskId].tSpriteId = CreateObjectGraphicsSpriteWithTag(graphicsId, SpriteCallbackDummy, DEBUG_NUMBER_ICON_X, DEBUG_NUMBER_ICON_Y, 4, DEBUG_ICON_TAG);
     if (gTasks[taskId].tSpriteId == MAX_SPRITES)
@@ -2884,15 +2878,6 @@ static void Debug_CreateTrainerIcon(u8 taskId)
     }
     StartSpriteAnim(&gSprites[gTasks[taskId].tSpriteId], ANIM_STD_GO_SOUTH);
     gSprites[gTasks[taskId].tSpriteId].oam.priority = 0;
-    // The sprite's template is freed by now, so take the tag from the graphics info.
-    // A dynamic (follower) palette isn't an object event palette, so the sprite keeps its own,
-    // as it does when the copy finds no free palette slot.
-    if (paletteTag != OBJ_EVENT_PAL_TAG_DYNAMIC)
-    {
-        u32 paletteNum = LoadObjectEventPaletteCopy(paletteTag, DEBUG_ICON_TAG);
-        if (paletteNum != 0xFF)
-            gSprites[gTasks[taskId].tSpriteId].oam.paletteNum = paletteNum;
-    }
 }
 
 static void DebugSelectionStep_UpdateMapTrainer(u8 taskId, u8 digits, u32 min, u32 max)
@@ -4519,7 +4504,7 @@ static void DebugAction_Sound_PrintId(u8 taskId, enum SongType type)
         name = sDebugText_Dashes;
     StringCopy(gStringVar2, gText_DigitIndicator[gTasks[taskId].tDigit]);
     StringCopyPadded(gStringVar1, name, CHAR_SPACE, 35);
-    Debug_InputToDecimalString(gStringVar3, taskId, Debug_CountDigits(Debug_GetLastSong(type)));
+    Debug_InputToDecimalString(gStringVar3, taskId, Debug_CountDigits(sDebugMenuListData->lastSong));
     StringExpandPlaceholders(gStringVar4, type == SONG_SE ? sDebugText_Sound_SFX_ID : sDebugText_Sound_Music_ID);
     AddTextPrinterParameterized(gTasks[taskId].tSubWindowId, DEBUG_MENU_FONT, gStringVar4, 0, 0, 0, NULL);
 }
@@ -4544,7 +4529,9 @@ static void DebugAction_Sound_Start(u8 taskId, enum SongType type)
     else
         gTasks[taskId].func = DebugAction_Sound_MUS_SelectId;
     gTasks[taskId].tSubWindowId = windowId;
-    Debug_StartNumericInput(taskId, Debug_GetFirstSong(type));
+    sDebugMenuListData->firstSong = Debug_GetFirstSong(type);
+    sDebugMenuListData->lastSong = Debug_GetLastSong(type);
+    Debug_StartNumericInput(taskId, sDebugMenuListData->firstSong);
     gTasks[taskId].tCurrentSong = gTasks[taskId].tInput;
 
     DebugAction_Sound_PrintId(taskId, type);
@@ -4574,7 +4561,7 @@ static bool32 DebugAction_Sound_HandleInput(u8 taskId, enum SongType type)
     }
     else if (DEBUG_NUMERIC_INPUT_PRESSED())
     {
-        if (Debug_HandleInput_SongId(taskId, type))
+        if (Debug_HandleInput_SongId(taskId))
             DebugAction_Sound_PrintId(taskId, type);
     }
     return FALSE;

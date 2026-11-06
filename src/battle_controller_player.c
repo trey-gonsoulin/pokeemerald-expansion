@@ -1413,6 +1413,25 @@ static bool32 IsMonOnPartnerBattler(enum BattlerId battler, u32 monId)
         && IsMonOnBattler(partner, monId);
 }
 
+// The battler on screen with the player's monId: battler (the exp controller, always battler 0)
+// or its partner, else MAX_BATTLERS_COUNT.
+static enum BattlerId GetBattlerWithExpMon(enum BattlerId battler, u32 monId)
+{
+    if (IsMonOnBattler(battler, monId))
+        return battler;
+    if (IsMonOnPartnerBattler(battler, monId))
+        return GetPartnerBattler(battler);
+    return MAX_BATTLERS_COUNT;
+}
+
+// Reapplies the Dynamax HP multiplier to a levelling mon still Dynamaxed on screen.
+static void TryDynamaxModifyHPLevelUp(struct Pokemon *mon, enum BattlerId battler, u32 monId, u32 oldMaxHP)
+{
+    battler = GetBattlerWithExpMon(battler, monId);
+    if (battler != MAX_BATTLERS_COUNT && GetActiveGimmick(battler) == GIMMICK_DYNAMAX)
+        DynamaxModifyHPLevelUp(mon, battler, oldMaxHP);
+}
+
 static s32 GetTaskExpValue(u8 taskId)
 {
     return (u16)(gTasks[taskId].tExpTask_gainedExp_1) | (gTasks[taskId].tExpTask_gainedExp_2 << 16);
@@ -1441,8 +1460,7 @@ static void Task_GiveExpToMon(u8 taskId)
             CalculateMonStats(mon);
 
             // Reapply Dynamax HP multiplier after stats are recalculated.
-            if (GetActiveGimmick(battler) == GIMMICK_DYNAMAX && monId == gBattlerPartyIndexes[battler])
-                DynamaxModifyHPLevelUp(mon, battler, oldMaxHP);
+            TryDynamaxModifyHPLevelUp(mon, battler, monId, oldMaxHP);
 
             gainedExp -= nextLvlExp - currExp;
             BtlController_EmitTwoReturnValues(battler, B_COMM_TO_ENGINE, RET_VALUE_LEVELED_UP, (B_LEVEL_UP_NOTIFICATION >= GEN_9) ? 0 : gainedExp);
@@ -1527,8 +1545,7 @@ static void Task_GiveExpWithExpBar(u8 taskId)
                 CalculateMonStats(mon);
 
                 // Reapply Dynamax HP multiplier after stats are recalculated.
-                if (GetActiveGimmick(battler) == GIMMICK_DYNAMAX && monId == gBattlerPartyIndexes[battler])
-                    DynamaxModifyHPLevelUp(mon, battler, oldMaxHP);
+                TryDynamaxModifyHPLevelUp(mon, battler, monId, oldMaxHP);
 
                 gainedExp -= expOnNextLvl - currExp;
                 BtlController_EmitTwoReturnValues(battler, B_COMM_TO_ENGINE, RET_VALUE_LEVELED_UP, (B_LEVEL_UP_NOTIFICATION >= GEN_9) ? 0 : gainedExp);
@@ -1549,10 +1566,9 @@ static void Task_GiveExpWithExpBar(u8 taskId)
 static enum BattlerId GetLvlUpAnimBattler(u8 taskId)
 {
     enum BattlerId battler = gTasks[taskId].tExpTask_battler;
+    enum BattlerId monBattler = GetBattlerWithExpMon(battler, gTasks[taskId].tExpTask_monId);
 
-    if (IsMonOnPartnerBattler(battler, gTasks[taskId].tExpTask_monId))
-        return GetPartnerBattler(battler);
-    return battler;
+    return monBattler == MAX_BATTLERS_COUNT ? battler : monBattler;
 }
 
 static void Task_LaunchLvlUpAnim(u8 taskId)
