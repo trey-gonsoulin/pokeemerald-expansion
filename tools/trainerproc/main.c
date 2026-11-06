@@ -33,7 +33,6 @@
 // The game's MAX_PER_STAT_EVS is 252 from P_EV_CAP GEN_6 and 255 before, a
 // config the tool can't read: 253-255 give the same stat as 252 (EV / 4).
 #define MAX_PER_STAT_EVS 255
-#define MAX_TOTAL_EVS 510
 
 #define STR(x) #x
 #define XSTR(x) STR(x)
@@ -1013,11 +1012,6 @@ static bool token_stats(struct Parser *p, const struct Token *t, struct Stats *s
     return true;
 }
 
-static int stats_total(struct Stats stats)
-{
-    return stats.hp + stats.attack + stats.defense + stats.special_attack + stats.special_defense + stats.speed;
-}
-
 // '/'-separated strings.
 static bool token_human_identifiers(struct Parser *p, const struct Token *t, struct String *ids, int *ids_n, int max_ids_n, const char *too_many_error)
 {
@@ -1484,8 +1478,6 @@ static bool parse_trainer(struct Parser *p, const struct Parsed *parsed, struct 
                 pokemon->evs_line = value.location.line;
                 if (!token_stats(p, &value, &pokemon->evs, false, MAX_PER_STAT_EVS, "EVs must be from 0 to " XSTR(MAX_PER_STAT_EVS)))
                     any_error = !show_parse_error(p);
-                else if (stats_total(pokemon->evs) > MAX_TOTAL_EVS)
-                    any_error = !set_show_parse_error(p, value.location, "EVs must total at most " XSTR(MAX_TOTAL_EVS));
             }
             else if (is_literal_token(&key, "IVs"))
             {
