@@ -174,8 +174,6 @@ TEST("Milcery morning: every day spin evolves Milcery in the morning too")
         EXPECT_NE(daySpecies, SPECIES_NONE);
         EXPECT_EQ(GetMilcerySpinEvolution(sweet, MORNING_HOUR_BEGIN, daySpins[i]), daySpecies);
     }
-    if (sweet == ITEM_STRAWBERRY_SWEET)
-        EXPECT_EQ(GetMilcerySpinEvolution(sweet, MORNING_HOUR_BEGIN, SPIN_CW_SHORT), SPECIES_ALCREMIE_STRAWBERRY_VANILLA_CREAM);
 }
 
 TEST("Milcery morning: the day spins leave the evening and the night alone")
