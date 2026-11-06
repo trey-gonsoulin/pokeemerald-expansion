@@ -250,7 +250,7 @@ AUTO_GEN_TARGETS += $(DATA_SRC_SUBDIR)/wild_encounters.h
 MISC_TOOL_DIR := $(TOOLS_DIR)/misc
 AUTO_GEN_TARGETS +=  $(INCLUDE_DIRS)/constants/script_commands.h
 
-$(DATA_SRC_SUBDIR)/wild_encounters.h: $(DATA_SRC_SUBDIR)/wild_encounters.json $(WILD_ENCOUNTERS_TOOL_DIR)/wild_encounters_to_header.py $(INCLUDE_DIRS)/config/overworld.h $(INCLUDE_DIRS)/config/dexnav.h
+$(DATA_SRC_SUBDIR)/wild_encounters.h: $(DATA_SRC_SUBDIR)/wild_encounters.json $(WILD_ENCOUNTERS_TOOL_DIR)/wild_encounters_to_header.py $(INCLUDE_DIRS)/config/overworld.h $(INCLUDE_DIRS)/config/dexnav.h $(INCLUDE_DIRS)/constants/rtc.h
 	python3 $(WILD_ENCOUNTERS_TOOL_DIR)/wild_encounters_to_header.py
 
 $(INCLUDE_DIRS)/constants/script_commands.h: $(MISC_TOOL_DIR)/make_scr_cmd_constants.py $(DATA_ASM_SUBDIR)/script_cmd_table.inc
@@ -438,16 +438,18 @@ generated: $(AUTO_GEN_TARGETS)
 %.pal: ;
 %.wav: ;
 
-%.1bpp:     %.png  ; $(GFX) $< $@
-%.4bpp:     %.png  ; $(GFX) $< $@
-%.8bpp:     %.png  ; $(GFX) $< $@
-%.gbapal:   %.pal  ; $(GFX) $< $@
-%.gbapal:   %.png  ; $(GFX) $< $@
-%.lz:       %      ; $(GFX) $< $@
-%.smolTM:   %      ; $(SMOLTM) $< $@
-%.fastSmol: %      ; $(SMOL) -w $< $@ false false false
-%.smol:     %      ; $(SMOL) -w $< $@
-%.rl:       %      ; $(GFX) $< $@
+# Each output also depends on the tool that writes it, so a tool rebuilt from changed source
+# rewrites its outputs.
+%.1bpp:     %.png  $(GFX)    ; $(GFX) $< $@
+%.4bpp:     %.png  $(GFX)    ; $(GFX) $< $@
+%.8bpp:     %.png  $(GFX)    ; $(GFX) $< $@
+%.gbapal:   %.pal  $(GFX)    ; $(GFX) $< $@
+%.gbapal:   %.png  $(GFX)    ; $(GFX) $< $@
+%.lz:       %      $(GFX)    ; $(GFX) $< $@
+%.smolTM:   %      $(SMOLTM) ; $(SMOLTM) $< $@
+%.fastSmol: %      $(SMOL)   ; $(SMOL) -w $< $@ false false false
+%.smol:     %      $(SMOL)   ; $(SMOL) -w $< $@
+%.rl:       %      $(GFX)    ; $(GFX) $< $@
 
 clean-teachables_intermediates:
 	rm -f $(DATA_SRC_SUBDIR)/tutor_moves.h
@@ -492,7 +494,7 @@ else
 	$(AS) $(ASFLAGS) -o $@ $(C_BUILDDIR)/$*.s
 endif
 
-$(C_BUILDDIR)/%.d: $(C_SUBDIR)/%.c
+$(C_BUILDDIR)/%.d: $(C_SUBDIR)/%.c $(SCANINC)
 	$(SCANINC) -M $@ -g $(ASSETS_DIR_NAME) $(INCLUDE_SCANINC_ARGS) -I tools/agbcc/include $<
 
 ifneq ($(NODEP),1)
@@ -505,7 +507,7 @@ $(TEST_BUILDDIR)/%.o: $(TEST_SUBDIR)/%.c
 	@echo "$(CC1) <flags> -o $@ $<"
 	@$(CPP) $(CPPFLAGS) $< | $(PREPROC) -i -g $(ASSETS_DIR_NAME) $< charmap.txt | $(CC1) $(CFLAGS) -o - - | cat - <(echo -e ".text\n\t.align\t2, 0") | $(AS) $(ASFLAGS) -o $@ -
 
-$(TEST_BUILDDIR)/%.d: $(TEST_SUBDIR)/%.c
+$(TEST_BUILDDIR)/%.d: $(TEST_SUBDIR)/%.c $(SCANINC)
 	$(SCANINC) -M $@ -g $(ASSETS_DIR_NAME) $(INCLUDE_SCANINC_ARGS) -I tools/agbcc/include $<
 
 ifneq ($(NODEP),1)
@@ -516,7 +518,7 @@ endif
 $(ASM_BUILDDIR)/%.o: $(ASM_SUBDIR)/%.s
 	$(AS) $(ASFLAGS) -o $@ $<
 
-$(ASM_BUILDDIR)/%.d: $(ASM_SUBDIR)/%.s
+$(ASM_BUILDDIR)/%.d: $(ASM_SUBDIR)/%.s $(SCANINC)
 	$(SCANINC) -M $@ -g $(ASSETS_DIR_NAME) $(INCLUDE_SCANINC_ARGS) -I "" $<
 
 ifneq ($(NODEP),1)
@@ -526,7 +528,7 @@ endif
 $(C_BUILDDIR)/%.o: $(C_SUBDIR)/%.s
 	$(PREPROC) $< charmap.txt | $(CPP) $(CPPFLAGS) $(INCLUDE_SCANINC_ARGS) - | $(PREPROC) -ie $< charmap.txt | $(AS) $(ASFLAGS) -o $@
 
-$(C_BUILDDIR)/%.d: $(C_SUBDIR)/%.s
+$(C_BUILDDIR)/%.d: $(C_SUBDIR)/%.s $(SCANINC)
 	$(SCANINC) -M $@ -g $(ASSETS_DIR_NAME) $(INCLUDE_SCANINC_ARGS) -I "" $<
 
 ifneq ($(NODEP),1)
@@ -536,7 +538,7 @@ endif
 $(DATA_ASM_BUILDDIR)/%.o: $(DATA_ASM_SUBDIR)/%.s
 	$(PREPROC) -s $< charmap.txt | $(CPP) $(CPPFLAGS) $(INCLUDE_SCANINC_ARGS) - | $(PREPROC) -ie $< charmap.txt | $(AS) $(ASFLAGS) -o $@
 
-$(DATA_ASM_BUILDDIR)/%.d: $(DATA_ASM_SUBDIR)/%.s
+$(DATA_ASM_BUILDDIR)/%.d: $(DATA_ASM_SUBDIR)/%.s $(SCANINC)
 	$(SCANINC) -M $@ -g $(ASSETS_DIR_NAME) $(INCLUDE_SCANINC_ARGS) -I "" $<
 
 ifneq ($(NODEP),1)
@@ -567,10 +569,14 @@ $(ALL_TUTORS_JSON): $(wildcard data/scripts/*.inc data/maps/*/scripts.inc)  $(LE
 $(ALL_TEACHING_TYPES_JSON): $(wildcard $(DATA_SRC_SUBDIR)/pokemon/species_info/*_families.h)  $(LEARNSET_HELPERS_DIR)/make_teaching_types.py | $(LEARNSET_HELPERS_BUILD_DIR)
 	python3 $(LEARNSET_HELPERS_DIR)/make_teaching_types.py $@
 
-$(DATA_SRC_SUBDIR)/pokemon/teachable_learnsets.h: $(TEACHABLE_DEPS) | $(ALL_TUTORS_JSON) $(ALL_TEACHING_TYPES_JSON)
+# .SECONDARY: with no prerequisites makes every file intermediate, and make doesn't remake a missing
+# intermediate file when its dependents are up to date, so these two are forced when missing (they
+# aren't AUTO_GEN_TARGETS, which the prebuild makes as goals). make_tutors.py touches
+# make_teachables.py when the tutor list changes, which rebuilds both.
+$(DATA_SRC_SUBDIR)/pokemon/teachable_learnsets.h: $(TEACHABLE_DEPS) $(call force_if_missing,$(DATA_SRC_SUBDIR)/pokemon/teachable_learnsets.h) | $(ALL_TUTORS_JSON) $(ALL_TEACHING_TYPES_JSON)
 	python3 $(LEARNSET_HELPERS_DIR)/make_teachables.py $(LEARNSET_HELPERS_BUILD_DIR)
 
-$(DATA_SRC_SUBDIR)/tutor_moves.h: $(DATA_SRC_SUBDIR)/pokemon/special_movesets.json | $(ALL_TUTORS_JSON)
+$(DATA_SRC_SUBDIR)/tutor_moves.h: $(DATA_SRC_SUBDIR)/pokemon/special_movesets.json $(LEARNSET_HELPERS_DIR)/make_teachables.py $(call force_if_missing,$(DATA_SRC_SUBDIR)/tutor_moves.h) | $(ALL_TUTORS_JSON)
 	python3 $(LEARNSET_HELPERS_DIR)/make_teachables.py  --tutors $(LEARNSET_HELPERS_BUILD_DIR)
 
 # Linker script
@@ -578,21 +584,32 @@ LD_SCRIPT := ld_script_modern.ld
 
 # Final rules
 
-libagbsyscall:
+# The sub-make runs every time, but the ELF relinks only when it changes the library.
+LIBAGBSYSCALL := libagbsyscall/libagbsyscall.a
+libagbsyscall: $(LIBAGBSYSCALL)
+$(LIBAGBSYSCALL): FORCE
 	@$(MAKE) -C libagbsyscall TOOLCHAIN=$(TOOLCHAIN) MODERN=1
+
+# The ELF's name doesn't say which objects it was linked from (make debug writes pokeemerald.elf
+# from build/emerald-debug), so this stamp records the object directory and link flags, and the
+# ELF relinks when they change.
+ELF_MODE_STAMP := $(BUILD_DIR)/$(notdir $(ELF)).mode
+$(ELF_MODE_STAMP): FORCE
+	@mkdir -p $(@D)
+	@(echo '$(OBJ_DIR) $(LDFLAGS)' | cmp -s $@ -) || echo '$(OBJ_DIR) $(LDFLAGS)' > $@
 
 # Enable LTO LDFLAGS if set
 ifneq ($(LTO),0)
 LDFLAGS := -march=armv4t -mabi=apcs-gnu -mcpu=arm7tdmi -Xlinker -Map=../../$(MAP) -Xlinker --print-memory-usage -Xassembler -meabi=5 -Xassembler -march=armv4t -Xassembler -mcpu=arm7tdmi -Xlinker --gc-sections
 LDFLAGS += -Xlinker -flto=auto
-$(ELF): $(LD_SCRIPT) $(OBJS) libagbsyscall
+$(ELF): $(LD_SCRIPT) $(OBJS) $(LIBAGBSYSCALL) $(ELF_MODE_STAMP)
 	@echo "cd $(OBJ_DIR) && $(ARMCC) $(LDFLAGS) -T ../../$< -o ../../$@ <objs> <libs>"
 	+@cd $(OBJ_DIR) && $(ARMCC) $(LDFLAGS) -T ../../$< -o ../../$@ $(OBJS_REL) $(LIB)
 	$(FIX) $@ -t"$(TITLE)" -c$(GAME_CODE) -m$(MAKER_CODE) -r$(REVISION) --silent
 else
 # Output .map file, memory usage readout and gc sections to clean-up unused data
 LDFLAGS = -Map ../../$(MAP) --print-memory-usage --gc-sections
-$(ELF): $(LD_SCRIPT) $(OBJS) libagbsyscall
+$(ELF): $(LD_SCRIPT) $(OBJS) $(LIBAGBSYSCALL) $(ELF_MODE_STAMP)
 	@cd $(OBJ_DIR) && $(LD) $(LDFLAGS) -T ../../$<  -o ../../$@ $(OBJS_REL) $(LIB) | cat
 	@echo "cd $(OBJ_DIR) && $(LD) $(LDFLAGS) -T ../../$< -o ../../$@ <objs> <libs> | cat"
 	$(FIX) $@ -t"$(TITLE)" -c$(GAME_CODE) -m$(MAKER_CODE) -r$(REVISION) --silent
