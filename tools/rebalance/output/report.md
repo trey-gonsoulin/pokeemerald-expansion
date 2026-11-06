@@ -780,6 +780,88 @@ Per boss Pokemon: retyping, defensive multipliers that changed (attacking type: 
 
 - Tentacruel 83: takes Fairy new->0.5x; hits Fairy new->2x
 
+## Combat power estimate
+
+`power.py` scores each Pokemon one-on-one against a reference Pokemon of its own level (base 80 in every stat, IV 15, no type) on turns to KO, with its best expected damage per turn (STAB, accuracy, strikes, half for recharge and two-turn moves) and up to 0.5 turn for the faster side. Its effective level is the level at which the reference itself would score the same: what level of typical Pokemon it fights like. Types, abilities, items, status and stat moves are left out (README, "Matchup-relative strength").
+
+The reference's expected power is fitted to every trainer Pokemon's best move: 1.23 + 28.74 ln(level), 47 at 5, 94 at 25, 114 at 50, 125 at 75, 134 at 100.
+
+Bench: the Exp. Share bench before the fight (1.5x off, full / friendship, the Exp. Share curve's). Strongest: the highest effective level on the team.
+
+| stage | boss | ace level | strongest (level -> effective) | mean level | mean effective | bench | strongest - bench |
+|---|---|---|---|---|---|---|---|
+| Rival (Route 103) | May Route 103 Mudkip | 6 | Treecko 6 -> 4.3 | 6.0 | 4.3 | 5 | -0.7 |
+| Roxanne | Roxanne 1 | 15 | Nosepass 15 -> 13.4 | 13.0 | 11.2 | 14 | -0.6 |
+| Brawly | May Rustboro Mudkip | 17 | Grovyle 17 -> 13.9 | 16.0 | 11.8 | 16 | -2.1 |
+| Brawly | Brawly 1 | 19 | Meditite 16 -> 16.9 | 17.0 | 15.4 | 16 | +0.9 |
+| Wattson | May Route 110 Mudkip | 26 | Grovyle 26 -> 24.7 | 24.7 | 19.0 | 23 | +1.7 |
+| Wattson | Wally Mauville | 26 | Ralts 26 -> 15.4 | 26.0 | 15.4 | 23 | -7.6 |
+| Wattson | Wattson 1 | 26 | Manectric 26 -> 27.4 | 23.5 | 22.3 | 24 | +3.4 |
+| Flannery | Tabitha Mt Chimney | 38 | Camerupt 38 -> 37.8 | 36.5 | 33.4 | 36 | +1.8 |
+| Flannery | Maxie Mt Chimney | 39 | Camerupt 39 -> 40.2 | 38.3 | 37.8 | 36 | +4.2 |
+| Flannery | Flannery 1 | 39 | Torkoal 39 -> 44.4 | 35.8 | 36.6 | 37 | +7.4 |
+| Norman | Norman 1 | 41 | Slaking 41 -> 46.2 | 38.5 | 38.6 | 39 | +7.2 |
+| Winona | May Route 119 Mudkip | 56 | Sceptile 56 -> 62.0 | 54.7 | 56.1 | 53 | +9.0 |
+| Winona | Shelly Weather Institute | 56 | Sharpedo 56 -> 53.8 | 56.0 | 52.0 | 53 | +0.8 |
+| Winona | Winona 1 | 57 | Altaria 57 -> 58.6 | 54.4 | 53.0 | 54 | +4.6 |
+| Tate and Liza | May Lilycove Mudkip | 66 | Sceptile 66 -> 73.7 | 64.2 | 66.3 | 63 | +10.7 |
+| Tate and Liza | Tabitha Magma Hideout | 66 | Camerupt 66 -> 65.0 | 62.2 | 59.9 | 63 | +2.0 |
+| Tate and Liza | Maxie Magma Hideout | 67 | Camerupt 67 -> 67.8 | 66.0 | 65.3 | 64 | +3.8 |
+| Tate and Liza | Matt | 67 | Crobat 67 -> 64.3 | 67.0 | 62.6 | 64 | +0.3 |
+| Tate and Liza | Tate And Liza 1 | 67 | Lunatone 67 -> 73.1 | 66.5 | 71.2 | 64 | +9.1 |
+| Juan | Tabitha Mossdeep | 75 | Crobat 75 -> 73.0 | 73.0 | 69.8 | 71 | +2.0 |
+| Juan | Maxie Mossdeep | 75 | Camerupt 75 -> 75.5 | 74.0 | 72.2 | 71 | +4.5 |
+| Juan | Shelly Seafloor Cavern | 75 | Sharpedo 75 -> 72.9 | 75.0 | 70.3 | 71 | +1.9 |
+| Juan | Archie | 75 | Sharpedo 75 -> 74.7 | 73.7 | 71.6 | 71 | +3.7 |
+| Juan | Juan 1 | 76 | Kingdra 76 -> 79.4 | 72.8 | 72.2 | 72 | +7.4 |
+| Elite Four | Wally Vr 1 | 79 | Gardevoir 79 -> 90.9 | 77.4 | 78.2 | 75 | +15.9 |
+| Elite Four | Sidney | 80 | Crawdaunt 79 -> 78.1 | 78.4 | 75.7 | 76 | +2.1 |
+| Elite Four | Phoebe | 81 | Dusknoir 81 -> 84.2 | 79.4 | 75.1 | 76 | +8.2 |
+| Elite Four | Glacia | 82 | Walrein 82 -> 93.4 | 80.4 | 83.6 | 76 | +17.4 |
+| Elite Four | Drake | 83 | Salamence 83 -> 99.5 | 81.4 | 89.9 | 77 | +22.5 |
+| Elite Four | Wallace | 86 | Milotic 86 -> 101.3 | 84.3 | 93.8 | 78 | +23.3 |
+
+Boss Pokemon at least 10% from their level, strongest first (best move; "default" for a default moveset):
+
+| boss | Pokemon | level | effective | off | best move |
+|---|---|---|---|---|---|
+| Drake | Salamence | 83 | 99.5 | +20% | Dragon Claw |
+| Wallace | Milotic | 86 | 101.3 | +18% | Surf |
+| Wallace | Gyarados | 84 | 98.9 | +18% | Double Edge |
+| Drake | Flygon | 81 | 94.3 | +16% | Earthquake |
+| Wally Vr 1 | Gardevoir | 79 | 90.9 | +15% | Psychic |
+| Glacia | Walrein | 82 | 93.4 | +14% | Surf |
+| Flannery 1 | Torkoal | 39 | 44.4 | +14% | Overheat |
+| Drake | Kingdra | 81 | 92.0 | +14% | Surf |
+| Norman 1 | Slaking | 41 | 46.2 | +13% | Facade |
+| Flannery 1 | Camerupt | 36 | 40.5 | +12% | Overheat |
+| May Lilycove Mudkip | Sceptile | 66 | 73.7 | +12% | Energy Ball |
+| May Route 119 Mudkip | Sceptile | 56 | 62.0 | +11% | Energy Ball |
+| Wally Vr 1 | Magnezone | 75 | 83.0 | +11% | Thunderbolt |
+| Wallace | Tentacruel | 83 | 91.7 | +10% | Sludge Bomb |
+| Tate And Liza 1 | Claydol | 66 | 72.7 | +10% | Earthquake |
+| Shelly Weather Institute | Mightyena | 56 | 50.1 | -11% | Sucker Punch (default) |
+| Roxanne 1 | Nosepass | 15 | 13.4 | -11% | Rock Tomb |
+| Flannery 1 | Slugma | 34 | 30.3 | -11% | Overheat |
+| Winona 1 | Pelipper | 54 | 47.9 | -11% | Water Gun |
+| Tabitha Mt Chimney | Mightyena | 36 | 31.9 | -11% | Assurance (default) |
+| Norman 1 | Spinda | 37 | 32.5 | -12% | Facade |
+| Wattson 1 | Voltorb | 22 | 19.1 | -13% | Shock Wave |
+| Brawly 1 | Machop | 16 | 13.7 | -14% | Seismic Toss |
+| Roxanne 1 | Geodude | 12 | 10.1 | -16% | Rock Tomb |
+| Roxanne 1 | Geodude | 12 | 10.1 | -16% | Rock Tomb |
+| Brawly 1 | Makuhita | 19 | 15.7 | -17% | Vital Throw |
+| May Rustboro Mudkip | Grovyle | 17 | 13.9 | -18% | Mega Drain (default) |
+| Tabitha Mt Chimney | Numel | 34 | 27.5 | -19% | Earth Power (default) |
+| Wattson 1 | Electrike | 22 | 17.7 | -20% | Shock Wave |
+| Wally Vr 1 | Delcatty | 77 | 60.7 | -21% | Feint Attack |
+| Juan 1 | Luvdisc | 71 | 55.8 | -21% | Water Pulse |
+| May Route 103 Mudkip | Treecko | 6 | 4.3 | -28% | Leafage (default) |
+| May Route 110 Mudkip | Wingull | 24 | 16.7 | -30% | Water Pulse (default) |
+| May Route 110 Mudkip | Slugma | 24 | 15.7 | -35% | Ember |
+| May Rustboro Mudkip | Wingull | 15 | 9.6 | -36% | Water Gun (default) |
+| Wally Mauville | Ralts | 26 | 15.4 | -41% | Psybeam (default) |
+
 ## TMs by story stage
 
 First stage where each TM is on a stage map (ball, hidden item, mart list, script, or reward: a Trick House puzzle prize, filed under that puzzle). Hidden Power's type comes from the IVs. Reusable TMs mean one copy covers the whole party.

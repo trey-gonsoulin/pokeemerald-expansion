@@ -522,6 +522,14 @@ The flags are back to 0 / 0.
 
 Other trainers keep theirs: the report lists 215 Pokémon (Machoke 33, Roselia 26, Staryu 25, Graveler 20 and so on) for a later call. Not playtested.
 
+## 15. Combat power beyond level (prototype)
+Every target above is in levels, which ignore base stats, IVs and moves. `power.py` (README, "Combat power estimate") gives each boss Pokémon an effective level: the level of a typical Pokémon (base 80 in every stat, IV 15) that would fare as well one-on-one with no types in play. The report's "Combat power estimate" table puts each boss's strongest Pokémon by that measure against the Exp. Share bench. What it shows, as a diagnostic only (no data changed):
+- **Early bosses fight below their levels.** Roxanne's Nosepass 15 counts as 13.4 and her Geodude 12 as 10.2. May at Rustboro and Route 103 sits 2 below the bench, though her ace is 1 above it in levels. Unevolved early Pokémon on 40-60 power moves are why. Brawly's strongest is his Meditite (Pure Power), not his level-19 Makuhita.
+- **The late game fights well above them.** Glacia's Walrein (+17 over the bench), Drake's Salamence (+22), Wallace's Milotic (+23) and Wally's Victory Road Gardevoir (+16) all sit far past the 1 to 8 levels the curve gives them. High base stats, plus #130's and #131's same-type sets, are why. Sidney is the exception (+2): Dark-types with 70-80 power moves.
+- **Wally at Mauville** (Ralts 26, effective 15.4) is the weakest fight in the story, as `EVOLVE_EXEMPT` intends.
+- **Caveat: the bench is levels, not effective levels.** It counts the player's team as typical Pokémon, so a party of strong, fully evolved Pokémon with good moves sits above its level too. The late "strongest - bench" gaps overstate the gap to such a party and understate it to a weak one. Comparing with the player's actual team is the matchup-relative model, written up but not built (README, "Matchup-relative strength").
+- Known model gaps: types, most abilities, items, and status and stat moves don't count. Water Spout is scored at 60% of its power.
+
 ## Proposed balance changes (owner to accept or reject; each can be its own issue)
 1. **Soft level cap at each gym ace** (config). Set `B_LEVEL_CAP_TYPE LEVEL_CAP_FLAG_LIST` and `B_EXP_CAP_TYPE EXP_CAP_SOFT`. `sLevelCapFlagMap` in `src/caps.c` already holds exactly the measured aces (15/19/24/29/31/33/42/46/58). Consider `B_RARE_CANDY_CAP` too.
 2. **Boss AI to `Smart Trainer`** (data) for the gym leaders, the Elite Four, Wallace, and optionally the rivals and team leaders. Done in #129 for all of them, without Omniscient and Smart Tera (see "Corrections").
