@@ -3609,6 +3609,13 @@ static bool32 IsItemSweet(enum Item item)
     return item >= ITEM_STRAWBERRY_SWEET && item <= ITEM_RIBBON_SWEET;
 }
 
+// The condition is IF_NOT_TIME first and the next one IF_NOT_TIME second.
+static bool32 IsNotTimePair(const struct EvolutionParam *params, enum TimeOfDay first, enum TimeOfDay second)
+{
+    return params[0].condition == IF_NOT_TIME && params[0].arg1 == first
+        && params[1].condition == IF_NOT_TIME && params[1].arg1 == second;
+}
+
 static void PrintEvolutionTargetSpeciesAndMethod(u8 taskId, enum Species species, u8 depth, u32 *depth_i, u32 alreadyPrintedIcons[], u32 *icon_depth_i, u32 numLines)
 {
     int i;
@@ -3790,11 +3797,10 @@ static void PrintEvolutionTargetSpeciesAndMethod(u8 taskId, enum Species species
                     }
                     break;
                 case IF_NOT_TIME:
-                    // Milcery's night spins are NOT Day and NOT Morning (#276): "Night" covers both
-                    // (the evening counts as night, as in Sword and Shield), as "Day" does below.
-                    if (evolutions[i].params[j].arg1 == TIME_DAY
-                     && evolutions[i].params[j + 1].condition == IF_NOT_TIME
-                     && evolutions[i].params[j + 1].arg1 == TIME_MORNING)
+                    // Milcery's spins pair two NOT times, and the second NOT would wrap the line:
+                    // NOT Day and NOT Morning print as "Night" (#276: the evening counts as night,
+                    // as in Sword and Shield), and NOT Night and NOT Evening as "Day" (#169).
+                    if (IsNotTimePair(&evolutions[i].params[j], TIME_DAY, TIME_MORNING))
                     {
                         StringAppend(gStringVar4, COMPOUND_STRING("Night"));
                         j++;
@@ -3807,11 +3813,7 @@ static void PrintEvolutionTargetSpeciesAndMethod(u8 taskId, enum Species species
                     case TIME_EVENING: StringAppend(gStringVar4, COMPOUND_STRING("NOT Evening")); break;
                     case TIME_NIGHT:   StringAppend(gStringVar4, COMPOUND_STRING("Day"));         break; // More intuitive than "NOT Night"
                     }
-                    // Milcery's day spins are NOT Night and NOT Evening (#169): "Day" covers both,
-                    // and "NOT Evening" too would wrap the line.
-                    if (evolutions[i].params[j].arg1 == TIME_NIGHT
-                     && evolutions[i].params[j + 1].condition == IF_NOT_TIME
-                     && evolutions[i].params[j + 1].arg1 == TIME_EVENING)
+                    if (IsNotTimePair(&evolutions[i].params[j], TIME_NIGHT, TIME_EVENING))
                         j++;
                     break;
                 case IF_HOLD_ITEM:
