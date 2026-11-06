@@ -430,3 +430,27 @@ TEST("Bounded label: a cut never splits a control code")
     EXPECT_EQ(label[4], EXT_CTRL_CODE_BEGIN);
     EXPECT_EQ(label[5], EXT_CTRL_CODE_COLOR);
 }
+
+TEST("Bounded label: a cut never splits a two-byte character")
+{
+    static const u8 text[] = {CHAR_a, CHAR_a, CHAR_DYNAMIC, 0, CHAR_b, EOS};
+    u8 label[5];
+
+    Debug_CopyLabel(label, 4, text);
+    EXPECT_EQ(StringLength(label), 2);
+    Debug_CopyLabel(label, ARRAY_COUNT(label), text);
+    EXPECT_EQ(StringLength(label), 4);
+    EXPECT_EQ(label[2], CHAR_DYNAMIC);
+}
+
+TEST("Bounded label: a control code's 0xFF argument is copied, not read as the end")
+{
+    static const u8 text[] = {EXT_CTRL_CODE_BEGIN, EXT_CTRL_CODE_CLEAR_TO, 0xFF, CHAR_a, EOS};
+    u8 label[8];
+    u8 *end;
+
+    end = Debug_CopyLabel(label, ARRAY_COUNT(label), text);
+    EXPECT_EQ(end, &label[4]);
+    EXPECT_EQ(label[2], 0xFF);
+    EXPECT_EQ(label[3], CHAR_a);
+}
