@@ -464,6 +464,7 @@ extern const u8 Debug_BerryWeedsDisabled[];
 extern const u8 Common_EventScript_MoveRelearner[];
 
 static const struct DebugSelection sWarpSelection;
+static const struct DebugSelection sWarpToCoordsSelection;
 static const struct DebugSelection sSetWeatherSelection;
 static const struct DebugSelection sSpeciesGeneratorSelection;
 static const struct DebugSelection sItemGeneratorSelection;
@@ -632,6 +633,7 @@ static const struct DebugMenuOption sDebugMenu_Actions_Utilities[] =
     { COMPOUND_STRING("Recent warps…"),             DebugAction_OpenSubMenuRecentWarps, sDebugMenu_Actions_RecentWarps },
     { COMPOUND_STRING("Fly to map…"),               DebugAction_Util_Fly },
     { COMPOUND_STRING("Warp to map warp…"),         DebugAction_Selection_Init, &sWarpSelection},
+    { COMPOUND_STRING("Warp to x/y here…"),         DebugAction_Selection_Init, &sWarpToCoordsSelection },
     { COMPOUND_STRING("Set weather…"),              DebugAction_Selection_Init, &sSetWeatherSelection },
     { COMPOUND_STRING("Font Test…"),                DebugAction_ExecuteScript, Debug_EventScript_FontTest },
     { COMPOUND_STRING("Time Functions…"),           DebugAction_OpenSubMenu, sDebugMenu_Actions_TimeMenu, },
@@ -2277,13 +2279,14 @@ static u32 Debug_GenerateListRecentWarpsMenu(const struct DebugMenuOption *items
 
     sDebugMenuListData->listItems[0].id = 0;
     sDebugMenuListData->listItems[0].name = sDebugMenuListData->itemNames[0];
-    // The empty list's one entry is the warp back, which isn't set before the first warp
-    if (sDebugRecentWarpsCount == 0)
+    // The empty list's one entry is the warp back, which isn't set before the first debug warp.
+    // A fly or an x/y warp sets it without adding a recent warp.
+    if (sDebugWarpBack.warpId != WARP_ID_NONE)
     {
         StringCopy(sDebugMenuListData->itemNames[0], COMPOUND_STRING("No warps yet"));
         return 1;
     }
-    // Debug_WarpTo sets the warp back with each recent warp. Its map name keeps its end, as below, after the whole prefix.
+    // Every debug warp sets the warp back. Its map name keeps its end, as below, after the whole prefix.
     end = StringCopy(sDebugMenuListData->itemNames[0], backPrefix);
     Debug_CopyMapName(gStringVar4, sDebugWarpBack.mapGroup, sDebugWarpBack.mapNum);
     Debug_CopyStringEndToFit(end, ARRAY_COUNT(sDebugMenuListData->itemNames[0]) - StringLength(backPrefix),
@@ -2340,6 +2343,81 @@ static const struct DebugSelection sWarpSelection = {
     .steps = {&sMapGroupSelectionStep, &sMapNumSelectionStep, &sWarpSelectionStep},
     .maxSteps = 3,
     .showMapNames = TRUE,
+};
+
+// Warp to x/y here…: step 0 is X and step 1 is Y, in map coordinates (no MAP_OFFSET) on the player's map
+static void DebugSelectionStep_UpdateCoord(u8 taskId, u8 digits, u32 min, u32 max)
+{
+    bool32 isY = gTasks[taskId].tStep == 1;
+    u32 x = isY ? DebugSelection_GetStepData(taskId, 0) : DEBUG_TASK_INPUT(taskId);
+    u32 y = isY ? DEBUG_TASK_INPUT(taskId) : DebugSelection_GetStepData(taskId, 1);
+    u8 *end;
+
+    Debug_InputToDecimalString(gStringVar2, taskId, digits);
+    ConvertIntToDecimalStringN(gStringVar3, max, STR_CONV_MODE_LEADING_ZEROS, digits);
+    StringExpandPlaceholders(gStringVar1, isY ? COMPOUND_STRING("Y: {STR_VAR_2} / {STR_VAR_3}")
+                                              : COMPOUND_STRING("X: {STR_VAR_2} / {STR_VAR_3}"));
+    Debug_CopyMapName(gStringVar2, gSaveBlock1Ptr->location.mapGroup, gSaveBlock1Ptr->location.mapNum);
+    // Where the player lands: the other step's value is the one it holds now
+    end = StringCopy(gStringVar3, COMPOUND_STRING("To X "));
+    end = ConvertIntToDecimalStringN(end, x, STR_CONV_MODE_LEFT_ALIGN, 3);
+    end = StringCopy(end, COMPOUND_STRING(", Y "));
+    ConvertIntToDecimalStringN(end, y, STR_CONV_MODE_LEFT_ALIGN, 3);
+    DebugNativeStep_PrintWindowSelectionToFit(taskId);
+}
+
+static u32 DebugSelectionStep_GetLastCoordX(u8 taskId)
+{
+    return gMapHeader.mapLayout->width - 1;
+}
+
+static u32 DebugSelectionStep_GetLastCoordY(u8 taskId)
+{
+    return gMapHeader.mapLayout->height - 1;
+}
+
+static const struct DebugSelectionStep sCoordXSelectionStep = {
+    .stepUpdate = DebugSelectionStep_UpdateCoord,
+    .stepConfirm = DebugSelectionStep_GenericInputConfirm,
+    .minValue = 0,
+    .maxFunc = DebugSelectionStep_GetLastCoordX,
+    .useMaxFunc = TRUE,
+};
+
+static const struct DebugSelectionStep sCoordYSelectionStep = {
+    .stepUpdate = DebugSelectionStep_UpdateCoord,
+    .stepConfirm = DebugSelectionStep_GenericInputConfirm,
+    .minValue = 0,
+    .maxFunc = DebugSelectionStep_GetLastCoordY,
+    .useMaxFunc = TRUE,
+};
+
+// Starts from the player's own tile
+static void DebugSelection_WarpToCoords_Init(u8 taskId)
+{
+    Debug_CreateInputDisplayWindowFromTemplate(taskId, &sDebugMenuWindowTemplateWarp);
+    DebugSelection_SetData(taskId, 0, gSaveBlock1Ptr->pos.x);
+    DebugSelection_SetData(taskId, 1, gSaveBlock1Ptr->pos.y);
+}
+
+// Records the warp back like Back to <map>, and isn't a recent warp: those are map warps
+static bool32 DebugSelection_WarpToCoords_OnComplete(u8 taskId)
+{
+    s16 x = DebugSelection_GetData(taskId, 0);
+    s16 y = DebugSelection_GetData(taskId, 1);
+
+    Debug_SaveWarpBack();
+    SetWarpDestination(gSaveBlock1Ptr->location.mapGroup, gSaveBlock1Ptr->location.mapNum, WARP_ID_NONE, x, y);
+    Debug_DoWarp(taskId);
+    return TRUE;
+}
+
+static const struct DebugSelection sWarpToCoordsSelection = {
+    .onInit = DebugSelection_WarpToCoords_Init,
+    .onCancel = DebugSelectionStep_ReturnToUtilMenu,
+    .onComplete = DebugSelection_WarpToCoords_OnComplete,
+    .steps = {&sCoordXSelectionStep, &sCoordYSelectionStep},
+    .maxSteps = 2,
 };
 
 void CheckSaveBlock1Size(struct ScriptContext *ctx)
