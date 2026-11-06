@@ -8,6 +8,7 @@
 ## for wild_encounter_group in wild_encounter_groups
 {% if wild_encounter_group.for_maps %}
 ## for wild_encounter_field in wild_encounter_group.fields
+{% if wild_encounter_field.type == "hidden_mons" %}{{ setVar("hidden_mons_slots_defined", "TRUE") }}{% endif %}
 {% if not existsIn(wild_encounter_field, "groups") %}
 ## for encounter_rate in wild_encounter_field.encounter_rates
 ## endfor
@@ -25,7 +26,10 @@
 {% endif %}
 ## endfor
 
+{# DexNav's slot count when no map has a hidden_mons field (one defines its own above) #}
+{% if getVar("hidden_mons_slots_defined") != "TRUE" %}
 #define NUM_HIDDEN_MONS_ENCOUNTER_SLOTS   3
+{% endif %}
 
 #define WILD_CHECK_REPEL    (1 << 0)
 #define WILD_CHECK_KEEN_EYE (1 << 1)
