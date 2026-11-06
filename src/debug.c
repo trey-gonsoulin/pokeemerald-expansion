@@ -250,6 +250,9 @@ struct DebugMenuListData
     struct DebugNameOrder sortedNames[DEBUG_STEP_NAMES_COUNT]; // built on a step's first Start, freed with this data
     s16 data[8];
     s16 savedData[8]; // data as Choose trainer from map found it, restored when B cancels the picker
+    // The sound test's song ID range, found once when it opens (#37)
+    u16 firstSong;
+    u16 lastSong;
 };
 
 struct DebugSelectionStep
@@ -1322,13 +1325,13 @@ static bool32 Debug_IsSong(enum SongType type, u32 songId)
 }
 
 // Same input as the other numeric screens. Returns whether the ID or the highlighted digit changed.
-static bool32 Debug_HandleInput_SongId(u8 taskId, enum SongType type)
+static bool32 Debug_HandleInput_SongId(u8 taskId)
 {
     s16 oldInput = gTasks[taskId].tInput;
     s16 oldDigit = gTasks[taskId].tDigit;
-    u32 max = Debug_GetLastSong(type);
+    u32 max = sDebugMenuListData->lastSong;
 
-    Debug_HandleInput_Numeric(taskId, Debug_GetFirstSong(type), max, Debug_CountDigits(max), FALSE);
+    Debug_HandleInput_Numeric(taskId, sDebugMenuListData->firstSong, max, Debug_CountDigits(max), FALSE);
     return gTasks[taskId].tInput != oldInput || gTasks[taskId].tDigit != oldDigit;
 }
 
@@ -4519,7 +4522,7 @@ static void DebugAction_Sound_PrintId(u8 taskId, enum SongType type)
         name = sDebugText_Dashes;
     StringCopy(gStringVar2, gText_DigitIndicator[gTasks[taskId].tDigit]);
     StringCopyPadded(gStringVar1, name, CHAR_SPACE, 35);
-    Debug_InputToDecimalString(gStringVar3, taskId, Debug_CountDigits(Debug_GetLastSong(type)));
+    Debug_InputToDecimalString(gStringVar3, taskId, Debug_CountDigits(sDebugMenuListData->lastSong));
     StringExpandPlaceholders(gStringVar4, type == SONG_SE ? sDebugText_Sound_SFX_ID : sDebugText_Sound_Music_ID);
     AddTextPrinterParameterized(gTasks[taskId].tSubWindowId, DEBUG_MENU_FONT, gStringVar4, 0, 0, 0, NULL);
 }
@@ -4544,7 +4547,9 @@ static void DebugAction_Sound_Start(u8 taskId, enum SongType type)
     else
         gTasks[taskId].func = DebugAction_Sound_MUS_SelectId;
     gTasks[taskId].tSubWindowId = windowId;
-    Debug_StartNumericInput(taskId, Debug_GetFirstSong(type));
+    sDebugMenuListData->firstSong = Debug_GetFirstSong(type);
+    sDebugMenuListData->lastSong = Debug_GetLastSong(type);
+    Debug_StartNumericInput(taskId, sDebugMenuListData->firstSong);
     gTasks[taskId].tCurrentSong = gTasks[taskId].tInput;
 
     DebugAction_Sound_PrintId(taskId, type);
@@ -4574,7 +4579,7 @@ static bool32 DebugAction_Sound_HandleInput(u8 taskId, enum SongType type)
     }
     else if (DEBUG_NUMERIC_INPUT_PRESSED())
     {
-        if (Debug_HandleInput_SongId(taskId, type))
+        if (Debug_HandleInput_SongId(taskId))
             DebugAction_Sound_PrintId(taskId, type);
     }
     return FALSE;
