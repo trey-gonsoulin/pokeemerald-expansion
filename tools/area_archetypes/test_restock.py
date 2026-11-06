@@ -519,7 +519,7 @@ class CliTests(unittest.TestCase):
                 written, _ = run_quietly(['--wild', wild, '--out-dir', out, '--write', '--levels', levels])
                 self.assertEqual(written[AA.RESTOCK_STAMP]['level_offsets'], {'MAP_ROUTE101': {'land_mons': shift}})
             edited = R.load_json(wild)
-            enc = next(e for e in R.wild_headers(edited)['encounters'] if e.get('map') == 'MAP_ROUTE101')
+            enc = next(e for e in AA.map_headers(edited)['encounters'] if e.get('map') == 'MAP_ROUTE101')
             enc['land_mons']['mons'][0]['max_level'] += 1
             R.dump_wild(edited, wild)
             with self.assertRaises(SystemExit):

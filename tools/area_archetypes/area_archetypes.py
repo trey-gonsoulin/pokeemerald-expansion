@@ -390,6 +390,12 @@ def emerald_location(map_const, region, known):
     return name, False
 
 
+def map_headers(wild):
+    """The gWildMonHeaders group of wild (wild_encounters.json): the maps' tables, without
+    the Battle Pyramid's and Battle Pike's groups."""
+    return next(g for g in wild['wild_encounter_groups'] if g['label'] == 'gWildMonHeaders')
+
+
 def classify_emerald(data, smap, wild, water_by_loc):
     """Archetype for every table of every map in wild (wild_encounters.json).
 
@@ -398,7 +404,7 @@ def classify_emerald(data, smap, wild, water_by_loc):
     habitat reuses what the matched location's PokeAPI tables mostly got, so a
     map agrees with its source games; unmatched maps fall back to the rules.
     """
-    group = next(g for g in wild['wild_encounter_groups'] if g['label'] == 'gWildMonHeaders')
+    group = map_headers(wild)
     field_defs = {fd['type']: fd for fd in group['fields']}
     known = {l['identifier'] for l in data.locations.values()}
     out = {}
