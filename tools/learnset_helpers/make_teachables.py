@@ -168,7 +168,7 @@ def create_tutor_moves_array(tutors):
     with open("./src/data/tutor_moves.h", "w") as f:
         f.write(header + "\n".join(lines))
 
-def make_move_tutors(build_dir, special_movesets):
+def read_move_tutors(build_dir, special_movesets):
     SOURCE_TUTORS_JSON = build_dir / "all_tutors.json"
 
     assert SOURCE_TUTORS_JSON.exists(), f"{SOURCE_TUTORS_JSON=} does not exist"
@@ -177,10 +177,7 @@ def make_move_tutors(build_dir, special_movesets):
     with open(SOURCE_TUTORS_JSON, "r") as fp:
         repo_tutors = json.load(fp)
 
-    repo_tutors = sorted(list(set(repo_tutors + special_movesets["extraTutors"])))
-    create_tutor_moves_array(repo_tutors)
-
-    return repo_tutors
+    return sorted(list(set(repo_tutors + special_movesets["extraTutors"])))
 
 def main():
     if not enabled():
@@ -203,8 +200,10 @@ def main():
     with open("src/data/pokemon/special_movesets.json", "r") as file:
         special_movesets = json.load(file)
 
-    repo_tutors = make_move_tutors(SOURCE_DIR, special_movesets)
+    repo_tutors = read_move_tutors(SOURCE_DIR, special_movesets)
+    # Only --tutors writes tutor_moves.h, so that make has one recipe for it.
     if tutor_mode:
+        create_tutor_moves_array(repo_tutors)
         quit(0)
 
     SOURCE_LEARNSETS_JSON = pathlib.Path("./src/data/pokemon/all_learnables.json")

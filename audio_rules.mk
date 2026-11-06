@@ -14,13 +14,14 @@ SPECIAL_OUTDIRS += $(SOUND_BIN_DIR) $(SOUND_BIN_DIR)/direct_sound_samples/phonem
 $(shell mkdir -p $(SPECIAL_OUTDIRS) )
 
 # Assembly song compilation
-$(SONG_BUILDDIR)/%.o: $(SONG_SUBDIR)/%.s $(EXPANSION_BATTLE_CONFIG)
-	$(AS) $(ASFLAGS) -I sound -o $@ $<
 $(MID_BUILDDIR)/%.o: $(MID_ASM_DIR)/%.s
 	$(AS) $(ASFLAGS) -I sound -o $@ $<
 
+# The outputs below also depend on the tool that writes them, so a tool rebuilt from changed
+# source rewrites them.
+
 # Compressed cries
-$(CRY_BIN_DIR)/%.bin: $(CRY_SUBDIR)/%.wav
+$(CRY_BIN_DIR)/%.bin: $(CRY_SUBDIR)/%.wav $(WAV2AGB)
 # NOTE: If using ipatix's High Quality Audio Mixer, remove "--no-pad" below.
 	$(WAV2AGB) -b -c -l 1 --no-pad $< $@
 
@@ -29,7 +30,7 @@ $(CRY_BIN_DIR)/uncomp_%.bin: $(CRY_SUBDIR)/uncomp_%.aif
 	$(AIF) $< $@
 
 # Uncompressed sounds
-$(SOUND_BIN_DIR)/%.bin: sound/%.wav
+$(SOUND_BIN_DIR)/%.bin: sound/%.wav $(WAV2AGB)
 	$(WAV2AGB) -b $< $@
 
 # For each line in midi.cfg, we do some trickery to convert it into a make rule for the `.mid` file described on the line
@@ -38,7 +39,7 @@ MID_CFG_PATH := $(MID_SUBDIR)/midi.cfg
 
 # $1: Source path no extension, $2 Options
 define MID_RULE
-$(MID_ASM_DIR)/$1.s: $(MID_SUBDIR)/$1.mid $(MID_CFG_PATH)
+$(MID_ASM_DIR)/$1.s: $(MID_SUBDIR)/$1.mid $(MID_CFG_PATH) $(MID)
 	$(MID) $$< $$@ $2
 endef
 #                            source path,                             remaining text (options)

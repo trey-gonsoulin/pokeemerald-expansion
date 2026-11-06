@@ -16,7 +16,7 @@ contest_types := cool beauty cute smart tough
 
 ### Miscellaneous ###
 
-$(TITLESCREENGFXDIR)/pokemon_logo.gbapal: %.gbapal: %.pal
+$(TITLESCREENGFXDIR)/pokemon_logo.gbapal: %.gbapal: %.pal $(GFX)
 	$(GFX) $< $@ -num_colors 224
 
 $(BATINTGFXDIR)/textbox.gbapal: $(BATINTGFXDIR)/textbox_0.gbapal \
@@ -60,7 +60,7 @@ $(UNUSEDGFXDIR)/redyellowgreen_frame.bin: $(UNUSEDGFXDIR)/red_frame.bin \
                                           $(UNUSEDGFXDIR)/blank_frame.bin
 	@cat $^ >$@
 
-$(BATINTGFXDIR)/ability_pop_up.4bpp: %.4bpp: %.png
+$(BATINTGFXDIR)/ability_pop_up.4bpp: %.4bpp: %.png $(GFX)
 	$(GFX) $< $@ -mwidth 8 -mheight 4
 
 $(JPCONTESTGFXDIR)/composite_1.4bpp: $(JPCONTESTGFXDIR)/frame_1.4bpp \
@@ -137,13 +137,13 @@ $(SLOTMACHINEGFXDIR)/reel_time_gfx.4bpp: $(SLOTMACHINEGFXDIR)/reel_time_pikachu.
 
 ### Pokémon Storage System ###
 
-$(WALLPAPERGFXDIR)/forest/frame.4bpp: %.4bpp: %.png
+$(WALLPAPERGFXDIR)/forest/frame.4bpp: %.4bpp: %.png $(GFX)
 	$(GFX) $< $@ -num_tiles 55 -Wnum_tiles
 
 $(WALLPAPERGFXDIR)/forest/tiles.4bpp: $(WALLPAPERGFXDIR)/forest/frame.4bpp $(WALLPAPERGFXDIR)/forest/bg.4bpp
 	@cat $^ >$@
 
-$(WALLPAPERGFXDIR)/city/frame.4bpp: %.4bpp: %.png
+$(WALLPAPERGFXDIR)/city/frame.4bpp: %.4bpp: %.png $(GFX)
 	$(GFX) $< $@ -num_tiles 52 -Wnum_tiles
 
 $(WALLPAPERGFXDIR)/city/tiles.4bpp: $(WALLPAPERGFXDIR)/city/frame.4bpp $(WALLPAPERGFXDIR)/city/bg.4bpp
@@ -152,97 +152,97 @@ $(WALLPAPERGFXDIR)/city/tiles.4bpp: $(WALLPAPERGFXDIR)/city/frame.4bpp $(WALLPAP
 $(WALLPAPERGFXDIR)/desert/tiles.4bpp: $(WALLPAPERGFXDIR)/desert/frame.4bpp $(WALLPAPERGFXDIR)/desert/bg.4bpp
 	@cat $^ >$@
 
-$(WALLPAPERGFXDIR)/savanna/frame.4bpp: %.4bpp: %.png
+$(WALLPAPERGFXDIR)/savanna/frame.4bpp: %.4bpp: %.png $(GFX)
 	$(GFX) $< $@ -num_tiles 45 -Wnum_tiles
 
-$(WALLPAPERGFXDIR)/savanna/bg.4bpp: %.4bpp: %.png
+$(WALLPAPERGFXDIR)/savanna/bg.4bpp: %.4bpp: %.png $(GFX)
 	$(GFX) $< $@ -num_tiles 23 -Wnum_tiles
 
 $(WALLPAPERGFXDIR)/savanna/tiles.4bpp: $(WALLPAPERGFXDIR)/savanna/frame.4bpp $(WALLPAPERGFXDIR)/savanna/bg.4bpp
 	@cat $^ >$@
 
-$(WALLPAPERGFXDIR)/crag/frame.4bpp: %.4bpp: %.png
+$(WALLPAPERGFXDIR)/crag/frame.4bpp: %.4bpp: %.png $(GFX)
 	$(GFX) $< $@ -num_tiles 49 -Wnum_tiles
 
 $(WALLPAPERGFXDIR)/crag/tiles.4bpp: $(WALLPAPERGFXDIR)/crag/frame.4bpp $(WALLPAPERGFXDIR)/crag/bg.4bpp
 	@cat $^ >$@
 
-$(WALLPAPERGFXDIR)/volcano/frame.4bpp: %.4bpp: %.png
+$(WALLPAPERGFXDIR)/volcano/frame.4bpp: %.4bpp: %.png $(GFX)
 	$(GFX) $< $@ -num_tiles 56 -Wnum_tiles
 
 $(WALLPAPERGFXDIR)/volcano/tiles.4bpp: $(WALLPAPERGFXDIR)/volcano/frame.4bpp $(WALLPAPERGFXDIR)/volcano/bg.4bpp
 	@cat $^ >$@
 
-$(WALLPAPERGFXDIR)/snow/frame.4bpp: %.4bpp: %.png
+$(WALLPAPERGFXDIR)/snow/frame.4bpp: %.4bpp: %.png $(GFX)
 	$(GFX) $< $@ -num_tiles 57 -Wnum_tiles
 
 $(WALLPAPERGFXDIR)/snow/tiles.4bpp: $(WALLPAPERGFXDIR)/snow/frame.4bpp $(WALLPAPERGFXDIR)/snow/bg.4bpp
 	@cat $^ >$@
 
-$(WALLPAPERGFXDIR)/cave/frame.4bpp: %.4bpp: %.png
+$(WALLPAPERGFXDIR)/cave/frame.4bpp: %.4bpp: %.png $(GFX)
 	$(GFX) $< $@ -num_tiles 55 -Wnum_tiles
 
 $(WALLPAPERGFXDIR)/cave/tiles.4bpp: $(WALLPAPERGFXDIR)/cave/frame.4bpp $(WALLPAPERGFXDIR)/cave/bg.4bpp
 	@cat $^ >$@
 
-$(WALLPAPERGFXDIR)/beach/frame.4bpp: %.4bpp: %.png
+$(WALLPAPERGFXDIR)/beach/frame.4bpp: %.4bpp: %.png $(GFX)
 	$(GFX) $< $@ -num_tiles 46 -Wnum_tiles
 
-$(WALLPAPERGFXDIR)/beach/bg.4bpp: %.4bpp: %.png
+$(WALLPAPERGFXDIR)/beach/bg.4bpp: %.4bpp: %.png $(GFX)
 	$(GFX) $< $@ -num_tiles 23 -Wnum_tiles
 
 $(WALLPAPERGFXDIR)/beach/tiles.4bpp: $(WALLPAPERGFXDIR)/beach/frame.4bpp $(WALLPAPERGFXDIR)/beach/bg.4bpp
 	@cat $^ >$@
 
-$(WALLPAPERGFXDIR)/seafloor/frame.4bpp: %.4bpp: %.png
+$(WALLPAPERGFXDIR)/seafloor/frame.4bpp: %.4bpp: %.png $(GFX)
 	$(GFX) $< $@ -num_tiles 54 -Wnum_tiles
 
 $(WALLPAPERGFXDIR)/seafloor/tiles.4bpp: $(WALLPAPERGFXDIR)/seafloor/frame.4bpp $(WALLPAPERGFXDIR)/seafloor/bg.4bpp
 	@cat $^ >$@
 
-$(WALLPAPERGFXDIR)/river/frame.4bpp: %.4bpp: %.png
+$(WALLPAPERGFXDIR)/river/frame.4bpp: %.4bpp: %.png $(GFX)
 	$(GFX) $< $@ -num_tiles 51 -Wnum_tiles
 
-$(WALLPAPERGFXDIR)/river/bg.4bpp: %.4bpp: %.png
+$(WALLPAPERGFXDIR)/river/bg.4bpp: %.4bpp: %.png $(GFX)
 	$(GFX) $< $@ -num_tiles 11 -Wnum_tiles
 
 $(WALLPAPERGFXDIR)/river/tiles.4bpp: $(WALLPAPERGFXDIR)/river/frame.4bpp $(WALLPAPERGFXDIR)/river/bg.4bpp
 	@cat $^ >$@
 
-$(WALLPAPERGFXDIR)/sky/frame.4bpp: %.4bpp: %.png
+$(WALLPAPERGFXDIR)/sky/frame.4bpp: %.4bpp: %.png $(GFX)
 	$(GFX) $< $@ -num_tiles 45 -Wnum_tiles
 
 $(WALLPAPERGFXDIR)/sky/tiles.4bpp: $(WALLPAPERGFXDIR)/sky/frame.4bpp $(WALLPAPERGFXDIR)/sky/bg.4bpp
 	@cat $^ >$@
 
-$(WALLPAPERGFXDIR)/polkadot/frame.4bpp: %.4bpp: %.png
+$(WALLPAPERGFXDIR)/polkadot/frame.4bpp: %.4bpp: %.png $(GFX)
 	$(GFX) $< $@ -num_tiles 54 -Wnum_tiles
 
 $(WALLPAPERGFXDIR)/polkadot/tiles.4bpp: $(WALLPAPERGFXDIR)/polkadot/frame.4bpp $(WALLPAPERGFXDIR)/polkadot/bg.4bpp
 	@cat $^ >$@
 
-$(WALLPAPERGFXDIR)/pokecenter/frame.4bpp: %.4bpp: %.png
+$(WALLPAPERGFXDIR)/pokecenter/frame.4bpp: %.4bpp: %.png $(GFX)
 	$(GFX) $< $@ -num_tiles 35 -Wnum_tiles
 
 $(WALLPAPERGFXDIR)/pokecenter/tiles.4bpp: $(WALLPAPERGFXDIR)/pokecenter/frame.4bpp $(WALLPAPERGFXDIR)/pokecenter/bg.4bpp
 	@cat $^ >$@
 
-$(WALLPAPERGFXDIR)/machine/frame.4bpp: %.4bpp: %.png
+$(WALLPAPERGFXDIR)/machine/frame.4bpp: %.4bpp: %.png $(GFX)
 	$(GFX) $< $@ -num_tiles 33 -Wnum_tiles
 
 $(WALLPAPERGFXDIR)/machine/tiles.4bpp: $(WALLPAPERGFXDIR)/machine/frame.4bpp $(WALLPAPERGFXDIR)/machine/bg.4bpp
 	@cat $^ >$@
 
-$(WALLPAPERGFXDIR)/plain/frame.4bpp: %.4bpp: %.png
+$(WALLPAPERGFXDIR)/plain/frame.4bpp: %.4bpp: %.png $(GFX)
 	$(GFX) $< $@ -num_tiles 18 -Wnum_tiles
 
 $(WALLPAPERGFXDIR)/plain/tiles.4bpp: $(WALLPAPERGFXDIR)/plain/frame.4bpp $(WALLPAPERGFXDIR)/plain/bg.4bpp
 	@cat $^ >$@
 
-$(WALLPAPERGFXDIR)/friends_frame1.4bpp: %.4bpp: %.png
+$(WALLPAPERGFXDIR)/friends_frame1.4bpp: %.4bpp: %.png $(GFX)
 	$(GFX) $< $@ -num_tiles 57 -Wnum_tiles
 
-$(WALLPAPERGFXDIR)/friends_frame2.4bpp: %.4bpp: %.png
+$(WALLPAPERGFXDIR)/friends_frame2.4bpp: %.4bpp: %.png $(GFX)
 	$(GFX) $< $@ -num_tiles 57 -Wnum_tiles
 
 $(WALLPAPERGFXDIR)/zigzagoon/tiles.4bpp: $(WALLPAPERGFXDIR)/friends_frame1.4bpp $(WALLPAPERGFXDIR)/zigzagoon/bg.4bpp
