@@ -32,6 +32,7 @@ import collections
 import csv
 import datetime
 import hashlib
+import io
 import json
 import os
 import re
@@ -118,32 +119,53 @@ def refresh_baseline(src=SRC_WILD, base=VANILLA_WILD, force=False):
 def write_atomic(path, data):
     """Write bytes to path through path.tmp, so an interrupted write leaves the old file."""
     tmp = path + '.tmp'
-    with open(tmp, 'wb') as f:
-        f.write(data)
-    os.replace(tmp, path)
-
-
-def fetch(cache, ref=POKEAPI_REF):
-    """Download CSV_FILES at PokeAPI commit ref, then record the ref, date and hashes."""
-    os.makedirs(cache, exist_ok=True)
-    hashes = {}
-    for name in CSV_FILES:
-        url = POKEAPI_CSV_URL.format(ref=ref, name=name)
-        print(f'fetching {url}')
-        with urllib.request.urlopen(url, timeout=FETCH_TIMEOUT) as resp:
-            raw = resp.read()
-        if not raw:
-            sys.exit(f'{url} returned no data')
-        write_atomic(os.path.join(cache, name + '.csv'), raw)
-        hashes[name] = hashlib.sha256(raw).hexdigest()
-    provenance = {'ref': ref, 'fetched': datetime.datetime.now(datetime.timezone.utc).date().isoformat(),
-                  'csv_sha256': hashes}
-    write_atomic(os.path.join(cache, PROVENANCE_FILE),
-                 (json.dumps(provenance, indent=1) + '\n').encode('utf-8'))
+    try:
+        with open(tmp, 'wb') as f:
+            f.write(data)
+        os.replace(tmp, path)
+    finally:
+        if os.path.exists(tmp):
+            os.remove(tmp)
 
 
 def refetch_hint():
     return f'run `{sys.argv[0]} fetch` first'
+
+
+def parse_csv(name, text, where):
+    """The rows of CSV text, refusing an empty one or one without CSV_FILES' columns."""
+    if not text:
+        sys.exit(f'{where} is empty; {refetch_hint()}')
+    reader = csv.DictReader(io.StringIO(text, newline=''))
+    missing = [c for c in CSV_FILES[name] if c not in (reader.fieldnames or ())]
+    if missing:
+        sys.exit(f'{where} has no {", ".join(missing)} column; {refetch_hint()}')
+    rows = list(reader)
+    if not rows:
+        sys.exit(f'{where} has no rows; {refetch_hint()}')
+    return rows
+
+
+def fetch(cache, ref=POKEAPI_REF):
+    """Download CSV_FILES at PokeAPI commit ref, then record the ref, date and hashes.
+
+    Every file is downloaded and checked before any is written, so a failed
+    request leaves the cache as it was.
+    """
+    raws = {}
+    for name in CSV_FILES:
+        url = POKEAPI_CSV_URL.format(ref=ref, name=name)
+        print(f'fetching {url}')
+        with urllib.request.urlopen(url, timeout=FETCH_TIMEOUT) as resp:
+            raws[name] = resp.read()
+        parse_csv(name, raws[name].decode('utf-8'), url)
+    os.makedirs(cache, exist_ok=True)
+    for name, raw in raws.items():
+        write_atomic(os.path.join(cache, name + '.csv'), raw)
+    provenance = {'ref': ref, 'fetched': datetime.datetime.now(datetime.timezone.utc).date().isoformat(),
+                  'csv_sha256': {name: hashlib.sha256(raw).hexdigest() for name, raw in raws.items()}}
+    write_atomic(os.path.join(cache, PROVENANCE_FILE),
+                 (json.dumps(provenance, indent=1) + '\n').encode('utf-8'))
 
 
 def load_provenance(cache):
@@ -151,35 +173,34 @@ def load_provenance(cache):
     path = os.path.join(cache, PROVENANCE_FILE)
     if not os.path.exists(path):
         sys.exit(f'missing {path}, so the cache records no PokeAPI ref; {refetch_hint()}')
-    with open(path, encoding='utf-8') as f:
-        provenance = json.load(f)
+    try:
+        with open(path, encoding='utf-8') as f:
+            provenance = json.load(f)
+        hashes, ref = provenance['csv_sha256'], provenance['ref']
+        if not isinstance(hashes, dict):
+            raise TypeError
+    except (ValueError, KeyError, TypeError):
+        sys.exit(f'{path} is not a fetch record; {refetch_hint()}')
     for name in CSV_FILES:
         csv_path = os.path.join(cache, name + '.csv')
         if not os.path.exists(csv_path):
             sys.exit(f'missing {csv_path}; {refetch_hint()}')
         with open(csv_path, 'rb') as f:
             digest = hashlib.sha256(f.read()).hexdigest()
-        if provenance['csv_sha256'].get(name) != digest:
+        if hashes.get(name) != digest:
             sys.exit(f'{csv_path} is not the file fetch recorded in {path}; {refetch_hint()}')
+    if ref != POKEAPI_REF:
+        print(f'warning: {cache} holds PokeAPI {ref}, not POKEAPI_REF {POKEAPI_REF}', file=sys.stderr)
     return provenance
 
 
 def read_csv(cache, name):
-    """The rows of a cached CSV, refusing an empty one or one without CSV_FILES' columns."""
+    """The checked rows of a cached CSV (parse_csv)."""
     path = os.path.join(cache, name + '.csv')
     if not os.path.exists(path):
         sys.exit(f'missing {path}; {refetch_hint()}')
-    if os.path.getsize(path) == 0:
-        sys.exit(f'{path} is empty; {refetch_hint()}')
     with open(path, newline='', encoding='utf-8') as f:
-        reader = csv.DictReader(f)
-        missing = [c for c in CSV_FILES[name] if c not in (reader.fieldnames or ())]
-        if missing:
-            sys.exit(f'{path} has no {", ".join(missing)} column; {refetch_hint()}')
-        rows = list(reader)
-    if not rows:
-        sys.exit(f'{path} has no rows; {refetch_hint()}')
-    return rows
+        return parse_csv(name, f.read(), path)
 
 
 class PokeData:

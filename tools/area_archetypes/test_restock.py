@@ -704,7 +704,7 @@ class FixtureRestockTests(unittest.TestCase):
         fixture = os.path.join(TESTDATA, 'wild_encounters.json')
         with tempfile.TemporaryDirectory() as tmp:
             build = os.path.join(tmp, 'build')
-            with contextlib.redirect_stdout(io.StringIO()):
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
                 AA.build(os.path.join(TESTDATA, 'pokeapi'), build, AA.REPO, base=fixture)
             base = shutil.copy(fixture, os.path.join(tmp, 'base.json'))
             wild = shutil.copy(fixture, os.path.join(tmp, 'wild.json'))
