@@ -1,7 +1,10 @@
 #include "global.h"
+#include "event_data.h"
 #include "item.h"
 #include "item_use.h"
+#include "overworld.h"
 #include "pokemon.h"
+#include "rtc.h"
 #include "test/test.h"
 
 // The evolution scene evolves the mon and then calls ConsumeEvolutionItems. Cancelling it
@@ -128,4 +131,47 @@ TEST("Linking Cord: trade held items are used from the bag like stones")
 
     CreatePartyMon(0, SPECIES_ONIX, ITEM_NONE);
     EXPECT_EQ(GetEvolutionTargetSpecies(onix, EVO_MODE_ITEM_USE, ITEM_METAL_COAT, NULL, NULL, CHECK_EVO), SPECIES_STEELIX);
+}
+
+// Milcery's day spins checked IF_TIME TIME_DAY, so no entry matched in the morning
+// (6-10 under the Gen 8+ times), though Sword and Shield count it as day (#169). They
+// now match anything but the night and the evening, which Rainbow Swirl keeps.
+static enum Species GetMilcerySpinEvolution(u32 hours, u16 spin)
+{
+    struct Pokemon *milcery = &gParties[B_TRAINER_PLAYER][0];
+    enum Species targetSpecies;
+
+    ZeroPlayerPartyMons();
+    CreatePartyMon(0, SPECIES_MILCERY, ITEM_STRAWBERRY_SWEET);
+    SetTimeOfDay(hours);
+    gSpecialVar_0x8000 = spin;
+    targetSpecies = GetEvolutionTargetSpecies(milcery, EVO_MODE_OVERWORLD_SPECIAL, ITEM_NONE, NULL, NULL, CHECK_EVO);
+    SetTimeOfDay(0);
+    return targetSpecies;
+}
+
+TEST("Milcery morning: a day spin evolves Milcery in the morning too")
+{
+    u32 hours = 0;
+    enum TimeOfDay timeOfDay = TIME_MORNING;
+
+    PARAMETRIZE { hours = MORNING_HOUR_BEGIN; timeOfDay = TIME_MORNING; }
+    PARAMETRIZE { hours = DAY_HOUR_BEGIN; timeOfDay = TIME_DAY; }
+
+    SetTimeOfDay(hours);
+    EXPECT_EQ(GetTimeOfDay(), timeOfDay);
+    SetTimeOfDay(0);
+    EXPECT_EQ(GetMilcerySpinEvolution(hours, SPIN_CW_SHORT), SPECIES_ALCREMIE_STRAWBERRY_VANILLA_CREAM);
+    EXPECT_EQ(GetMilcerySpinEvolution(hours, SPIN_CCW_SHORT), SPECIES_ALCREMIE_STRAWBERRY_RUBY_CREAM);
+    EXPECT_EQ(GetMilcerySpinEvolution(hours, SPIN_CCW_LONG), SPECIES_ALCREMIE_STRAWBERRY_RUBY_SWIRL);
+    EXPECT_EQ(GetMilcerySpinEvolution(hours, SPIN_CW_LONG), SPECIES_ALCREMIE_STRAWBERRY_CARAMEL_SWIRL);
+}
+
+TEST("Milcery morning: the day spins leave the evening and the night alone")
+{
+    ASSUME(EVENING_HOUR_BEGIN != EVENING_HOUR_END);
+    EXPECT_EQ(GetMilcerySpinEvolution(EVENING_HOUR_BEGIN, SPIN_EITHER), SPECIES_ALCREMIE_STRAWBERRY_RAINBOW_SWIRL);
+    EXPECT_NE(GetMilcerySpinEvolution(EVENING_HOUR_BEGIN, SPIN_CW_SHORT), SPECIES_ALCREMIE_STRAWBERRY_VANILLA_CREAM);
+    EXPECT_EQ(GetMilcerySpinEvolution(NIGHT_HOUR_BEGIN + 1, SPIN_CW_SHORT), SPECIES_ALCREMIE_STRAWBERRY_MATCHA_CREAM);
+    EXPECT_EQ(GetMilcerySpinEvolution(NIGHT_HOUR_BEGIN + 1, SPIN_CCW_LONG), SPECIES_ALCREMIE_STRAWBERRY_MINT_CREAM);
 }

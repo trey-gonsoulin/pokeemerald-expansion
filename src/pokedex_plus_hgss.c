@@ -3797,6 +3797,12 @@ static void PrintEvolutionTargetSpeciesAndMethod(u8 taskId, enum Species species
                     case TIME_EVENING: StringAppend(gStringVar4, COMPOUND_STRING("NOT Evening")); break;
                     case TIME_NIGHT:   StringAppend(gStringVar4, COMPOUND_STRING("Day"));         break; // More intuitive than "NOT Night"
                     }
+                    // Milcery's day spins are NOT Night and NOT Evening (#169): "Day" covers both,
+                    // and "NOT Evening" too would wrap the line.
+                    if (evolutions[i].params[j].arg1 == TIME_NIGHT
+                     && evolutions[i].params[j + 1].condition == IF_NOT_TIME
+                     && evolutions[i].params[j + 1].arg1 == TIME_EVENING)
+                        j++;
                     break;
                 case IF_HOLD_ITEM:
                     StringAppend(gStringVar4, COMPOUND_STRING("holds "));
