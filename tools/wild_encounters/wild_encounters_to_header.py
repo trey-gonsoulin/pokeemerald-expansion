@@ -18,7 +18,14 @@ MAX_ENCOUNTER_RATE = 255 # struct WildPokemonInfo's u8 encounterRate
 # the pickers in src/wild_encounter.c draw a u8 below that total. The fishing picker draws
 # one number below the largest rod's total for every rod, so the rods' totals must match.
 MAX_RATES_TOTAL = 256
+# The slots the pickers in src/wild_encounter.c choose from (ChooseWildMonIndex_Land and the
+# rest), whose lure swaps (11 - index, ...) and else branches assume exactly these.
+PICKER_SLOT_COUNTS = {"land_mons": 12, "water_mons": 5, "rock_smash_mons": 5, "fishing_mons": 10, "hidden_mons": 3}
+PICKER_GROUPS = {"fishing_mons": {"old_rod": [0, 1], "good_rod": [2, 3, 4], "super_rod": [5, 6, 7, 8, 9]}}
 VERSION_SUFFIXES = {"_FireRed": "FIRERED", "_LeafGreen": "LEAFGREEN"}
+# GetCurrentMapWildMonHeaderId adds VAR_ALTERING_CAVE_WILD_SET to the first header of
+# Altering Cave, so its tables are labels of their own on one map.
+ROTATING_TABLE_MAPS = {"MAP_ALTERING_CAVE", "MAP_SIX_ISLAND_ALTERING_CAVE"}
 
 
 class WildEncountersError(Exception):
@@ -77,12 +84,27 @@ def CheckGroups(field, where):
         raise WildEncountersError(f"{where}: the groups' encounter_rates totals differ ({totals})")
 
 
+def CheckPickerShape(field, where):
+    """The field's slots and groups as its picker in src/wild_encounter.c takes them."""
+    field_type = field["type"]
+    if field_type not in PICKER_SLOT_COUNTS:
+        raise WildEncountersError(f"{where}: no picker in src/wild_encounter.c reads this field type")
+    slot_count = len(field["encounter_rates"])
+    if slot_count != PICKER_SLOT_COUNTS[field_type]:
+        raise WildEncountersError(f"{where}: {slot_count} encounter_rates, but src/wild_encounter.c picks from {PICKER_SLOT_COUNTS[field_type]} slots")
+    groups = field.get("groups")
+    expected = PICKER_GROUPS.get(field_type)
+    if (groups and {name: sorted(slots) for name, slots in groups.items()}) != expected:
+        raise WildEncountersError(f"{where}: groups are {groups}, but src/wild_encounter.c picks from {expected}")
+
+
 def ValidateEncounters(json_data):
     """Raise WildEncountersError on data the header would carry silently wrong: a
-    table whose slot count differs from its field's encounter_rates, encounter_rates
-    whose total is 0 or past MAX_RATES_TOTAL (or differs between groups), a bad
-    groups index, an unknown key, a missing
-    key, a level outside 1-100 or above max_level, or an encounter rate past a u8."""
+    field whose slots or groups differ from its picker's, a table whose slot count
+    differs from its field's encounter_rates, encounter_rates whose total is 0 or
+    past MAX_RATES_TOTAL (or differs between groups), a bad groups index, an unknown
+    key, a missing key, a level outside 1-100 or above max_level, or an encounter
+    rate past a u8."""
     slot_counts = {}
     for group in json_data["wild_encounter_groups"]:
         CheckKeys(group, *GROUP_KEYS, group.get("label", "wild encounter group"))
@@ -94,8 +116,8 @@ def ValidateEncounters(json_data):
                 CheckGroups(field, field_where)
             else:
                 CheckRates(field["encounter_rates"], range(slot_count), field_where)
-            if slot_counts.setdefault(field["type"], slot_count) != slot_count:
-                raise WildEncountersError(f"{field_where}: {slot_count} encounter_rates, but another group's has {slot_counts[field['type']]}")
+            CheckPickerShape(field, field_where)
+            slot_counts[field["type"]] = slot_count
 
     for group in json_data["wild_encounter_groups"]:
         required = {"base_label", "map"} if group.get("for_maps") else {"base_label"}
@@ -138,15 +160,32 @@ def GetLabelVersion(shared_label):
     return "EMERALD"
 
 
-def ValidateLabels(json_data, times_of_day, time_fallback):
+def CheckVersionSuffixLast(label, times_of_day):
+    """A version suffix goes before the time of day suffix (sRoute1_FireRed_Night):
+    SplitTimeOfDay and GetLabelVersion each read only the last suffix."""
+    for version_suffix in VERSION_SUFFIXES:
+        if label.endswith(version_suffix):
+            for time_suffix in times_of_day.values():
+                if label[:-len(version_suffix)].endswith("_" + time_suffix):
+                    renamed = label[:-len(version_suffix + "_" + time_suffix)] + version_suffix + "_" + time_suffix
+                    raise WildEncountersError(f"{label}: version suffix after the time of day suffix, expected {renamed}")
+
+
+def ValidateLabels(json_data, times_of_day, time_fallback, time_encounters):
     """Raise WildEncountersError when two encounters of a group share a label and time
     of day, or two times of one label name different maps: WriteEncounters would keep
-    only the later one's tables, or map, in the header."""
+    only the later one's tables, or map, in the header. Also when two labels of one
+    version name one map (outside ROTATING_TABLE_MAPS), since GetCurrentMapWildMonHeaderId
+    takes the first; when a label's time of day suffix comes before its version suffix;
+    and, with time_encounters off, when a label has no time_fallback encounters, the only
+    ones WritePokemonHeaders writes then."""
     for group in json_data["wild_encounter_groups"]:
         label_times = {}
         label_maps = {}
+        map_labels = {}
         for map_encounters in group["encounters"]:
             where = map_encounters["base_label"]
+            CheckVersionSuffixLast(where, times_of_day)
             shared_label, time = SplitTimeOfDay(where, times_of_day, time_fallback)
             if (shared_label, time) in label_times:
                 raise WildEncountersError(f"{where}: same label and time of day as {label_times[shared_label, time]} ({shared_label}, {time})")
@@ -155,6 +194,17 @@ def ValidateLabels(json_data, times_of_day, time_fallback):
             first_map, first_where = label_maps.setdefault(shared_label, (map_name, where))
             if map_name != first_map:
                 raise WildEncountersError(f"{where}: map {map_name}, but {first_where} has {first_map}")
+            version = GetLabelVersion(shared_label)
+            if map_name is not None and map_name not in ROTATING_TABLE_MAPS:
+                map_label = map_labels.setdefault((map_name, version), shared_label)
+                if map_label != shared_label:
+                    raise WildEncountersError(f"{where}: map {map_name} already has {map_label}'s encounters ({version})")
+
+        if not time_encounters:
+            for shared_label, (_, first_where) in label_maps.items():
+                if (shared_label, time_fallback) not in label_times:
+                    raise WildEncountersError(f"{first_where}: with OW_TIME_OF_DAY_ENCOUNTERS FALSE only {time_fallback} encounters are used, "
+                                              f"and {shared_label} has none ({shared_label} or {shared_label}_{times_of_day[time_fallback]})")
 
 class Config:
     def __init__(self, config_file_name, rtc_constants_file_name, encounters_json_data):
@@ -400,7 +450,7 @@ class WildEncounterAssembler:
 def ConvertToHeaderFile(json_data):
     ValidateEncounters(json_data)
     config = Config('include/config/overworld.h', 'include/constants/rtc.h', json_data)
-    ValidateLabels(json_data, config.times_of_day, config.time_fallback)
+    ValidateLabels(json_data, config.times_of_day, config.time_fallback, config.time_encounters)
     with open('src/data/wild_encounters.h', 'w') as output_file:
         assembler = WildEncounterAssembler(output_file, json_data, config)
         assembler.WriteHeader()
