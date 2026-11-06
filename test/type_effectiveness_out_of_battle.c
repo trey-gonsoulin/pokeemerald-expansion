@@ -268,8 +268,6 @@ static u16 GetDomeWinningMoveAgainst(u16 loserTrainerId, const u16 *loserMons)
 
 TEST("Out-of-battle type effectiveness: the Dome's winning move against a losing Frontier Brain reads its Pokemon by species")
 {
-    u16 savedFacility = VarGet(VAR_FRONTIER_FACILITY);
-    u8 savedLvlMode = gSaveBlock2Ptr->frontier.lvlMode;
     u16 brainSpecies[FRONTIER_PARTY_SIZE];
     const u16 sameSpeciesMons[FRONTIER_PARTY_SIZE] = {FRONTIER_MON_SWAMPERT_1, FRONTIER_MON_SALAMENCE_1, FRONTIER_MON_CHARIZARD_1};
     u32 i;
@@ -294,7 +292,4 @@ TEST("Out-of-battle type effectiveness: the Dome's winning move against a losing
     EXPECT_EQ(GetDomeWinningMoveAgainst(TRAINER_FRONTIER_BRAIN, brainSpecies), MOVE_ICE_BEAM);
     EXPECT_EQ(GetDomeWinningMoveAgainst(1, sameSpeciesMons), MOVE_ICE_BEAM);
     EXPECT_EQ(GetDomeWinningMoveAgainst(1, brainSpecies), MOVE_THUNDERBOLT);
-
-    VarSet(VAR_FRONTIER_FACILITY, savedFacility);
-    gSaveBlock2Ptr->frontier.lvlMode = savedLvlMode;
 }
