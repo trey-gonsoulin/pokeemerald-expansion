@@ -3,6 +3,7 @@
 #include "debug_menu_ui.h"
 #include "string_util.h"
 #include "test/test.h"
+#include "text.h"
 
 // In name order: "10,000 Volt" (5), "abra" (1), "Abra" (2), "Abras" (8), "Ekans" (7),
 // "Flabébé" (3), "Flabebe" (4), "Zubat" (0). Value 6 has no name.
@@ -321,4 +322,68 @@ TEST("Flag and var names: name order sorts them, trainer flags included")
     ExpectNameOrder(&order, VARS_START, VARS_END, Debug_GetVarDisplayName);
     EXPECT_GT(order.count, 200);
     Debug_FreeNameOrder(&order);
+}
+
+// The label width the list fits a debug menu label to (sDebugMenuWindowTemplateMain's 16 tiles less item_X)
+#define SUBMENU_LABEL_LIST_WIDTH 120
+
+static u32 GetSubMenuArrowWidth(u32 fontId)
+{
+    static const u8 arrow[] = {CHAR_RIGHT_ARROW, EOS};
+    return GetStringWidth(fontId, arrow, 0);
+}
+
+TEST("Submenu label: text that ends by the arrow's x keeps the menu font")
+{
+    static const u8 text[] = _("Set time of day…");
+    u8 label[32];
+
+    ASSUME(GetStringWidth(FONT_NORMAL, text, 0) <= DEBUG_SUBMENU_ARROW_X);
+    Debug_CopySubMenuLabel(label, ARRAY_COUNT(label), text, FONT_NORMAL);
+    EXPECT_EQ(StringLength(label), StringLength(text) + 4);
+    EXPECT_EQ(StringCompareN(label, text, StringLength(text)), 0);
+    EXPECT_EQ(GetStringWidth(FONT_NORMAL, label, 0), DEBUG_SUBMENU_ARROW_X + GetSubMenuArrowWidth(FONT_NORMAL));
+}
+
+TEST("Submenu label: text past the arrow's x drops to a narrower font and keeps the arrow in line")
+{
+    u8 text[24];
+    u8 label[32];
+    u32 length = 0;
+    u32 labelWidth;
+
+    // Text between the arrow's x and the list's width, which the list would leave in FONT_NORMAL
+    while (length < ARRAY_COUNT(text) - 1)
+    {
+        text[length++] = CHAR_a;
+        text[length] = EOS;
+        if (GetStringWidth(FONT_NORMAL, text, 0) > DEBUG_SUBMENU_ARROW_X)
+            break;
+    }
+    ASSUME(GetStringWidth(FONT_NORMAL, text, 0) > DEBUG_SUBMENU_ARROW_X);
+    ASSUME(GetStringWidth(FONT_NORMAL, text, 0) <= SUBMENU_LABEL_LIST_WIDTH);
+    ASSUME(GetStringWidth(FONT_NARROW, text, 0) <= DEBUG_SUBMENU_ARROW_X);
+
+    Debug_CopySubMenuLabel(label, ARRAY_COUNT(label), text, FONT_NORMAL);
+    EXPECT_EQ(label[0], EXT_CTRL_CODE_BEGIN);
+    EXPECT_EQ(label[1], EXT_CTRL_CODE_FONT);
+    EXPECT_EQ(label[2], FONT_NARROW);
+    // The arrow starts at its x, in the menu font, and the list keeps the menu font for the label
+    labelWidth = GetStringWidth(FONT_NORMAL, label, 0);
+    EXPECT_EQ(labelWidth, DEBUG_SUBMENU_ARROW_X + GetSubMenuArrowWidth(FONT_NORMAL));
+    EXPECT_EQ(GetFontIdToFit(label, FONT_NORMAL, 0, SUBMENU_LABEL_LIST_WIDTH), FONT_NORMAL);
+}
+
+TEST("Submenu label: text too long for the buffer is cut off before the arrow")
+{
+    static const u8 text[] = _("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    u8 label[32];
+    u32 length;
+
+    ASSUME(StringLength(text) > ARRAY_COUNT(label));
+    // What is left of the text still runs past the arrow's x, so the label takes its font codes too
+    Debug_CopySubMenuLabel(label, ARRAY_COUNT(label), text, FONT_NORMAL);
+    length = StringLength(label);
+    EXPECT_EQ(length, ARRAY_COUNT(label) - 1);
+    EXPECT_EQ(label[length - 1], CHAR_RIGHT_ARROW);
 }
