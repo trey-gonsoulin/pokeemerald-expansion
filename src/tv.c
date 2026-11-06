@@ -3982,6 +3982,9 @@ void SanitizeTVShowLocationsForRuby(TVShow *shows)
 // gSpecialVar_0x8004 here is set from GetRandomActiveShowIdx in EventScript_TryDoTVShow
 void DoTVShow(void)
 {
+    // Each show sets it FALSE while it has more to say, so a slot that prints
+    // nothing (inactive, dummy or an unknown kind) still ends EventScript_DoTVShow's loop
+    gSpecialVar_Result = TRUE;
     if (gSaveBlock1Ptr->tvShows[gSpecialVar_0x8004].common.active)
     {
         switch (gSaveBlock1Ptr->tvShows[gSpecialVar_0x8004].common.kind)
@@ -4081,6 +4084,10 @@ void DoTVShow(void)
             break;
         case TVSHOW_LILYCOVE_CONTEST_LADY:
             DoTVShowLilycoveContestLady();
+            break;
+        default:
+            // Can't air here (a corrupt slot, or another game's show via record mixing)
+            TVShowDone();
             break;
         }
     }
