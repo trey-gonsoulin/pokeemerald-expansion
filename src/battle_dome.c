@@ -5068,6 +5068,16 @@ static void ResolveDomeRoundWinners(void)
 }
 
 // Decides the winning move of an NPC vs NPC match
+// A species with one ability has it in both slots, as GetAbilityBySpecies gives in battle.
+static enum Ability GetDomeMonAbility(enum Species species, u32 abilityNum)
+{
+    enum Ability ability = GetSpeciesAbility(species, abilityNum);
+
+    if (ability == ABILITY_NONE)
+        ability = GetSpeciesAbility(species, 0);
+    return ability;
+}
+
 static u16 GetWinningMove(int winnerTournamentId, int loserTournamentId, u8 roundId)
 {
     int i, j, k;
@@ -5090,7 +5100,7 @@ static u16 GetWinningMove(int winnerTournamentId, int loserTournamentId, u8 roun
             attackerSpecies = gFacilityTrainerMons[DOME_MONS[winnerTournamentId][i]].species;
         // Mold Breaker and the like get past the target's ability. Like the target's, the
         // attacker's ability is one of its two, at random.
-        attackerAbility = GetSpeciesAbility(attackerSpecies, Random() & 1);
+        attackerAbility = GetDomeMonAbility(attackerSpecies, Random() & 1);
 
         for (j = 0; j < MAX_MON_MOVES; j++)
         {
@@ -5125,10 +5135,7 @@ static u16 GetWinningMove(int winnerTournamentId, int loserTournamentId, u8 roun
 
                 targetSpecies = gFacilityTrainerMons[DOME_MONS[loserTournamentId][k]].species;
 
-                if (personality & 1)
-                    targetAbility = GetSpeciesAbility(targetSpecies, 1);
-                else
-                    targetAbility = GetSpeciesAbility(targetSpecies, 0);
+                targetAbility = GetDomeMonAbility(targetSpecies, personality & 1);
 
                 typeMultiplier = CalcPartyMonTypeEffectivenessMultiplier(moves[i * 4 + j], attackerAbility, targetSpecies, targetAbility);
                 if (typeMultiplier == UQ_4_12(0))
