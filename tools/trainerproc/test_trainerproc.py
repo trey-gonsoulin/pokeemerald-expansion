@@ -113,8 +113,9 @@ class EVs(TrainerprocTestCase):
     def test_over_255_is_rejected(self):
         self.assertRejected(trainer(mon("EVs: 256 HP")), "EVs must be from 0 to 255", 6)
 
-    def test_over_510_in_total_is_rejected(self):
-        self.assertRejected(trainer(mon("EVs: 252 HP / 252 Atk / 7 Def")), "EVs must total at most 510", 6)
+    def test_total_is_not_capped(self):
+        # Upstream leaves the total uncapped on purpose; the game reads each stat as a u8.
+        self.assertIn("TRAINER_PARTY_EVS(255, 255, 255, 255, 255, 255)", self.assertAccepted(trainer(mon("EVs: 255 HP / 255 Atk / 255 Def / 255 SpA / 255 SpD / 255 Spe"))))
 
 
 class Happiness(TrainerprocTestCase):
