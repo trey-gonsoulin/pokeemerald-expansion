@@ -602,26 +602,6 @@ void Debug_PrintLinesToFit(u32 windowId, u32 fontId, u32 lineHeight, const u8 *c
     }
 }
 
-// Copies src, or for a src too long for dest or too wide for widthPx in fontId,
-// a leading ellipsis and as much of the end of src as fits.
-void Debug_CopyStringEndToFit(u8 *dest, u32 destSize, const u8 *src, u32 fontId, u32 widthPx)
-{
-    u32 length = StringLength(src);
-    u32 skip;
-
-    if (length < destSize && GetStringWidth(fontId, src, 0) <= widthPx)
-    {
-        StringCopy(dest, src);
-        return;
-    }
-    // The ellipsis, src from skip on and the EOS fill at most destSize
-    skip = length + 2 > destSize ? length + 2 - destSize : 1;
-    dest[0] = CHAR_ELLIPSIS;
-    StringCopy(&dest[1], &src[skip]);
-    while (skip < length && GetStringWidth(fontId, dest, 0) > widthPx)
-        StringCopy(&dest[1], &src[++skip]);
-}
-
 // The bytes of the character or code at s: a control code with its arguments, a placeholder or a two-byte character.
 // Arguments are copied as they are (a CLEAR_TO 255 is 0xFF), but a prefix right before the EOS counts alone.
 static u32 GetLabelCharSize(const u8 *s)
@@ -639,6 +619,39 @@ static u32 GetLabelCharSize(const u8 *s)
         return 2;
     default:
         return 1;
+    }
+}
+
+// Steps past whole characters and codes of s until at least bytes bytes are skipped, or to its EOS.
+static const u8 *SkipLabelBytes(const u8 *s, u32 bytes)
+{
+    const u8 *start = s;
+
+    while (*s != EOS && (u32)(s - start) < bytes)
+        s += GetLabelCharSize(s);
+    return s;
+}
+
+// Copies src, or for a src too long for dest or too wide for widthPx in fontId,
+// a leading ellipsis and as much of the end of src as fits. The end starts on a whole
+// character or code, never inside a control code or a two-byte character (#283).
+void Debug_CopyStringEndToFit(u8 *dest, u32 destSize, const u8 *src, u32 fontId, u32 widthPx)
+{
+    u32 length = SkipLabelBytes(src, UINT32_MAX) - src;
+
+    if (length < destSize && GetStringWidth(fontId, src, 0) <= widthPx)
+    {
+        Debug_CopyLabel(dest, destSize, src);
+        return;
+    }
+    // The ellipsis, src from the skip on and the EOS fill at most destSize
+    src = SkipLabelBytes(src, length + 2 > destSize ? length + 2 - destSize : 1);
+    dest[0] = CHAR_ELLIPSIS;
+    Debug_CopyLabel(&dest[1], destSize - 1, src);
+    while (*src != EOS && GetStringWidth(fontId, dest, 0) > widthPx)
+    {
+        src = SkipLabelBytes(src, 1);
+        Debug_CopyLabel(&dest[1], destSize - 1, src);
     }
 }
 
