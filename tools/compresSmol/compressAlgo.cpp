@@ -593,6 +593,8 @@ size_t decodeNibbles(std::vector<DecodeCol> decodeTable, std::vector<unsigned in
 
         int currK = decodeTable[*currState].k;
         int nextState = decodeTable[*currState].y << currK;
+        if (currBitIndex > bits->size() || (size_t)currK > bits->size() - currBitIndex)
+            return DECODE_PAST_BITSTREAM;
         for (size_t j = 0; j < currK; j++)
         {
             nextState += (*bits)[currBitIndex] << j;
@@ -781,10 +783,29 @@ bool verifyCompressionShort(CompressedImage *pInput, std::vector<unsigned short>
 std::vector<unsigned short> decodeImageShort(CompressedImage *pInput)
 {
     DataVecs dataVecs = decodeDataVectorsNew(pInput);
-    return decodeBytesShort(&dataVecs.loVec, &dataVecs.symVec);
+    std::vector<unsigned short> decodedImage;
+    decodeBytesShort(&dataVecs.loVec, &dataVecs.symVec, &decodedImage);
+    return decodedImage;
 }
 
-std::vector<unsigned short> decodeBytesShort(std::vector<unsigned char> *pLoVec, std::vector<unsigned short> *pSymVec)
+//  Reads one length or offset: 7 bits, then 8 more if the continue bit is set
+static bool readLoValue(std::vector<unsigned char> *pLoVec, size_t *pLoIndex, size_t *pValue)
+{
+    if (*pLoIndex >= pLoVec->size())
+        return false;
+    unsigned char first = (*pLoVec)[(*pLoIndex)++];
+    *pValue = first & LO_LOW_BITS_MASK;
+    if ((first & LO_CONTINUE_BIT) == LO_CONTINUE_BIT)
+    {
+        if (*pLoIndex >= pLoVec->size())
+            return false;
+        *pValue += (*pLoVec)[(*pLoIndex)++] << LO_NUM_LOW_BITS;
+    }
+    return true;
+}
+
+//  FALSE when the instructions read past the LO or symbol data or copy from before the image
+bool decodeBytesShort(std::vector<unsigned char> *pLoVec, std::vector<unsigned short> *pSymVec, std::vector<unsigned short> *pOutput)
 {
     std::vector<unsigned short> decodedImage;
     size_t loIndex = 0;
@@ -793,29 +814,23 @@ std::vector<unsigned short> decodeBytesShort(std::vector<unsigned char> *pLoVec,
     {
         size_t currLength = 0;
         size_t currOffset = 0;
-        currLength += (*pLoVec)[loIndex] & LO_LOW_BITS_MASK;
-        loIndex++;
-        if (((*pLoVec)[loIndex-1] & LO_CONTINUE_BIT) == LO_CONTINUE_BIT)
-        {
-            currLength += (*pLoVec)[loIndex] << LO_NUM_LOW_BITS;
-            loIndex++;
-        }
-        currOffset += (*pLoVec)[loIndex] & LO_LOW_BITS_MASK;
-        loIndex++;
-        if (((*pLoVec)[loIndex-1] & LO_CONTINUE_BIT) == LO_CONTINUE_BIT)
-        {
-            currOffset += (*pLoVec)[loIndex] << LO_NUM_LOW_BITS;
-            loIndex++;
-        }
+        if (!readLoValue(pLoVec, &loIndex, &currLength) || !readLoValue(pLoVec, &loIndex, &currOffset))
+            return false;
         if (currLength != 0)
         {
+            if (symIndex >= pSymVec->size())
+                return false;
             decodedImage.push_back((*pSymVec)[symIndex]);
             symIndex++;
+            if (currOffset == 0 || currOffset > decodedImage.size())
+                return false;
             for (size_t i = 0; i < currLength; i++)
                 decodedImage.push_back(decodedImage[decodedImage.size() - currOffset]);
         }
         else
         {
+            if (currOffset > pSymVec->size() - symIndex)
+                return false;
             for (size_t i = 0; i < currOffset; i++)
             {
                 decodedImage.push_back((*pSymVec)[symIndex]);
@@ -823,7 +838,8 @@ std::vector<unsigned short> decodeBytesShort(std::vector<unsigned char> *pLoVec,
             }
         }
     }
-    return decodedImage;
+    *pOutput = decodedImage;
+    return true;
 }
 
 DataVecs decodeDataVectorsNew(CompressedImage *pInput)
@@ -1125,6 +1141,11 @@ bool readRawDataVecs(std::vector<unsigned int> *pInput, std::vector<unsigned sho
     {
         std::vector<unsigned char> loNibbles(readImage.loSize*2);
         bitIndex = decodeNibbles(loDecode, &allBits, &currState, &loNibbles, bitIndex, readImage.loSize*2, !symEncoded);
+        if (bitIndex == DECODE_PAST_BITSTREAM)
+        {
+            fprintf(stderr, "Error: the LO data runs past the %zu-word bitstream\n", readImage.bitreamSize);
+            return false;
+        }
         for (size_t i = 0; i < readImage.loSize; i++)
             loVec[i] = loNibbles[2*i] + (loNibbles[2*i + 1] << 4);
     }
@@ -1132,13 +1153,28 @@ bool readRawDataVecs(std::vector<unsigned int> *pInput, std::vector<unsigned sho
     {
         std::vector<unsigned char> symNibbles(readImage.symSize*4);
         bitIndex = decodeNibbles(symDecode, &allBits, &currState, &symNibbles, bitIndex, readImage.symSize*4, true);
+        if (bitIndex == DECODE_PAST_BITSTREAM)
+        {
+            fprintf(stderr, "Error: the symbol data runs past the %zu-word bitstream\n", readImage.bitreamSize);
+            return false;
+        }
         if (symDelta)
             deltaDecode(&symNibbles, symNibbles.size());
         for (size_t i = 0; i < readImage.symSize; i++)
             for (size_t j = 0; j < 4; j++)
                 symVec[i] += (unsigned short)symNibbles[i*4 + j] << (4*j);
     }
-    *pOutput = decodeBytesShort(&loVec, &symVec);
+    if (!decodeBytesShort(&loVec, &symVec, pOutput))
+    {
+        fprintf(stderr, "Error: the LO instructions read past the data or copy from before the image\n");
+        return false;
+    }
+    //  The GBA decoder writes the header's imageSize bytes, whatever the data holds
+    if (pOutput->size() * 2 != readImage.rawNumBytes)
+    {
+        fprintf(stderr, "Error: the data decodes to %zu bytes, but the header gives %zu\n", pOutput->size() * 2, readImage.rawNumBytes);
+        return false;
+    }
     return true;
 }
 

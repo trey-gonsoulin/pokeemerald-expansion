@@ -46,6 +46,15 @@ def header(data):
     }
 
 
+def base_only(image_bytes, syms, lo):
+    """A hand-made BASE_ONLY smol: the header, then the raw symbols and LO bytes."""
+    word0 = BASE_ONLY | (image_bytes // 4) << 4 | len(syms) << 18
+    word1 = len(lo) << 19
+    raw = struct.pack(f"<{len(syms)}H", *syms) + bytes(lo)
+    raw += bytes(-len(raw) % 4)
+    return struct.pack("<II", word0, word1) + raw
+
+
 class ToolTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -170,6 +179,34 @@ class DecodeTest(ToolTest):
         # The first frequency word: each of its five 6-bit fields at 63 overruns the 64-entry table
         broken = smol[:8] + struct.pack("<I", 0x3FFFFFFF) + smol[12:]
         self.assertFails(self.decode(broken), "frequencies add up to")
+
+    def test_a_bitstream_shorter_than_its_data_needs_fails(self):
+        smol = self.compress(tile_data(1024, 1))
+        word1 = struct.unpack_from("<I", smol, 4)[0]
+        self.assertGreater((word1 >> 6) & 0x1FFF, 1)
+        broken = smol[:4] + struct.pack("<I", (word1 & ~(0x1FFF << 6)) | 1 << 6) + smol[8:]
+        self.assertFails(self.decode(broken), "runs past the 1-word bitstream")
+
+    def test_a_hand_made_base_only_file_decodes(self):
+        # Two literal symbols: a length of 0 and a count of 2
+        self.assertEqual(self.decode(base_only(4, [0x1234, 0x5678], [0x00, 0x02])).returncode, 0)
+        self.assertEqual(self.read("check.4bpp"), struct.pack("<2H", 0x1234, 0x5678))
+
+    def test_lo_instructions_that_read_past_their_data_fail(self):
+        for name, syms, lo in (
+            ("a copy with no symbol left", [], [0x01, 0x01]),
+            ("more literals than symbols", [0x1234, 0x5678], [0x00, 0x05]),
+            ("a copy from before the image", [0x1234], [0x02, 0x05]),
+            ("a copy from offset 0", [0x1234], [0x02, 0x00]),
+            ("an offset cut off by the end of the data", [0x1234], [0x01]),
+        ):
+            with self.subTest(name):
+                self.assertFails(self.decode(base_only(4, syms, lo)), "the LO instructions read past the data")
+
+    def test_a_header_whose_image_size_disagrees_with_its_data_fails(self):
+        # The GBA decoder writes imageSize bytes, so the data has to decode to exactly that
+        self.assertFails(self.decode(base_only(8, [0x1234, 0x5678], [0x00, 0x02])),
+                         "the data decodes to 4 bytes, but the header gives 8")
 
 
 class ArgumentTest(ToolTest):
