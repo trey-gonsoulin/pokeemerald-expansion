@@ -14,6 +14,7 @@ import os
 import shutil
 import tempfile
 import unittest
+from unittest import mock
 
 import area_archetypes as AA
 import restock as R
@@ -453,6 +454,20 @@ def run_quietly(argv):
 
 def first_stamp(path):
     return R.load_json(path)[AA.RESTOCK_STAMP]
+
+
+class OutputFileTests(unittest.TestCase):
+    def test_load_maps_leaves_out_the_provenance(self):
+        self.assertIn(AA.PROVENANCE_KEY, R.load_json(MAPS))
+        self.assertNotIn(AA.PROVENANCE_KEY, R.load_maps(MAPS))
+
+    def test_dump_wild_keeps_the_old_file_on_a_failure(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, 'wild.json')
+            R.dump_wild({'old': 1}, path)
+            with mock.patch.object(AA.os, 'replace', side_effect=OSError('disk full')), self.assertRaises(OSError):
+                R.dump_wild({'new': 1}, path)
+            self.assertEqual(R.load_json(path), {'old': 1})
 
 
 class CliTests(unittest.TestCase):

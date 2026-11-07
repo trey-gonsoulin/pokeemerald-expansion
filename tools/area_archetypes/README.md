@@ -25,9 +25,13 @@ on the full data run only once `fetch` has filled `.cache/`.
 (`--pokesearch`, default `~/code/pokesearch`), whose `data/pokeapi/csv/` is
 filled by `python -m poke_extract.pokeapi` at the PokeAPI commit in its
 `COMMIT` file. That commit has to be `POKEAPI_REF` in `area_archetypes.py`.
-Every CSV is read and checked (not empty, has rows and the columns the build
-reads, `CSV_FILES`) before any is written, each through a `.tmp` and
-`os.replace`, so a bad source leaves the old cache. It records the ref,
+Every CSV is read and checked (not empty, UTF-8, has rows and the columns the
+build reads, `CSV_FILES`, with no row cut short) before any is written, each
+through a `.tmp` and `os.replace`, so a bad source leaves the old cache. While
+`output/` records the same ref, a CSV also has to have the hash recorded there,
+which catches a clean truncation and an interrupted pokesearch re-download
+(`--out` names the outputs to compare with). `git` has to be on PATH.
+It records the ref,
 pokesearch's git SHA, the date and each CSV's sha256 in
 `.cache/pokeapi/provenance.json`. `build` stops before writing anything when
 that record is missing, a CSV no longer has its recorded hash, or a CSV fails
