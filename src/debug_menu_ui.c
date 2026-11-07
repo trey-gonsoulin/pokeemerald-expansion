@@ -4,6 +4,7 @@
 #include "global.h"
 #include "data.h"
 #include "debug_menu_ui.h"
+#include "decoration.h"
 #include "list_menu.h"
 #include "main.h"
 #include "malloc.h"
@@ -460,22 +461,50 @@ const u8 *Debug_GetVarName(u32 varId)
 
 STATIC_ASSERT(DEBUG_NAME_BUFFER_SIZE >= sizeof(gTrainerClasses[0].name) + 1 + TRAINER_NAME_LENGTH + 1, DebugTrainerFlagNameSize);
 
-// For a trainer flag, copies the trainer's class and name ("LEADER ROXANNE") into dest, which holds
-// DEBUG_NAME_BUFFER_SIZE, and returns TRUE. Returns FALSE and leaves dest alone with
-// DEBUG_FLAG_VAR_NAMES off, for any other flag, and for a trainer without a party: TRAINER_NONE, and
-// IDs left out of the table (zero-filled, so the name has no EOS). IDs from TRAINERS_COUNT are unused.
-bool32 Debug_CopyTrainerFlagName(u8 *dest, u32 flag)
+// Copies a trainer's or partner's (TRAINER_PARTNER) class and name ("LEADER ROXANNE") into dest,
+// which holds DEBUG_NAME_BUFFER_SIZE, and returns TRUE. Returns FALSE and leaves dest alone for one
+// without a party: TRAINER_NONE, and IDs left out of the table (zero-filled, so the name has no EOS).
+bool32 Debug_CopyTrainerName(u8 *dest, u32 trainerId)
 {
-    u32 trainerId = flag - TRAINER_FLAGS_START;
-
-    if (!DEBUG_FLAG_VAR_NAMES || flag < TRAINER_FLAGS_START || trainerId >= TRAINERS_COUNT
-     || GetTrainerPartySizeFromId(trainerId) == 0)
+    if (GetTrainerPartySizeFromId(trainerId) == 0)
         return FALSE;
     dest = StringCopy(dest, GetTrainerClassNameFromId(trainerId));
     *dest++ = CHAR_SPACE;
     StringCopyN(dest, GetTrainerNameFromId(trainerId), TRAINER_NAME_LENGTH + 1);
     dest[TRAINER_NAME_LENGTH] = EOS;
     return TRUE;
+}
+
+// Debug_CopyTrainerName for a trainer flag. Also returns FALSE with DEBUG_FLAG_VAR_NAMES off and for
+// any other flag. IDs from TRAINERS_COUNT are unused.
+bool32 Debug_CopyTrainerFlagName(u8 *dest, u32 flag)
+{
+    u32 trainerId = flag - TRAINER_FLAGS_START;
+
+    if (!DEBUG_FLAG_VAR_NAMES || flag < TRAINER_FLAGS_START || trainerId >= TRAINERS_COUNT)
+        return FALSE;
+    return Debug_CopyTrainerName(dest, trainerId);
+}
+
+// The name the trainer step shows, and orders by, built in buffer (which holds
+// DEBUG_NAME_BUFFER_SIZE). NULL for a trainer without a party, which name order leaves out.
+const u8 *Debug_GetTrainerDisplayName(u8 *buffer, u32 trainerId)
+{
+    return Debug_CopyTrainerName(buffer, trainerId) ? buffer : NULL;
+}
+
+// Debug_GetTrainerDisplayName for the partner step, whose values are gBattlePartners indexes.
+// PARTNER_NONE has no trainer ID: TRAINER_PARTNER(PARTNER_NONE) fails GetTrainerStructFromId's assert.
+const u8 *Debug_GetPartnerDisplayName(u8 *buffer, u32 partnerId)
+{
+    return partnerId != PARTNER_NONE ? Debug_GetTrainerDisplayName(buffer, TRAINER_PARTNER(partnerId)) : NULL;
+}
+
+// A decoration's name, or NULL for an unnamed one (buffer is unused)
+const u8 *Debug_GetDecorationName(u8 *buffer, u32 decorationId)
+{
+    const u8 *name = gDecorations[decorationId].name;
+    return name[0] != EOS ? name : NULL;
 }
 
 // The name Set Flag shows, and orders by: a trainer flag's trainer, built in buffer (which holds

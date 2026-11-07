@@ -73,6 +73,11 @@ bool32 Debug_CopyTrainerFlagName(u8 *dest, u32 flag);
 // The names Set Flag and Set Var show and order by (DebugNameFuncs)
 const u8 *Debug_GetFlagDisplayName(u8 *buffer, u32 flag);
 const u8 *Debug_GetVarDisplayName(u8 *buffer, u32 varId);
+// A trainer's class and name, and the names the trainer, partner and decoration steps order by (DebugNameFuncs)
+bool32 Debug_CopyTrainerName(u8 *dest, u32 trainerId);
+const u8 *Debug_GetTrainerDisplayName(u8 *buffer, u32 trainerId);
+const u8 *Debug_GetPartnerDisplayName(u8 *buffer, u32 partnerId);
+const u8 *Debug_GetDecorationName(u8 *buffer, u32 decorationId);
 
 // List menus
 s32 Debug_ListMenu_ProcessInput(u8 listTaskId);

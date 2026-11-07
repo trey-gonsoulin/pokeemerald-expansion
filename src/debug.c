@@ -183,6 +183,9 @@ enum DebugStepNames
     DEBUG_STEP_NAMES_MOVES,
     DEBUG_STEP_NAMES_FLAGS,
     DEBUG_STEP_NAMES_VARS,
+    DEBUG_STEP_NAMES_TRAINERS,
+    DEBUG_STEP_NAMES_PARTNERS,
+    DEBUG_STEP_NAMES_DECORATIONS,
     DEBUG_STEP_NAMES_COUNT,
 };
 
@@ -273,8 +276,8 @@ struct DebugSelectionStep
     bool8 useMinFunc:1;
     bool8 useMaxFunc:1;
     bool8 hex:1; // Up/Down dial hex digits: stepUpdate prints with Debug_InputToHexString and gText_HexDigitIndicator
-    u8 names:3; // enum DebugStepNames: Start turns on name order, and stepUpdate prints with DebugNativeStep_PrintNamedSelection
-    bool8 padding:2;
+    u8 names:4; // enum DebugStepNames: Start turns on name order, and stepUpdate prints with DebugNativeStep_PrintNamedSelection
+    bool8 padding:1;
 };
 
 typedef const struct DebugSelectionStep *SelectionStep;
@@ -1449,6 +1452,9 @@ static const DebugNameFunc sDebugStepNameFuncs[] =
     [DEBUG_STEP_NAMES_MOVES] = Debug_GetMoveStepName,
     [DEBUG_STEP_NAMES_FLAGS] = Debug_GetFlagDisplayName,
     [DEBUG_STEP_NAMES_VARS] = Debug_GetVarDisplayName,
+    [DEBUG_STEP_NAMES_TRAINERS] = Debug_GetTrainerDisplayName,
+    [DEBUG_STEP_NAMES_PARTNERS] = Debug_GetPartnerDisplayName,
+    [DEBUG_STEP_NAMES_DECORATIONS] = Debug_GetDecorationName,
 };
 
 // Name order is only for the overworld menu, which holds its state; the release ROM's native steps have no names
@@ -2979,29 +2985,34 @@ static const struct DebugSelection sTrainerFromMapSelection = {
     .maxSteps = 1,
 };
 
-static void DebugSelectionStep_PrepareTrainerDisplay(u8 taskId, u8 digits, u32 trainerId)
+// Rematches share a class and name, so the party size tells them apart. ID 0 is the "no trainer"
+// choice, and has nothing to look up: TRAINER_PARTNER(PARTNER_NONE) isn't a valid trainer ID.
+static void DebugSelectionStep_PrintTrainer(u8 taskId, u8 digits, u32 trainerId)
 {
     Debug_InputToDecimalString(gStringVar3, taskId, digits);
-    StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("ID: {STR_VAR_3}"));
-    u8 *end;
-    if (gTasks[taskId].tInput == TRAINER_NONE )
-        end = StringCopy(gStringVar2, COMPOUND_STRING("None"));
+    if (gTasks[taskId].tInput == 0)
+    {
+        StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("ID: {STR_VAR_3}"));
+        StringCopy(gStringVar2, COMPOUND_STRING("None"));
+    }
     else
-        end = StringCopy(gStringVar2, GetTrainerNameFromId(trainerId));
-    WrapFontIdToFit(gStringVar2, end, DEBUG_MENU_FONT, WindowWidthPx(gTasks[taskId].tSubWindowId));
-    StringCopy(gStringVar3, COMPOUND_STRING(""));
+    {
+        ConvertIntToDecimalStringN(gStringVar2, GetTrainerPartySizeFromId(trainerId), STR_CONV_MODE_LEFT_ALIGN, 1);
+        StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("ID: {STR_VAR_3}  Party: {STR_VAR_2}"));
+        if (!Debug_CopyTrainerName(gStringVar2, trainerId))
+            StringCopy(gStringVar2, COMPOUND_STRING("{COLOR RED}{SHADOW LIGHT_RED}Not enabled"));
+    }
+    DebugNativeStep_PrintNamedSelection(taskId);
 }
 
 static void DebugSelectionStep_UpdateTrainer(u8 taskId, u8 digits, u32 min, u32 max)
 {
-    DebugSelectionStep_PrepareTrainerDisplay(taskId, digits, gTasks[taskId].tInput);
-    DebugNativeStep_PrintWindowSelection(taskId);
+    DebugSelectionStep_PrintTrainer(taskId, digits, gTasks[taskId].tInput);
 }
 
 static void DebugSelectionStep_UpdatePartner(u8 taskId, u8 digits, u32 min, u32 max)
 {
-    DebugSelectionStep_PrepareTrainerDisplay(taskId, digits, TRAINER_PARTNER(gTasks[taskId].tInput));
-    DebugNativeStep_PrintWindowSelection(taskId);
+    DebugSelectionStep_PrintTrainer(taskId, digits, TRAINER_PARTNER(gTasks[taskId].tInput));
 }
 
 static const struct DebugSelectionStep sTrainerSelectionStep = {
@@ -3009,6 +3020,7 @@ static const struct DebugSelectionStep sTrainerSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = 0,
     .maxValue = TRAINERS_COUNT - 1,
+    .names = DEBUG_STEP_NAMES_TRAINERS,
 };
 
 static const struct DebugSelectionStep sPartnerSelectionStep = {
@@ -3016,6 +3028,7 @@ static const struct DebugSelectionStep sPartnerSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
     .minValue = 0,
     .maxValue = PARTNER_COUNT - 1,
+    .names = DEBUG_STEP_NAMES_PARTNERS,
 };
 
 // TRAINER_SINGLE_SELECTION creates selection functions that matches trainer battle
@@ -3023,7 +3036,8 @@ static const struct DebugSelectionStep sPartnerSelectionStep = {
 // is stored in the trainer menu data
 #define TRAINER_SINGLE_SELECTION(label1, dataIndex)                                 \
 static void DebugSelection_ ## label1 ## _Init(u8 taskId) {                         \
-    Debug_CreateInputDisplayWindow(taskId);                                         \
+    /* Warp's 28-tile window, for the class and name */                             \
+    Debug_CreateInputDisplayWindowFromTemplate(taskId, &sDebugMenuWindowTemplateWarp); \
     DebugSelection_SetData(taskId, 0, sDebugMenuListData->data[dataIndex]);         \
 };                                                                                  \
 static bool32 DebugSelection_ ## label1 ## _Complete(u8 taskId) {                   \
@@ -4244,8 +4258,7 @@ static void DebugSelectionStep_UpdateDecoration(u8 taskId, u8 digits, u32 min, u
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Decor ID: {STR_VAR_3}"));
     u8* end = StringCopy(gStringVar2, gDecorations[decorationId].name);
     WrapFontIdToFit(gStringVar2, end, DEBUG_MENU_FONT, WindowWidthPx(gTasks[taskId].tSubWindowId));
-    StringCopy(gStringVar3, COMPOUND_STRING(""));
-    DebugNativeStep_PrintWindowSelection(taskId);
+    DebugNativeStep_PrintNamedSelection(taskId);
 }
 
 static bool32 DebugSelection_GiveDecoration_Complete(u8 taskId)
@@ -4261,6 +4274,7 @@ static const struct DebugSelectionStep sDecorationSelectionStep = {
     .stepConfirm = DebugSelectionStep_GenericInputConfirmAndDestroyIcon,
     .minValue = 1,
     .maxValue = NUM_DECORATIONS,
+    .names = DEBUG_STEP_NAMES_DECORATIONS,
 };
 
 static const struct DebugSelection sGiveDecorationSelection = {
