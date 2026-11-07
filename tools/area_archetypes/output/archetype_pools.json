@@ -1,5 +1,24 @@
 {
  "about": "Cross-generation wild species pools per area archetype (<habitat>/<stage>), built from PokeAPI encounter data by tools/area_archetypes. share = average fraction of encounters across contributing games; games = how many version groups have the species in this archetype.",
+ "provenance": {
+  "ref": "e2710d30d14b3f4dc6a02a4a71e8619cd835b7ff",
+  "pokesearch": "2b03433dc44d86af3124214550fdc09885b74c36",
+  "fetched": "2026-11-07",
+  "csv_sha256": {
+   "encounters": "93ba8853ac871719d230a6406c91f8418754fdc773f2f4b9f476007f743b4955",
+   "encounter_slots": "597dc58df2b0a2c64cedce6d6a2a08feeecbd1cf860bdf926cd27f119417d87a",
+   "encounter_methods": "99327ac41c463b8bcca18d04b56cad3d5532fec70dd7eb869b9ca650a007e291",
+   "locations": "2af5d6a1151d5ae402f9da1d5513bc1c7437795e69b140787c7aab3f6ed7eaa3",
+   "location_areas": "4706b96842166a44ca619da0add34c212088669270a478d9e84bc78e9f581840",
+   "regions": "dbd1ecc3f014b67c1a9452611fca5d13542ebc3524f3a4188b5a6cb1ca911d79",
+   "versions": "70083465865a6a69a9aad2be3fc3915078c6ff740f14a090b1367d8ec9cfc3cd",
+   "version_groups": "28da8d89d8eb4966941f81a9e62b3990510ed4d76dd774158246551a8e7707a7",
+   "pokemon": "16c81c33188b0eac403aa2f759fcbe9e42c611f722d263f5b5a6a5bff9f8ce6b",
+   "pokemon_species": "e66e2eeb25fd3836b0ebab6bf87bbf01960aa3c0555e2bac495fa8393c5e0c45",
+   "pokemon_types": "f1fc4bfd657a034ea3bf6972423b10276424aa068577b304a78a08996425ba05",
+   "types": "37f039c8d722f47d51ba1c5c5ecf9b7007235b1a9a1af2827645c777b70307c8"
+  }
+ },
  "stages": {
   "beginner": 7,
   "early": 17,

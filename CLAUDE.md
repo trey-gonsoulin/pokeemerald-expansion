@@ -104,7 +104,7 @@ make pokeemerald-test.elf TESTS="Lucky Egg" TOOLCHAIN=/opt/devkitpro/devkitARM  
 Area archetypes tool (standard library only, run from the repo root):
 
 ```sh
-python3 tools/area_archetypes/area_archetypes.py fetch     # once: PokeAPI CSVs -> .cache/
+python3 tools/area_archetypes/area_archetypes.py fetch     # once: PokeAPI CSVs at POKEAPI_REF from ~/code/pokesearch (--pokesearch) -> .cache/
 python3 tools/area_archetypes/area_archetypes.py build     # classify areas, write output/
 python3 tools/area_archetypes/area_archetypes.py restock   # preview a restocked src/data/wild_encounters.json
 python3 tools/area_archetypes/area_archetypes.py baseline --wild <upstream copy>  # refresh output/wild_encounters.vanilla.json after upstream changes it (README)
