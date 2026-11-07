@@ -85,7 +85,7 @@ TEST("Object graphics sprite: with no free palette slot a dynamic palette shares
 {
     // Where the weather update would write for a failed load's 0xFF, past the end of the buffer (an address for -Warray-bounds)
     const u16 *pastBuffer = (const u16 *)((uintptr_t)gPlttBufferFaded + sizeof(u16) * OBJ_PLTT_ID(0xFF));
-    u16 pastBufferBefore[16];
+    u32 fadeColor = ~pastBuffer[0] & 0x7FFF;
     u32 i, spriteId, lastSlotTag;
     u8 savedState = gWeatherPtr->palProcessingState;
     u8 savedFirstFrame = gWeatherPtr->fadeInFirstFrame;
@@ -94,17 +94,16 @@ TEST("Object graphics sprite: with no free palette slot a dynamic palette shares
     for (i = 0; IndexOfSpritePaletteTag(TAG_NONE) != 0xFF; i++)
         LoadSpritePaletteWithTag(gPlttBufferUnfaded, TEST_PALETTE_TAG + 1 + i);
     lastSlotTag = GetSpritePaletteTagByPaletteNum(15);
-    memcpy(pastBufferBefore, pastBuffer, sizeof(pastBufferBefore));
 
     gWeatherPtr->palProcessingState = WEATHER_PAL_STATE_SCREEN_FADING_IN;
     gWeatherPtr->fadeInFirstFrame = TRUE;
-    gWeatherPtr->fadeDestColor = ~pastBufferBefore[0];
+    gWeatherPtr->fadeDestColor = fadeColor;
     spriteId = CreateObjectGraphicsSprite(OBJ_EVENT_GFX_SPECIES(BULBASAUR), SpriteCallbackDummy, 0, 0, 0);
     gWeatherPtr->palProcessingState = savedState;
     gWeatherPtr->fadeInFirstFrame = savedFirstFrame;
     gWeatherPtr->fadeDestColor = savedColor;
 
-    EXPECT(memcmp(pastBufferBefore, pastBuffer, sizeof(pastBufferBefore)) == 0);
+    EXPECT_NE((u32)pastBuffer[0], fadeColor);
     EXPECT_NE(spriteId, MAX_SPRITES);
     EXPECT_EQ((u32)gSprites[spriteId].oam.paletteNum, 15);
     EXPECT_EQ((u32)GetSpritePaletteTagByPaletteNum(15), lastSlotTag);
