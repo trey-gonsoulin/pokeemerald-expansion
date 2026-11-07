@@ -17,6 +17,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+from unittest import mock
 
 import archetypes as A
 import area_archetypes as AA
@@ -263,10 +264,11 @@ class CacheTests(unittest.TestCase):
                                       os.path.join(self.pokesearch, AA.POKESEARCH_CSV_DIR))
         self.write_stamp(AA.POKEAPI_REF)
         git = ['git', '-C', self.pokesearch]
-        subprocess.run(git + ['init', '-q'], check=True)
-        subprocess.run(git + ['-c', 'user.name=test', '-c', 'user.email=test@example.com',
-                              'commit', '-q', '--allow-empty', '-m', 'test'], check=True)
-        self.sha = subprocess.run(git + ['rev-parse', 'HEAD'], check=True,
+        env = {k: v for k, v in os.environ.items() if not k.startswith('GIT_')}
+        subprocess.run(git + ['init', '-q'], check=True, env=env)
+        subprocess.run(git + ['-c', 'user.name=test', '-c', 'user.email=test@example.com', '-c', 'commit.gpgsign=false',
+                              'commit', '-q', '--allow-empty', '-m', 'test'], check=True, env=env)
+        self.sha = subprocess.run(git + ['rev-parse', 'HEAD'], check=True, env=env,
                                   capture_output=True, text=True).stdout.strip()
 
     def write_stamp(self, ref):
@@ -285,7 +287,13 @@ class CacheTests(unittest.TestCase):
 
     def fetch(self, cache):
         with contextlib.redirect_stdout(io.StringIO()):
-            AA.fetch(cache, self.pokesearch)
+            AA.fetch(cache, self.pokesearch, os.path.join(self.tmp, 'out'))
+
+    def write_committed(self, ref, **hashes):
+        out = os.path.join(self.tmp, 'out')
+        os.makedirs(out, exist_ok=True)
+        with open(os.path.join(out, 'archetype_pools.json'), 'w', encoding='utf-8') as f:
+            json.dump({AA.PROVENANCE_KEY: {'ref': ref, 'csv_sha256': hashes}}, f)
 
     def assertExits(self, fn, *msg):
         with self.assertRaises(SystemExit) as cm:
@@ -323,8 +331,10 @@ class CacheTests(unittest.TestCase):
         cases = [(lambda: write_pokemon(b''), 'pokemon.csv is empty; run `python -m poke_extract.pokeapi`'),
                  (lambda: write_pokemon(b'wrong,columns\n1,2\n'), 'has no id, identifier, species_id column'),
                  (lambda: write_pokemon(b'id,identifier,species_id\n'), 'has no rows'),
-                 (lambda: os.remove(os.path.join(self.source, 'pokemon.csv')), 'missing'),
-                 (lambda: os.remove(os.path.join(self.source, AA.POKESEARCH_STAMP)), 'missing'),
+                 (lambda: write_pokemon(b'id,identifier,species_id\n1,ivy\n'), 'line 2 is cut short'),
+                 (lambda: write_pokemon(b'id,identifier,species_id\n1,\xff,1\n'), 'not a readable CSV'),
+                 (lambda: os.remove(os.path.join(self.source, 'pokemon.csv')), 'No such file'),
+                 (lambda: os.remove(os.path.join(self.source, AA.POKESEARCH_STAMP)), 'No such file'),
                  (lambda: shutil.rmtree(os.path.join(self.pokesearch, '.git')), 'not a git checkout')]
         before = self.read_cache()
         for spoil, msg in cases:
@@ -335,11 +345,51 @@ class CacheTests(unittest.TestCase):
                 # The CSVs read before the bad one aren't written either.
                 self.assertEqual(self.read_cache(), before)
 
+    def test_fetch_refuses_a_csv_the_committed_outputs_dont_record(self):
+        # A truncation at a row boundary or an interrupted re-download, under a stamp that still matches.
+        before = self.read_cache()
+        self.write_committed(AA.POKEAPI_REF, pokemon='0' * 64)
+        self.assertExits(lambda: self.fetch(self.cache), 'pokemon.csv is not the file', AA.POKESEARCH_STAMP)
+        self.assertEqual(self.read_cache(), before)
+
+    def test_fetch_takes_new_hashes_once_the_ref_is_bumped(self):
+        self.write_committed('older-ref', pokemon='0' * 64)
+        self.fetch(self.cache)
+        self.assertEqual(AA.load_provenance(self.cache)['ref'], AA.POKEAPI_REF)
+
+    def test_fetch_uses_the_pokesearch_and_out_options(self):
+        cache = os.path.join(self.tmp, 'fresh')
+        self.write_committed(AA.POKEAPI_REF, pokemon='0' * 64)
+        args = ['fetch', '--pokesearch', self.pokesearch, '--cache', cache]
+        self.assertExits(lambda: AA.main(args + ['--out', os.path.join(self.tmp, 'out')]), 'is not the file')
+        with contextlib.redirect_stdout(io.StringIO()):
+            AA.main(args + ['--out', os.path.join(self.tmp, 'other')])
+        self.assertEqual(AA.load_provenance(cache)['pokesearch'], self.sha)
+
+    def test_fetch_refuses_a_dir_inside_another_checkout(self):
+        self.assertExits(lambda: AA.pokesearch_sha(os.path.join(self.pokesearch, 'data')), 'not a git checkout')
+
+    def test_write_atomic_keeps_the_old_file_on_a_failure(self):
+        path = os.path.join(self.tmp, 'file')
+        AA.write_atomic(path, b'old')
+        with mock.patch.object(AA.os, 'replace', side_effect=OSError('disk full')), self.assertRaises(OSError):
+            AA.write_atomic(path, b'new')
+        with open(path, 'rb') as f:
+            self.assertEqual(f.read(), b'old')
+        self.assertFalse(os.path.exists(path + '.tmp'))
+        AA.write_atomic(path, b'new')
+        with open(path, 'rb') as f:
+            self.assertEqual(f.read(), b'new')
+        self.assertFalse(os.path.exists(path + '.tmp'))
+
     def test_load_provenance_refuses_an_edited_cache(self):
         with open(self.csv_path('pokemon'), 'a', encoding='utf-8') as f:
             f.write('9999,edited,1\n')
         self.assertExits(lambda: AA.load_provenance(self.cache), 'pokemon.csv is not the file fetch recorded')
-        for content in ['{"ref": "x"', '{"ref": "x"}', '{"ref": "x", "csv_sha256": []}']:
+        full = {'ref': 'x', 'pokesearch': 'y', 'fetched': 'z', 'csv_sha256': {}}
+        for content in ['{"ref": "x"', '[]', '{"ref": "x"}', json.dumps({**full, 'csv_sha256': []}),
+                        json.dumps({**full, 'ref': None})] + [
+                            json.dumps({k: v for k, v in full.items() if k != key}) for key in full]:
             with self.subTest(content=content):
                 with open(os.path.join(self.cache, AA.PROVENANCE_FILE), 'w', encoding='utf-8') as f:
                     f.write(content)
@@ -353,11 +403,14 @@ class CacheTests(unittest.TestCase):
     def test_read_csv_refuses_a_bad_file(self):
         for content, msg in [('', 'is empty'),
                              ('id,identifier\n1,red\n', 'has no species_id column'),
-                             ('id,identifier,species_id\n', 'has no rows')]:
+                             ('id,identifier,species_id\n', 'has no rows'),
+                             ('id,identifier,species_id\n1,ivy\n', 'line 2 is cut short')]:
             with self.subTest(msg=msg):
                 with open(self.csv_path('pokemon'), 'w', encoding='utf-8') as f:
                     f.write(content)
                 self.assertExits(lambda: AA.read_csv(self.cache, 'pokemon'), 'pokemon.csv', msg)
+        os.remove(self.csv_path('pokemon'))
+        self.assertExits(lambda: AA.read_csv(self.cache, 'pokemon'), 'No such file', 'fetch` first')
 
     def build(self, out):
         with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
@@ -423,12 +476,12 @@ class EndToEndTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.out = tempfile.TemporaryDirectory()
-        _, _, tables, cls.pools, cls.emerald = AA.build(AA.DEFAULT_CACHE, cls.out.name, AA.REPO)
+        cls.addClassCleanup(cls.out.cleanup)
+        try:
+            _, _, tables, cls.pools, cls.emerald = AA.build(AA.DEFAULT_CACHE, cls.out.name, AA.REPO)
+        except SystemExit as e:  # keep a stale cache from ending the whole test run
+            raise RuntimeError(f'build exited: {e}') from e
         cls.arch = {(t.vg, t.location, t.area, t.group): t.archetype for t in tables}
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.out.cleanup()
 
     def assertArchetype(self, vg, location, area, group, want):
         self.assertEqual(self.arch[(vg, location, area, group)], want, (vg, location, area, group))
