@@ -548,8 +548,71 @@ class CliTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             base = os.path.join(tmp, 'base.json')
             with contextlib.redirect_stdout(io.StringIO()):
-                AA.main(['baseline', '--wild', WILD, '--base', base])
+                AA.main(['baseline', '--wild', WILD, '--base', base, '--out', tmp])
             self.assertEqual(read(base), read(WILD))
+
+    def test_baseline_says_when_the_maps_need_a_rebuild(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = os.path.join(tmp, 'base.json')
+            maps = os.path.join(tmp, 'emerald_maps.json')
+            _, wild_hash = AA.load_base(WILD)
+
+            def baseline_warnings():
+                with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()) as err:
+                    AA.main(['baseline', '--wild', WILD, '--base', base, '--out', tmp])
+                self.assertEqual(read(base), read(WILD))
+                return err.getvalue()
+
+            # No build there, so nothing to go stale.
+            self.assertEqual(baseline_warnings(), '')
+            for maps_text, why in ((json.dumps({AA.BASE_HASH_KEY: 'another'}), 'was built from another base'),
+                                   ('{}', 'records no base hash'),
+                                   ('[]', 'records no base hash'),
+                                   ('<<<<<<< HEAD', 'records no base hash')):
+                with self.subTest(maps_text=maps_text):
+                    with open(maps, 'w', encoding='utf-8') as f:
+                        f.write(maps_text)
+                    warning = baseline_warnings()
+                    self.assertIn(f'warning: {maps} {why}, so its archetypes may be stale for {base}', warning)
+                    self.assertIn(f'build --base {base} --out {tmp}', warning)
+            with open(maps, 'w', encoding='utf-8') as f:
+                json.dump({AA.BASE_HASH_KEY: wild_hash}, f)
+            self.assertEqual(baseline_warnings(), '')
+
+    def test_base_that_isnt_a_wild_table_is_refused(self):
+        groups = '{"wild_encounter_groups": %s}'
+        with tempfile.TemporaryDirectory() as tmp:
+            base = shutil.copy(WILD, os.path.join(tmp, 'base.json'))
+            bad = os.path.join(tmp, 'bad.json')
+            out = os.path.join(tmp, 'out')
+            not_json = ('{bad', b'\xff\xfe\xff')
+            not_table = ('[]', '{}', '5', 'null', groups % '[]', groups % '{}', groups % '[1]', groups % '[{}]',
+                         groups % '[{"label": "gBattlePikeWildMonHeaders"}]',
+                         groups % '[{"label": "gWildMonHeaders"}]',
+                         groups % '[{"label": "gWildMonHeaders", "encounters": []}]',
+                         groups % '[{"label": "gWildMonHeaders", "fields": []}]',
+                         groups % '[{"label": "gWildMonHeaders", "encounters": {}, "fields": []}]',
+                         groups % '[{"label": "gWildMonHeaders", "encounters": [], "fields": {}}]',
+                         groups % '[{"label": "gWildMonHeaders", "encounters": [], "fields": []}, {}]')
+            for content in not_json + not_table:
+                expected = 'is not valid JSON' if content in not_json else 'has no gWildMonHeaders group'
+                with self.subTest(content=content):
+                    with open(bad, 'wb') as f:
+                        f.write(content if isinstance(content, bytes) else content.encode())
+                    commands = ((lambda: AA.main(['baseline', '--wild', bad, '--base', base, '--out', tmp])),
+                                # --force doesn't let one through: it only overrides the restock stamp.
+                                (lambda: AA.main(['baseline', '--wild', bad, '--base', base, '--out', tmp, '--force'])),
+                                (lambda: AA.main(['build', '--base', bad, '--cache', os.path.join(TESTDATA, 'pokeapi'),
+                                                  '--out', out])),
+                                (lambda: run_quietly(['--base', bad, '--out-dir', out])))
+                    for command in commands:
+                        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()), \
+                                self.assertRaises(SystemExit) as cm:
+                            command()
+                        self.assertIn(f'{bad} {expected}', cm.exception.code)
+                        self.assertIn(AA.BASE_HINT, cm.exception.code)
+                    self.assertEqual(read(base), read(WILD))
+                    self.assertFalse(os.path.exists(out))
 
     def test_baseline_exits_cleanly_on_a_bad_path(self):
         with tempfile.TemporaryDirectory() as tmp:
