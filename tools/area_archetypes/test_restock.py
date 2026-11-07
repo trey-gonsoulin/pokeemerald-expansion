@@ -14,6 +14,7 @@ import os
 import shutil
 import tempfile
 import unittest
+from unittest import mock
 
 import area_archetypes as AA
 import restock as R
@@ -283,7 +284,7 @@ class RestockTests(unittest.TestCase):
     def setUpClass(cls):
         cls.info = R.SpeciesInfo(AA.REPO)
         cls.wild = R.load_json(WILD)
-        cls.maps = R.load_json(MAPS)
+        cls.maps = R.load_maps(MAPS)
         cls.pools = R.load_json(POOLS)
         cls.runs = {ratio: R.restock(cls.wild, cls.maps, cls.pools, cls.info, R.Settings(ratio=ratio))
                     for ratio in (0.0, 0.5, 1.0)}
@@ -455,6 +456,20 @@ def first_stamp(path):
     return R.load_json(path)[AA.RESTOCK_STAMP]
 
 
+class OutputFileTests(unittest.TestCase):
+    def test_load_maps_leaves_out_the_provenance(self):
+        self.assertIn(AA.PROVENANCE_KEY, R.load_json(MAPS))
+        self.assertNotIn(AA.PROVENANCE_KEY, R.load_maps(MAPS))
+
+    def test_dump_wild_keeps_the_old_file_on_a_failure(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, 'wild.json')
+            R.dump_wild({'old': 1}, path)
+            with mock.patch.object(AA.os, 'replace', side_effect=OSError('disk full')), self.assertRaises(OSError):
+                R.dump_wild({'new': 1}, path)
+            self.assertEqual(R.load_json(path), {'old': 1})
+
+
 class CliTests(unittest.TestCase):
     def test_writes_preview_and_report_without_touching_src(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -535,7 +550,7 @@ class CliTests(unittest.TestCase):
             self.assertEqual(read(base), read(WILD))
 
     def test_labels_missing_from_maps_are_reported(self):
-        maps = R.load_json(MAPS)
+        maps = R.load_maps(MAPS)
         del maps['gRoute101']
         err = io.StringIO()
         with contextlib.redirect_stderr(err):
@@ -704,7 +719,7 @@ class FixtureRestockTests(unittest.TestCase):
         fixture = os.path.join(TESTDATA, 'wild_encounters.json')
         with tempfile.TemporaryDirectory() as tmp:
             build = os.path.join(tmp, 'build')
-            with contextlib.redirect_stdout(io.StringIO()):
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
                 AA.build(os.path.join(TESTDATA, 'pokeapi'), build, AA.REPO, base=fixture)
             base = shutil.copy(fixture, os.path.join(tmp, 'base.json'))
             wild = shutil.copy(fixture, os.path.join(tmp, 'wild.json'))

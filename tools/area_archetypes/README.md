@@ -9,7 +9,7 @@ Viridian Forest, Ilex Forest, Petalburg Woods and Santalune Forest become
 Zigzagoon, Bidoof, Patrat, Lillipup, Skwovet... with how common each one is.
 
 ```sh
-python3 tools/area_archetypes/area_archetypes.py fetch   # once: PokeAPI CSVs -> .cache/
+python3 tools/area_archetypes/area_archetypes.py fetch   # once: pokesearch's PokeAPI CSVs -> .cache/
 python3 tools/area_archetypes/area_archetypes.py build   # classify + write output/
 python3 tools/area_archetypes/area_archetypes.py restock # preview restocked wild_encounters.json
 python3 tools/area_archetypes/area_archetypes.py baseline # refresh the vanilla snapshot (see below)
@@ -17,8 +17,30 @@ python3 -m unittest discover -s tools/area_archetypes    # tests
 ```
 
 Standard library only. The tests run the whole build on the tiny hand-written
-PokeAPI CSV set in `testdata/`, so they need no network; the end-to-end tests
+PokeAPI CSV set in `testdata/`, so they need no pokesearch checkout; the end-to-end tests
 on the full data run only once `fetch` has filled `.cache/`.
+
+`fetch` makes no network requests: it copies the CSVs from a
+[pokesearch](https://github.com/trey-gonsoulin/pokesearch) checkout
+(`--pokesearch`, default `~/code/pokesearch`), whose `data/pokeapi/csv/` is
+filled by `python -m poke_extract.pokeapi` at the PokeAPI commit in its
+`COMMIT` file. That commit has to be `POKEAPI_REF` in `area_archetypes.py`.
+Every CSV is read and checked (not empty, UTF-8, has rows and the columns the
+build reads, `CSV_FILES`, with no row cut short) before any is written, each
+through a `.tmp` and `os.replace`, so a bad source leaves the old cache. While
+`output/` records the same ref, a CSV also has to have the hash recorded there,
+which catches a clean truncation and an interrupted pokesearch re-download
+(`--out` names the outputs to compare with). `git` has to be on PATH.
+It records the ref,
+pokesearch's git SHA, the date and each CSV's sha256 in
+`.cache/pokeapi/provenance.json`. `build` stops before writing anything when
+that record is missing, a CSV no longer has its recorded hash, or a CSV fails
+the same checks, and warns when the ref isn't `POKEAPI_REF`; then it copies the
+record into `archetype_pools.json` and `emerald_maps.json` as `provenance`. To
+move to newer PokeAPI data, bump `COMMIT` in pokesearch and run its download,
+bump `POKEAPI_REF`, fetch, build, and commit `output/` with it (a test checks
+the committed outputs' ref). The fixture in `testdata/pokeapi/` has its own
+`provenance.json`, whose hashes have to follow any edit to its CSVs.
 
 ## Archetypes
 

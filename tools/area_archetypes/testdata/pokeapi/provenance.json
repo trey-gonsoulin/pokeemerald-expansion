@@ -1,0 +1,19 @@
+{
+ "ref": "testdata",
+ "pokesearch": "testdata",
+ "fetched": "2026-10-24",
+ "csv_sha256": {
+  "encounters": "54f0ea08225cea56fd0a21c6658d8488d2215e3a052480c1a5e14c7ba1ff8f4d",
+  "encounter_slots": "b1937ee3fdb4fb7088a8806f797547fa7ba6d12dcd789040d7d76fe8ab244d04",
+  "encounter_methods": "fa707d870ec785982ac1fe4fce9840f3f9562511b4519cde6c9394e012d84073",
+  "locations": "cdcb080df04e770c4bcd6bea3eb61fced18d98b841c78e5dad911838155ff79f",
+  "location_areas": "351919ab3137ffbc97f36148898edee5f8fcf9db65a82a835161b9e9f0074350",
+  "regions": "c006a3f4fbb018da21732b2f90ec73b863ff209f4ee773b4d790fbc20e618f26",
+  "versions": "5301c8d6ff88a7c7632f6db2d2d02a25233e626593345b544ffd3500ba5ce83e",
+  "version_groups": "aae7506ed4a64c931be0ee4e1a7cff03c16071a92c1dc926c8b7a9edcaf91508",
+  "pokemon": "88c1794ac1416c0e7a7ef74276b7de80e7c2e6d23da06a97dd30859593b55e87",
+  "pokemon_species": "0f9fc9d77188f45568cefe26b728d4c0a7086b2e141efaf8a4f6b5f521448f91",
+  "pokemon_types": "aa03d9e97d8ace21f78b5f28c02672c6727d3a77efdee681175379075873f51d",
+  "types": "b707bed6577658757ae738b9fe02f4290e18d18ba21bcedc1632a6a9985d2ce4"
+ }
+}
