@@ -295,40 +295,42 @@ TEST("Flag and var names: no trainer for TRAINER_NONE, trainers without a party,
     EXPECT(Debug_GetFlagName(TRAINER_FLAGS_START + TRAINER_ROXANNE_1) == NULL);
 }
 
-TEST("Name order for trainers goes by class and name, without the ones with no party")
+
+TEST("Name order for trainers goes by name, without the ones with no party")
 {
     struct DebugNameOrder order = {0};
-    u8 buffer[DEBUG_NAME_BUFFER_SIZE];
     u32 withParty = 0;
 
     for (u32 i = 0; i < TRAINERS_COUNT; i++)
         withParty += GetTrainerPartySizeFromId(i) != 0;
-    Debug_BuildNameOrder(&order, 0, TRAINERS_COUNT - 1, Debug_GetTrainerDisplayName);
-    ExpectNameOrder(&order, 0, TRAINERS_COUNT - 1, Debug_GetTrainerDisplayName);
+    Debug_BuildNameOrder(&order, 0, TRAINERS_COUNT - 1, Debug_GetTrainerStepName);
+    ExpectNameOrder(&order, 0, TRAINERS_COUNT - 1, Debug_GetTrainerStepName);
     EXPECT_EQ(order.count, withParty);
-    EXPECT(Debug_GetTrainerDisplayName(buffer, TRAINER_NONE) == NULL);
-    EXPECT(Debug_GetTrainerDisplayName(buffer, TRAINERS_COUNT - 1) == NULL); // zero-filled here, a real trainer in the game
-    EXPECT(NameIs(Debug_GetTrainerDisplayName(buffer, 1), COMPOUND_STRING("{PKMN} TRAINER RED")));
-    // LEAF (2) sorts before RED (1), and the same class and name (3 and 10) by ID, side by side
+    EXPECT(Debug_GetTrainerStepName(NULL, TRAINER_NONE) == NULL);
+    EXPECT(Debug_GetTrainerStepName(NULL, TRAINERS_COUNT - 1) == NULL); // zero-filled here, a real trainer in the game
+    // LEAF (2) sorts before RED (1), and the same name (3 and 10) by ID, side by side
     EXPECT_EQ(Debug_StepByName(&order, 2, FALSE), 1);
     EXPECT_EQ(Debug_StepByName(&order, 3, FALSE), 10);
-    // From TRAINER_NONE, which has no name, Up goes to the first name
+    // From TRAINER_NONE, which has no name, Start and Up go to the first name, and Start goes by the name, not the class
     EXPECT_EQ(Debug_StepByName(&order, TRAINER_NONE, FALSE), order.values[0]);
+    EXPECT_EQ(Debug_NextNameInitial(&order, TRAINER_NONE), order.values[0]);
+    EXPECT_EQ(Debug_NextNameInitial(&order, 2), 1);
     Debug_FreeNameOrder(&order);
 }
 
-TEST("Name order for partners goes by class and name, without PARTNER_NONE")
+TEST("Name order for partners goes by name, without PARTNER_NONE")
 {
     struct DebugNameOrder order = {0};
-    u8 buffer[DEBUG_NAME_BUFFER_SIZE];
 
-    Debug_BuildNameOrder(&order, 0, PARTNER_COUNT - 1, Debug_GetPartnerDisplayName);
-    ExpectNameOrder(&order, 0, PARTNER_COUNT - 1, Debug_GetPartnerDisplayName);
+    Debug_BuildNameOrder(&order, 0, PARTNER_COUNT - 1, Debug_GetPartnerStepName);
+    ExpectNameOrder(&order, 0, PARTNER_COUNT - 1, Debug_GetPartnerStepName);
     EXPECT_EQ(order.count, PARTNER_COUNT - 1);
-    EXPECT(Debug_GetPartnerDisplayName(buffer, PARTNER_NONE) == NULL);
+    EXPECT(Debug_GetPartnerStepName(NULL, PARTNER_NONE) == NULL);
     // The test ROM's difficulty var starts at Easy, whose test partner has another name
     SetCurrentDifficultyLevel(DIFFICULTY_NORMAL);
-    EXPECT(NameIs(Debug_GetPartnerDisplayName(buffer, 1), COMPOUND_STRING("{PKMN} TRAINER STEVEN")));
+    EXPECT(NameIs(Debug_GetPartnerStepName(NULL, 1), COMPOUND_STRING("STEVEN")));
+    // Start goes from None to the only partner, whose name starts with a letter
+    EXPECT_EQ(Debug_NextNameInitial(&order, PARTNER_NONE), 1);
     Debug_FreeNameOrder(&order);
 }
 
@@ -336,8 +338,8 @@ TEST("Name order for decorations goes by name")
 {
     struct DebugNameOrder order = {0};
 
-    Debug_BuildNameOrder(&order, 1, NUM_DECORATIONS, Debug_GetDecorationName);
-    ExpectNameOrder(&order, 1, NUM_DECORATIONS, Debug_GetDecorationName);
+    Debug_BuildNameOrder(&order, 1, NUM_DECORATIONS, Debug_GetDecorationStepName);
+    ExpectNameOrder(&order, 1, NUM_DECORATIONS, Debug_GetDecorationStepName);
     EXPECT_EQ(order.count, NUM_DECORATIONS);
     EXPECT_EQ(order.values[0], DECOR_A_NOTE_MAT);
     EXPECT_EQ(Debug_StepByName(&order, DECOR_A_NOTE_MAT, FALSE), DECOR_ATTRACT_MAT);
