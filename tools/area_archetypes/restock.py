@@ -1005,8 +1005,9 @@ def warn_if_maps_stale(maps_path, base_path, base_sha256):
     if recorded == base_sha256:
         return
     why = 'records no base hash' if recorded is None else 'was built from another base'
+    out = os.path.dirname(os.path.abspath(maps_path))
     print(f'warning: {maps_path} {why}, so its archetypes may be stale for {base_path}; '
-          f'run area_archetypes.py build', file=sys.stderr)
+          f'run area_archetypes.py build --base {base_path} --out {out}', file=sys.stderr)
 
 
 def skeleton(wild):
