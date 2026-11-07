@@ -15,7 +15,8 @@ encounter table, then writes to ``output/`` (the JSON files with that provenance
 * ``archetype_pools.json``   archetype -> method group -> weighted species pool
 * ``archetype_pools.md``     readable summary of the top of each pool
 * ``area_classification.csv`` every source table and the archetype it got
-* ``emerald_maps.json``      archetype for each table in the vanilla baseline
+* ``emerald_maps.json``      archetype for each table in the vanilla baseline,
+                             and the baseline's SHA-256
 
 The vanilla baseline is ``output/wild_encounters.vanilla.json``, a committed
 copy of the unrestocked src/data/wild_encounters.json that ``build`` and
@@ -71,6 +72,9 @@ POKEAPI_REF = 'e2710d30d14b3f4dc6a02a4a71e8619cd835b7ff'
 # build copies them under into archetype_pools.json and emerald_maps.json.
 PROVENANCE_FILE = 'provenance.json'
 PROVENANCE_KEY = 'provenance'
+# Key in emerald_maps.json for the SHA-256 of the base build classified, which
+# restock compares with its own base to warn about stale archetypes.
+BASE_HASH_KEY = 'base_sha256'
 # Each CSV the build reads -> the columns it reads from it.
 CSV_FILES = {
     'encounters': ('version_id', 'location_area_id', 'encounter_slot_id', 'pokemon_id',
@@ -102,8 +106,7 @@ REGIONAL_FORM_RE = re.compile(r'_(' + '|'.join(REGIONAL_FORM_GENS) + r')(?:_|$)'
 
 def load_base(path, force=False):
     """(wild_encounters.json at path, its SHA-256), refusing one restock wrote unless force."""
-    with open(path, 'rb') as f:
-        raw = f.read()
+    raw = read_or_exit(path, 'pass a vanilla wild_encounters.json')
     wild = json.loads(raw)
     if RESTOCK_STAMP in wild and not force:
         sys.exit(f'{path} was written by restock ({RESTOCK_STAMP} is set), so it is not a vanilla '
@@ -113,10 +116,13 @@ def load_base(path, force=False):
 
 def refresh_baseline(src=SRC_WILD, base=VANILLA_WILD, force=False):
     """Copy src over the vanilla baseline, unless restock wrote src."""
+    load_base(src, force)
     if os.path.exists(base) and os.path.samefile(src, base):
         sys.exit(f'{src} is already the baseline')
-    load_base(src, force)
-    shutil.copyfile(src, base)
+    try:
+        shutil.copyfile(src, base)
+    except OSError as e:
+        sys.exit(f'cannot write {base}: {e.strerror}; pass --base a path in an existing directory')
     print(f'wrote {base} from {src}')
 
 
@@ -619,7 +625,7 @@ def classify_emerald(data, smap, wild, water_by_loc):
 # Output
 # ---------------------------------------------------------------------------
 
-def write_outputs(out_dir, data, tables, pools, sources, emerald, provenance):
+def write_outputs(out_dir, data, tables, pools, sources, emerald, provenance, base_sha256):
     os.makedirs(out_dir, exist_ok=True)
     archs = sorted(pools, key=archetype_order)
     vg_gen = {v['identifier']: int(v['generation_id']) for v in data.version_groups.values()}
@@ -657,7 +663,7 @@ def write_outputs(out_dir, data, tables, pools, sources, emerald, provenance):
                         ' '.join(f'{data.pokemon[p]["identifier"]}:{s:.2f}' for p, s in top)])
 
     with open(os.path.join(out_dir, 'emerald_maps.json'), 'w', encoding='utf-8') as f:
-        json.dump({PROVENANCE_KEY: provenance, **emerald}, f, indent=1)
+        json.dump({PROVENANCE_KEY: provenance, BASE_HASH_KEY: base_sha256, **emerald}, f, indent=1)
         f.write('\n')
 
     lines = ['# Area archetype pools', '',
@@ -686,8 +692,9 @@ def build(cache, out_dir, repo, base=VANILLA_WILD, force=False):
     tables = build_tables(data)
     classify_tables(data, tables)
     pools, sources = build_pools(data, smap, tables)
-    emerald = classify_emerald(data, smap, load_base(base, force)[0], water_habitat_by_location(tables))
-    write_outputs(out_dir, data, tables, pools, sources, emerald, provenance)
+    base_wild, base_sha256 = load_base(base, force)
+    emerald = classify_emerald(data, smap, base_wild, water_habitat_by_location(tables))
+    write_outputs(out_dir, data, tables, pools, sources, emerald, provenance, base_sha256)
     counts = collections.Counter(t.archetype for t in tables)
     wild = {pid for t in tables for pid in t.weight}
     unmapped = sorted(data.pokemon[p]['identifier'] for p in wild if p not in smap.to_const)

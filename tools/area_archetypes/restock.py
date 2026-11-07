@@ -992,10 +992,21 @@ def load_json(path):
 
 
 def load_maps(path):
-    """emerald_maps.json's maps, without the PokeAPI provenance build records beside them."""
+    """emerald_maps.json's maps, without the PokeAPI provenance and base hash build records beside them."""
     maps = load_json(path)
     maps.pop(AA.PROVENANCE_KEY, None)
+    maps.pop(AA.BASE_HASH_KEY, None)
     return maps
+
+
+def warn_if_maps_stale(maps_path, base_path, base_sha256):
+    """Warn unless emerald_maps.json records this base: its archetypes may be from another one."""
+    recorded = load_json(maps_path).get(AA.BASE_HASH_KEY)
+    if recorded == base_sha256:
+        return
+    why = 'records no base hash' if recorded is None else 'was built from another base'
+    print(f'warning: {maps_path} {why}, so its archetypes may be stale for {base_path}; '
+          f'run area_archetypes.py build', file=sys.stderr)
 
 
 def skeleton(wild):
@@ -1050,6 +1061,7 @@ def main(argv=None):
         sys.exit(f'unknown species: {", ".join(unknown)}')
     base, base_sha256 = AA.load_base(args.base, args.force)
     emerald_maps = load_maps(args.maps)
+    warn_if_maps_stale(args.maps, args.base, base_sha256)
     unknown = sorted(set(settings.maps) - {e['base_label'] for e in AA.map_headers(base)['encounters']})
     if unknown:
         p.error(f'maps: not a gWildMonHeaders base label in {args.base}: {", ".join(unknown)}')

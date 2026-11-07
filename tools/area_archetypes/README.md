@@ -98,8 +98,9 @@ Pinwheel Forest is `forest/early` in BW but `forest/endgame` in BW2.
 - **`archetype_pools.md`**: the top 15 of every pool, for skimming.
 - **`emerald_maps.json`**: an archetype for every table of every map in
   the vanilla baseline (`wild_encounters.vanilla.json`, see
-  [The vanilla baseline](#the-vanilla-baseline)), keyed by base label. Each
-  fishing rod gets its own entry. Example:
+  [The vanilla baseline](#the-vanilla-baseline)), keyed by base label, with
+  the `provenance` and that file's SHA-256 as `base_sha256` beside the maps.
+  Each fishing rod gets its own entry. Example:
   ```json
   "gPetalburgWoods": {"map": "MAP_PETALBURG_WOODS", "location": "petalburg-woods",
     "land_mons": {"archetype": "forest/beginner", "pool": "land", "level": 5.2}}
@@ -179,6 +180,12 @@ file. `build` classifies the same file into `emerald_maps.json`. So rerunning
 restocking it again, and `build` gives the same maps after a restock as
 before. The same base, options and seed always give the same output.
 
+`build` records the base's SHA-256 in `emerald_maps.json` as `base_sha256`.
+`restock` warns, and carries on, when that isn't the SHA-256 of its `--base`
+(a baseline refresh without a `build`, say, which leaves it pairing the new base
+with stale archetypes) or when the file records none (one from before this
+check). A test checks the committed file against the committed baseline.
+
 Every file `restock` writes (the preview and `--write`) carries a top-level
 `restocked_by` stamp with the base's SHA-256, the seed and the ratio. The game
 build ignores it. `restock --base`, `build --base` and `baseline` refuse a
@@ -201,6 +208,9 @@ then rerun `build` and `restock --write`:
 git show upstream/master:src/data/wild_encounters.json > /tmp/wild_encounters.json
 python3 tools/area_archetypes/area_archetypes.py baseline --wild /tmp/wild_encounters.json
 ```
+
+`baseline` stops with a message, and a nonzero exit, when the `--wild` file can't
+be read or the directory of `--base` doesn't exist.
 
 | option | default | meaning |
 |---|---|---|
