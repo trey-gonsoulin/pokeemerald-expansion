@@ -37,7 +37,6 @@ import io
 import json
 import os
 import re
-import shutil
 import subprocess
 import sys
 
@@ -75,6 +74,7 @@ PROVENANCE_KEY = 'provenance'
 # Key in emerald_maps.json for the SHA-256 of the base build classified, which
 # restock compares with its own base to warn about stale archetypes.
 BASE_HASH_KEY = 'base_sha256'
+BASE_HINT = 'pass a vanilla wild_encounters.json'
 # Each CSV the build reads -> the columns it reads from it.
 CSV_FILES = {
     'encounters': ('version_id', 'location_area_id', 'encounter_slot_id', 'pokemon_id',
@@ -106,7 +106,7 @@ REGIONAL_FORM_RE = re.compile(r'_(' + '|'.join(REGIONAL_FORM_GENS) + r')(?:_|$)'
 
 def load_base(path, force=False):
     """(wild_encounters.json at path, its SHA-256), refusing one restock wrote unless force."""
-    raw = read_or_exit(path, 'pass a vanilla wild_encounters.json')
+    raw = read_or_exit(path, BASE_HINT)
     wild = json.loads(raw)
     if RESTOCK_STAMP in wild and not force:
         sys.exit(f'{path} was written by restock ({RESTOCK_STAMP} is set), so it is not a vanilla '
@@ -119,10 +119,11 @@ def refresh_baseline(src=SRC_WILD, base=VANILLA_WILD, force=False):
     load_base(src, force)
     if os.path.exists(base) and os.path.samefile(src, base):
         sys.exit(f'{src} is already the baseline')
+    raw = read_or_exit(src, BASE_HINT)
     try:
-        shutil.copyfile(src, base)
+        write_atomic(base, raw)
     except OSError as e:
-        sys.exit(f'cannot write {base}: {e.strerror}; pass --base a path in an existing directory')
+        sys.exit(f'cannot write {base}: {e.strerror}')
     print(f'wrote {base} from {src}')
 
 

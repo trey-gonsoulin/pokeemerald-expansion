@@ -210,7 +210,8 @@ python3 tools/area_archetypes/area_archetypes.py baseline --wild /tmp/wild_encou
 ```
 
 `baseline` stops with a message, and a nonzero exit, when the `--wild` file can't
-be read or the directory of `--base` doesn't exist.
+be read or `--base` can't be written (its directory doesn't exist, say). The old
+baseline stays as it was if the write fails.
 
 | option | default | meaning |
 |---|---|---|

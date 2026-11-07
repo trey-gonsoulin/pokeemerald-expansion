@@ -565,6 +565,18 @@ class CliTests(unittest.TestCase):
                 self.assertIn(message, cm.exception.code)  # a message, so the exit code is 1
             self.assertEqual(read(base), read(WILD))
 
+    def test_baseline_keeps_the_old_file_on_a_failed_write(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = os.path.join(tmp, 'base.json')
+            with open(base, 'w', encoding='utf-8') as f:
+                f.write('old')
+            with mock.patch.object(AA.os, 'replace', side_effect=OSError(28, 'No space left')), \
+                    self.assertRaises(SystemExit) as cm:
+                AA.main(['baseline', '--wild', WILD, '--base', base])
+            self.assertEqual(cm.exception.code, f'cannot write {base}: No space left')
+            self.assertEqual(read(base), 'old')
+            self.assertEqual(os.listdir(tmp), ['base.json'])
+
     def test_labels_missing_from_maps_are_reported(self):
         maps = R.load_maps(MAPS)
         del maps['gRoute101']
@@ -758,14 +770,15 @@ class FixtureRestockTests(unittest.TestCase):
             build = os.path.join(tmp, 'build')
             maps = os.path.join(build, 'emerald_maps.json')
             base = shutil.copy(fixture, os.path.join(tmp, 'base.json'))
-            preview = os.path.join(tmp, 'out', 'wild_encounters.json')
+            out = os.path.join(tmp, 'out')
 
             def restock_warnings():
+                shutil.rmtree(out, ignore_errors=True)
                 err = io.StringIO()
                 with contextlib.redirect_stderr(err):
-                    run_quietly(['--base', base, '--out-dir', os.path.join(tmp, 'out'), '--maps', maps,
+                    run_quietly(['--base', base, '--out-dir', out, '--maps', maps,
                                  '--pools', os.path.join(build, 'archetype_pools.json')])
-                self.assertTrue(os.path.exists(preview))
+                self.assertTrue(os.path.exists(os.path.join(out, 'wild_encounters.json')))
                 return err.getvalue()
 
             with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
