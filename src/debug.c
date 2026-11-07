@@ -240,7 +240,7 @@ struct DebugMenuListData
     u16 scrollArrowsOffset;
     // Object tile tag the trainer icon loaded itself (TAG_NONE if it was already loaded)
     u16 iconTileTag;
-    // Palette tag the trainer icon loaded itself (TAG_NONE if none, or it was already loaded)
+    // Dynamic palette tag the trainer icon loaded itself (TAG_NONE if none, or it was already loaded)
     u16 iconPaletteTag;
     DebugFunc pendingInputFunc; // input handler that takes over from DebugTask_StartMenuInput
     struct ListMenuItem listItems[DEBUG_MAX_MENU_ITEMS + 1];
@@ -2877,9 +2877,10 @@ static void Debug_CreateTrainerIcon(u8 taskId)
     sDebugMenuListData->iconTileTag = tileTag;
 
     gTasks[taskId].tSpriteId = CreateObjectGraphicsSpriteWithTag(graphicsId, SpriteCallbackDummy, DEBUG_NUMBER_ICON_X, DEBUG_NUMBER_ICON_Y, 4, DEBUG_ICON_TAG);
-    // A palette loads into the first free slot, so a tag there now is one the creator loaded and the icon frees.
-    // A species palette a follower or NPC already loaded leaves that slot empty, so it stays loaded.
-    if (freePaletteSlot != 0xFF)
+    // A dynamic palette loads into the first free slot, so a tag there now is one the creator loaded and the icon
+    // frees. A species palette a follower or NPC already loaded leaves that slot empty, so it stays loaded. With
+    // WE_OW_ENCOUNTERS on and every slot full, the load can evict a generated object, and this misses that palette.
+    if (graphicsInfo->paletteTag == OBJ_EVENT_PAL_TAG_DYNAMIC && freePaletteSlot != 0xFF)
         sDebugMenuListData->iconPaletteTag = GetSpritePaletteTagByPaletteNum(freePaletteSlot);
     if (gTasks[taskId].tSpriteId == MAX_SPRITES)
     {
