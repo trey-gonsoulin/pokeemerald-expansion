@@ -1,7 +1,8 @@
 {
  "provenance": {
-  "ref": "2bf639e5572812a67d2b94903fdcb9d095f5aeb2",
-  "fetched": "2026-11-06",
+  "ref": "e2710d30d14b3f4dc6a02a4a71e8619cd835b7ff",
+  "pokesearch": "2b03433dc44d86af3124214550fdc09885b74c36",
+  "fetched": "2026-11-07",
   "csv_sha256": {
    "encounters": "93ba8853ac871719d230a6406c91f8418754fdc773f2f4b9f476007f743b4955",
    "encounter_slots": "597dc58df2b0a2c64cedce6d6a2a08feeecbd1cf860bdf926cd27f119417d87a",
