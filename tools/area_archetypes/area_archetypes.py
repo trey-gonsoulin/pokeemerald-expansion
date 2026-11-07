@@ -63,6 +63,8 @@ RESTOCK_STAMP = 'restocked_by'
 DEFAULT_POKESEARCH = os.path.expanduser('~/code/pokesearch')
 POKESEARCH_CSV_DIR = os.path.join('data', 'pokeapi', 'csv')
 POKESEARCH_STAMP = 'COMMIT'
+POKESEARCH_HINT = 'run `python -m poke_extract.pokeapi` in pokesearch'
+REFETCH_HINT = f'run `{sys.argv[0]} fetch` first'
 # PokeAPI commit fetch accepts; pokesearch's poke_extract.pokeapi.COMMIT must match.
 POKEAPI_REF = 'e2710d30d14b3f4dc6a02a4a71e8619cd835b7ff'
 # Where fetch records the ref, SHA, date and CSV hashes in the cache, and the key
@@ -130,12 +132,13 @@ def write_atomic(path, data):
             os.remove(tmp)
 
 
-def refetch_hint():
-    return f'run `{sys.argv[0]} fetch` first'
-
-
-def pokesearch_hint():
-    return 'run `python -m poke_extract.pokeapi` in pokesearch'
+def read_or_exit(path, hint):
+    """The bytes of path, exiting with hint if it doesn't exist."""
+    try:
+        with open(path, 'rb') as f:
+            return f.read()
+    except FileNotFoundError:
+        sys.exit(f'missing {path}; {hint}')
 
 
 def parse_csv(name, text, where, hint):
@@ -143,7 +146,7 @@ def parse_csv(name, text, where, hint):
     if not text:
         sys.exit(f'{where} is empty; {hint}')
     reader = csv.DictReader(io.StringIO(text, newline=''))
-    missing = [c for c in CSV_FILES[name] if c not in (reader.fieldnames or ())]
+    missing = [c for c in CSV_FILES[name] if c not in reader.fieldnames]
     if missing:
         sys.exit(f'{where} has no {", ".join(missing)} column; {hint}')
     rows = list(reader)
@@ -161,7 +164,7 @@ def pokesearch_sha(pokesearch):
         sys.exit(f'{pokesearch} is not a git checkout of pokesearch; pass it with --pokesearch')
 
 
-def fetch(cache, pokesearch=DEFAULT_POKESEARCH):
+def fetch(cache, pokesearch):
     """Copy CSV_FILES from pokesearch, then record the ref, SHA, date and hashes.
 
     Every file is read and checked before any is written, so a bad source
@@ -169,22 +172,15 @@ def fetch(cache, pokesearch=DEFAULT_POKESEARCH):
     """
     source = os.path.join(pokesearch, POKESEARCH_CSV_DIR)
     sha = pokesearch_sha(pokesearch)
-    stamp = os.path.join(source, POKESEARCH_STAMP)
-    if not os.path.exists(stamp):
-        sys.exit(f'missing {stamp}; {pokesearch_hint()}')
-    with open(stamp, encoding='utf-8') as f:
-        ref = f.read().strip()
+    ref = read_or_exit(os.path.join(source, POKESEARCH_STAMP), POKESEARCH_HINT).decode('utf-8').strip()
     if ref != POKEAPI_REF:
         sys.exit(f'{source} holds PokeAPI {ref}, not POKEAPI_REF {POKEAPI_REF}; '
                  'to take its data, bump POKEAPI_REF')
     raws = {}
     for name in CSV_FILES:
         path = os.path.join(source, name + '.csv')
-        if not os.path.exists(path):
-            sys.exit(f'missing {path}; {pokesearch_hint()}')
-        with open(path, 'rb') as f:
-            raws[name] = f.read()
-        parse_csv(name, raws[name].decode('utf-8'), path, pokesearch_hint())
+        raws[name] = read_or_exit(path, POKESEARCH_HINT)
+        parse_csv(name, raws[name].decode('utf-8'), path, POKESEARCH_HINT)
     os.makedirs(cache, exist_ok=True)
     for name, raw in raws.items():
         write_atomic(os.path.join(cache, name + '.csv'), raw)
@@ -199,24 +195,19 @@ def fetch(cache, pokesearch=DEFAULT_POKESEARCH):
 def load_provenance(cache):
     """The cache's provenance.json, once every CSV still has the hash fetch recorded."""
     path = os.path.join(cache, PROVENANCE_FILE)
-    if not os.path.exists(path):
-        sys.exit(f'missing {path}, so the cache records no PokeAPI ref; {refetch_hint()}')
+    record = read_or_exit(path, f'the cache records no PokeAPI ref; {REFETCH_HINT}')
     try:
-        with open(path, encoding='utf-8') as f:
-            provenance = json.load(f)
+        provenance = json.loads(record)
         hashes, ref = provenance['csv_sha256'], provenance['ref']
         if not isinstance(hashes, dict):
             raise TypeError
     except (ValueError, KeyError, TypeError):
-        sys.exit(f'{path} is not a fetch record; {refetch_hint()}')
+        sys.exit(f'{path} is not a fetch record; {REFETCH_HINT}')
     for name in CSV_FILES:
         csv_path = os.path.join(cache, name + '.csv')
-        if not os.path.exists(csv_path):
-            sys.exit(f'missing {csv_path}; {refetch_hint()}')
-        with open(csv_path, 'rb') as f:
-            digest = hashlib.sha256(f.read()).hexdigest()
+        digest = hashlib.sha256(read_or_exit(csv_path, REFETCH_HINT)).hexdigest()
         if hashes.get(name) != digest:
-            sys.exit(f'{csv_path} is not the file fetch recorded in {path}; {refetch_hint()}')
+            sys.exit(f'{csv_path} is not the file fetch recorded in {path}; {REFETCH_HINT}')
     if ref != POKEAPI_REF:
         print(f'warning: {cache} holds PokeAPI {ref}, not POKEAPI_REF {POKEAPI_REF}', file=sys.stderr)
     return provenance
@@ -225,10 +216,8 @@ def load_provenance(cache):
 def read_csv(cache, name):
     """The checked rows of a cached CSV (parse_csv)."""
     path = os.path.join(cache, name + '.csv')
-    if not os.path.exists(path):
-        sys.exit(f'missing {path}; {refetch_hint()}')
     with open(path, newline='', encoding='utf-8') as f:
-        return parse_csv(name, f.read(), path, refetch_hint())
+        return parse_csv(name, f.read(), path, REFETCH_HINT)
 
 
 class PokeData:

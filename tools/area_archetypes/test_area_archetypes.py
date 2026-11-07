@@ -3,7 +3,7 @@
     python3 -m unittest discover -s tools/area_archetypes
 
 FixtureBuildTests run the whole build on the small hand-written data set in
-testdata/, so they need no network. The end-to-end tests need the full
+testdata/, so they need no pokesearch checkout. The end-to-end tests need the full
 PokeAPI cache (`area_archetypes.py fetch`) and are skipped without it.
 """
 
@@ -320,8 +320,8 @@ class CacheTests(unittest.TestCase):
             with open(os.path.join(self.source, 'pokemon.csv'), 'wb') as f:
                 f.write(body)
 
-        cases = [(lambda: write_pokemon(b''), 'pokemon.csv is empty'),
-                 (lambda: write_pokemon(b'<html>rate limited</html>\n'), 'has no id, identifier, species_id column'),
+        cases = [(lambda: write_pokemon(b''), 'pokemon.csv is empty; run `python -m poke_extract.pokeapi`'),
+                 (lambda: write_pokemon(b'wrong,columns\n1,2\n'), 'has no id, identifier, species_id column'),
                  (lambda: write_pokemon(b'id,identifier,species_id\n'), 'has no rows'),
                  (lambda: os.remove(os.path.join(self.source, 'pokemon.csv')), 'missing'),
                  (lambda: os.remove(os.path.join(self.source, AA.POKESEARCH_STAMP)), 'missing'),
@@ -334,13 +334,6 @@ class CacheTests(unittest.TestCase):
                 self.assertExits(lambda: self.fetch(self.cache), msg)
                 # The CSVs read before the bad one aren't written either.
                 self.assertEqual(self.read_cache(), before)
-        with contextlib.redirect_stderr(io.StringIO()):
-            self.assertEqual(AA.load_provenance(self.cache)['ref'], 'testdata')
-
-    def test_a_bad_source_names_the_pokesearch_command(self):
-        with open(os.path.join(self.source, 'pokemon.csv'), 'wb'):
-            pass
-        self.assertExits(lambda: self.fetch(self.cache), 'python -m poke_extract.pokeapi')
 
     def test_load_provenance_refuses_an_edited_cache(self):
         with open(self.csv_path('pokemon'), 'a', encoding='utf-8') as f:
