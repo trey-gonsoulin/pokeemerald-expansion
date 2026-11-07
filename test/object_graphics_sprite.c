@@ -1,6 +1,7 @@
 #include "global.h"
 #include "decoration.h"
 #include "event_object_movement.h"
+#include "field_weather.h"
 #include "palette.h"
 #include "sprite.h"
 #include "constants/decorations.h"
@@ -77,6 +78,37 @@ TEST("Object graphics sprite: no palette tag keeps the object's own")
     EXPECT_NE(spriteId, MAX_SPRITES);
     EXPECT_NE(IndexOfSpritePaletteTag(objectTag), 0xFF);
     EXPECT_EQ((u32)gSprites[spriteId].oam.paletteNum, IndexOfSpritePaletteTag(objectTag));
+    DestroySprite(&gSprites[spriteId]);
+}
+
+TEST("Object graphics sprite: with no free palette slot a dynamic palette shares the last slot without a weather update")
+{
+    // Where the weather update would write for a failed load's 0xFF, past the end of the buffer (an address for -Warray-bounds)
+    const u16 *pastBuffer = (const u16 *)((uintptr_t)gPlttBufferFaded + sizeof(u16) * OBJ_PLTT_ID(0xFF));
+    u16 pastBufferBefore[16];
+    u32 i, spriteId, lastSlotTag;
+    u8 savedState = gWeatherPtr->palProcessingState;
+    u8 savedFirstFrame = gWeatherPtr->fadeInFirstFrame;
+    u16 savedColor = gWeatherPtr->fadeDestColor;
+
+    for (i = 0; IndexOfSpritePaletteTag(TAG_NONE) != 0xFF; i++)
+        LoadSpritePaletteWithTag(gPlttBufferUnfaded, TEST_PALETTE_TAG + 1 + i);
+    lastSlotTag = GetSpritePaletteTagByPaletteNum(15);
+    memcpy(pastBufferBefore, pastBuffer, sizeof(pastBufferBefore));
+
+    gWeatherPtr->palProcessingState = WEATHER_PAL_STATE_SCREEN_FADING_IN;
+    gWeatherPtr->fadeInFirstFrame = TRUE;
+    gWeatherPtr->fadeDestColor = ~pastBufferBefore[0];
+    spriteId = CreateObjectGraphicsSprite(OBJ_EVENT_GFX_SPECIES(BULBASAUR), SpriteCallbackDummy, 0, 0, 0);
+    gWeatherPtr->palProcessingState = savedState;
+    gWeatherPtr->fadeInFirstFrame = savedFirstFrame;
+    gWeatherPtr->fadeDestColor = savedColor;
+
+    EXPECT(memcmp(pastBufferBefore, pastBuffer, sizeof(pastBufferBefore)) == 0);
+    EXPECT_NE(spriteId, MAX_SPRITES);
+    EXPECT_EQ((u32)gSprites[spriteId].oam.paletteNum, 15);
+    EXPECT_EQ((u32)GetSpritePaletteTagByPaletteNum(15), lastSlotTag);
+
     DestroySprite(&gSprites[spriteId]);
 }
 
