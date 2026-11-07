@@ -7,8 +7,10 @@ and build cross-generation species pools for each archetype.
     python3 tools/area_archetypes/area_archetypes.py baseline [--force]
     python3 tools/area_archetypes/area_archetypes.py restock [--help]
 
-``fetch`` downloads PokeAPI's CSV dump (encounters for Gens 1-8) into a local
-cache. ``build`` classifies every encounter table, then writes to ``output/``:
+``fetch`` downloads PokeAPI's CSV dump (encounters for Gens 1-8) at commit
+POKEAPI_REF (``--ref``) into a local cache, with its provenance (ref, date,
+sha256s). ``build`` classifies every encounter table, then writes to ``output/``
+(the JSON files with that provenance):
 
 * ``archetype_pools.json``   archetype -> method group -> weighted species pool
 * ``archetype_pools.md``     readable summary of the top of each pool
@@ -28,7 +30,9 @@ Archetype rules live in ``archetypes.py``.
 import argparse
 import collections
 import csv
+import datetime
 import hashlib
+import io
 import json
 import os
 import re
@@ -54,12 +58,31 @@ RESTOCK_SETTINGS = os.path.join(HERE, 'restock_settings.json')
 # Top-level key restock adds to the JSON it writes, so a restocked file is
 # never mistaken for the vanilla baseline.
 RESTOCK_STAMP = 'restocked_by'
-POKEAPI_CSV_URL = 'https://raw.githubusercontent.com/PokeAPI/pokeapi/master/data/v2/csv/'
-CSV_FILES = [
-    'encounters', 'encounter_slots', 'encounter_methods', 'locations', 'location_areas',
-    'regions', 'versions', 'version_groups', 'pokemon', 'pokemon_species',
-    'pokemon_types', 'types',
-]
+# PokeAPI commit fetch downloads from (--ref overrides it): master on
+# 2026-10-24, which reproduced the committed output/.
+POKEAPI_REF = '2bf639e5572812a67d2b94903fdcb9d095f5aeb2'
+POKEAPI_CSV_URL = 'https://raw.githubusercontent.com/PokeAPI/pokeapi/{ref}/data/v2/csv/{name}.csv'
+FETCH_TIMEOUT = 60  # seconds, per request
+# Where fetch records the ref, date and CSV hashes in the cache, and the key
+# build copies them under into archetype_pools.json and emerald_maps.json.
+PROVENANCE_FILE = 'provenance.json'
+PROVENANCE_KEY = 'provenance'
+# Each CSV the build reads -> the columns it reads from it.
+CSV_FILES = {
+    'encounters': ('version_id', 'location_area_id', 'encounter_slot_id', 'pokemon_id',
+                   'min_level', 'max_level'),
+    'encounter_slots': ('id', 'encounter_method_id', 'rarity'),
+    'encounter_methods': ('id', 'identifier'),
+    'locations': ('id', 'identifier', 'region_id'),
+    'location_areas': ('id', 'identifier', 'location_id'),
+    'regions': ('id', 'identifier'),
+    'versions': ('id', 'version_group_id'),
+    'version_groups': ('id', 'identifier', 'generation_id'),
+    'pokemon': ('id', 'identifier', 'species_id'),
+    'pokemon_species': ('id', 'identifier', 'generation_id'),
+    'pokemon_types': ('pokemon_id', 'type_id'),
+    'types': ('id', 'identifier'),
+}
 # Species whose share of a pool is below this are dropped from the output.
 MIN_POOL_SHARE = 0.001
 MD_TOP_N = 15
@@ -93,21 +116,91 @@ def refresh_baseline(src=SRC_WILD, base=VANILLA_WILD, force=False):
     print(f'wrote {base} from {src}')
 
 
-def fetch(cache):
-    os.makedirs(cache, exist_ok=True)
+def write_atomic(path, data):
+    """Write bytes to path through path.tmp, so an interrupted write leaves the old file."""
+    tmp = path + '.tmp'
+    try:
+        with open(tmp, 'wb') as f:
+            f.write(data)
+        os.replace(tmp, path)
+    finally:
+        if os.path.exists(tmp):
+            os.remove(tmp)
+
+
+def refetch_hint():
+    return f'run `{sys.argv[0]} fetch` first'
+
+
+def parse_csv(name, text, where):
+    """The rows of CSV text, refusing an empty one or one without CSV_FILES' columns."""
+    if not text:
+        sys.exit(f'{where} is empty; {refetch_hint()}')
+    reader = csv.DictReader(io.StringIO(text, newline=''))
+    missing = [c for c in CSV_FILES[name] if c not in (reader.fieldnames or ())]
+    if missing:
+        sys.exit(f'{where} has no {", ".join(missing)} column; {refetch_hint()}')
+    rows = list(reader)
+    if not rows:
+        sys.exit(f'{where} has no rows; {refetch_hint()}')
+    return rows
+
+
+def fetch(cache, ref=POKEAPI_REF):
+    """Download CSV_FILES at PokeAPI commit ref, then record the ref, date and hashes.
+
+    Every file is downloaded and checked before any is written, so a failed
+    request leaves the cache as it was.
+    """
+    raws = {}
     for name in CSV_FILES:
-        url = f'{POKEAPI_CSV_URL}{name}.csv'
+        url = POKEAPI_CSV_URL.format(ref=ref, name=name)
         print(f'fetching {url}')
-        with urllib.request.urlopen(url) as resp, open(os.path.join(cache, name + '.csv'), 'wb') as f:
-            f.write(resp.read())
+        with urllib.request.urlopen(url, timeout=FETCH_TIMEOUT) as resp:
+            raws[name] = resp.read()
+        parse_csv(name, raws[name].decode('utf-8'), url)
+    os.makedirs(cache, exist_ok=True)
+    for name, raw in raws.items():
+        write_atomic(os.path.join(cache, name + '.csv'), raw)
+    provenance = {'ref': ref, 'fetched': datetime.datetime.now(datetime.timezone.utc).date().isoformat(),
+                  'csv_sha256': {name: hashlib.sha256(raw).hexdigest() for name, raw in raws.items()}}
+    write_atomic(os.path.join(cache, PROVENANCE_FILE),
+                 (json.dumps(provenance, indent=1) + '\n').encode('utf-8'))
+
+
+def load_provenance(cache):
+    """The cache's provenance.json, once every CSV still has the hash fetch recorded."""
+    path = os.path.join(cache, PROVENANCE_FILE)
+    if not os.path.exists(path):
+        sys.exit(f'missing {path}, so the cache records no PokeAPI ref; {refetch_hint()}')
+    try:
+        with open(path, encoding='utf-8') as f:
+            provenance = json.load(f)
+        hashes, ref = provenance['csv_sha256'], provenance['ref']
+        if not isinstance(hashes, dict):
+            raise TypeError
+    except (ValueError, KeyError, TypeError):
+        sys.exit(f'{path} is not a fetch record; {refetch_hint()}')
+    for name in CSV_FILES:
+        csv_path = os.path.join(cache, name + '.csv')
+        if not os.path.exists(csv_path):
+            sys.exit(f'missing {csv_path}; {refetch_hint()}')
+        with open(csv_path, 'rb') as f:
+            digest = hashlib.sha256(f.read()).hexdigest()
+        if hashes.get(name) != digest:
+            sys.exit(f'{csv_path} is not the file fetch recorded in {path}; {refetch_hint()}')
+    if ref != POKEAPI_REF:
+        print(f'warning: {cache} holds PokeAPI {ref}, not POKEAPI_REF {POKEAPI_REF}', file=sys.stderr)
+    return provenance
 
 
 def read_csv(cache, name):
+    """The checked rows of a cached CSV (parse_csv)."""
     path = os.path.join(cache, name + '.csv')
     if not os.path.exists(path):
-        sys.exit(f'missing {path}; run `{sys.argv[0]} fetch` first')
+        sys.exit(f'missing {path}; {refetch_hint()}')
     with open(path, newline='', encoding='utf-8') as f:
-        return list(csv.DictReader(f))
+        return parse_csv(name, f.read(), path)
 
 
 class PokeData:
@@ -478,7 +571,7 @@ def classify_emerald(data, smap, wild, water_by_loc):
 # Output
 # ---------------------------------------------------------------------------
 
-def write_outputs(out_dir, data, tables, pools, sources, emerald):
+def write_outputs(out_dir, data, tables, pools, sources, emerald, provenance):
     os.makedirs(out_dir, exist_ok=True)
     archs = sorted(pools, key=archetype_order)
     vg_gen = {v['identifier']: int(v['generation_id']) for v in data.version_groups.values()}
@@ -489,6 +582,7 @@ def write_outputs(out_dir, data, tables, pools, sources, emerald):
                   'tools/area_archetypes. share = average fraction of encounters '
                   'across contributing games; games = how many version groups '
                   'have the species in this archetype.'),
+        PROVENANCE_KEY: provenance,
         'stages': {s: top for s, top in A.STAGES},
         'habitats': {'land': A.LAND_HABITATS, 'water': A.WATER_HABITATS},
         'archetypes': {},
@@ -515,7 +609,7 @@ def write_outputs(out_dir, data, tables, pools, sources, emerald):
                         ' '.join(f'{data.pokemon[p]["identifier"]}:{s:.2f}' for p, s in top)])
 
     with open(os.path.join(out_dir, 'emerald_maps.json'), 'w', encoding='utf-8') as f:
-        json.dump(emerald, f, indent=1)
+        json.dump({PROVENANCE_KEY: provenance, **emerald}, f, indent=1)
         f.write('\n')
 
     lines = ['# Area archetype pools', '',
@@ -538,18 +632,20 @@ def write_outputs(out_dir, data, tables, pools, sources, emerald):
 
 
 def build(cache, out_dir, repo, base=VANILLA_WILD, force=False):
+    provenance = load_provenance(cache)
     data = PokeData(cache)
     smap = SpeciesMap(data, load_species_constants(repo))
     tables = build_tables(data)
     classify_tables(data, tables)
     pools, sources = build_pools(data, smap, tables)
     emerald = classify_emerald(data, smap, load_base(base, force)[0], water_habitat_by_location(tables))
-    write_outputs(out_dir, data, tables, pools, sources, emerald)
+    write_outputs(out_dir, data, tables, pools, sources, emerald, provenance)
     counts = collections.Counter(t.archetype for t in tables)
     wild = {pid for t in tables for pid in t.weight}
     unmapped = sorted(data.pokemon[p]['identifier'] for p in wild if p not in smap.to_const)
     print(f'{len(tables)} tables -> {len(pools)} archetypes; '
           f'{len(emerald)} Emerald maps classified; output in {out_dir}')
+    print(f'  PokeAPI ref {provenance["ref"]}, fetched {provenance["fetched"]}')
     if unmapped:
         print(f'  wild forms with no SPECIES_ constant (left out of pools): {", ".join(unmapped)}')
     for arch in sorted(counts, key=archetype_order):
@@ -572,13 +668,16 @@ def main(argv=None):
                    help='vanilla wild_encounters.json that build classifies and baseline writes')
     p.add_argument('--wild', help='file baseline copies from (default src/data/wild_encounters.json)')
     p.add_argument('--force', action='store_true', help='accept a --base or --wild that restock wrote')
+    p.add_argument('--ref', help=f'PokeAPI commit fetch downloads (default {POKEAPI_REF})')
     args = p.parse_args(argv)
     if args.command == 'restock':
         p.error('restock must come first: area_archetypes.py restock [options]')
     if args.wild and args.command != 'baseline':
         p.error('--wild only applies to baseline')
+    if args.ref and args.command != 'fetch':
+        p.error('--ref only applies to fetch')
     if args.command == 'fetch':
-        fetch(args.cache)
+        fetch(args.cache, args.ref or POKEAPI_REF)
     elif args.command == 'baseline':
         refresh_baseline(args.wild or SRC_WILD, args.base, args.force)
     else:
