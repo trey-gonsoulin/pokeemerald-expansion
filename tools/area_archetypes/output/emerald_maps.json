@@ -18,6 +18,7 @@
    "types": "37f039c8d722f47d51ba1c5c5ecf9b7007235b1a9a1af2827645c777b70307c8"
   }
  },
+ "base_sha256": "e0f695fc6cbd6bb8ceddf83c76ad69ca2a4f529d8c95167e228dc5e9812b9f18",
  "gRoute101": {
   "map": "MAP_ROUTE101",
   "location": "hoenn-route-101",

@@ -457,9 +457,10 @@ def first_stamp(path):
 
 
 class OutputFileTests(unittest.TestCase):
-    def test_load_maps_leaves_out_the_provenance(self):
-        self.assertIn(AA.PROVENANCE_KEY, R.load_json(MAPS))
-        self.assertNotIn(AA.PROVENANCE_KEY, R.load_maps(MAPS))
+    def test_load_maps_leaves_out_the_provenance_and_base_hash(self):
+        for key in (AA.PROVENANCE_KEY, AA.BASE_HASH_KEY):
+            self.assertIn(key, R.load_json(MAPS))
+            self.assertNotIn(key, R.load_maps(MAPS))
 
     def test_dump_wild_keeps_the_old_file_on_a_failure(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -502,7 +503,8 @@ class CliTests(unittest.TestCase):
             run_quietly(['--wild', wild, '--out-dir', out, '--write'])
             with self.assertRaises(SystemExit):
                 run_quietly(['--base', wild, '--out-dir', out])
-            forced, _ = run_quietly(['--base', wild, '--out-dir', out, '--force'])
+            with contextlib.redirect_stderr(io.StringIO()):  # this base isn't the one the maps record
+                forced, _ = run_quietly(['--base', wild, '--out-dir', out, '--force'])
             self.assertEqual(forced[AA.RESTOCK_STAMP]['base_restocked_by'], first_stamp(wild))
             with self.assertRaises(SystemExit):
                 AA.refresh_baseline(wild, os.path.join(tmp, 'base.json'))
@@ -548,6 +550,32 @@ class CliTests(unittest.TestCase):
             with contextlib.redirect_stdout(io.StringIO()):
                 AA.main(['baseline', '--wild', WILD, '--base', base])
             self.assertEqual(read(base), read(WILD))
+
+    def test_baseline_exits_cleanly_on_a_bad_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = shutil.copy(WILD, os.path.join(tmp, 'base.json'))
+            missing = os.path.join(tmp, 'missing.json')
+            cases = ((['--wild', missing, '--base', base], f'cannot read {missing}: '),
+                     (['--wild', missing, '--base', os.path.join(tmp, 'new.json')], f'cannot read {missing}: '),
+                     (['--wild', WILD, '--base', os.path.join(tmp, 'no_dir', 'base.json')],
+                      f'cannot write {os.path.join(tmp, "no_dir", "base.json")}: '))
+            for argv, message in cases:
+                with self.subTest(argv=argv), self.assertRaises(SystemExit) as cm:
+                    AA.main(['baseline'] + argv)
+                self.assertIn(message, cm.exception.code)  # a message, so the exit code is 1
+            self.assertEqual(read(base), read(WILD))
+
+    def test_baseline_keeps_the_old_file_on_a_failed_write(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = os.path.join(tmp, 'base.json')
+            with open(base, 'w', encoding='utf-8') as f:
+                f.write('old')
+            with mock.patch.object(AA.os, 'replace', side_effect=OSError(28, 'No space left')), \
+                    self.assertRaises(SystemExit) as cm:
+                AA.main(['baseline', '--wild', WILD, '--base', base])
+            self.assertEqual(cm.exception.code, f'cannot write {base}: No space left')
+            self.assertEqual(read(base), 'old')
+            self.assertEqual(os.listdir(tmp), ['base.json'])
 
     def test_labels_missing_from_maps_are_reported(self):
         maps = R.load_maps(MAPS)
@@ -734,6 +762,39 @@ class FixtureRestockTests(unittest.TestCase):
             self.assertEqual((again, changes_again), (first, changes))
             self.assertEqual(read(wild), written)
             self.assertEqual(read(base), read(fixture))
+
+    def test_warns_when_the_maps_are_not_from_this_base(self):
+        """A warning, not a refusal: restock still writes its preview (#84)."""
+        fixture = os.path.join(TESTDATA, 'wild_encounters.json')
+        with tempfile.TemporaryDirectory() as tmp:
+            build = os.path.join(tmp, 'build')
+            maps = os.path.join(build, 'emerald_maps.json')
+            base = shutil.copy(fixture, os.path.join(tmp, 'base.json'))
+            out = os.path.join(tmp, 'out')
+
+            def restock_warnings():
+                shutil.rmtree(out, ignore_errors=True)
+                err = io.StringIO()
+                with contextlib.redirect_stderr(err):
+                    run_quietly(['--base', base, '--out-dir', out, '--maps', maps,
+                                 '--pools', os.path.join(build, 'archetype_pools.json')])
+                self.assertTrue(os.path.exists(os.path.join(out, 'wild_encounters.json')))
+                return err.getvalue()
+
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                AA.build(os.path.join(TESTDATA, 'pokeapi'), build, AA.REPO, base=fixture)
+            self.assertNotIn('may be stale', restock_warnings())
+            # A baseline refresh without a rebuild.
+            with open(base, 'a', encoding='utf-8') as f:
+                f.write('\n')
+            self.assertIn(f'warning: {maps} was built from another base, so its archetypes may be stale '
+                          f'for {base}', restock_warnings())
+            # A file from before the hash was recorded: no crash, and it can't vouch for the base.
+            old = R.load_json(maps)
+            del old[AA.BASE_HASH_KEY]
+            with open(maps, 'w', encoding='utf-8') as f:
+                json.dump(old, f)
+            self.assertIn(f'warning: {maps} records no base hash', restock_warnings())
 
 
 if __name__ == '__main__':
