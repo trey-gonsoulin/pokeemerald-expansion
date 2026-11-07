@@ -290,11 +290,14 @@ class CacheTests(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()):
             AA.fetch(cache, self.pokesearch, os.path.join(self.tmp, 'out'))
 
-    def write_committed(self, ref, **hashes):
+    def write_pools(self, body):
         out = os.path.join(self.tmp, 'out')
         os.makedirs(out, exist_ok=True)
         with open(os.path.join(out, 'archetype_pools.json'), 'w', encoding='utf-8') as f:
-            json.dump({AA.PROVENANCE_KEY: {'ref': ref, 'csv_sha256': hashes}}, f)
+            f.write(body)
+
+    def write_committed(self, ref, **hashes):
+        self.write_pools(json.dumps({AA.PROVENANCE_KEY: {'ref': ref, 'csv_sha256': hashes}}))
 
     def assertExits(self, fn, *msg):
         with self.assertRaises(SystemExit) as cm:
@@ -394,21 +397,15 @@ class CacheTests(unittest.TestCase):
         self.assertExits(lambda: self.fetch(self.cache), 'bump POKEAPI_REF')
 
     def test_fetch_refuses_outputs_it_cant_read(self):
-        out = os.path.join(self.tmp, 'out')
-        os.makedirs(out)
         before = self.read_cache()
         for body in ('<<<<<<< HEAD\n{}', '[]', '{"provenance": []}', '{"provenance": {"csv_sha256": []}}'):
             with self.subTest(body=body):
-                with open(os.path.join(out, 'archetype_pools.json'), 'w', encoding='utf-8') as f:
-                    f.write(body)
+                self.write_pools(body)
                 self.assertExits(lambda: self.fetch(self.cache), 'archetype_pools.json is not a build record', '--out')
                 self.assertEqual(self.read_cache(), before)
 
     def test_fetch_takes_outputs_with_no_provenance(self):
-        out = os.path.join(self.tmp, 'out')
-        os.makedirs(out)
-        with open(os.path.join(out, 'archetype_pools.json'), 'w', encoding='utf-8') as f:
-            f.write('{}')
+        self.write_pools('{}')
         self.fetch(self.cache)
 
     def test_read_or_exit_covers_every_read_failure(self):
