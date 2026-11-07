@@ -116,39 +116,50 @@ REGIONAL_FORM_RE = re.compile(r'_(' + '|'.join(REGIONAL_FORM_GENS) + r')(?:_|$)'
 def load_base(path, force=False):
     """(wild_encounters.json at path, its SHA-256), refusing one restock wrote unless force."""
     raw = read_or_exit(path, BASE_HINT)
+    return check_base(path, raw, force), hashlib.sha256(raw).hexdigest()
+
+
+def check_base(path, raw, force):
+    """The parsed wild_encounters.json bytes from path, refusing a bad table or one restock wrote unless force."""
     try:
         wild = json.loads(raw)
     except ValueError as e:
         sys.exit(f'{path} is not valid JSON ({e}); {BASE_HINT}')
     if not has_map_headers(wild):
-        sys.exit(f'{path} has no {MAP_HEADERS_LABEL} group; {BASE_HINT}')
+        sys.exit(f'{path} has no usable {MAP_HEADERS_LABEL} group; {BASE_HINT}')
     if RESTOCK_STAMP in wild and not force:
         sys.exit(f'{path} was written by restock ({RESTOCK_STAMP} is set), so it is not a vanilla '
                  f'baseline; pass a vanilla file, or --force to use it anyway')
-    return wild, hashlib.sha256(raw).hexdigest()
+    return wild
 
 
 def has_map_headers(wild):
-    """Whether parsed JSON has the group map_headers finds, with the lists classify_emerald reads."""
+    """Whether parsed JSON has the group map_headers finds, with the entries classify_emerald looks up."""
     groups = wild.get('wild_encounter_groups') if isinstance(wild, dict) else None
     if not isinstance(groups, list) or not all(isinstance(g, dict) and 'label' in g for g in groups):
         return False
-    return any(g['label'] == MAP_HEADERS_LABEL and isinstance(g.get('encounters'), list)
-               and isinstance(g.get('fields'), list) for g in groups)
+    try:
+        group = map_headers(wild)
+    except StopIteration:
+        return False
+    encounters, fields = group.get('encounters'), group.get('fields')
+    return (isinstance(encounters, list) and isinstance(fields, list)
+            and all(isinstance(e, dict) and 'base_label' in e and 'map' in e for e in encounters)
+            and all(isinstance(f, dict) and 'type' in f for f in fields))
 
 
 def refresh_baseline(src=SRC_WILD, base=VANILLA_WILD, force=False, out=DEFAULT_OUT):
     """Copy src over the vanilla baseline, unless restock wrote src, then warn if out's maps need a rebuild."""
-    _, base_sha256 = load_base(src, force)
+    raw = read_or_exit(src, BASE_HINT)
+    check_base(src, raw, force)
     if os.path.exists(base) and os.path.samefile(src, base):
         sys.exit(f'{src} is already the baseline')
-    raw = read_or_exit(src, BASE_HINT)
     try:
         write_atomic(base, raw)
     except OSError as e:
         sys.exit(f'cannot write {base}: {e.strerror}')
     print(f'wrote {base} from {src}')
-    warn_if_maps_stale(os.path.join(out, 'emerald_maps.json'), base, base_sha256)
+    warn_if_maps_stale(os.path.join(out, 'emerald_maps.json'), base, hashlib.sha256(raw).hexdigest())
 
 
 def warn_if_maps_stale(maps_path, base_path, base_sha256):
@@ -247,9 +258,10 @@ def committed_hashes(out, ref):
     except ValueError:
         doc = None
     provenance = doc.get(PROVENANCE_KEY, {}) if isinstance(doc, dict) else None
-    if not isinstance(provenance, dict) or not isinstance(provenance.get('csv_sha256', {}), dict):
+    hashes = provenance.get('csv_sha256', {}) if isinstance(provenance, dict) else None
+    if not isinstance(hashes, dict):
         sys.exit(f'{path} is not a build record; {fix}')
-    return provenance.get('csv_sha256', {}) if provenance.get('ref') == ref else {}
+    return hashes if provenance.get('ref') == ref else {}
 
 
 def fetch(cache, pokesearch, out):

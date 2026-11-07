@@ -593,9 +593,15 @@ class CliTests(unittest.TestCase):
                          groups % '[{"label": "gWildMonHeaders", "fields": []}]',
                          groups % '[{"label": "gWildMonHeaders", "encounters": {}, "fields": []}]',
                          groups % '[{"label": "gWildMonHeaders", "encounters": [], "fields": {}}]',
-                         groups % '[{"label": "gWildMonHeaders", "encounters": [], "fields": []}, {}]')
+                         groups % '[{"label": "gWildMonHeaders", "encounters": [], "fields": []}, {}]',
+                         groups % '[{"label": "gWildMonHeaders", "encounters": [{}], "fields": []}]',
+                         groups % '[{"label": "gWildMonHeaders", "encounters": [{"base_label": "a"}], "fields": []}]',
+                         groups % '[{"label": "gWildMonHeaders", "encounters": [], "fields": [{}]}]',
+                         # map_headers takes the first of a repeated label, so a good second one doesn't help.
+                         groups % ('[{"label": "gWildMonHeaders"},'
+                                   ' {"label": "gWildMonHeaders", "encounters": [], "fields": []}]'))
             for content in not_json + not_table:
-                expected = 'is not valid JSON' if content in not_json else 'has no gWildMonHeaders group'
+                expected = 'is not valid JSON' if content in not_json else 'has no usable gWildMonHeaders group'
                 with self.subTest(content=content):
                     with open(bad, 'wb') as f:
                         f.write(content if isinstance(content, bytes) else content.encode())

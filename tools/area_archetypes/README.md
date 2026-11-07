@@ -211,9 +211,9 @@ python3 tools/area_archetypes/area_archetypes.py baseline --wild /tmp/wild_encou
 ```
 
 `baseline` stops with a message, and a nonzero exit, when the `--wild` file can't
-be read, isn't valid JSON or has no `gWildMonHeaders` group with its `encounters`
-and `fields`, or when `--base` can't be written (its directory doesn't exist,
-say). The old baseline stays as it was if it stops. `build` and `restock` refuse
+be read, isn't valid JSON or has no usable `gWildMonHeaders` group (its
+`encounters` and `fields`, each entry with the keys `build` looks up), or when
+`--base` can't be written (its directory doesn't exist, say). The old baseline stays as it was if it stops. `build` and `restock` refuse
 such a `--base` the same way. After a refresh, `baseline` gives the same warning
 as `restock` when `emerald_maps.json` in `--out` doesn't record the new base, and
 names the `build` to run.
