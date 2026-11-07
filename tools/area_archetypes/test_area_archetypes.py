@@ -14,9 +14,9 @@ import io
 import json
 import os
 import shutil
+import subprocess
 import tempfile
 import unittest
-from unittest import mock
 
 import archetypes as A
 import area_archetypes as AA
@@ -246,34 +246,46 @@ class FixtureBuildTests(unittest.TestCase):
 
 
 class CacheTests(unittest.TestCase):
-    """fetch writes the cache atomically and records its provenance; build refuses a bad cache (#52)."""
+    """fetch copies pokesearch's CSVs atomically and records their provenance; build refuses a bad cache (#52)."""
 
     def setUp(self):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         self.tmp = tmp.name
         self.cache = shutil.copytree(os.path.join(TESTDATA, 'pokeapi'), os.path.join(self.tmp, 'cache'))
+        self.pokesearch = os.path.join(self.tmp, 'pokesearch')
+        self.make_pokesearch()
+
+    def make_pokesearch(self):
+        """A git checkout holding the fixture CSVs at POKEAPI_REF, in place of any before it."""
+        shutil.rmtree(self.pokesearch, ignore_errors=True)
+        self.source = shutil.copytree(os.path.join(TESTDATA, 'pokeapi'),
+                                      os.path.join(self.pokesearch, AA.POKESEARCH_CSV_DIR))
+        self.write_stamp(AA.POKEAPI_REF)
+        git = ['git', '-C', self.pokesearch]
+        subprocess.run(git + ['init', '-q'], check=True)
+        subprocess.run(git + ['-c', 'user.name=test', '-c', 'user.email=test@example.com',
+                              'commit', '-q', '--allow-empty', '-m', 'test'], check=True)
+        self.sha = subprocess.run(git + ['rev-parse', 'HEAD'], check=True,
+                                  capture_output=True, text=True).stdout.strip()
+
+    def write_stamp(self, ref):
+        with open(os.path.join(self.source, AA.POKESEARCH_STAMP), 'w', encoding='utf-8') as f:
+            f.write(ref + '\n')
+
+    def read_cache(self):
+        files = {}
+        for name in os.listdir(self.cache):
+            with open(os.path.join(self.cache, name), 'rb') as f:
+                files[name] = f.read()
+        return files
 
     def csv_path(self, name):
         return os.path.join(self.cache, name + '.csv')
 
-    def fake_urlopen(self, fail_on=None):
-        """An urlopen that serves the fixture CSVs and records its calls."""
-        calls = []
-
-        def urlopen(url, timeout=None):
-            calls.append((url, timeout))
-            name = url.rsplit('/', 1)[1].removesuffix('.csv')
-            if name == fail_on:
-                raise OSError('connection reset')
-            with open(os.path.join(TESTDATA, 'pokeapi', name + '.csv'), 'rb') as f:
-                return io.BytesIO(f.read())
-        return urlopen, calls
-
-    def fetch(self, cache, urlopen, ref=AA.POKEAPI_REF):
-        with mock.patch.object(AA.urllib.request, 'urlopen', urlopen), \
-                contextlib.redirect_stdout(io.StringIO()):
-            AA.fetch(cache, ref)
+    def fetch(self, cache):
+        with contextlib.redirect_stdout(io.StringIO()):
+            AA.fetch(cache, self.pokesearch)
 
     def assertExits(self, fn, *msg):
         with self.assertRaises(SystemExit) as cm:
@@ -281,41 +293,54 @@ class CacheTests(unittest.TestCase):
         for m in msg:
             self.assertIn(m, str(cm.exception))
 
-    def test_fetch_pins_the_ref_and_records_provenance(self):
+    def test_fetch_copies_the_csvs_and_records_provenance(self):
         cache = os.path.join(self.tmp, 'fresh')
-        urlopen, calls = self.fake_urlopen()
-        self.fetch(cache, urlopen, 'abc123')
-        self.assertEqual(calls, [(AA.POKEAPI_CSV_URL.format(ref='abc123', name=n), AA.FETCH_TIMEOUT)
-                                 for n in AA.CSV_FILES])
-        self.assertIn('/PokeAPI/pokeapi/abc123/data/v2/csv/encounters.csv', calls[0][0])
+        # A table the build doesn't read, as pokesearch has, isn't copied.
+        with open(os.path.join(self.source, 'moves.csv'), 'w', encoding='utf-8') as f:
+            f.write('id\n1\n')
+        self.fetch(cache)
         self.assertEqual(sorted(os.listdir(cache)),
                          sorted([n + '.csv' for n in AA.CSV_FILES] + [AA.PROVENANCE_FILE]))
-        with contextlib.redirect_stderr(io.StringIO()):
-            provenance = AA.load_provenance(cache)
-        self.assertEqual(provenance['ref'], 'abc123')
+        provenance = AA.load_provenance(cache)
+        self.assertEqual(provenance['ref'], AA.POKEAPI_REF)
+        self.assertEqual(provenance['pokesearch'], self.sha)
         self.assertRegex(provenance['fetched'], r'^\d{4}-\d\d-\d\d$')
         # The fixture's own record has the same hashes: they are the same files.
         with open(os.path.join(self.cache, AA.PROVENANCE_FILE), encoding='utf-8') as f:
             self.assertEqual(provenance['csv_sha256'], json.load(f)['csv_sha256'])
 
-    def test_interrupted_fetch_keeps_the_old_cache(self):
-        before = {n: open(os.path.join(self.cache, n), 'rb').read() for n in os.listdir(self.cache)}
-        urlopen, calls = self.fake_urlopen(fail_on='pokemon')
-        with self.assertRaises(OSError):
-            self.fetch(self.cache, urlopen, 'abc123')
-        self.assertIn('pokemon', calls[-1][0])
-        # Nothing is written until every file is in, so the old cache still checks out.
-        self.assertEqual({n: open(os.path.join(self.cache, n), 'rb').read() for n in os.listdir(self.cache)},
-                         before)
+    def test_fetch_refuses_another_pokeapi_ref(self):
+        before = self.read_cache()
+        self.write_stamp('abc123')
+        self.assertExits(lambda: self.fetch(self.cache), 'holds PokeAPI abc123', 'bump POKEAPI_REF')
+        self.assertEqual(self.read_cache(), before)
+
+    def test_fetch_refuses_a_bad_source_and_keeps_the_old_cache(self):
+        def write_pokemon(body):
+            with open(os.path.join(self.source, 'pokemon.csv'), 'wb') as f:
+                f.write(body)
+
+        cases = [(lambda: write_pokemon(b''), 'pokemon.csv is empty'),
+                 (lambda: write_pokemon(b'<html>rate limited</html>\n'), 'has no id, identifier, species_id column'),
+                 (lambda: write_pokemon(b'id,identifier,species_id\n'), 'has no rows'),
+                 (lambda: os.remove(os.path.join(self.source, 'pokemon.csv')), 'missing'),
+                 (lambda: os.remove(os.path.join(self.source, AA.POKESEARCH_STAMP)), 'missing'),
+                 (lambda: shutil.rmtree(os.path.join(self.pokesearch, '.git')), 'not a git checkout')]
+        before = self.read_cache()
+        for spoil, msg in cases:
+            with self.subTest(msg=msg):
+                self.make_pokesearch()
+                spoil()
+                self.assertExits(lambda: self.fetch(self.cache), msg)
+                # The CSVs read before the bad one aren't written either.
+                self.assertEqual(self.read_cache(), before)
         with contextlib.redirect_stderr(io.StringIO()):
             self.assertEqual(AA.load_provenance(self.cache)['ref'], 'testdata')
 
-    def test_fetch_refuses_a_bad_response(self):
-        for body, msg in [(b'', 'is empty'), (b'<html>rate limited</html>\n', 'column')]:
-            with self.subTest(msg=msg):
-                self.assertExits(lambda: self.fetch(self.cache, lambda url, timeout=None: io.BytesIO(body)),
-                                 'encounters.csv', msg)
-                self.assertGreater(os.path.getsize(self.csv_path('encounters')), 0)
+    def test_a_bad_source_names_the_pokesearch_command(self):
+        with open(os.path.join(self.source, 'pokemon.csv'), 'wb'):
+            pass
+        self.assertExits(lambda: self.fetch(self.cache), 'python -m poke_extract.pokeapi')
 
     def test_load_provenance_refuses_an_edited_cache(self):
         with open(self.csv_path('pokemon'), 'a', encoding='utf-8') as f:
@@ -360,10 +385,10 @@ class CacheTests(unittest.TestCase):
         self.assertExits(lambda: self.build(out), 'encounters.csv is empty')
         self.assertFalse(os.path.exists(out))
 
-    def test_ref_only_applies_to_fetch(self):
+    def test_pokesearch_only_applies_to_fetch(self):
         with contextlib.redirect_stderr(io.StringIO()) as err, self.assertRaises(SystemExit):
-            AA.main(['build', '--ref', 'abc123', '--cache', self.cache, '--out', self.tmp])
-        self.assertIn('--ref only applies to fetch', err.getvalue())
+            AA.main(['build', '--pokesearch', self.pokesearch, '--cache', self.cache, '--out', self.tmp])
+        self.assertIn('--pokesearch only applies to fetch', err.getvalue())
 
 
 def map_labels(path):
@@ -395,6 +420,7 @@ class CommittedOutputTests(unittest.TestCase):
         self.assertEqual(recorded[0], recorded[1])
         self.assertEqual(recorded[0]['ref'], AA.POKEAPI_REF,
                          'output/ was built from another PokeAPI ref than POKEAPI_REF; fetch, then build')
+        self.assertRegex(recorded[0]['pokesearch'], r'^[0-9a-f]{40}$')
         self.assertEqual(set(recorded[0]['csv_sha256']), set(AA.CSV_FILES))
 
 

@@ -1,5 +1,6 @@
 {
  "ref": "testdata",
+ "pokesearch": "testdata",
  "fetched": "2026-10-24",
  "csv_sha256": {
   "encounters": "54f0ea08225cea56fd0a21c6658d8488d2215e3a052480c1a5e14c7ba1ff8f4d",
