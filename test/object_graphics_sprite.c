@@ -79,3 +79,39 @@ TEST("Object graphics sprite: no palette tag keeps the object's own")
     EXPECT_EQ((u32)gSprites[spriteId].oam.paletteNum, IndexOfSpritePaletteTag(objectTag));
     DestroySprite(&gSprites[spriteId]);
 }
+
+// Debug_CreateTrainerIcon (src/debug.c) relies on the next two to free only a species palette the icon loaded.
+TEST("Object graphics sprite: a dynamic palette loads into the first free slot under its species tag")
+{
+    u32 freeSlot = IndexOfSpritePaletteTag(TAG_NONE);
+    u32 spriteId = CreateObjectGraphicsSpriteWithTag(OBJ_EVENT_GFX_SPECIES(BULBASAUR), SpriteCallbackDummy, 0, 0, 0, TEST_PALETTE_TAG);
+    u32 speciesTag = GetSpritePaletteTagByPaletteNum(freeSlot);
+
+    EXPECT_NE(spriteId, MAX_SPRITES);
+    EXPECT_EQ((u32)gSprites[spriteId].oam.paletteNum, freeSlot);
+    EXPECT_NE(speciesTag, TAG_NONE);
+    EXPECT_NE(speciesTag, TEST_PALETTE_TAG);
+    EXPECT_EQ(IndexOfSpritePaletteTag(TEST_PALETTE_TAG), 0xFF);
+
+    FreeSpritePaletteByTag(speciesTag);
+    DestroySprite(&gSprites[spriteId]);
+    EXPECT_EQ(IndexOfSpritePaletteTag(speciesTag), 0xFF);
+}
+
+TEST("Object graphics sprite: an already loaded dynamic palette leaves the first free slot empty")
+{
+    u32 followerSpriteId = CreateObjectGraphicsSprite(OBJ_EVENT_GFX_SPECIES(BULBASAUR), SpriteCallbackDummy, 0, 0, 0);
+    u32 followerSlot, freeSlot, spriteId;
+
+    ASSUME(followerSpriteId != MAX_SPRITES);
+    followerSlot = gSprites[followerSpriteId].oam.paletteNum;
+    freeSlot = IndexOfSpritePaletteTag(TAG_NONE);
+
+    spriteId = CreateObjectGraphicsSpriteWithTag(OBJ_EVENT_GFX_SPECIES(BULBASAUR), SpriteCallbackDummy, 0, 0, 0, TEST_PALETTE_TAG);
+    EXPECT_NE(spriteId, MAX_SPRITES);
+    EXPECT_EQ((u32)gSprites[spriteId].oam.paletteNum, followerSlot);
+    EXPECT_EQ(GetSpritePaletteTagByPaletteNum(freeSlot), TAG_NONE);
+
+    DestroySprite(&gSprites[spriteId]);
+    DestroySprite(&gSprites[followerSpriteId]);
+}
