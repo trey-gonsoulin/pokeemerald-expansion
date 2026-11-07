@@ -240,6 +240,8 @@ struct DebugMenuListData
     u16 scrollArrowsOffset;
     // Object tile tag the trainer icon loaded itself (TAG_NONE if it was already loaded)
     u16 iconTileTag;
+    // Dynamic palette tag the trainer icon loaded itself (TAG_NONE if none, or it was already loaded)
+    u16 iconPaletteTag;
     DebugFunc pendingInputFunc; // input handler that takes over from DebugTask_StartMenuInput
     struct ListMenuItem listItems[DEBUG_MAX_MENU_ITEMS + 1];
     u8 itemNames[DEBUG_MAX_MENU_ITEMS + 1][32]; // room for a submenu label's font codes and arrow (#88)
@@ -921,6 +923,7 @@ void Debug_ShowMainMenu(void)
     sDebugMenuListData = AllocZeroed(sizeof(*sDebugMenuListData));
     sDebugMenuListData->menuType = DEBUG_BASIC_MENU;
     sDebugMenuListData->iconTileTag = TAG_NONE;
+    sDebugMenuListData->iconPaletteTag = TAG_NONE;
     sDebugMenuListData->positions[0] = sDebugMainMenuPosition;
     // AllocZeroed leaves the rematch id at 0, a valid gRematchTable index
     Debug_Trainers_ResetTrainersData();
@@ -1181,12 +1184,15 @@ static void DestroyDebugIcon(u8 taskId)
         if (gTasks[taskId].tSpriteId < MAX_SPRITES)
             DestroySprite(&gSprites[gTasks[taskId].tSpriteId]);
         gTasks[taskId].tSpriteId = SPRITE_NONE;
-        // Native party-menu tasks run without sDebugMenuListData. Only the trainer icon, a menu one, sets this tag.
+        // Native party-menu tasks run without sDebugMenuListData. Only the trainer icon, a menu one, sets these tags.
         if (sDebugMenuListData != NULL)
         {
             if (sDebugMenuListData->iconTileTag != TAG_NONE)
                 FreeSpriteTilesByTag(sDebugMenuListData->iconTileTag);
             sDebugMenuListData->iconTileTag = TAG_NONE;
+            if (sDebugMenuListData->iconPaletteTag != TAG_NONE)
+                FreeSpritePaletteByTag(sDebugMenuListData->iconPaletteTag);
+            sDebugMenuListData->iconPaletteTag = TAG_NONE;
         }
     }
 }
@@ -2856,11 +2862,12 @@ static void Debug_CreateTrainerIcon(u8 taskId)
     u32 graphicsId = gMapHeader.events->objectEvents[gTasks[taskId].tInput - 1].graphicsId;
     const struct ObjectEventGraphicsInfo *graphicsInfo = GetObjectEventGraphicsInfo(graphicsId);
     u32 tileTag = TAG_NONE;
+    u32 freePaletteSlot = IndexOfSpritePaletteTag(TAG_NONE);
 
     // CreateObjectGraphicsSpriteWithTag loads the palette under DEBUG_ICON_TAG (a dynamic follower one stays
-    // under its species tag and isn't freed, as before), but a compressed sheet under the object's own tag,
-    // which NPCs on the map may share. Note whether it is about to load that sheet, so it gets freed with
-    // the icon only then. The sheet tag follows LoadSheetGraphicsInfo.
+    // under its species tag, see below), but a compressed sheet under the object's own tag, which NPCs on the
+    // map may share. Note whether it is about to load that sheet, so it gets freed with the icon only then.
+    // The sheet tag follows LoadSheetGraphicsInfo.
     if (OW_GFX_COMPRESS && graphicsInfo->compressed)
     {
         tileTag = graphicsInfo->tileTag != TAG_NONE ? graphicsInfo->tileTag : COMP_OW_TILE_TAG_BASE + graphicsId;
@@ -2870,6 +2877,11 @@ static void Debug_CreateTrainerIcon(u8 taskId)
     sDebugMenuListData->iconTileTag = tileTag;
 
     gTasks[taskId].tSpriteId = CreateObjectGraphicsSpriteWithTag(graphicsId, SpriteCallbackDummy, DEBUG_NUMBER_ICON_X, DEBUG_NUMBER_ICON_Y, 4, DEBUG_ICON_TAG);
+    // A dynamic palette loads into the first free slot, so a tag there now is one the creator loaded and the icon
+    // frees. A species palette a follower or NPC already loaded leaves that slot empty, so it stays loaded. With
+    // WE_OW_ENCOUNTERS on and every slot full, the load can evict a generated object, and this misses that palette.
+    if (graphicsInfo->paletteTag == OBJ_EVENT_PAL_TAG_DYNAMIC && freePaletteSlot != 0xFF)
+        sDebugMenuListData->iconPaletteTag = GetSpritePaletteTagByPaletteNum(freePaletteSlot);
     if (gTasks[taskId].tSpriteId == MAX_SPRITES)
     {
         // Frees what the failed creator loaded and leaves tSpriteId = SPRITE_NONE
