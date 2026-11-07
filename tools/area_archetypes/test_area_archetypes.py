@@ -333,6 +333,7 @@ class CacheTests(unittest.TestCase):
                  (lambda: write_pokemon(b'wrong,columns\n1,2\n'), 'has no id, identifier, species_id column'),
                  (lambda: write_pokemon(b'id,identifier,species_id\n'), 'has no rows'),
                  (lambda: write_pokemon(b'id,identifier,species_id\n1,ivy\n'), 'line 2 is cut short'),
+                 (lambda: write_pokemon(b'id,identifier,species_id\n1,,1\n'), 'line 2 has a blank identifier'),
                  (lambda: write_pokemon(b'id,identifier,species_id\n1,\xff,1\n'), 'not a readable CSV'),
                  (lambda: os.remove(os.path.join(self.source, 'pokemon.csv')), 'No such file'),
                  (lambda: os.remove(os.path.join(self.source, AA.POKESEARCH_STAMP)), 'No such file'),
@@ -370,6 +371,49 @@ class CacheTests(unittest.TestCase):
     def test_fetch_refuses_a_dir_inside_another_checkout(self):
         self.assertExits(lambda: AA.pokesearch_sha(os.path.join(self.pokesearch, 'data')), 'not a git checkout')
 
+    def test_pokesearch_sha_ignores_the_callers_git_env(self):
+        with mock.patch.dict(os.environ, {'GIT_DIR': os.path.join(self.tmp, 'no_repo')}):
+            self.assertEqual(AA.pokesearch_sha(self.pokesearch), self.sha)
+
+    def test_pokesearch_sha_says_when_git_cant_run(self):
+        with mock.patch.object(AA.subprocess, 'run', side_effect=FileNotFoundError(2, 'No such file or directory')):
+            self.assertExits(lambda: AA.pokesearch_sha(self.pokesearch), 'cannot run git: No such file', 'PATH')
+
+    def test_pokesearch_sha_takes_another_spelling_of_the_path(self):
+        link = os.path.join(self.tmp, 'link')
+        os.symlink(self.pokesearch, link)
+        self.assertEqual(AA.pokesearch_sha(link), self.sha)
+        variant = os.path.join(self.tmp, 'POKESEARCH')
+        if not os.path.exists(variant):
+            self.skipTest('case-sensitive file system')
+        self.assertEqual(AA.pokesearch_sha(variant), self.sha)
+
+    def test_fetch_reports_an_unreadable_stamp_as_another_ref(self):
+        with open(os.path.join(self.source, AA.POKESEARCH_STAMP), 'wb') as f:
+            f.write(b'\xff\n')
+        self.assertExits(lambda: self.fetch(self.cache), 'bump POKEAPI_REF')
+
+    def test_fetch_refuses_outputs_it_cant_read(self):
+        out = os.path.join(self.tmp, 'out')
+        os.makedirs(out)
+        before = self.read_cache()
+        for body in ('<<<<<<< HEAD\n{}', '[]', '{"provenance": []}', '{"provenance": {"csv_sha256": []}}'):
+            with self.subTest(body=body):
+                with open(os.path.join(out, 'archetype_pools.json'), 'w', encoding='utf-8') as f:
+                    f.write(body)
+                self.assertExits(lambda: self.fetch(self.cache), 'archetype_pools.json is not a build record', '--out')
+                self.assertEqual(self.read_cache(), before)
+
+    def test_fetch_takes_outputs_with_no_provenance(self):
+        out = os.path.join(self.tmp, 'out')
+        os.makedirs(out)
+        with open(os.path.join(out, 'archetype_pools.json'), 'w', encoding='utf-8') as f:
+            f.write('{}')
+        self.fetch(self.cache)
+
+    def test_read_or_exit_covers_every_read_failure(self):
+        self.assertExits(lambda: AA.read_or_exit(self.tmp, 'the hint'), f'cannot read {self.tmp}: ', 'the hint')
+
     def test_write_atomic_keeps_the_old_file_on_a_failure(self):
         path = os.path.join(self.tmp, 'file')
         AA.write_atomic(path, b'old')
@@ -405,13 +449,30 @@ class CacheTests(unittest.TestCase):
         for content, msg in [('', 'is empty'),
                              ('id,identifier\n1,red\n', 'has no species_id column'),
                              ('id,identifier,species_id\n', 'has no rows'),
-                             ('id,identifier,species_id\n1,ivy\n', 'line 2 is cut short')]:
+                             ('id,identifier,species_id\n1,ivy\n', 'line 2 is cut short'),
+                             # height isn't read, but a row without it is still cut short.
+                             ('id,identifier,species_id,height\n1,ivy,1\n', 'line 2 is cut short'),
+                             ('id,identifier,species_id\n1,,1\n', 'line 2 has a blank identifier'),
+                             ('id,identifier,species_id\n1,ivy,1\n2,oak,\n', 'line 3 has a blank species_id'),
+                             (f'id,identifier,species_id\n1,{"x" * (csv.field_size_limit() + 1)},1\n',
+                              'not a readable CSV')]:
             with self.subTest(msg=msg):
                 with open(self.csv_path('pokemon'), 'w', encoding='utf-8') as f:
                     f.write(content)
                 self.assertExits(lambda: AA.read_csv(self.cache, 'pokemon'), 'pokemon.csv', msg)
         os.remove(self.csv_path('pokemon'))
         self.assertExits(lambda: AA.read_csv(self.cache, 'pokemon'), 'No such file', 'fetch` first')
+
+    def test_read_csv_takes_the_blanks_real_data_has(self):
+        # PokeAPI leaves these blank, and a column the build doesn't read may be blank anywhere.
+        for name, content in [('locations', 'id,identifier,region_id\n1,ivy,\n'),
+                              ('location_areas', 'id,identifier,location_id\n1,,1\n'),
+                              ('encounter_slots', 'id,encounter_method_id,rarity\n1,1,\n'),
+                              ('pokemon', 'id,identifier,species_id,height\n1,ivy,1,\n')]:
+            with self.subTest(name=name):
+                with open(self.csv_path(name), 'w', encoding='utf-8') as f:
+                    f.write(content)
+                self.assertEqual(len(AA.read_csv(self.cache, name)), 1)
 
     def build(self, out):
         with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
