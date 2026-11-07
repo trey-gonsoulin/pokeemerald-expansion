@@ -238,6 +238,7 @@ class FixtureBuildTests(unittest.TestCase):
         self.assertEqual(provenance['ref'], 'testdata')
         self.assertEqual(doc[AA.PROVENANCE_KEY], provenance)
         self.assertEqual(maps.pop(AA.PROVENANCE_KEY), provenance)
+        self.assertEqual(maps.pop(AA.BASE_HASH_KEY), AA.load_base(os.path.join(TESTDATA, 'wild_encounters.json'))[1])
         self.assertEqual(maps, self.emerald)
         self.assertIn(f'PokeAPI ref testdata, fetched {provenance["fetched"]}', self.log.getvalue())
         rows = list(csv.DictReader(io.StringIO(self.read_output('area_classification.csv'))))
@@ -455,7 +456,14 @@ class CommittedOutputTests(unittest.TestCase):
         with open(os.path.join(AA.DEFAULT_OUT, 'emerald_maps.json'), encoding='utf-8') as f:
             emerald = json.load(f)
         emerald.pop(AA.PROVENANCE_KEY)
+        emerald.pop(AA.BASE_HASH_KEY)
         self.assertEqual(sorted(emerald), map_labels(AA.VANILLA_WILD),
+                         'output/emerald_maps.json is stale; run area_archetypes.py build')
+
+    def test_emerald_maps_records_the_snapshot_hash(self):
+        with open(os.path.join(AA.DEFAULT_OUT, 'emerald_maps.json'), encoding='utf-8') as f:
+            recorded = json.load(f)[AA.BASE_HASH_KEY]
+        self.assertEqual(recorded, AA.load_base(AA.VANILLA_WILD)[1],
                          'output/emerald_maps.json is stale; run area_archetypes.py build')
 
     def test_outputs_record_the_pinned_ref(self):
