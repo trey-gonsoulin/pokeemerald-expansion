@@ -1452,9 +1452,9 @@ static const DebugNameFunc sDebugStepNameFuncs[] =
     [DEBUG_STEP_NAMES_MOVES] = Debug_GetMoveStepName,
     [DEBUG_STEP_NAMES_FLAGS] = Debug_GetFlagDisplayName,
     [DEBUG_STEP_NAMES_VARS] = Debug_GetVarDisplayName,
-    [DEBUG_STEP_NAMES_TRAINERS] = Debug_GetTrainerDisplayName,
-    [DEBUG_STEP_NAMES_PARTNERS] = Debug_GetPartnerDisplayName,
-    [DEBUG_STEP_NAMES_DECORATIONS] = Debug_GetDecorationName,
+    [DEBUG_STEP_NAMES_TRAINERS] = Debug_GetTrainerStepName,
+    [DEBUG_STEP_NAMES_PARTNERS] = Debug_GetPartnerStepName,
+    [DEBUG_STEP_NAMES_DECORATIONS] = Debug_GetDecorationStepName,
 };
 
 // Name order is only for the overworld menu, which holds its state; the release ROM's native steps have no names
@@ -2985,34 +2985,41 @@ static const struct DebugSelection sTrainerFromMapSelection = {
     .maxSteps = 1,
 };
 
-// Rematches share a class and name, so the party size tells them apart. ID 0 is the "no trainer"
-// choice, and has nothing to look up: TRAINER_PARTNER(PARTNER_NONE) isn't a valid trainer ID.
-static void DebugSelectionStep_PrintTrainer(u8 taskId, u8 digits, u32 trainerId)
+// The name first, since name order goes by it, then the class and party size that help tell the
+// trainers who share a name apart. name is the step's DebugNameFunc's, NULL without a party: value 0
+// is the "no trainer" choice, and trainerId isn't valid for PARTNER_NONE.
+static void DebugSelectionStep_PrintTrainer(u8 taskId, u8 digits, const u8 *name, u32 trainerId)
 {
     Debug_InputToDecimalString(gStringVar3, taskId, digits);
-    if (gTasks[taskId].tInput == 0)
+    if (name == NULL)
     {
         StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("ID: {STR_VAR_3}"));
-        StringCopy(gStringVar2, COMPOUND_STRING("None"));
+        if (DEBUG_TASK_INPUT(taskId) == 0)
+            StringCopy(gStringVar2, COMPOUND_STRING("None"));
+        else
+            StringCopy(gStringVar2, COMPOUND_STRING("{COLOR RED}{SHADOW LIGHT_RED}Not enabled"));
     }
     else
     {
         ConvertIntToDecimalStringN(gStringVar2, GetTrainerPartySizeFromId(trainerId), STR_CONV_MODE_LEFT_ALIGN, 1);
         StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("ID: {STR_VAR_3}  Party: {STR_VAR_2}"));
-        if (!Debug_CopyTrainerName(gStringVar2, trainerId))
-            StringCopy(gStringVar2, COMPOUND_STRING("{COLOR RED}{SHADOW LIGHT_RED}Not enabled"));
+        u8 *end = StringCopy(gStringVar2, name);
+        end = StringCopy(end, COMPOUND_STRING("  "));
+        StringCopy(end, GetTrainerClassNameFromId(trainerId));
     }
     DebugNativeStep_PrintNamedSelection(taskId);
 }
 
 static void DebugSelectionStep_UpdateTrainer(u8 taskId, u8 digits, u32 min, u32 max)
 {
-    DebugSelectionStep_PrintTrainer(taskId, digits, gTasks[taskId].tInput);
+    u32 trainerId = DEBUG_TASK_INPUT(taskId);
+    DebugSelectionStep_PrintTrainer(taskId, digits, Debug_GetTrainerStepName(NULL, trainerId), trainerId);
 }
 
 static void DebugSelectionStep_UpdatePartner(u8 taskId, u8 digits, u32 min, u32 max)
 {
-    DebugSelectionStep_PrintTrainer(taskId, digits, TRAINER_PARTNER(gTasks[taskId].tInput));
+    u32 partnerId = DEBUG_TASK_INPUT(taskId);
+    DebugSelectionStep_PrintTrainer(taskId, digits, Debug_GetPartnerStepName(NULL, partnerId), TRAINER_PARTNER(partnerId));
 }
 
 static const struct DebugSelectionStep sTrainerSelectionStep = {
@@ -3036,7 +3043,7 @@ static const struct DebugSelectionStep sPartnerSelectionStep = {
 // is stored in the trainer menu data
 #define TRAINER_SINGLE_SELECTION(label1, dataIndex)                                 \
 static void DebugSelection_ ## label1 ## _Init(u8 taskId) {                         \
-    /* Warp's 28-tile window, for the class and name */                             \
+    /* Warp's 28-tile window, for the name and class */                             \
     Debug_CreateInputDisplayWindowFromTemplate(taskId, &sDebugMenuWindowTemplateWarp); \
     DebugSelection_SetData(taskId, 0, sDebugMenuListData->data[dataIndex]);         \
 };                                                                                  \
