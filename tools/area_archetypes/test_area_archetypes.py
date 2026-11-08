@@ -293,11 +293,11 @@ class CacheTests(unittest.TestCase):
     def write_pools(self, body):
         out = os.path.join(self.tmp, 'out')
         os.makedirs(out, exist_ok=True)
-        with open(os.path.join(out, 'archetype_pools.json'), 'w', encoding='utf-8') as f:
+        with open(os.path.join(out, 'archetype_pools.json'), 'wb') as f:
             f.write(body)
 
     def write_committed(self, ref, **hashes):
-        self.write_pools(json.dumps({AA.PROVENANCE_KEY: {'ref': ref, 'csv_sha256': hashes}}))
+        self.write_pools(json.dumps({AA.PROVENANCE_KEY: {'ref': ref, 'csv_sha256': hashes}}).encode())
 
     def assertExits(self, fn, *msg):
         with self.assertRaises(SystemExit) as cm:
@@ -398,14 +398,21 @@ class CacheTests(unittest.TestCase):
 
     def test_fetch_refuses_outputs_it_cant_read(self):
         before = self.read_cache()
-        for body in ('<<<<<<< HEAD\n{}', '[]', '{"provenance": []}', '{"provenance": {"csv_sha256": []}}'):
+        # A record with this ref and no hashes would otherwise turn fetch's hash check off.
+        for body in (b'<<<<<<< HEAD\n{}', b'\xff\xfe\xff', b'[]', b'{"provenance": []}', b'{"provenance": {}}',
+                     b'{"provenance": {"csv_sha256": []}}',
+                     json.dumps({AA.PROVENANCE_KEY: {'ref': AA.POKEAPI_REF}}).encode()):
             with self.subTest(body=body):
                 self.write_pools(body)
                 self.assertExits(lambda: self.fetch(self.cache), 'archetype_pools.json is not a build record', '--out')
                 self.assertEqual(self.read_cache(), before)
 
+    def test_fetch_says_when_it_cant_read_the_outputs(self):
+        os.makedirs(os.path.join(self.tmp, 'out', 'archetype_pools.json'))
+        self.assertExits(lambda: self.fetch(self.cache), 'cannot read', 'restore it')
+
     def test_fetch_takes_outputs_with_no_provenance(self):
-        self.write_pools('{}')
+        self.write_pools(b'{}')
         self.fetch(self.cache)
 
     def test_read_or_exit_covers_every_read_failure(self):
@@ -451,6 +458,10 @@ class CacheTests(unittest.TestCase):
                              ('id,identifier,species_id,height\n1,ivy,1\n', 'line 2 is cut short'),
                              ('id,identifier,species_id\n1,,1\n', 'line 2 has a blank identifier'),
                              ('id,identifier,species_id\n1,ivy,1\n2,oak,\n', 'line 3 has a blank species_id'),
+                             ('id,identifier,species_id\n1, ,1\n', 'line 2 has a blank identifier'),
+                             ('id,identifier,species_id\n1,,\n', 'line 2 has a blank identifier, species_id'),
+                             # A lost newline: the merged row has every column, but not the right values.
+                             ('id,identifier,species_id\n1,ivy,12,oak,2\n', 'line 2 has too many fields'),
                              (f'id,identifier,species_id\n1,{"x" * (csv.field_size_limit() + 1)},1\n',
                               'not a readable CSV')]:
             with self.subTest(msg=msg):
@@ -464,12 +475,17 @@ class CacheTests(unittest.TestCase):
         # PokeAPI leaves these blank, and a column the build doesn't read may be blank anywhere.
         for name, content in [('locations', 'id,identifier,region_id\n1,ivy,\n'),
                               ('location_areas', 'id,identifier,location_id\n1,,1\n'),
-                              ('encounter_slots', 'id,encounter_method_id,rarity\n1,1,\n'),
                               ('pokemon', 'id,identifier,species_id,height\n1,ivy,1,\n')]:
             with self.subTest(name=name):
                 with open(self.csv_path(name), 'w', encoding='utf-8') as f:
                     f.write(content)
                 self.assertEqual(len(AA.read_csv(self.cache, name)), 1)
+
+    def test_read_csv_refuses_a_blank_rarity(self):
+        # A row cut after its last comma: the build would drop it and shift the pools without a word.
+        with open(self.csv_path('encounter_slots'), 'w', encoding='utf-8') as f:
+            f.write('id,encounter_method_id,rarity\n1,1,\n')
+        self.assertExits(lambda: AA.read_csv(self.cache, 'encounter_slots'), 'line 2 has a blank rarity')
 
     def build(self, out):
         with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
