@@ -655,7 +655,9 @@ class CliTests(unittest.TestCase):
                      table(encounters=[{**enc, 'land_mons': {'mons': [{**mon, 'max_level': '2'}]}}]),
                      rod_table(without(rods, 'groups')), rod_table({**rods, 'groups': []}),
                      rod_table({**rods, 'groups': {'old_rod': 0}}), rod_table({**rods, 'groups': {'old_rod': [2]}}),
-                     rod_table({**rods, 'groups': {'old_rod': ['0']}})]
+                     rod_table({**rods, 'groups': {'old_rod': ['0']}}),
+                     rod_table({**rods, 'groups': {'old_rod': [1.0]}}),
+                     rod_table({**rods, 'groups': {'old_rod': [-1]}})]
         with tempfile.TemporaryDirectory() as tmp:
             base = shutil.copy(WILD, os.path.join(tmp, 'base.json'))
             bad = os.path.join(tmp, 'bad.json')

@@ -173,7 +173,8 @@ def mon_table_problem(field, table, field_def):
     if field == 'fishing_mons':
         groups = field_def.get('groups')
         if not isinstance(groups, dict) or not all(
-                isinstance(idxs, list) and all(i in range(len(mons)) for i in idxs) for idxs in groups.values()):
+                isinstance(idxs, list) and all(type(i) is int and 0 <= i < len(mons) for i in idxs)
+                for idxs in groups.values()):
             return 'no rod groups within its mons'
     return None
 
@@ -201,7 +202,7 @@ def warn_if_maps_stale(maps_path, base_path, base_sha256, force=False):
     """Warn unless emerald_maps.json records this base: its archetypes may be from another one.
 
     Quiet when there's no such file, since then no archetypes can be stale. force
-    is whether the base needed --force, so the build named needs it too.
+    is whether --force was given, so the build named takes it too.
     """
     try:
         with open(maps_path, 'rb') as f:
