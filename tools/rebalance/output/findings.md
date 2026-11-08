@@ -58,7 +58,7 @@ The exp math follows `Cmd_getexp` and is checked against `test/battle/exp.c`.
 - **One damaging move left:** Shannon's Claydol is down to Self-Destruct.
 - **Hand-written in #131 (after #127's levels and #138's evolutions):** 101 slots now have set moves, 84 of them on story trainers. Each is its Gen 9 default with one move swapped (two for Shannon's Claydol) for an attack the species learns, so it has a same-type attack and at least two damaging moves (the six rematch slots below get one attack, as in vanilla):
   - Story flags (no attack / one attack / lost STAB / above band / new strong): 9 / 61 / 46 / 12 / 163 after #127, 9 / 61 / 47 / 13 / 164 after #138 (May's Lilycove Sceptile 50 has no Grass move: Leaf Blade is an evolution move, which a default moveset skips; her Magcargo 48 has Body Slam above the band), and 9 / 0 / 0 / 11 / 161 now. Over every trainer: 15 / 134 / 91 / 32 / 447, then 15 / 134 / 93 / 36 / 451 (also the Route 119 Blaziken 42 on the Treecko-player teams, without Blaze Kick), now 9 / 73 / 32 / 32 / 444, and lost every damaging move 6 -> 0. The 73 and 32 left are rematch and other unstaged teams.
-  - The above-band count only drops because set-move slots aren't flagged: the Route 110 Combusken 26 keeps Slash, and strong default moves are #132's.
+  - The above-band count only drops because set-move slots aren't flagged: the Route 110 Combusken 26 kept Slash until #132 (section 17) swapped it for Quick Attack.
   - Examples: the Makuhita and Hariyama get Force Palm (level 13) for Whirlwind or Detect; Jeff's and Jace's Slugma get Ember back for Rock Throw; the Duskull get Shadow Sneak for Mean Look; the Teleport Xatu get Air Slash (level 1); Shannon's Claydol gets Earth Power and Extrasensory for Guard Split and Power Split; Matt's and Maxie's Mightyena get Crunch back for Scary Face; Owen's Kecleon gets Slash for Detect.
   - Every swap is a level-up move at or below the slot's level or an evolution move, except two that come from the TM and tutor list, where the species learns no fitting attack by that level: Rock Smash on the Meditite 13 (Force Palm comes at 17) and Fury Cutter on the Nincada 6 and 8 (Gen 9 Nincada learns only Scratch by then). The Museum grunts' Carvanha get Aqua Jet (level 1), not Bite, which Gen 9 Carvanha learns at 16.
   - The rematch-only slots that had lost every attack get one back: Bubble Beam on Jeffrey 4/5's Surskit, Bite on Isaac 2's Mightyena, Struggle Bug on Kira and Dan 2's Illumise.
@@ -541,17 +541,17 @@ Every target above is in levels, which ignore base stats, IVs and moves. `power.
 - The stand-in teams are in the report, with their attacks. They are a guess, and the rule (`matchup_settings.json`) is the owner's to change: the Game Corner TMs, the catches per stage and the wild fields are knobs.
 
 ## 17. Review of the strong default moves (#132)
-The owner approved the early slots below for a swap and left the rest. Numbers are from `32bea88293`, before the swaps, unless marked "now".
+Numbers are from `32bea88293`, before the swaps, except the table's "after" column.
 
 The `new_strong` flag doesn't measure a problem. It only says Gen 3 never taught the move, so level raises keep adding to it: 161 story slots after #131, 323 before this review. The `above_band` count was 11 after #131 and 8 before this review. Of the 301 `new_strong` flags on ordinary story trainers (bosses and rivals aside), 242 were from Winona's stage on.
 
 So each of the 791 ordinary story slots was scored with `power.py`'s effective level (section 15) against its stage's bosses, with the May/Mudkip team for a rival fight:
 - **No ordinary slot is stronger than its boss.** None beats the stage boss's strongest Pokémon, and none reaches the boss ace's level, before or after the swaps. Counting Huge Power, which the model skips because it's only one of Marill's regular abilities, on all 29 Marill-line slots changes neither.
-- **The model can't see everything.** It's one-on-one against a neutral reference, without type matchups, status, setup moves or recoil, and the raised data hasn't been playtested. This rules out a spike in raw power, not a fight that feels wrong.
+- **The model can't see everything:** besides section 15's gaps it skips status, setup moves and recoil, and the raised data hasn't been playtested. This rules out a spike in raw power, not a fight that feels wrong.
 
-**Changed (13 slots, levels unchanged):** each listed move swapped for a weaker one the species learns by that level, of the same type except where noted. Effective levels are before -> after.
+**Changed (13 slots, levels unchanged):** each listed move swapped for a weaker one of the same type that the species learns by that level.
 
-| slot | swap | effective level |
+| slot | swap | effective level (before -> after) |
 |---|---|---|
 | Sally's Oddish 21 | Giga Drain -> Mega Drain | 17.6 -> 15.2 |
 | Route 110 rival Grovyle 26 (May and Brendan, Mudkip teams) | Giga Drain -> Mega Drain | 24.7 -> 21.3 |
@@ -564,12 +564,12 @@ So each of the 791 ordinary story slots was scored with `power.py`'s effective l
 | Claude's Gyarados 25 | Waterfall -> Water Pulse (from the teachable list), Crunch -> Bite | 28.4 -> 24.5 |
 | Alix's Kadabra 35 | Psychic -> Psybeam, Psyshock -> Confusion | 33.6 -> 31.1 |
 
-- Each "before" is scored on the reference fitted to the old data and each "after" on the refit (section 15), which moves scores by about 0.1. Marshtomp's and Combusken's don't change because the swapped move wasn't their best (Water Pulse and Aerial Ace still are).
-- These are hand-written sets now, so they don't move with a later level change, and the tool doesn't flag set-move slots: Shelby's Zen Headbutt and Alix's Psycho Cut (both `new_strong` before) stay. Maxie's Camerupt has no Fire move, as its Gen 9 default had none.
+- Each "before" is scored on the reference fitted to the old data and each "after" on the refit (section 15), which moves scores by about 0.1. Marshtomp's and Combusken's don't change because the swapped move wasn't their best (Water Pulse and Flame Charge still are).
+- Set-move slots aren't flagged (section 2), so Shelby's Zen Headbutt and Alix's Psycho Cut, both `new_strong` before and not part of the approval, stay. Maxie's Camerupt has no Fire move, as its Gen 9 default had none.
 - **Effects on the fights:** Route 110's Mudkip-team rival goes from +1.7 to -1.7 over the bench (`power.py`'s gap), and Crobat, not Camerupt, now scores highest on Tabitha's and Maxie's Mt Chimney teams (Tabitha +2.0 -> +0.7, Maxie +4.4 -> +2.0). Their Camerupt still go last.
 
 **Left alone, for a playtest to revisit:**
-- **The early Marill line** (13 slots, Roxanne to Flannery): scores under its level, and a Huge Power roll adds at most about 3 levels over it (Vivi's Azumarill 24 scores 26.9). The owner's approval covered Tier A, but this row's recommendation was to leave it, and only weak moves are legal.
+- **The early Marill line** (13 slots, Roxanne to Flannery): scores under its level, and a Huge Power roll adds at most about 3 levels over it (Vivi's Azumarill 24 scores 26.9). Left as recommended: only weak moves are legal for it.
 - **Late slots highest over their level:** Mollie's Medicham 60 (effective 70.5), Vito's Dodrio 67 (75.3), Michelle's Medicham 67 (73.8), Albert's Muk 68 (74.5), Kelvin's Walrein 60 (67.1), the Gardevoir 58 (64.4) and the Gyarados with Hydro Pump, Hurricane and Hyper Beam. All stay well under their bosses.
 - **The other bosses and rivals:** 36 flagged slots, such as Mightyena's Sucker Punch and Play Rough, Sharpedo's Liquidation and the Lilycove Tropius's Outrage and Solar Beam.
 - **`above_band`:** the 8 story slots (7 Azumarill, Jaylen's Trapinch 28 with Dig) all score under their levels without Huge Power.
