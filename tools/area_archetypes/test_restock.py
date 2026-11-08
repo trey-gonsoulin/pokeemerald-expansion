@@ -548,8 +548,145 @@ class CliTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             base = os.path.join(tmp, 'base.json')
             with contextlib.redirect_stdout(io.StringIO()):
-                AA.main(['baseline', '--wild', WILD, '--base', base])
+                AA.main(['baseline', '--wild', WILD, '--base', base, '--out', tmp])
             self.assertEqual(read(base), read(WILD))
+
+    def test_baseline_says_when_the_maps_need_a_rebuild(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = os.path.join(tmp, 'base.json')
+            maps = os.path.join(tmp, 'emerald_maps.json')
+            _, wild_hash = AA.load_base(WILD)
+
+            def baseline_warnings(*extra, wild=WILD, out=tmp):
+                with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()) as err:
+                    AA.main(['baseline', '--wild', wild, '--base', base, '--out', out, *extra])
+                self.assertEqual(read(base), read(wild))
+                return err.getvalue()
+
+            # No build there, so nothing to go stale.
+            self.assertEqual(baseline_warnings(), '')
+            for maps_text, why in ((json.dumps({AA.BASE_HASH_KEY: 'another'}), 'was built from another base'),
+                                   ('{}', 'records no base hash'),
+                                   ('[]', 'is not a build record'),
+                                   ('[1]', 'is not a build record'),
+                                   ('<<<<<<< HEAD', 'is not a build record')):
+                with self.subTest(maps_text=maps_text):
+                    with open(maps, 'w', encoding='utf-8') as f:
+                        f.write(maps_text)
+                    warning = baseline_warnings()
+                    self.assertIn(f'warning: {maps} {why}, so its archetypes may be stale for {base}', warning)
+                    self.assertTrue(warning.endswith(f'build --base {base} --out {tmp}\n'), warning)
+            # The build named has an absolute --out, whatever spelling baseline got.
+            self.assertIn(f'--out {tmp}\n', baseline_warnings(out=os.path.relpath(tmp)))
+            with open(maps, 'w', encoding='utf-8') as f:
+                json.dump({AA.BASE_HASH_KEY: wild_hash}, f)
+            self.assertEqual(baseline_warnings(), '')
+            os.remove(maps)
+            os.mkdir(maps)
+            self.assertIn(f'{maps} is not a build record', baseline_warnings())
+
+    def test_baseline_warning_keeps_force_for_a_stamped_base(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            stamped = os.path.join(tmp, 'stamped.json')
+            base = os.path.join(tmp, 'base.json')
+            with open(stamped, 'w', encoding='utf-8') as f:
+                json.dump({**R.load_json(WILD), AA.RESTOCK_STAMP: {}}, f)
+            with open(os.path.join(tmp, 'emerald_maps.json'), 'w', encoding='utf-8') as f:
+                f.write('{}')
+            argv = ['baseline', '--wild', stamped, '--base', base, '--out', tmp]
+            with self.assertRaises(SystemExit):
+                AA.main(argv)
+            self.assertFalse(os.path.exists(base))
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()) as err:
+                AA.main(argv + ['--force'])
+            self.assertEqual(read(base), read(stamped))
+            self.assertTrue(err.getvalue().endswith(f'--out {tmp} --force\n'), err.getvalue())
+
+    def test_baseline_only_pairs_the_committed_maps_with_the_committed_base(self):
+        fixture = os.path.join(TESTDATA, 'wild_encounters.json')
+        with tempfile.TemporaryDirectory() as tmp:
+            base = os.path.join(tmp, 'base.json')
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()) as err:
+                AA.main(['baseline', '--wild', fixture, '--base', base])
+            self.assertEqual(err.getvalue(), '')
+            with mock.patch.object(AA, 'VANILLA_WILD', base), contextlib.redirect_stdout(io.StringIO()), \
+                    contextlib.redirect_stderr(io.StringIO()) as err:
+                AA.refresh_baseline(fixture, base)
+            self.assertIn(f'{AA.DEFAULT_OUT}/emerald_maps.json was built from another base', err.getvalue())
+
+    def test_base_that_isnt_a_wild_table_is_refused(self):
+        rates = {'type': 'land_mons', 'encounter_rates': [100]}
+        rods = {'type': 'fishing_mons', 'encounter_rates': [60, 40], 'groups': {'old_rod': [0, 1]}}
+        mon = {'species': 'SPECIES_A', 'min_level': 1, 'max_level': 2}
+        enc = {'base_label': 'a', 'map': 'MAP_A', 'land_mons': {'mons': [mon]}}
+
+        def table(encounters=(enc,), fields=(rates, rods), label='gWildMonHeaders', **rest):
+            return {'wild_encounter_groups': [{'label': label, 'encounters': encounters, 'fields': fields}], **rest}
+
+        def rod_table(rods_field, mons=(mon, mon)):
+            return table([{**enc, 'fishing_mons': {'mons': mons}}], [rates, rods_field])
+
+        def good_then(group):
+            good = table()['wild_encounter_groups'][0]
+            return {'wild_encounter_groups': [good, group]}
+
+        def without(d, key):
+            return {k: v for k, v in d.items() if k != key}
+
+        not_json = ('{bad', b'\xff\xfe\xff')
+        not_table = [[], {}, [1], 5, None, 'wild_encounters',
+                     {'wild_encounter_groups': []}, {'wild_encounter_groups': {}}, {'wild_encounter_groups': [1]},
+                     {'wild_encounter_groups': [{}]}, good_then({}),
+                     table(label='gBattlePikeWildMonHeaders'),
+                     {'wild_encounter_groups': [{'label': 'gWildMonHeaders'}]},
+                     # map_headers takes the first of a repeated label, so a good second one doesn't help.
+                     {'wild_encounter_groups': [{'label': 'gWildMonHeaders'}, table()['wild_encounter_groups'][0]]},
+                     table(encounters=[]), table(encounters={}), table(fields={}), table(encounters=[1]),
+                     table(fields=[1]), table(fields=[{}]), table(fields=[without(rates, 'encounter_rates')]),
+                     table(fields=[{**rates, 'type': []}]), table(fields=[rates, {}]),
+                     table(encounters=[without(enc, 'map')]), table(encounters=[without(enc, 'base_label')]),
+                     table(encounters=[{**enc, 'map': None}]), table(encounters=[enc, {}]),
+                     table(fields=[rods]),
+                     table(encounters=[{**enc, 'land_mons': {}}]), table(encounters=[{**enc, 'land_mons': []}]),
+                     table(encounters=[{**enc, 'land_mons': {'mons': [mon, mon]}}]),
+                     table(encounters=[{**enc, 'land_mons': {'mons': [1]}}]),
+                     table(encounters=[{**enc, 'land_mons': {'mons': [without(mon, 'species')]}}]),
+                     table(encounters=[{**enc, 'land_mons': {'mons': [without(mon, 'min_level')]}}]),
+                     table(encounters=[{**enc, 'land_mons': {'mons': [{**mon, 'max_level': '2'}]}}]),
+                     rod_table(without(rods, 'groups')), rod_table({**rods, 'groups': []}),
+                     rod_table({**rods, 'groups': {'old_rod': 0}}), rod_table({**rods, 'groups': {'old_rod': [2]}}),
+                     rod_table({**rods, 'groups': {'old_rod': ['0']}}),
+                     rod_table({**rods, 'groups': {'old_rod': [1.0]}}),
+                     rod_table({**rods, 'groups': {'old_rod': [-1]}})]
+        with tempfile.TemporaryDirectory() as tmp:
+            base = shutil.copy(WILD, os.path.join(tmp, 'base.json'))
+            bad = os.path.join(tmp, 'bad.json')
+            out = os.path.join(tmp, 'out')
+            # The cases above each break one thing in tables that pass.
+            for good in (table(), rod_table(rods), table(encounters=[{'base_label': 'a', 'map': 'MAP_A'}], fields=[])):
+                with open(bad, 'w', encoding='utf-8') as f:
+                    json.dump(good, f)
+                self.assertEqual(AA.load_base(bad)[0], R.load_json(bad))
+            for content in (*not_json, *not_table):
+                expected = 'is not valid JSON' if content in not_json else 'has no usable gWildMonHeaders group'
+                with self.subTest(content=content):
+                    with open(bad, 'wb') as f:
+                        f.write(content if isinstance(content, bytes) else
+                                content.encode() if content in not_json else json.dumps(content).encode())
+                    commands = ((lambda: AA.main(['baseline', '--wild', bad, '--base', base, '--out', tmp])),
+                                # --force doesn't let one through: it only overrides the restock stamp.
+                                (lambda: AA.main(['baseline', '--wild', bad, '--base', base, '--out', tmp, '--force'])),
+                                (lambda: AA.main(['build', '--base', bad, '--cache', os.path.join(TESTDATA, 'pokeapi'),
+                                                  '--out', out])),
+                                (lambda: run_quietly(['--base', bad, '--out-dir', out])))
+                    for command in commands:
+                        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()), \
+                                self.assertRaises(SystemExit) as cm:
+                            command()
+                        self.assertIn(f'{bad} {expected}', cm.exception.code)
+                        self.assertIn(AA.BASE_HINT, cm.exception.code)
+                    self.assertEqual(read(base), read(WILD))
+                    self.assertFalse(os.path.exists(out))
 
     def test_baseline_exits_cleanly_on_a_bad_path(self):
         with tempfile.TemporaryDirectory() as tmp:
