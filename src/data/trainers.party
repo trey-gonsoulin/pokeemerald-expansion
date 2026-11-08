@@ -6177,6 +6177,10 @@ AI: Basic Trainer
 Meditite
 Level: 30
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
+- Psybeam
+- Calm Mind
+- Zen Headbutt
+- Force Palm
 
 Hariyama
 Level: 30
@@ -6683,6 +6687,10 @@ AI: Check Bad Move
 Gyarados
 Level: 25
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Brine
+- Scary Face
+- Water Pulse
+- Bite
 
 Goldeen
 Level: 26
@@ -10065,6 +10073,10 @@ IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 Grovyle
 Level: 26
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Detect
+- Quick Guard
+- Assurance
+- Mega Drain
 
 === TRAINER_BRENDAN_ROUTE_119_MUDKIP ===
 Name: BRENDAN
@@ -10127,7 +10139,7 @@ IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 - Detect
 - Flame Charge
 - Aerial Ace
-- Slash
+- Quick Attack
 
 === TRAINER_BRENDAN_ROUTE_119_TREECKO ===
 Name: BRENDAN
@@ -10191,6 +10203,10 @@ IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 Marshtomp
 Level: 26
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Protect
+- Supersonic
+- Water Pulse
+- Rock Throw
 
 === TRAINER_BRENDAN_ROUTE_119_TORCHIC ===
 Name: BRENDAN
@@ -10250,6 +10266,10 @@ IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 Grovyle
 Level: 26
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Detect
+- Quick Guard
+- Assurance
+- Mega Drain
 
 === TRAINER_MAY_ROUTE_119_MUDKIP ===
 Name: MAY
@@ -10312,7 +10332,7 @@ IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 - Detect
 - Flame Charge
 - Aerial Ace
-- Slash
+- Quick Attack
 
 === TRAINER_MAY_ROUTE_119_TREECKO ===
 Name: MAY
@@ -10376,6 +10396,10 @@ IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 Marshtomp
 Level: 26
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
+- Protect
+- Supersonic
+- Water Pulse
+- Rock Throw
 
 === TRAINER_MAY_ROUTE_119_TORCHIC ===
 Name: MAY
@@ -11594,6 +11618,10 @@ AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / 
 Numel
 Level: 34
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
+- Incinerate
+- Bulldoze
+- Curse
+- Take Down
 
 Mightyena
 Level: 36
@@ -11606,6 +11634,10 @@ IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 Camerupt
 Level: 38
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
+- Incinerate
+- Bulldoze
+- Curse
+- Take Down
 
 === TRAINER_JONATHAN ===
 Name: JONATHAN
@@ -11714,6 +11746,10 @@ IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 Camerupt
 Level: 39
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
+- Bulldoze
+- Curse
+- Take Down
+- Yawn
 
 === TRAINER_TIANA ===
 Name: TIANA
@@ -11867,6 +11903,10 @@ AI: Check Bad Move
 Oddish
 Level: 21
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Poison Powder
+- Stun Spore
+- Sleep Powder
+- Mega Drain
 
 === TRAINER_ROBIN ===
 Name: ROBIN
@@ -14620,6 +14660,10 @@ AI: Check Bad Move
 Kadabra
 Level: 35
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+- Psycho Cut
+- Recover
+- Confusion
+- Psybeam
 
 Gardevoir
 Level: 35
