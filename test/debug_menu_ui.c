@@ -295,7 +295,6 @@ TEST("Flag and var names: no trainer for TRAINER_NONE, trainers without a party,
     EXPECT(Debug_GetFlagName(TRAINER_FLAGS_START + TRAINER_ROXANNE_1) == NULL);
 }
 
-
 TEST("Name order for trainers goes by name, without the ones with no party")
 {
     struct DebugNameOrder order = {0};
