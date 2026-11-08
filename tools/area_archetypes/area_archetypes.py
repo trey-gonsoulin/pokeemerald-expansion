@@ -93,12 +93,11 @@ CSV_FILES = {
     'pokemon_types': ('pokemon_id', 'type_id'),
     'types': ('id', 'identifier'),
 }
-# The read columns that may be blank, which the build handles; a blank in any
-# other would stop it. PokeAPI leaves the first two blank on real rows.
+# The read columns PokeAPI leaves blank on real rows, which the build handles; a
+# blank in any other would stop it or silently drop the row.
 CSV_BLANK_OK = {
     'locations': {'region_id'},
     'location_areas': {'identifier'},
-    'encounter_slots': {'rarity'},
 }
 # Species whose share of a pool is below this are dropped from the output.
 MIN_POOL_SHARE = 0.001
@@ -125,31 +124,66 @@ def check_base(path, raw, force):
         wild = json.loads(raw)
     except ValueError as e:
         sys.exit(f'{path} is not valid JSON ({e}); {BASE_HINT}')
-    if not has_map_headers(wild):
-        sys.exit(f'{path} has no usable {MAP_HEADERS_LABEL} group; {BASE_HINT}')
+    problem = map_headers_problem(wild)
+    if problem:
+        sys.exit(f'{path} has no usable {MAP_HEADERS_LABEL} group ({problem}); {BASE_HINT}')
     if RESTOCK_STAMP in wild and not force:
         sys.exit(f'{path} was written by restock ({RESTOCK_STAMP} is set), so it is not a vanilla '
                  f'baseline; pass a vanilla file, or --force to use it anyway')
     return wild
 
 
-def has_map_headers(wild):
-    """Whether parsed JSON has the group map_headers finds, with the entries classify_emerald looks up."""
+def map_headers_problem(wild):
+    """What stops build and restock reading the map tables in parsed JSON, or None."""
     groups = wild.get('wild_encounter_groups') if isinstance(wild, dict) else None
     if not isinstance(groups, list) or not all(isinstance(g, dict) and 'label' in g for g in groups):
-        return False
+        return 'no labelled wild_encounter_groups'
     try:
         group = map_headers(wild)
     except StopIteration:
-        return False
+        return 'not there'
     encounters, fields = group.get('encounters'), group.get('fields')
-    return (isinstance(encounters, list) and isinstance(fields, list)
-            and all(isinstance(e, dict) and 'base_label' in e and 'map' in e for e in encounters)
-            and all(isinstance(f, dict) and 'type' in f for f in fields))
+    if not isinstance(encounters, list) or not encounters:
+        return 'no encounters'
+    if not isinstance(fields, list) or not all(isinstance(f, dict) and isinstance(f.get('type'), str)
+                                               and isinstance(f.get('encounter_rates'), list) for f in fields):
+        return 'a field without its type and encounter_rates'
+    field_defs = {f['type']: f for f in fields}
+    for enc in encounters:
+        if not isinstance(enc, dict) or not all(isinstance(enc.get(k), str) for k in ('base_label', 'map')):
+            return 'an encounter without its base_label and map'
+        for field in (k for k in enc if k.endswith('_mons')):
+            problem = mon_table_problem(field, enc[field], field_defs.get(field))
+            if problem:
+                return f'{enc["base_label"]} {field}: {problem}'
+    return None
+
+
+def mon_table_problem(field, table, field_def):
+    """What stops build and restock reading one encounter's table of a field, or None."""
+    if field_def is None:
+        return 'no field definition'
+    mons = table.get('mons') if isinstance(table, dict) else None
+    if not isinstance(mons, list) or not all(
+            isinstance(m, dict) and isinstance(m.get('species'), str)
+            and isinstance(m.get('min_level'), int) and isinstance(m.get('max_level'), int) for m in mons):
+        return 'no mons with a species and levels'
+    if len(mons) > len(field_def['encounter_rates']):
+        return 'more mons than encounter_rates'
+    if field == 'fishing_mons':
+        groups = field_def.get('groups')
+        if not isinstance(groups, dict) or not all(
+                isinstance(idxs, list) and all(i in range(len(mons)) for i in idxs) for idxs in groups.values()):
+            return 'no rod groups within its mons'
+    return None
 
 
 def refresh_baseline(src=SRC_WILD, base=VANILLA_WILD, force=False, out=DEFAULT_OUT):
-    """Copy src over the vanilla baseline, unless restock wrote src, then warn if out's maps need a rebuild."""
+    """Copy src over the vanilla baseline, unless restock wrote src, then warn if out's maps need a rebuild.
+
+    A --base other than the committed baseline doesn't pair with the committed maps,
+    so those are only compared when out was named too.
+    """
     raw = read_or_exit(src, BASE_HINT)
     check_base(src, raw, force)
     if os.path.exists(base) and os.path.samefile(src, base):
@@ -159,13 +193,15 @@ def refresh_baseline(src=SRC_WILD, base=VANILLA_WILD, force=False, out=DEFAULT_O
     except OSError as e:
         sys.exit(f'cannot write {base}: {e.strerror}')
     print(f'wrote {base} from {src}')
-    warn_if_maps_stale(os.path.join(out, 'emerald_maps.json'), base, hashlib.sha256(raw).hexdigest())
+    if out != DEFAULT_OUT or os.path.abspath(base) == VANILLA_WILD:
+        warn_if_maps_stale(os.path.join(out, 'emerald_maps.json'), base, hashlib.sha256(raw).hexdigest(), force)
 
 
-def warn_if_maps_stale(maps_path, base_path, base_sha256):
+def warn_if_maps_stale(maps_path, base_path, base_sha256, force=False):
     """Warn unless emerald_maps.json records this base: its archetypes may be from another one.
 
-    Quiet when there's no such file, since then no archetypes can be stale.
+    Quiet when there's no such file, since then no archetypes can be stale. force
+    is whether the base needed --force, so the build named needs it too.
     """
     try:
         with open(maps_path, 'rb') as f:
@@ -174,13 +210,16 @@ def warn_if_maps_stale(maps_path, base_path, base_sha256):
         return
     except (OSError, ValueError):
         maps = None
-    recorded = maps.get(BASE_HASH_KEY) if isinstance(maps, dict) else None
-    if recorded == base_sha256:
+    if not isinstance(maps, dict):
+        why = 'is not a build record'
+    elif maps.get(BASE_HASH_KEY) == base_sha256:
         return
-    why = 'records no base hash' if recorded is None else 'was built from another base'
+    else:
+        why = 'records no base hash' if maps.get(BASE_HASH_KEY) is None else 'was built from another base'
     out = os.path.dirname(os.path.abspath(maps_path))
     print(f'warning: {maps_path} {why}, so its archetypes may be stale for {base_path}; '
-          f'run area_archetypes.py build --base {base_path} --out {out}', file=sys.stderr)
+          f'run area_archetypes.py build --base {base_path} --out {out}{" --force" if force else ""}',
+          file=sys.stderr)
 
 
 def write_atomic(path, data):
@@ -205,7 +244,7 @@ def read_or_exit(path, hint):
 
 
 def parse_csv(name, raw, where, hint):
-    """The rows of CSV bytes, refusing any that are empty, unreadable, cut short, without CSV_FILES' columns
+    """The rows of CSV bytes, refusing any that are empty, unreadable, the wrong length, without CSV_FILES' columns
     or blank in one outside CSV_BLANK_OK."""
     if not raw:
         sys.exit(f'{where} is empty; {hint}')
@@ -220,7 +259,9 @@ def parse_csv(name, raw, where, hint):
         for row in reader:
             if None in row.values():
                 sys.exit(f'{where} line {reader.line_num} is cut short; {hint}')
-            blank = [c for c in required if not row[c]]
+            if None in row:  # DictReader keeps the fields past the last column under None.
+                sys.exit(f'{where} line {reader.line_num} has too many fields; {hint}')
+            blank = [c for c in required if not row[c].strip()]
             if blank:
                 sys.exit(f'{where} line {reader.line_num} has a blank {", ".join(blank)}; {hint}')
             rows.append(row)
@@ -257,8 +298,10 @@ def committed_hashes(out, ref):
         doc = json.loads(read_or_exit(path, fix))
     except ValueError:
         doc = None
-    provenance = doc.get(PROVENANCE_KEY, {}) if isinstance(doc, dict) else None
-    hashes = provenance.get('csv_sha256', {}) if isinstance(provenance, dict) else None
+    if isinstance(doc, dict) and PROVENANCE_KEY not in doc:
+        return {}
+    provenance = doc.get(PROVENANCE_KEY) if isinstance(doc, dict) else None
+    hashes = provenance.get('csv_sha256') if isinstance(provenance, dict) else None
     if not isinstance(hashes, dict):
         sys.exit(f'{path} is not a build record; {fix}')
     return hashes if provenance.get('ref') == ref else {}
@@ -439,7 +482,7 @@ def build_tables(data):
         if loc['identifier'].startswith(A.SKIP_LOCATION_PREFIXES) or area['identifier'] in A.SKIP_AREAS:
             continue
         vg = data.version_groups[data.version_to_group[e['version_id']]]['identifier']
-        rarity = int(slot['rarity'] or 0)
+        rarity = int(slot['rarity'])
         if rarity <= 0:
             continue
         # Seaweed is surfing underwater: same Emerald field, its own habitat.

@@ -1051,7 +1051,7 @@ def main(argv=None):
         sys.exit(f'unknown species: {", ".join(unknown)}')
     base, base_sha256 = AA.load_base(args.base, args.force)
     emerald_maps = load_maps(args.maps)
-    AA.warn_if_maps_stale(args.maps, args.base, base_sha256)
+    AA.warn_if_maps_stale(args.maps, args.base, base_sha256, args.force)
     unknown = sorted(set(settings.maps) - {e['base_label'] for e in AA.map_headers(base)['encounters']})
     if unknown:
         p.error(f'maps: not a gWildMonHeaders base label in {args.base}: {", ".join(unknown)}')

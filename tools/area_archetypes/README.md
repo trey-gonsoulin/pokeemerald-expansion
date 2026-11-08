@@ -26,8 +26,8 @@ on the full data run only once `fetch` has filled `.cache/`.
 filled by `python -m poke_extract.pokeapi` at the PokeAPI commit in its
 `COMMIT` file. That commit has to be `POKEAPI_REF` in `area_archetypes.py`.
 Every CSV is read and checked (not empty, UTF-8, has rows and the columns the
-build reads, `CSV_FILES`, with no row cut short and no blank in a column it reads,
-apart from the ones in `CSV_BLANK_OK`) before any is written, each
+build reads, `CSV_FILES`, with no row cut short or too long and no blank in a
+column it reads, apart from the ones in `CSV_BLANK_OK`) before any is written, each
 through a `.tmp` and `os.replace`, so a bad source leaves the old cache. While
 `output/` records the same ref, a CSV also has to have the hash recorded there,
 which catches a clean truncation and an interrupted pokesearch re-download
@@ -211,12 +211,14 @@ python3 tools/area_archetypes/area_archetypes.py baseline --wild /tmp/wild_encou
 ```
 
 `baseline` stops with a message, and a nonzero exit, when the `--wild` file can't
-be read, isn't valid JSON or has no usable `gWildMonHeaders` group (its
-`encounters` and `fields`, each entry with the keys `build` looks up), or when
-`--base` can't be written (its directory doesn't exist, say). The old baseline stays as it was if it stops. `build` and `restock` refuse
-such a `--base` the same way. After a refresh, `baseline` gives the same warning
-as `restock` when `emerald_maps.json` in `--out` doesn't record the new base, and
-names the `build` to run.
+be read, isn't valid JSON or has no usable `gWildMonHeaders` group (at least one
+encounter, and the shape `build` and `restock` read down to each mon's species and
+levels), or when `--base` can't be written (its directory doesn't exist, say). The
+old baseline stays as it was if it stops. `build` and `restock` refuse such a
+`--base` the same way. After a refresh, `baseline` gives the same warning as
+`restock` when `emerald_maps.json` in `--out` doesn't record the new base, and
+names the `build` to run. With another `--base` and no `--out` it doesn't compare,
+since the committed maps don't pair with that file.
 
 | option | default | meaning |
 |---|---|---|
