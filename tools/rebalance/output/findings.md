@@ -524,7 +524,7 @@ Other trainers keep theirs: the report lists 215 Pokémon (Machoke 33, Roselia 2
 
 ## 15. Combat power beyond level (prototype)
 Every target above is in levels, which ignore base stats, IVs and moves. `power.py` (README, "Combat power estimate") gives each boss Pokémon an effective level: the level of a typical Pokémon (base 80 in every stat, IV 15) that would fare as well one-on-one with no types in play. The report's "Combat power estimate" table puts each boss's strongest Pokémon by that measure against the Exp. Share bench. What it shows, as a diagnostic only (no data changed):
-- **Early bosses fight below their levels.** Roxanne's Nosepass 15 counts as 13.4 and her Geodude 12 as 10.1. May at Rustboro sits 2 below the bench (at Route 103, 1 below), though her ace is 1 above it in levels. Unevolved early Pokémon on 40-60 power moves are why. Brawly's strongest is his level-19 Makuhita (15.7).
+- **Early bosses fight below their levels.** Roxanne's Nosepass 15 counts as 13.4 and her Geodude 12 as 10.1. May at Rustboro sits 2 below the bench (at Route 103, 1 below), though her ace is 1 above it in levels. Unevolved early Pokémon on 40-60 power moves are why. Brawly's strongest is his level-19 Makuhita (15.8).
 - **Brawly's Meditite has no attack the model scores.** Its set (upstream's) is Focus Punch, Light Screen, Reflect and Bulk Up, and Focus Punch fails whenever Meditite is hit first that turn, so it counts as no attack (`CONDITIONAL_EFFECTS`, which also takes Dream Eater, Fake Out and the like). In play the AI can still land it behind a screen or on a switch. Confusion, a same-type move it learns at level 1, would give it one (Force Palm comes at 17); that is the owner's call, not made here.
 - **The late game fights well above them.** Glacia's Walrein (+18 over the bench), Drake's Salamence (+24), Wallace's Milotic (+24) and Wally's Victory Road Gardevoir (+17) all sit far past the 1 to 8 levels the curve gives them. High base stats, plus #130's and #131's same-type sets, are why. Sidney is the exception (+3): Dark-types with 70-80 power moves.
 - **Wally at Mauville** (Ralts 26, effective 15.4) is the weakest fight in the story, as `EVOLVE_EXEMPT` intends.
@@ -543,7 +543,7 @@ Every target above is in levels, which ignore base stats, IVs and moves. `power.
 ## 17. Review of the strong default moves (#132)
 The owner approved the early slots below for a swap and left the rest. Numbers are from `32bea88293`, before the swaps, unless marked "now".
 
-The `new_strong` flag doesn't measure a problem. It only says Gen 3 never taught the move, so level raises keep adding to it: 161 story slots after #131, 323 before this review (`above_band`, 11 then, was 8). Of the 301 `new_strong` flags on ordinary story trainers (bosses and rivals aside), 242 were from Winona's stage on.
+The `new_strong` flag doesn't measure a problem. It only says Gen 3 never taught the move, so level raises keep adding to it: 161 story slots after #131, 323 before this review. The `above_band` count was 11 after #131 and 8 before this review. Of the 301 `new_strong` flags on ordinary story trainers (bosses and rivals aside), 242 were from Winona's stage on.
 
 So each of the 791 ordinary story slots was scored with `power.py`'s effective level (section 15) against its stage's bosses, with the May/Mudkip team for a rival fight:
 - **No ordinary slot is stronger than its boss.** None beats the stage boss's strongest Pokémon, and none reaches the boss ace's level, before or after the swaps. Counting Huge Power, which the model skips because it's only one of Marill's regular abilities, on all 29 Marill-line slots changes neither.
@@ -555,21 +555,22 @@ So each of the 791 ordinary story slots was scored with `power.py`'s effective l
 |---|---|---|
 | Sally's Oddish 21 | Giga Drain -> Mega Drain | 17.6 -> 15.2 |
 | Route 110 rival Grovyle 26 (May and Brendan, Mudkip teams) | Giga Drain -> Mega Drain | 24.7 -> 21.3 |
-| Route 110 rival Marshtomp 26 (May and Brendan, Torchic teams) | Rock Slide -> Rock Throw | now 22.5 |
-| Route 110 rival Combusken 26 (May and Brendan, Treecko teams) | Slash -> Quick Attack | now 21.9 |
+| Route 110 rival Marshtomp 26 (May and Brendan, Torchic teams) | Rock Slide -> Rock Throw | 22.5 -> 22.5 |
+| Route 110 rival Combusken 26 (May and Brendan, Treecko teams) | Slash -> Quick Attack | 21.9 -> 21.9 |
 | Tabitha's Numel 34 | Lava Plume -> Incinerate, Earth Power -> Bulldoze | 27.6 -> 25.2 |
 | Tabitha's Camerupt 38 | Lava Plume -> Incinerate, Earth Power -> Bulldoze | 38.0 -> 35.2 |
 | Maxie's Mt Chimney Camerupt 39 | Earth Power -> Bulldoze | 40.4 -> 37.1 |
 | Shelby's Meditite 30 | High Jump Kick -> Force Palm | 30.0 -> 27.3 |
-| Claude's Gyarados 25 | Waterfall -> Twister (Dragon: Whirlpool, the only weaker Water move, traps), Crunch -> Bite | 28.4 -> 24.5 |
+| Claude's Gyarados 25 | Waterfall -> Water Pulse (from the teachable list), Crunch -> Bite | 28.4 -> 24.5 |
 | Alix's Kadabra 35 | Psychic -> Psybeam, Psyshock -> Confusion | 33.6 -> 31.1 |
 
-- These are hand-written sets now, so they don't move with a later level change, and the tool doesn't flag set-move slots: Shelby's Zen Headbutt and Alix's Psycho Cut (both `new_strong` before) stay.
+- Each "before" is scored on the reference fitted to the old data and each "after" on the refit (section 15), which moves scores by about 0.1. Marshtomp's and Combusken's don't change because the swapped move wasn't their best (Water Pulse and Aerial Ace still are).
+- These are hand-written sets now, so they don't move with a later level change, and the tool doesn't flag set-move slots: Shelby's Zen Headbutt and Alix's Psycho Cut (both `new_strong` before) stay. Maxie's Camerupt has no Fire move, as its Gen 9 default had none.
 - **Effects on the fights:** Route 110's Mudkip-team rival goes from +1.7 to -1.7 over the bench (`power.py`'s gap), and Crobat, not Camerupt, now scores highest on Tabitha's and Maxie's Mt Chimney teams (Tabitha +2.0 -> +0.7, Maxie +4.4 -> +2.0). Their Camerupt still go last.
 
 **Left alone, for a playtest to revisit:**
 - **The early Marill line** (13 slots, Roxanne to Flannery): scores under its level, and a Huge Power roll adds at most about 3 levels over it (Vivi's Azumarill 24 scores 26.9). The owner's approval covered Tier A, but this row's recommendation was to leave it, and only weak moves are legal.
-- **Late slots highest over their level:** Mollie's Medicham 60 (effective 70.5), Vito's Dodrio 67 (75.3), Albert's Muk 68 (74.5), Kelvin's Walrein 60 (67.1), the Gardevoir 58 (64.4) and the Gyarados with Hydro Pump, Hurricane and Hyper Beam. All stay well under their bosses.
+- **Late slots highest over their level:** Mollie's Medicham 60 (effective 70.5), Vito's Dodrio 67 (75.3), Michelle's Medicham 67 (73.8), Albert's Muk 68 (74.5), Kelvin's Walrein 60 (67.1), the Gardevoir 58 (64.4) and the Gyarados with Hydro Pump, Hurricane and Hyper Beam. All stay well under their bosses.
 - **The other bosses and rivals:** 36 flagged slots, such as Mightyena's Sucker Punch and Play Rough, Sharpedo's Liquidation and the Lilycove Tropius's Outrage and Solar Beam.
 - **`above_band`:** the 8 story slots (7 Azumarill, Jaylen's Trapinch 28 with Dig) all score under their levels without Huge Power.
 
