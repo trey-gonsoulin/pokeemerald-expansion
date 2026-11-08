@@ -4,6 +4,7 @@
 #include "global.h"
 #include "data.h"
 #include "debug_menu_ui.h"
+#include "decoration.h"
 #include "list_menu.h"
 #include "main.h"
 #include "malloc.h"
@@ -489,6 +490,30 @@ const u8 *Debug_GetFlagDisplayName(u8 *buffer, u32 flag)
 const u8 *Debug_GetVarDisplayName(u8 *buffer, u32 varId)
 {
     return Debug_GetVarName(varId);
+}
+
+// *******************************
+// Trainer, partner and decoration names
+
+// A trainer's name, which the trainer step orders by, or NULL for one without a party: TRAINER_NONE,
+// and IDs left out of the table (zero-filled, so the name has no EOS). buffer is unused, as below.
+const u8 *Debug_GetTrainerStepName(u8 *buffer, u32 trainerId)
+{
+    return GetTrainerPartySizeFromId(trainerId) != 0 ? GetTrainerNameFromId(trainerId) : NULL;
+}
+
+// For the partner step, whose values are gBattlePartners indexes. PARTNER_NONE has no trainer ID:
+// TRAINER_PARTNER(PARTNER_NONE) fails GetTrainerStructFromId's assert.
+const u8 *Debug_GetPartnerStepName(u8 *buffer, u32 partnerId)
+{
+    return partnerId != PARTNER_NONE ? Debug_GetTrainerStepName(buffer, TRAINER_PARTNER(partnerId)) : NULL;
+}
+
+// A decoration's name, or NULL for an unnamed one
+const u8 *Debug_GetDecorationStepName(u8 *buffer, u32 decorationId)
+{
+    const u8 *name = gDecorations[decorationId].name;
+    return name[0] != EOS ? name : NULL;
 }
 
 // *******************************
