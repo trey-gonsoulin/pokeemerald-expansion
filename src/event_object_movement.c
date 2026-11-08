@@ -2275,8 +2275,12 @@ static u32 LoadDynamicFollowerPalette(enum Species species, bool32 shiny, bool32
         // Use matching front sprite's normal/shiny palettes
         // Load compressed palette
         LoadSpritePaletteWithTag(palette, species);
-        paletteNum = IndexOfSpritePaletteTag(species); // Tag is always present
+        paletteNum = IndexOfSpritePaletteTag(species);
     }
+
+    // With every slot full, share the last slot's palette, as callers use the result as a slot
+    if (paletteNum == 0xFF)
+        return 15;
 
     if (gWeatherPtr->currWeather != WEATHER_FOG_HORIZONTAL) // don't want to weather blend in fog
         UpdateSpritePaletteWithWeather(paletteNum, FALSE);
