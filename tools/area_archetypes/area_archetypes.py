@@ -75,6 +75,8 @@ PROVENANCE_KEY = 'provenance'
 # restock compares with its own base to warn about stale archetypes.
 BASE_HASH_KEY = 'base_sha256'
 BASE_HINT = 'pass a vanilla wild_encounters.json'
+# The wild_encounter_groups entry with the maps' tables (map_headers).
+MAP_HEADERS_LABEL = 'gWildMonHeaders'
 # Each CSV the build reads -> the columns it reads from it.
 CSV_FILES = {
     'encounters': ('version_id', 'location_area_id', 'encounter_slot_id', 'pokemon_id',
@@ -90,6 +92,12 @@ CSV_FILES = {
     'pokemon_species': ('id', 'identifier', 'generation_id'),
     'pokemon_types': ('pokemon_id', 'type_id'),
     'types': ('id', 'identifier'),
+}
+# The read columns PokeAPI leaves blank on real rows, which the build handles; a
+# blank in any other would stop it or silently drop the row.
+CSV_BLANK_OK = {
+    'locations': {'region_id'},
+    'location_areas': {'identifier'},
 }
 # Species whose share of a pool is below this are dropped from the output.
 MIN_POOL_SHARE = 0.001
@@ -107,24 +115,112 @@ REGIONAL_FORM_RE = re.compile(r'_(' + '|'.join(REGIONAL_FORM_GENS) + r')(?:_|$)'
 def load_base(path, force=False):
     """(wild_encounters.json at path, its SHA-256), refusing one restock wrote unless force."""
     raw = read_or_exit(path, BASE_HINT)
-    wild = json.loads(raw)
+    return check_base(path, raw, force), hashlib.sha256(raw).hexdigest()
+
+
+def check_base(path, raw, force):
+    """The parsed wild_encounters.json bytes from path, refusing a bad table or one restock wrote unless force."""
+    try:
+        wild = json.loads(raw)
+    except ValueError as e:
+        sys.exit(f'{path} is not valid JSON ({e}); {BASE_HINT}')
+    problem = map_headers_problem(wild)
+    if problem:
+        sys.exit(f'{path} has no usable {MAP_HEADERS_LABEL} group ({problem}); {BASE_HINT}')
     if RESTOCK_STAMP in wild and not force:
         sys.exit(f'{path} was written by restock ({RESTOCK_STAMP} is set), so it is not a vanilla '
                  f'baseline; pass a vanilla file, or --force to use it anyway')
-    return wild, hashlib.sha256(raw).hexdigest()
+    return wild
 
 
-def refresh_baseline(src=SRC_WILD, base=VANILLA_WILD, force=False):
-    """Copy src over the vanilla baseline, unless restock wrote src."""
-    load_base(src, force)
+def map_headers_problem(wild):
+    """What stops build and restock reading the map tables in parsed JSON, or None."""
+    groups = wild.get('wild_encounter_groups') if isinstance(wild, dict) else None
+    if not isinstance(groups, list) or not all(isinstance(g, dict) and 'label' in g for g in groups):
+        return 'no labelled wild_encounter_groups'
+    try:
+        group = map_headers(wild)
+    except StopIteration:
+        return 'not there'
+    encounters, fields = group.get('encounters'), group.get('fields')
+    if not isinstance(encounters, list) or not encounters:
+        return 'no encounters'
+    if not isinstance(fields, list) or not all(isinstance(f, dict) and isinstance(f.get('type'), str)
+                                               and isinstance(f.get('encounter_rates'), list) for f in fields):
+        return 'a field without its type and encounter_rates'
+    field_defs = {f['type']: f for f in fields}
+    for enc in encounters:
+        if not isinstance(enc, dict) or not all(isinstance(enc.get(k), str) for k in ('base_label', 'map')):
+            return 'an encounter without its base_label and map'
+        for field in (k for k in enc if k.endswith('_mons')):
+            problem = mon_table_problem(field, enc[field], field_defs.get(field))
+            if problem:
+                return f'{enc["base_label"]} {field}: {problem}'
+    return None
+
+
+def mon_table_problem(field, table, field_def):
+    """What stops build and restock reading one encounter's table of a field, or None."""
+    if field_def is None:
+        return 'no field definition'
+    mons = table.get('mons') if isinstance(table, dict) else None
+    if not isinstance(mons, list) or not all(
+            isinstance(m, dict) and isinstance(m.get('species'), str)
+            and isinstance(m.get('min_level'), int) and isinstance(m.get('max_level'), int) for m in mons):
+        return 'no mons with a species and levels'
+    if len(mons) > len(field_def['encounter_rates']):
+        return 'more mons than encounter_rates'
+    if field == 'fishing_mons':
+        groups = field_def.get('groups')
+        if not isinstance(groups, dict) or not all(
+                isinstance(idxs, list) and all(type(i) is int and 0 <= i < len(mons) for i in idxs)
+                for idxs in groups.values()):
+            return 'no rod groups within its mons'
+    return None
+
+
+def refresh_baseline(src=SRC_WILD, base=VANILLA_WILD, force=False, out=DEFAULT_OUT):
+    """Copy src over the vanilla baseline, unless restock wrote src, then warn if out's maps need a rebuild.
+
+    A --base other than the committed baseline doesn't pair with the committed maps,
+    so those are only compared when out was named too.
+    """
+    raw = read_or_exit(src, BASE_HINT)
+    check_base(src, raw, force)
     if os.path.exists(base) and os.path.samefile(src, base):
         sys.exit(f'{src} is already the baseline')
-    raw = read_or_exit(src, BASE_HINT)
     try:
         write_atomic(base, raw)
     except OSError as e:
         sys.exit(f'cannot write {base}: {e.strerror}')
     print(f'wrote {base} from {src}')
+    if out != DEFAULT_OUT or os.path.abspath(base) == VANILLA_WILD:
+        warn_if_maps_stale(os.path.join(out, 'emerald_maps.json'), base, hashlib.sha256(raw).hexdigest(), force)
+
+
+def warn_if_maps_stale(maps_path, base_path, base_sha256, force=False):
+    """Warn unless emerald_maps.json records this base: its archetypes may be from another one.
+
+    Quiet when there's no such file, since then no archetypes can be stale. force
+    is whether --force was given, so the build named takes it too.
+    """
+    try:
+        with open(maps_path, 'rb') as f:
+            maps = json.load(f)
+    except FileNotFoundError:
+        return
+    except (OSError, ValueError):
+        maps = None
+    if not isinstance(maps, dict):
+        why = 'is not a build record'
+    elif maps.get(BASE_HASH_KEY) == base_sha256:
+        return
+    else:
+        why = 'records no base hash' if maps.get(BASE_HASH_KEY) is None else 'was built from another base'
+    out = os.path.dirname(os.path.abspath(maps_path))
+    print(f'warning: {maps_path} {why}, so its archetypes may be stale for {base_path}; '
+          f'run area_archetypes.py build --base {base_path} --out {out}{" --force" if force else ""}',
+          file=sys.stderr)
 
 
 def write_atomic(path, data):
@@ -149,10 +245,12 @@ def read_or_exit(path, hint):
 
 
 def parse_csv(name, raw, where, hint):
-    """The rows of CSV bytes, refusing any that are empty, unreadable, cut short or without CSV_FILES' columns."""
+    """The rows of CSV bytes, refusing any that are empty, unreadable, the wrong length, without CSV_FILES' columns
+    or blank in one outside CSV_BLANK_OK."""
     if not raw:
         sys.exit(f'{where} is empty; {hint}')
     columns = CSV_FILES[name]
+    required = [c for c in columns if c not in CSV_BLANK_OK.get(name, ())]
     rows = []
     try:
         reader = csv.DictReader(io.StringIO(raw.decode('utf-8'), newline=''))
@@ -160,8 +258,13 @@ def parse_csv(name, raw, where, hint):
         if missing:
             sys.exit(f'{where} has no {", ".join(missing)} column; {hint}')
         for row in reader:
-            if any(row[c] is None for c in columns):
+            if None in row.values():
                 sys.exit(f'{where} line {reader.line_num} is cut short; {hint}')
+            if None in row:  # DictReader keeps the fields past the last column under None.
+                sys.exit(f'{where} line {reader.line_num} has too many fields; {hint}')
+            blank = [c for c in required if not row[c].strip()]
+            if blank:
+                sys.exit(f'{where} line {reader.line_num} has a blank {", ".join(blank)}; {hint}')
             rows.append(row)
     except (UnicodeDecodeError, csv.Error) as e:
         sys.exit(f'{where} is not a readable CSV ({e}); {hint}')
@@ -177,9 +280,11 @@ def pokesearch_sha(pokesearch):
     try:
         top, sha = subprocess.run(['git', '-C', pokesearch, 'rev-parse', '--show-toplevel', 'HEAD'], check=True,
                                   capture_output=True, text=True, env=env).stdout.splitlines()
-    except (OSError, subprocess.CalledProcessError):
+    except OSError as e:
+        sys.exit(f'cannot run git: {e.strerror}; fetch needs it on PATH')
+    except subprocess.CalledProcessError:
         sys.exit(not_checkout)
-    if os.path.realpath(top) != os.path.realpath(pokesearch):
+    if not os.path.samefile(top, pokesearch):
         sys.exit(not_checkout)
     return sha
 
@@ -189,9 +294,18 @@ def committed_hashes(out, ref):
     path = os.path.join(out, 'archetype_pools.json')
     if not os.path.exists(path):
         return {}
-    with open(path, encoding='utf-8') as f:
-        provenance = json.load(f).get(PROVENANCE_KEY, {})
-    return provenance.get('csv_sha256', {}) if provenance.get('ref') == ref else {}
+    fix = 'restore it, or name other outputs with --out'
+    try:
+        doc = json.loads(read_or_exit(path, fix))
+    except ValueError:
+        doc = None
+    if isinstance(doc, dict) and PROVENANCE_KEY not in doc:
+        return {}
+    provenance = doc.get(PROVENANCE_KEY) if isinstance(doc, dict) else None
+    hashes = provenance.get('csv_sha256') if isinstance(provenance, dict) else None
+    if not isinstance(hashes, dict):
+        sys.exit(f'{path} is not a build record; {fix}')
+    return hashes if provenance.get('ref') == ref else {}
 
 
 def fetch(cache, pokesearch, out):
@@ -369,7 +483,7 @@ def build_tables(data):
         if loc['identifier'].startswith(A.SKIP_LOCATION_PREFIXES) or area['identifier'] in A.SKIP_AREAS:
             continue
         vg = data.version_groups[data.version_to_group[e['version_id']]]['identifier']
-        rarity = int(slot['rarity'] or 0)
+        rarity = int(slot['rarity'])
         if rarity <= 0:
             continue
         # Seaweed is surfing underwater: same Emerald field, its own habitat.
@@ -541,7 +655,7 @@ def emerald_location(map_const, region, known):
 def map_headers(wild):
     """The gWildMonHeaders group of wild (wild_encounters.json): the maps' tables, without
     the Battle Pyramid's and Battle Pike's groups."""
-    return next(g for g in wild['wild_encounter_groups'] if g['label'] == 'gWildMonHeaders')
+    return next(g for g in wild['wild_encounter_groups'] if g['label'] == MAP_HEADERS_LABEL)
 
 
 def classify_emerald(data, smap, wild, water_by_loc):
@@ -735,7 +849,7 @@ def main(argv=None):
     if args.command == 'fetch':
         fetch(args.cache, args.pokesearch or DEFAULT_POKESEARCH, args.out)
     elif args.command == 'baseline':
-        refresh_baseline(args.wild or SRC_WILD, args.base, args.force)
+        refresh_baseline(args.wild or SRC_WILD, args.base, args.force, args.out)
     else:
         build(args.cache, args.out, REPO, args.base, args.force)
 
