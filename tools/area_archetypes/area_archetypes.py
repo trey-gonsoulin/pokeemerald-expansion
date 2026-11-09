@@ -99,6 +99,27 @@ CSV_BLANK_OK = {
     'locations': {'region_id'},
     'location_areas': {'identifier'},
 }
+# The read columns the build turns into numbers with int().
+CSV_INT_COLUMNS = {
+    'encounters': ('min_level', 'max_level'),
+    'encounter_slots': ('rarity',),
+    'version_groups': ('generation_id',),
+    'pokemon': ('id',),
+    'pokemon_species': ('generation_id',),
+}
+# The ids the build looks up in another CSV: (CSV, column, the CSV whose id it is).
+# locations.region_id isn't one: a region the build doesn't know reads as 'other'.
+CSV_REFS = (
+    ('encounters', 'encounter_slot_id', 'encounter_slots'),
+    ('encounters', 'location_area_id', 'location_areas'),
+    ('encounters', 'version_id', 'versions'),
+    ('encounters', 'pokemon_id', 'pokemon'),
+    ('encounter_slots', 'encounter_method_id', 'encounter_methods'),
+    ('location_areas', 'location_id', 'locations'),
+    ('versions', 'version_group_id', 'version_groups'),
+    ('pokemon', 'species_id', 'pokemon_species'),
+    ('pokemon_types', 'type_id', 'types'),
+)
 # Species whose share of a pool is below this are dropped from the output.
 MIN_POOL_SHARE = 0.001
 MD_TOP_N = 15
@@ -120,10 +141,7 @@ def load_base(path, force=False):
 
 def check_base(path, raw, force):
     """The parsed wild_encounters.json bytes from path, refusing a bad table or one restock wrote unless force."""
-    try:
-        wild = json.loads(raw)
-    except ValueError as e:
-        sys.exit(f'{path} is not valid JSON ({e}); {BASE_HINT}')
+    wild = parse_json(path, raw, BASE_HINT)
     problem = map_headers_problem(wild)
     if problem:
         sys.exit(f'{path} has no usable {MAP_HEADERS_LABEL} group ({problem}); {BASE_HINT}')
@@ -131,6 +149,18 @@ def check_base(path, raw, force):
         sys.exit(f'{path} was written by restock ({RESTOCK_STAMP} is set), so it is not a vanilla '
                  f'baseline; pass a vanilla file, or --force to use it anyway')
     return wild
+
+
+def parse_json(path, raw, hint):
+    """The JSON in bytes read from path, exiting with hint if they aren't JSON or nest too deep to parse."""
+    try:
+        return json.loads(raw)
+    except (ValueError, RecursionError) as e:
+        sys.exit(f'{path} is not valid JSON ({e}); {hint}')
+
+
+def is_number(v):
+    return isinstance(v, (int, float)) and not isinstance(v, bool)
 
 
 def map_headers_problem(wild):
@@ -148,6 +178,8 @@ def map_headers_problem(wild):
     if not isinstance(fields, list) or not all(isinstance(f, dict) and isinstance(f.get('type'), str)
                                                and isinstance(f.get('encounter_rates'), list) for f in fields):
         return 'a field without its type and encounter_rates'
+    if not all(is_number(r) for f in fields for r in f['encounter_rates']):
+        return 'an encounter_rates value that is not a number'
     field_defs = {f['type']: f for f in fields}
     for enc in encounters:
         if not isinstance(enc, dict) or not all(isinstance(enc.get(k), str) for k in ('base_label', 'map')):
@@ -194,23 +226,26 @@ def refresh_baseline(src=SRC_WILD, base=VANILLA_WILD, force=False, out=DEFAULT_O
     except OSError as e:
         sys.exit(f'cannot write {base}: {e.strerror}')
     print(f'wrote {base} from {src}')
-    if out != DEFAULT_OUT or os.path.abspath(base) == VANILLA_WILD:
-        warn_if_maps_stale(os.path.join(out, 'emerald_maps.json'), base, hashlib.sha256(raw).hexdigest(), force)
-
-
-def warn_if_maps_stale(maps_path, base_path, base_sha256, force=False):
-    """Warn unless emerald_maps.json records this base: its archetypes may be from another one.
-
-    Quiet when there's no such file, since then no archetypes can be stale. force
-    is whether --force was given, so the build named takes it too.
-    """
+    if out == DEFAULT_OUT and os.path.abspath(base) != VANILLA_WILD:
+        return
+    # Quiet when there's no build there, since then no archetypes can be stale.
+    maps_path = os.path.join(out, 'emerald_maps.json')
     try:
         with open(maps_path, 'rb') as f:
             maps = json.load(f)
     except FileNotFoundError:
         return
-    except (OSError, ValueError):
+    except (OSError, ValueError, RecursionError):
         maps = None
+    warn_if_maps_stale(maps_path, maps, base, hashlib.sha256(raw).hexdigest(), force)
+
+
+def warn_if_maps_stale(maps_path, maps, base_path, base_sha256, force=False):
+    """Warn unless maps, the parsed emerald_maps.json at maps_path (None if it isn't JSON), records this base:
+    its archetypes may be from another one.
+
+    force is whether --force was given, so the build named takes it too.
+    """
     if not isinstance(maps, dict):
         why = 'is not a build record'
     elif maps.get(BASE_HASH_KEY) == base_sha256:
@@ -265,6 +300,11 @@ def parse_csv(name, raw, where, hint):
             blank = [c for c in required if not row[c].strip()]
             if blank:
                 sys.exit(f'{where} line {reader.line_num} has a blank {", ".join(blank)}; {hint}')
+            for c in CSV_INT_COLUMNS.get(name, ()):
+                try:
+                    int(row[c])
+                except ValueError:
+                    sys.exit(f'{where} line {reader.line_num} has {c} {row[c]!r}, not a whole number; {hint}')
             rows.append(row)
     except (UnicodeDecodeError, csv.Error) as e:
         sys.exit(f'{where} is not a readable CSV ({e}); {hint}')
@@ -324,15 +364,22 @@ def fetch(cache, pokesearch, out):
         sys.exit(f'{source} holds PokeAPI {ref}, not POKEAPI_REF {POKEAPI_REF}; '
                  'to take its data, bump POKEAPI_REF')
     committed = committed_hashes(out, ref)
-    raws, hashes = {}, {}
+    raws, hashes, rows = {}, {}, {}
     for name in CSV_FILES:
         path = os.path.join(source, name + '.csv')
         raws[name] = read_or_exit(path, POKESEARCH_HINT)
-        parse_csv(name, raws[name], path, POKESEARCH_HINT)
+        rows[name] = parse_csv(name, raws[name], path, POKESEARCH_HINT)
         hashes[name] = hashlib.sha256(raws[name]).hexdigest()
         if committed.get(name, hashes[name]) != hashes[name]:
             sys.exit(f'{path} is not the file {out} was built from at PokeAPI {ref}; '
                      f'remove {stamp}, then {POKESEARCH_HINT}')
+    # The cache is only built from as fetch recorded it, so checking the ids here covers build.
+    for name, column, target in CSV_REFS:
+        ids = {r['id'] for r in rows[target]}
+        dangling = next((r[column] for r in rows[name] if r[column] not in ids), None)
+        if dangling is not None:
+            sys.exit(f'{os.path.join(source, name + ".csv")} has {column} {dangling}, which no row of '
+                     f'{target}.csv has; {POKESEARCH_HINT}')
     os.makedirs(cache, exist_ok=True)
     for name, raw in raws.items():
         write_atomic(os.path.join(cache, name + '.csv'), raw)

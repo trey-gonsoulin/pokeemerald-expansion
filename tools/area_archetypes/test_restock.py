@@ -284,7 +284,7 @@ class RestockTests(unittest.TestCase):
     def setUpClass(cls):
         cls.info = R.SpeciesInfo(AA.REPO)
         cls.wild = R.load_json(WILD)
-        cls.maps = R.load_maps(MAPS)
+        cls.maps = R.maps_of(R.load_json(MAPS))
         cls.pools = R.load_json(POOLS)
         cls.runs = {ratio: R.restock(cls.wild, cls.maps, cls.pools, cls.info, R.Settings(ratio=ratio))
                     for ratio in (0.0, 0.5, 1.0)}
@@ -457,10 +457,10 @@ def first_stamp(path):
 
 
 class OutputFileTests(unittest.TestCase):
-    def test_load_maps_leaves_out_the_provenance_and_base_hash(self):
+    def test_maps_of_leaves_out_the_provenance_and_base_hash(self):
         for key in (AA.PROVENANCE_KEY, AA.BASE_HASH_KEY):
             self.assertIn(key, R.load_json(MAPS))
-            self.assertNotIn(key, R.load_maps(MAPS))
+            self.assertNotIn(key, R.maps_of(R.load_json(MAPS)))
 
     def test_dump_wild_keeps_the_old_file_on_a_failure(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -569,7 +569,8 @@ class CliTests(unittest.TestCase):
                                    ('{}', 'records no base hash'),
                                    ('[]', 'is not a build record'),
                                    ('[1]', 'is not a build record'),
-                                   ('<<<<<<< HEAD', 'is not a build record')):
+                                   ('<<<<<<< HEAD', 'is not a build record'),
+                                   ('[' * 200_000, 'is not a build record')):
                 with self.subTest(maps_text=maps_text):
                     with open(maps, 'w', encoding='utf-8') as f:
                         f.write(maps_text)
@@ -633,7 +634,7 @@ class CliTests(unittest.TestCase):
         def without(d, key):
             return {k: v for k, v in d.items() if k != key}
 
-        not_json = ('{bad', b'\xff\xfe\xff')
+        not_json = ('{bad', b'\xff\xfe\xff', '[' * 200_000)  # the last nests too deep for json.loads
         not_table = [[], {}, [1], 5, None, 'wild_encounters',
                      {'wild_encounter_groups': []}, {'wild_encounter_groups': {}}, {'wild_encounter_groups': [1]},
                      {'wild_encounter_groups': [{}]}, good_then({}),
@@ -644,6 +645,8 @@ class CliTests(unittest.TestCase):
                      table(encounters=[]), table(encounters={}), table(fields={}), table(encounters=[1]),
                      table(fields=[1]), table(fields=[{}]), table(fields=[without(rates, 'encounter_rates')]),
                      table(fields=[{**rates, 'type': []}]), table(fields=[rates, {}]),
+                     table(fields=[{**rates, 'encounter_rates': ['100']}]),
+                     table(fields=[rates, {**rods, 'encounter_rates': [60, True]}]),
                      table(encounters=[without(enc, 'map')]), table(encounters=[without(enc, 'base_label')]),
                      table(encounters=[{**enc, 'map': None}]), table(encounters=[enc, {}]),
                      table(fields=[rods]),
@@ -702,6 +705,36 @@ class CliTests(unittest.TestCase):
                 self.assertIn(message, cm.exception.code)  # a message, so the exit code is 1
             self.assertEqual(read(base), read(WILD))
 
+    def test_restock_exits_cleanly_on_a_bad_json_input(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            bad = os.path.join(tmp, 'bad.json')
+            out = os.path.join(tmp, 'out')
+            flags = {'--maps': ['--maps', bad], '--pools': ['--pools', bad], '--config': ['--config', bad],
+                     '--levels': ['--levels', bad], '--wild': ['--wild', bad, '--write']}
+            contents = {'is not valid JSON': ('{bad', b'\xff\xfe', '[' * 200_000),
+                        'is not a JSON object': ('[1]', '5', 'null')}
+            for flag, argv in flags.items():
+                for message, texts in contents.items():
+                    for text in texts:
+                        with self.subTest(flag=flag, text=text[:8]):
+                            with open(bad, 'wb') as f:
+                                f.write(text if isinstance(text, bytes) else text.encode())
+                            err = io.StringIO()
+                            with contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as cm:
+                                run_quietly(['--out-dir', out, '--levels', no_levels(tmp), *argv])
+                            # A --config of another type is a usage error, as its bad keys are.
+                            if flag == '--config' and message == 'is not a JSON object':
+                                self.assertEqual(cm.exception.code, 2)
+                                self.assertIn(f'{bad} {message}', err.getvalue())
+                            else:
+                                self.assertIn(f'{bad} {message}', cm.exception.code)
+                            self.assertFalse(os.path.exists(out))
+            os.remove(bad)
+            for flag in ('--maps', '--pools', '--config'):
+                with self.subTest(flag=flag, text='missing'), self.assertRaises(SystemExit) as cm:
+                    run_quietly(['--out-dir', out, flag, bad])
+                self.assertIn(f'cannot read {bad}: ', cm.exception.code)
+
     def test_baseline_keeps_the_old_file_on_a_failed_write(self):
         with tempfile.TemporaryDirectory() as tmp:
             base = os.path.join(tmp, 'base.json')
@@ -715,7 +748,7 @@ class CliTests(unittest.TestCase):
             self.assertEqual(os.listdir(tmp), ['base.json'])
 
     def test_labels_missing_from_maps_are_reported(self):
-        maps = R.load_maps(MAPS)
+        maps = R.maps_of(R.load_json(MAPS))
         del maps['gRoute101']
         err = io.StringIO()
         with contextlib.redirect_stderr(err):
