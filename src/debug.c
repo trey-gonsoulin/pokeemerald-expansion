@@ -1484,15 +1484,14 @@ static void DebugSelection_SetNameOrderValue(u8 taskId, const struct DebugSelect
     }
     mapGroup = Debug_GetMapGroupFromIndex(value, &mapNum);
     groupIndex = DebugSelection_StepDataIndex(taskId, gTasks[taskId].tStep - 1);
+    gTasks[taskId].tInput = mapNum;
     if (mapGroup == DebugSelection_GetData(taskId, groupIndex))
-    {
-        gTasks[taskId].tInput = mapNum;
         return;
-    }
-    // A map in another group sets the group step, and the map number starts over there: Select
-    // goes back to this map, not to the start's number, which the new group may not have
+    // A map in another group sets the group step, and keeps the map for B then A to come back to.
+    // Select goes back to this map, not to the start's number, which the new group may not have.
     DebugSelection_SetData(taskId, groupIndex, mapGroup);
-    Debug_StartNumericInput(taskId, mapNum);
+    DebugSelection_SetData(taskId, DebugSelection_DataIndex(taskId), mapNum);
+    gTasks[taskId].tInputStart = mapNum;
 }
 
 // Start turns on name order and jumps to the next initial letter, and Up/Down then go A-Z (Down
@@ -1605,9 +1604,13 @@ static void DebugAction_Selection_StepUpdate(u8 taskId)
         // Holding Up/Down at min/max changes nothing, so don't beep or redraw every repeat
         if (DebugSelection_GetNameOrderValue(taskId, selectionStep) == oldValue && gTasks[taskId].tDigit == oldDigit && Debug_IsNameOrder() == oldNameOrder)
             return;
-        // Name order on Warp's map step can change the group, and with it the last map number
+        // Name order on Warp's map step can change the group, and with it the last map number's digits
         if (selectionStep->names == DEBUG_STEP_NAMES_MAPS)
+        {
             digits = DebugSelection_GetRange(taskId, selectionStep, &min, &max);
+            if (gTasks[taskId].tDigit >= digits)
+                gTasks[taskId].tDigit = digits - 1;
+        }
         PlaySE(SE_SELECT);
         selectionStep->stepUpdate(taskId, digits, min, max);
         return;

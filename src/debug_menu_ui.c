@@ -535,7 +535,7 @@ u32 Debug_GetMapCount(u32 mapGroup)
 
 const u8 *Debug_GetMapGroupName(u32 mapGroup)
 {
-    return sDebugMapGroupNames[mapGroup];
+    return mapGroup < MAP_GROUPS_COUNT ? sDebugMapGroupNames[mapGroup] : COMPOUND_STRING("?");
 }
 
 // Copies the map's name from its map.json, or "?" for a map this game doesn't have
