@@ -22,6 +22,11 @@ bool readFileAsUS(std::string filePath, std::vector<unsigned short> *pFileData)
     }
     pFileData->resize(size/2);
     iStream.read((char *)(pFileData->data()), size);
+    if (iStream.gcount() != size)
+    {
+        fprintf(stderr, "Error: read %zu of %s's %zu bytes\n", (size_t)iStream.gcount(), filePath.c_str(), (size_t)size);
+        return false;
+    }
     iStream.close();
     return true;
 }
