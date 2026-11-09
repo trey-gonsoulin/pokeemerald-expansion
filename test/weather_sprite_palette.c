@@ -13,6 +13,9 @@
 static const u16 sTestPalette[16] = {0};
 static const struct SpritePalette sTestSpritePalette = {sTestPalette, TEST_PALETTE_TAG};
 
+static u8 sSavedState, sSavedFirstFrame;
+static u16 sSavedColor;
+
 static void FillEverySpritePaletteSlot(void)
 {
     u32 i;
@@ -21,68 +24,67 @@ static void FillEverySpritePaletteSlot(void)
         LoadSpritePaletteWithTag(gPlttBufferUnfaded, TEST_PALETTE_TAG + 1 + i);
 }
 
-// Sets up the first frame of a weather fade-in, which writes fadeDestColor over the whole slot
-static void StartFadeIn(u32 fadeColor)
+// Starts the first frame of a weather fade-in, which writes fadeDestColor over the whole slot, and returns that color
+static u32 StartFadeIn(void)
 {
+    u32 fadeColor = ~PAST_BUFFER[0] & 0x7FFF;
+
+    sSavedState = gWeatherPtr->palProcessingState;
+    sSavedFirstFrame = gWeatherPtr->fadeInFirstFrame;
+    sSavedColor = gWeatherPtr->fadeDestColor;
     gWeatherPtr->palProcessingState = WEATHER_PAL_STATE_SCREEN_FADING_IN;
     gWeatherPtr->fadeInFirstFrame = TRUE;
     gWeatherPtr->fadeDestColor = fadeColor;
+    return fadeColor;
 }
 
-// Gives palette 15 (where slot 0xFF + 16 lands as a u8) a color map type other than the loaders', and returns the table
+static void EndFadeIn(void)
+{
+    gWeatherPtr->palProcessingState = sSavedState;
+    gWeatherPtr->fadeInFirstFrame = sSavedFirstFrame;
+    gWeatherPtr->fadeDestColor = sSavedColor;
+}
+
+// Gives BG palette 15 (where slot 0xFF + 16 lands as a u8) a color map type other than the loaders', and returns the table
 static const u8 *SetPalette15ColorMapType(void)
 {
-    SetPaletteColorMapType(15, COLOR_MAP_NONE);
+    ResetPreservedPalettesInWeather();
     return SetPaletteColorMapType(15, COLOR_MAP_CONTRAST);
 }
 
 // The reflection loaders (src/field_effect_helpers.c) and Mew's grass on Faraway Island (src/faraway_island.c) pass this
 TEST("Weather sprite palette: a weather update for slot 0xFF writes nothing")
 {
-    u32 fadeColor = ~PAST_BUFFER[0] & 0x7FFF;
-    u8 savedState = gWeatherPtr->palProcessingState;
-    u8 savedFirstFrame = gWeatherPtr->fadeInFirstFrame;
-    u16 savedColor = gWeatherPtr->fadeDestColor;
+    u32 fadeColor = StartFadeIn();
 
-    StartFadeIn(fadeColor);
     UpdateSpritePaletteWithWeather(0xFF, TRUE);
-    gWeatherPtr->palProcessingState = savedState;
-    gWeatherPtr->fadeInFirstFrame = savedFirstFrame;
-    gWeatherPtr->fadeDestColor = savedColor;
+    EndFadeIn();
 
     EXPECT_NE((u32)PAST_BUFFER[0], fadeColor);
 }
 
 TEST("Weather sprite palette: with no free slot a field effect's faded palette changes no color map or fade")
 {
-    u32 fadeColor = ~PAST_BUFFER[0] & 0x7FFF;
-    u8 savedState = gWeatherPtr->palProcessingState;
-    u8 savedFirstFrame = gWeatherPtr->fadeInFirstFrame;
-    u16 savedColor = gWeatherPtr->fadeDestColor;
+    u32 fadeColor;
     const u8 *colorMapTypes;
     struct SpritePalette palette = sTestSpritePalette;
 
     FillEverySpritePaletteSlot();
     colorMapTypes = SetPalette15ColorMapType();
 
-    StartFadeIn(fadeColor);
+    fadeColor = StartFadeIn();
     FieldEffect_LoadFadedPalette(&palette, COLOR_MAP_DARK_CONTRAST);
-    gWeatherPtr->palProcessingState = savedState;
-    gWeatherPtr->fadeInFirstFrame = savedFirstFrame;
-    gWeatherPtr->fadeDestColor = savedColor;
+    EndFadeIn();
 
     EXPECT_EQ(IndexOfSpritePaletteTag(TEST_PALETTE_TAG), 0xFF);
     EXPECT_NE((u32)PAST_BUFFER[0], fadeColor);
     EXPECT_EQ(colorMapTypes[15], COLOR_MAP_CONTRAST);
-    ResetPaletteColorMapType(15);
+    ResetPreservedPalettesInWeather();
 }
 
 TEST("Weather sprite palette: with no free slot a field effect script's faded palette changes no color map or fade")
 {
-    u32 fadeColor = ~PAST_BUFFER[0] & 0x7FFF;
-    u8 savedState = gWeatherPtr->palProcessingState;
-    u8 savedFirstFrame = gWeatherPtr->fadeInFirstFrame;
-    u16 savedColor = gWeatherPtr->fadeDestColor;
+    u32 fadeColor;
     const u8 *colorMapTypes;
     uintptr_t palette = (uintptr_t)&sTestSpritePalette;
     // loadfadedpal's arguments: the palette's address, its color map type, then the next command's word
@@ -92,15 +94,13 @@ TEST("Weather sprite palette: with no free slot a field effect script's faded pa
     FillEverySpritePaletteSlot();
     colorMapTypes = SetPalette15ColorMapType();
 
-    StartFadeIn(fadeColor);
+    fadeColor = StartFadeIn();
     FieldEffectScript_LoadFadedPalette(&script);
-    gWeatherPtr->palProcessingState = savedState;
-    gWeatherPtr->fadeInFirstFrame = savedFirstFrame;
-    gWeatherPtr->fadeDestColor = savedColor;
+    EndFadeIn();
 
     EXPECT_EQ(IndexOfSpritePaletteTag(TEST_PALETTE_TAG), 0xFF);
     EXPECT_NE((u32)PAST_BUFFER[0], fadeColor);
     EXPECT_EQ(colorMapTypes[15], COLOR_MAP_CONTRAST);
     EXPECT_EQ(script - commands, 5);
-    ResetPaletteColorMapType(15);
+    ResetPreservedPalettesInWeather();
 }
