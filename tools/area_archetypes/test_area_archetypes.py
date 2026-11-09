@@ -487,6 +487,38 @@ class CacheTests(unittest.TestCase):
             f.write('id,encounter_method_id,rarity\n1,1,\n')
         self.assertExits(lambda: AA.read_csv(self.cache, 'encounter_slots'), 'line 2 has a blank rarity')
 
+    def test_read_csv_refuses_a_number_the_build_cant_read(self):
+        for name, content, msg in [
+                ('encounter_slots', 'id,encounter_method_id,rarity\n1,1,20\n2,1,ten\n',
+                 "line 3 has rarity 'ten', not a whole number"),
+                ('encounters', 'version_id,location_area_id,encounter_slot_id,pokemon_id,min_level,max_level\n'
+                               '1,1,1,1,2.5,3\n', "line 2 has min_level '2.5'"),
+                ('encounters', 'version_id,location_area_id,encounter_slot_id,pokemon_id,min_level,max_level\n'
+                               '1,1,1,1,2,x\n', "line 2 has max_level 'x'"),
+                ('version_groups', 'id,identifier,generation_id\n1,ruby-sapphire,III\n', "has generation_id 'III'"),
+                ('pokemon_species', 'id,identifier,generation_id\n1,ivy,one\n', "has generation_id 'one'"),
+                ('pokemon', 'id,identifier,species_id\n1a,ivy,1\n', "line 2 has id '1a'")]:
+            with self.subTest(name=name, msg=msg):
+                with open(self.csv_path(name), 'w', encoding='utf-8') as f:
+                    f.write(content)
+                self.assertExits(lambda: AA.read_csv(self.cache, name), f'{name}.csv', msg)
+
+    def test_fetch_refuses_an_id_no_row_has(self):
+        before = self.read_cache()
+        for name, column, target in AA.CSV_REFS:
+            with self.subTest(column=f'{name}.{column}'):
+                self.make_pokesearch()
+                # A copy of the first row, but for an id no row of target has.
+                path = os.path.join(self.source, name + '.csv')
+                with open(path, encoding='utf-8', newline='') as f:
+                    reader = csv.DictReader(f)
+                    row = {**next(reader), column: '99999'}
+                with open(path, 'a', encoding='utf-8', newline='') as f:
+                    csv.DictWriter(f, reader.fieldnames, lineterminator='\n').writerow(row)
+                self.assertExits(lambda: self.fetch(self.cache), f'{name}.csv has {column} 99999, which no row '
+                                                                 f'of {target}.csv has')
+                self.assertEqual(self.read_cache(), before)
+
     def build(self, out):
         with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
             AA.build(self.cache, out, AA.REPO, base=os.path.join(TESTDATA, 'wild_encounters.json'))
