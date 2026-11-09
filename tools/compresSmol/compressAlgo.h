@@ -138,7 +138,7 @@ bool compareVectorsShort(std::vector<unsigned short> *pVec1, std::vector<unsigne
 bool verifyCompressionShort(CompressedImage *pInput, std::vector<unsigned short> *pImage);
 
 bool verifyBytesShort(std::vector<unsigned char> *pLoVec, std::vector<unsigned short> *pSymVec, std::vector<unsigned short> *pImage);
-bool readRawDataVecs(std::vector<unsigned int> *pInput, std::vector<unsigned short> *pOutput);
+bool readRawDataVecs(std::vector<unsigned int> *pInput, std::vector<unsigned short> *pOutput, bool quiet = false);
 
 bool isModeLoEncoded(CompressionMode mode);
 bool isModeSymEncoded(CompressionMode mode);
