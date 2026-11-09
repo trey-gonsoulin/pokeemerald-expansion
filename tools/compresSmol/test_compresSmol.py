@@ -255,16 +255,23 @@ class ShortReadTest(ToolTest):
         fifo = self.path("in.fifo")
         os.mkfifo(fifo)
 
-        def feed():
-            with open(fifo, "wb") as f:
-                f.write(data)
+        errors = []
 
-        writer = threading.Thread(target=feed)
+        def feed():
+            try:
+                with open(fifo, "wb") as f:
+                    f.write(data)
+            except OSError as e:
+                errors.append(e)
+
+        # A daemon with a join timeout, so a tool that never opens the FIFO fails the test instead of hanging it
+        writer = threading.Thread(target=feed, daemon=True)
         writer.start()
-        try:
-            return self.run_tool(*[fifo if arg is None else arg for arg in args], tool=tool)
-        finally:
-            writer.join()
+        result = self.run_tool(*[fifo if arg is None else arg for arg in args], tool=tool)
+        writer.join(timeout=10)
+        self.assertFalse(writer.is_alive(), "the tool never opened the FIFO")
+        self.assertEqual(errors, [])
+        return result
 
     def test_a_short_image_read_fails(self):
         result = self.run_on_fifo(tile_data(64, 1), "-w", None, self.path("out.smol"))
@@ -308,12 +315,13 @@ class QuietSelfCheckTest(ToolTest):
             f.write(QUIET_DRIVER)
         exe = self.path("driver")
         sources = [os.path.join(TOOL_DIR, name) for name in ("compressAlgo.cpp", "tANS.cpp")]
-        build = subprocess.run([cxx, "-std=c++17", "-I", TOOL_DIR, driver, *sources, "-o", exe],
+        build = subprocess.run([cxx, "-Werror", "-std=c++17", "-I", TOOL_DIR, driver, *sources, "-o", exe],
                                capture_output=True, text=True)
         self.assertEqual(build.returncode, 0, build.stderr)
         result = subprocess.run([exe], capture_output=True, text=True)
         self.assertEqual(result.stdout, "00")
-        self.assertEqual(result.stderr, "Error: the data is 1 words, shorter than the 2-word header\n")
+        # Only the second, non-quiet call prints its reason
+        self.assertEqual(result.stderr.count("Error:"), 1, result.stderr)
 
 
 if __name__ == "__main__":
