@@ -9,9 +9,11 @@ root after `make -C tools/compresSmol`:
 
 import os
 import random
+import shutil
 import struct
 import subprocess
 import tempfile
+import threading
 import unittest
 
 TOOL_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -244,6 +246,74 @@ class TilemapTest(ToolTest):
     def test_an_even_length_tilemap_compresses(self):
         result = self.run_tool(self.write("map.bin", tile_data(2048, 1)), self.path("map.smolTM"), tool=SMOL_TILEMAP)
         self.assertEqual(result.returncode, 0, result.stderr)
+
+
+class ShortReadTest(ToolTest):
+    """A pipe gives its size to the probe, then can't seek back, so the read comes up short (#308)."""
+
+    def run_on_fifo(self, data, *args, tool=SMOL):
+        fifo = self.path("in.fifo")
+        os.mkfifo(fifo)
+
+        def feed():
+            with open(fifo, "wb") as f:
+                f.write(data)
+
+        writer = threading.Thread(target=feed)
+        writer.start()
+        try:
+            return self.run_tool(*[fifo if arg is None else arg for arg in args], tool=tool)
+        finally:
+            writer.join()
+
+    def test_a_short_image_read_fails(self):
+        result = self.run_on_fifo(tile_data(64, 1), "-w", None, self.path("out.smol"))
+        self.assertFails(result, "read 0 of")
+        self.assertIn("'s 64 bytes", result.stderr)
+        self.assertFalse(os.path.exists(self.path("out.smol")))
+
+    def test_a_short_smol_read_fails(self):
+        result = self.run_on_fifo(base_only(8, [1, 2, 3, 4], []), "-d", None, self.path("out.4bpp"))
+        self.assertFails(result, "read 0 of")
+
+    def test_a_short_tilemap_read_fails(self):
+        result = self.run_on_fifo(tile_data(64, 1), None, self.path("map.smolTM"), tool=SMOL_TILEMAP)
+        self.assertFails(result, "read 0 of")
+        self.assertFalse(os.path.exists(self.path("map.smolTM")))
+
+
+QUIET_DRIVER = r"""
+#include "compressAlgo.h"
+int main()
+{
+    std::vector<unsigned int> data(1);
+    std::vector<unsigned short> image;
+    printf("%d", readRawDataVecs(&data, &image, true));
+    printf("%d", readRawDataVecs(&data, &image));
+    return 0;
+}
+"""
+
+
+class QuietSelfCheckTest(ToolTest):
+    def test_the_self_check_rejects_data_without_an_error_line(self):
+        # The mode search decodes each candidate to check it and prints its own WARNING when one
+        # fails, so that decode mustn't print an Error: line (#308). No real input fails a
+        # candidate, so this links a driver against compressAlgo.cpp and calls it directly.
+        cxx = os.environ.get("CXX", "c++")
+        if shutil.which(cxx) is None:
+            self.skipTest(f"no C++ compiler ({cxx})")
+        driver = self.path("driver.cpp")
+        with open(driver, "w") as f:
+            f.write(QUIET_DRIVER)
+        exe = self.path("driver")
+        sources = [os.path.join(TOOL_DIR, name) for name in ("compressAlgo.cpp", "tANS.cpp")]
+        build = subprocess.run([cxx, "-std=c++17", "-I", TOOL_DIR, driver, *sources, "-o", exe],
+                               capture_output=True, text=True)
+        self.assertEqual(build.returncode, 0, build.stderr)
+        result = subprocess.run([exe], capture_output=True, text=True)
+        self.assertEqual(result.stdout, "00")
+        self.assertEqual(result.stderr, "Error: the data is 1 words, shorter than the 2-word header\n")
 
 
 if __name__ == "__main__":
