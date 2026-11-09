@@ -998,6 +998,7 @@ void getUIntVecFromData(CompressedImage *pImage, std::vector<unsigned int> *pOut
 }
 
 //  The mode search's self-check decodes quietly: its own WARNING line reports a failed candidate
+__attribute__((format(printf, 2, 3)))
 static void decodeError(bool quiet, const char *format, ...)
 {
     if (quiet)
