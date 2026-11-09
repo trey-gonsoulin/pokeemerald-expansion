@@ -78,6 +78,16 @@ const u8 *Debug_GetTrainerStepName(u8 *buffer, u32 trainerId);
 const u8 *Debug_GetPartnerStepName(u8 *buffer, u32 partnerId);
 const u8 *Debug_GetDecorationStepName(u8 *buffer, u32 decorationId);
 
+// Map names from the generated src/data/debug_map_names.h. A map index counts this game's maps
+// across all groups, for the Warp map step's name order (Debug_GetMapIndexName is its DebugNameFunc).
+u32 Debug_GetMapCount(u32 mapGroup);
+const u8 *Debug_GetMapGroupName(u32 mapGroup);
+u8 *Debug_CopyMapName(u8 *dest, u32 mapGroup, u32 mapNum);
+u32 Debug_GetMapIndex(u32 mapGroup, u32 mapNum);
+u32 Debug_GetMapIndexCount(void);
+u32 Debug_GetMapGroupFromIndex(u32 index, u32 *mapNum);
+const u8 *Debug_GetMapIndexName(u8 *buffer, u32 index);
+
 // List menus
 s32 Debug_ListMenu_ProcessInput(u8 listTaskId);
 u8 Debug_AddListScrollArrows(const struct WindowTemplate *listWindow, u32 totalItems, u32 maxShowed, u16 *scrollOffset);

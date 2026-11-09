@@ -13,6 +13,7 @@
 #include "task.h"
 #include "text.h"
 #include "window.h"
+#include "constants/map_groups.h"
 
 
 #define tInput      data[DEBUG_DATA_INPUT]
@@ -514,6 +515,65 @@ const u8 *Debug_GetDecorationStepName(u8 *buffer, u32 decorationId)
 {
     const u8 *name = gDecorations[decorationId].name;
     return name[0] != EOS ? name : NULL;
+}
+
+// *******************************
+// Map names
+
+// map.json names (#13), indexed like gMapGroups, with NULL for the other game's groups
+#include "data/debug_map_names.h"
+
+STATIC_ASSERT(ARRAY_COUNT(sDebugMapNames) == MAP_GROUPS_COUNT, DebugMapNamesCount);
+STATIC_ASSERT(ARRAY_COUNT(sDebugMapGroupNames) == MAP_GROUPS_COUNT, DebugMapGroupNamesCount);
+STATIC_ASSERT(ARRAY_COUNT(sDebugMapNameCounts) == MAP_GROUPS_COUNT, DebugMapNameCountsCount);
+
+// This game's maps in the group, which map_groups.json's group can outnumber: 0 for the other game's groups
+u32 Debug_GetMapCount(u32 mapGroup)
+{
+    return mapGroup < MAP_GROUPS_COUNT && sDebugMapNames[mapGroup] != NULL ? sDebugMapNameCounts[mapGroup] : 0;
+}
+
+const u8 *Debug_GetMapGroupName(u32 mapGroup)
+{
+    return sDebugMapGroupNames[mapGroup];
+}
+
+// Copies the map's name from its map.json, or "?" for a map this game doesn't have
+u8 *Debug_CopyMapName(u8 *dest, u32 mapGroup, u32 mapNum)
+{
+    if (mapNum >= Debug_GetMapCount(mapGroup))
+        return StringCopy(dest, COMPOUND_STRING("?"));
+    return StringCopy(dest, sDebugMapNames[mapGroup][mapNum]);
+}
+
+// Map indexes number this game's maps group by group, so that one name order holds every map
+u32 Debug_GetMapIndex(u32 mapGroup, u32 mapNum)
+{
+    for (u32 i = 0; i < mapGroup; i++)
+        mapNum += Debug_GetMapCount(i);
+    return mapNum;
+}
+
+u32 Debug_GetMapIndexCount(void)
+{
+    return Debug_GetMapIndex(MAP_GROUPS_COUNT, 0);
+}
+
+// The map group of a map index, with its map number in mapNum: MAP_GROUPS_COUNT past the last map
+u32 Debug_GetMapGroupFromIndex(u32 index, u32 *mapNum)
+{
+    u32 mapGroup;
+    for (mapGroup = 0; mapGroup < MAP_GROUPS_COUNT && index >= Debug_GetMapCount(mapGroup); mapGroup++)
+        index -= Debug_GetMapCount(mapGroup);
+    *mapNum = index;
+    return mapGroup;
+}
+
+// The name of the map at a map index, which the Warp map step orders by. buffer is unused.
+const u8 *Debug_GetMapIndexName(u8 *buffer, u32 index)
+{
+    u32 mapNum, mapGroup = Debug_GetMapGroupFromIndex(index, &mapNum);
+    return mapGroup < MAP_GROUPS_COUNT ? sDebugMapNames[mapGroup][mapNum] : NULL;
 }
 
 // *******************************
