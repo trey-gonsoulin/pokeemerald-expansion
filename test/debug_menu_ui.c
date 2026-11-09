@@ -1,6 +1,8 @@
 #include "global.h"
 #include "constants/characters.h"
 #include "constants/decorations.h"
+#include "constants/map_groups.h"
+#include "constants/maps.h"
 #include "data.h"
 #include "debug_menu_ui.h"
 #include "difficulty.h"
@@ -343,6 +345,55 @@ TEST("Name order for decorations goes by name")
     EXPECT_EQ(order.values[0], DECOR_A_NOTE_MAT);
     EXPECT_EQ(Debug_StepByName(&order, DECOR_A_NOTE_MAT, FALSE), DECOR_ATTRACT_MAT);
     EXPECT_EQ(Debug_NextNameInitial(&order, DECOR_ATTRACT_MAT), DECOR_B_NOTE_MAT);
+    Debug_FreeNameOrder(&order);
+}
+
+static u32 GetTestMapIndex(u32 map)
+{
+    return Debug_GetMapIndex(MAP_GROUP(map), MAP_NUM(map));
+}
+
+TEST("Map names: map indexes count this game's maps group by group")
+{
+    u32 index = 0, mapNum;
+    u8 name[DEBUG_NAME_BUFFER_SIZE];
+
+    for (u32 mapGroup = 0; mapGroup < MAP_GROUPS_COUNT; mapGroup++)
+    {
+        for (u32 i = 0; i < Debug_GetMapCount(mapGroup); i++, index++)
+        {
+            EXPECT_EQ(Debug_GetMapIndex(mapGroup, i), index);
+            EXPECT_EQ(Debug_GetMapGroupFromIndex(index, &mapNum), mapGroup);
+            EXPECT_EQ(mapNum, i);
+            Debug_CopyMapName(name, mapGroup, i);
+            EXPECT(NameIs(Debug_GetMapIndexName(NULL, index), name));
+        }
+    }
+    EXPECT_EQ(Debug_GetMapIndexCount(), index);
+    EXPECT_EQ(Debug_GetMapGroupFromIndex(index, &mapNum), MAP_GROUPS_COUNT);
+    EXPECT(Debug_GetMapIndexName(NULL, index) == NULL);
+    EXPECT_EQ(GetTestMapIndex(MAP_PETALBURG_CITY), 0);
+    // The other game's groups have no maps here, and their maps no name
+    EXPECT_EQ(Debug_GetMapCount(MAP_GROUPS_COUNT - 1), 0);
+    Debug_CopyMapName(name, MAP_GROUPS_COUNT - 1, 0);
+    EXPECT(NameIs(name, COMPOUND_STRING("?")));
+}
+
+TEST("Name order for maps goes by name across every group")
+{
+    struct DebugNameOrder order = {0};
+    u32 last = Debug_GetMapIndexCount() - 1;
+
+    Debug_BuildNameOrder(&order, 0, last, Debug_GetMapIndexName);
+    ExpectNameOrder(&order, 0, last, Debug_GetMapIndexName);
+    EXPECT_EQ(order.count, last + 1);
+    EXPECT_EQ(order.values[0], GetTestMapIndex(MAP_ABANDONED_SHIP_CAPTAINS_OFFICE));
+    EXPECT_EQ(order.values[last], GetTestMapIndex(MAP_VICTORY_ROAD_B2F));
+    // A city sorts before its buildings, which are in another group
+    EXPECT_EQ(Debug_StepByName(&order, GetTestMapIndex(MAP_PETALBURG_CITY), FALSE), GetTestMapIndex(MAP_PETALBURG_CITY_GYM));
+    EXPECT_EQ(Debug_StepByName(&order, GetTestMapIndex(MAP_ROUTE101), TRUE), GetTestMapIndex(MAP_RECORD_CORNER));
+    EXPECT_EQ(Debug_NextNameInitial(&order, GetTestMapIndex(MAP_ROUTE101)), GetTestMapIndex(MAP_SAFARI_ZONE_NORTH));
+    EXPECT_EQ(Debug_NextNameInitial(&order, GetTestMapIndex(MAP_VICTORY_ROAD_B2F)), order.values[0]);
     Debug_FreeNameOrder(&order);
 }
 

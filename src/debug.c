@@ -186,6 +186,7 @@ enum DebugStepNames
     DEBUG_STEP_NAMES_TRAINERS,
     DEBUG_STEP_NAMES_PARTNERS,
     DEBUG_STEP_NAMES_DECORATIONS,
+    DEBUG_STEP_NAMES_MAPS, // map indexes (Debug_GetMapIndex), not the step's map numbers
     DEBUG_STEP_NAMES_COUNT,
 };
 
@@ -495,8 +496,6 @@ static const struct DebugSelection sTrainerFromMapSelection;
 static const struct DebugSelection sTrainer1Selection;
 static const struct DebugSelection sTrainer2Selection;
 static const struct DebugSelection sPartnerSelection;
-
-#include "data/debug_map_names.h"
 
 // Text
 // General
@@ -1455,6 +1454,7 @@ static const DebugNameFunc sDebugStepNameFuncs[] =
     [DEBUG_STEP_NAMES_TRAINERS] = Debug_GetTrainerStepName,
     [DEBUG_STEP_NAMES_PARTNERS] = Debug_GetPartnerStepName,
     [DEBUG_STEP_NAMES_DECORATIONS] = Debug_GetDecorationStepName,
+    [DEBUG_STEP_NAMES_MAPS] = Debug_GetMapIndexName,
 };
 
 // Name order is only for the overworld menu, which holds its state; the release ROM's native steps have no names
@@ -1463,13 +1463,49 @@ static bool32 DebugSelection_StepHasNames(const struct DebugSelectionStep *selec
     return DEBUG_OVERWORLD_MENU && selectionStep->names != DEBUG_STEP_NAMES_NONE && sDebugMenuListData != NULL;
 }
 
+// The value the step's name order goes by: the input, or on Warp's map step the map index of the
+// map group step's group and the input's map number, so that it orders every map at once.
+// DEBUG_OVERWORLD_MENU lets LTO drop the map names from the release ROM, whose native steps have none.
+static u32 DebugSelection_GetNameOrderValue(u8 taskId, const struct DebugSelectionStep *selectionStep)
+{
+    if (DEBUG_OVERWORLD_MENU && selectionStep->names == DEBUG_STEP_NAMES_MAPS)
+        return Debug_GetMapIndex(DebugSelection_GetStepData(taskId, gTasks[taskId].tStep - 1), DEBUG_TASK_INPUT(taskId));
+    return DEBUG_TASK_INPUT(taskId);
+}
+
+static void DebugSelection_SetNameOrderValue(u8 taskId, const struct DebugSelectionStep *selectionStep, u32 value)
+{
+    u32 mapNum, mapGroup, groupIndex;
+
+    if (selectionStep->names != DEBUG_STEP_NAMES_MAPS)
+    {
+        gTasks[taskId].tInput = value;
+        return;
+    }
+    mapGroup = Debug_GetMapGroupFromIndex(value, &mapNum);
+    groupIndex = DebugSelection_StepDataIndex(taskId, gTasks[taskId].tStep - 1);
+    gTasks[taskId].tInput = mapNum;
+    if (mapGroup == DebugSelection_GetData(taskId, groupIndex))
+        return;
+    // A map in another group sets the group step, and keeps the map for B then A to come back to.
+    // Select goes back to this map, not to the start's number, which the new group may not have.
+    DebugSelection_SetData(taskId, groupIndex, mapGroup);
+    DebugSelection_SetData(taskId, DebugSelection_DataIndex(taskId), mapNum);
+    gTasks[taskId].tInputStart = mapNum;
+}
+
 // Start turns on name order and jumps to the next initial letter, and Up/Down then go A-Z (Down
 // goes back). Any other key turns name order off and returns FALSE, for the numeric input to handle.
 static bool32 DebugSelection_HandleInput_NameOrder(u8 taskId, const struct DebugSelectionStep *selectionStep, u32 min, u32 max)
 {
     struct DebugNameOrder *sortedNames = &sDebugMenuListData->sortedNames[selectionStep->names];
-    u32 input = DEBUG_TASK_INPUT(taskId);
+    u32 input = DebugSelection_GetNameOrderValue(taskId, selectionStep);
 
+    if (selectionStep->names == DEBUG_STEP_NAMES_MAPS)
+    {
+        min = 0;
+        max = Debug_GetMapIndexCount() - 1;
+    }
     if (JOY_NEW(START_BUTTON))
     {
         Debug_BuildNameOrder(sortedNames, min, max, sDebugStepNameFuncs[selectionStep->names]);
@@ -1486,7 +1522,7 @@ static bool32 DebugSelection_HandleInput_NameOrder(u8 taskId, const struct Debug
         sDebugMenuListData->nameOrder = FALSE;
         return FALSE;
     }
-    gTasks[taskId].tInput = input;
+    DebugSelection_SetNameOrderValue(taskId, selectionStep, input);
     return TRUE;
 }
 
@@ -1559,15 +1595,22 @@ static void DebugAction_Selection_StepUpdate(u8 taskId)
     else if (DEBUG_NUMERIC_INPUT_PRESSED() || (DebugSelection_StepHasNames(selectionStep) && JOY_NEW(START_BUTTON)))
     {
         u32 min, max;
-        s16 oldInput = gTasks[taskId].tInput;
+        u32 oldValue = DebugSelection_GetNameOrderValue(taskId, selectionStep);
         s16 oldDigit = gTasks[taskId].tDigit;
         bool32 oldNameOrder = Debug_IsNameOrder();
         u32 digits = DebugSelection_GetRange(taskId, selectionStep, &min, &max);
         if (!DebugSelection_StepHasNames(selectionStep) || !DebugSelection_HandleInput_NameOrder(taskId, selectionStep, min, max))
             Debug_HandleInput_Numeric(taskId, min, max, digits, selectionStep->hex);
         // Holding Up/Down at min/max changes nothing, so don't beep or redraw every repeat
-        if (gTasks[taskId].tInput == oldInput && gTasks[taskId].tDigit == oldDigit && Debug_IsNameOrder() == oldNameOrder)
+        if (DebugSelection_GetNameOrderValue(taskId, selectionStep) == oldValue && gTasks[taskId].tDigit == oldDigit && Debug_IsNameOrder() == oldNameOrder)
             return;
+        // Name order on Warp's map step can change the group, and with it the last map number's digits
+        if (selectionStep->names == DEBUG_STEP_NAMES_MAPS)
+        {
+            digits = DebugSelection_GetRange(taskId, selectionStep, &min, &max);
+            if (gTasks[taskId].tDigit >= digits)
+                gTasks[taskId].tDigit = digits - 1;
+        }
         PlaySE(SE_SELECT);
         selectionStep->stepUpdate(taskId, digits, min, max);
         return;
@@ -2072,19 +2115,6 @@ static void DebugAction_Util_Fly(u8 taskId)
     SetMainCallback2(CB2_OpenFlyMap);
 }
 
-// Copies the map's name from its map.json, or "?" for a map this game doesn't have
-static u8 *Debug_CopyMapName(u8 *dest, u32 mapGroup, u32 mapNum)
-{
-    // sDebugMapNames lists only this game's maps, which a group in map_groups.json can outnumber
-    if (mapGroup >= MAP_GROUPS_COUNT || sDebugMapNames[mapGroup] == NULL || mapNum >= sDebugMapNameCounts[mapGroup])
-        return StringCopy(dest, COMPOUND_STRING("?"));
-    return StringCopy(dest, sDebugMapNames[mapGroup][mapNum]);
-}
-
-STATIC_ASSERT(ARRAY_COUNT(sDebugMapNames) == MAP_GROUPS_COUNT, DebugMapNamesCount);
-STATIC_ASSERT(ARRAY_COUNT(sDebugMapGroupNames) == MAP_GROUPS_COUNT, DebugMapGroupNamesCount);
-STATIC_ASSERT(ARRAY_COUNT(sDebugMapNameCounts) == MAP_GROUPS_COUNT, DebugMapNameCountsCount);
-
 // Only Warp to map warp… has room for the map.json names. The outbreak location pickers share
 // the map group and map steps but keep the narrow window, so they show the region map section.
 static bool32 DebugSelection_ShowsMapNames(u8 taskId)
@@ -2099,15 +2129,15 @@ static void DebugSelectionStep_UpdateMapGroup(u8 taskId, u8 digits, u32 min, u32
     Debug_InputToDecimalString(gStringVar2, taskId, digits);
     ConvertIntToDecimalStringN(gStringVar3, max, STR_CONV_MODE_LEADING_ZEROS, digits);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Group: {STR_VAR_2} / {STR_VAR_3}"));
-    StringCopy(gStringVar2, DebugSelection_ShowsMapNames(taskId) ? sDebugMapGroupNames[mapGroup] : COMPOUND_STRING(""));
-    StringCopy(gStringVar3, sDebugMapNames[mapGroup] == NULL ? COMPOUND_STRING("Not in this game") : COMPOUND_STRING(""));
+    StringCopy(gStringVar2, DebugSelection_ShowsMapNames(taskId) ? Debug_GetMapGroupName(mapGroup) : COMPOUND_STRING(""));
+    StringCopy(gStringVar3, Debug_GetMapCount(mapGroup) == 0 ? COMPOUND_STRING("Not in this game") : COMPOUND_STRING(""));
     DebugNativeStep_PrintWindowSelectionToFit(taskId);
 }
 
 // The other game's groups have no maps in this ROM: gMapGroups has NULL for them
 static bool32 DebugSelectionStep_CanConfirmMapGroup(u8 taskId)
 {
-    return sDebugMapNames[DEBUG_TASK_INPUT(taskId)] != NULL;
+    return Debug_GetMapCount(DEBUG_TASK_INPUT(taskId)) != 0;
 }
 
 static void DebugSelectionStep_UpdateMapNum(u8 taskId, u8 digits, u32 min, u32 max)
@@ -2117,10 +2147,14 @@ static void DebugSelectionStep_UpdateMapNum(u8 taskId, u8 digits, u32 min, u32 m
     Debug_InputToDecimalString(gStringVar2, taskId, digits);
     ConvertIntToDecimalStringN(gStringVar3, max, STR_CONV_MODE_LEADING_ZEROS, digits);
     StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Map: {STR_VAR_2} / {STR_VAR_3}"));
+    // Warp's map step has name order (sWarpMapNumSelectionStep), whose hint takes the region map section's line
     if (DebugSelection_ShowsMapNames(taskId))
+    {
         Debug_CopyMapName(gStringVar2, mapGroup, mapNum);
-    else
-        StringCopy(gStringVar2, COMPOUND_STRING("MapSec:"));
+        DebugNativeStep_PrintNamedSelection(taskId);
+        return;
+    }
+    StringCopy(gStringVar2, COMPOUND_STRING("MapSec:"));
     GetMapName(gStringVar3, Overworld_GetMapHeaderByGroupAndId(mapGroup, mapNum)->regionMapSectionId, 0);
     DebugNativeStep_PrintWindowSelectionToFit(taskId);
 }
@@ -2129,7 +2163,7 @@ static u32 DebugSelectionStep_GetLastMapNum(u8 taskId)
 {
     u16 mapGroup = DebugSelection_GetStepData(taskId, gTasks[taskId].tStep - 1);
     // The map group step refuses a group with no maps in this game
-    return sDebugMapNameCounts[mapGroup] - 1;
+    return Debug_GetMapCount(mapGroup) - 1;
 }
 
 // The map dialed in the two steps before the Warp step
@@ -2357,6 +2391,16 @@ static const struct DebugSelectionStep sMapNumSelectionStep = {
     .useMaxFunc = TRUE,
 };
 
+// Name order on Warp's map step goes through every map, and sets the map group step too
+static const struct DebugSelectionStep sWarpMapNumSelectionStep = {
+    .stepUpdate = DebugSelectionStep_UpdateMapNum,
+    .stepConfirm = DebugSelectionStep_GenericInputConfirm,
+    .minValue = 0,
+    .maxFunc = DebugSelectionStep_GetLastMapNum,
+    .useMaxFunc = TRUE,
+    .names = DEBUG_STEP_NAMES_MAPS,
+};
+
 static const struct DebugSelectionStep sWarpSelectionStep = {
     .stepUpdate = DebugSelectionStep_UpdateWarp,
     .stepConfirm = DebugSelectionStep_GenericInputConfirm,
@@ -2369,7 +2413,7 @@ static const struct DebugSelection sWarpSelection = {
     .onInit = DebugSelection_SetWarp_Init,
     .onCancel = DebugSelectionStep_ReturnToUtilMenu,
     .onComplete = DebugSelection_SetWarp_OnComplete,
-    .steps = {&sMapGroupSelectionStep, &sMapNumSelectionStep, &sWarpSelectionStep},
+    .steps = {&sMapGroupSelectionStep, &sWarpMapNumSelectionStep, &sWarpSelectionStep},
     .maxSteps = 3,
     .showMapNames = TRUE,
 };
