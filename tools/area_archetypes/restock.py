@@ -515,12 +515,8 @@ class Settings:
 # Settings value, raising ValueError with what it expected. The command-line
 # types go through the same functions.
 
-def is_number(v):
-    return isinstance(v, (int, float)) and not isinstance(v, bool)
-
-
 def as_ratio(v):
-    if not is_number(v) or not 0 <= v <= 1:
+    if not AA.is_number(v) or not 0 <= v <= 1:
         raise ValueError(f'expected a number from 0 to 1, got {v!r}')
     return float(v)
 
@@ -584,7 +580,7 @@ def gen_factor(gen, factor):
         gen = int(gen)
     except ValueError:
         raise ValueError(f'expected a generation number, got {gen!r}') from None
-    if not is_number(factor) or factor < 0:
+    if not AA.is_number(factor) or factor < 0:
         raise ValueError(f'expected a factor of 0 or more for gen {gen}, got {factor!r}')
     return gen, float(factor)
 
@@ -986,23 +982,33 @@ def dump_wild(wild, path):
 # CLI
 # ---------------------------------------------------------------------------
 
-def load_json(path):
-    with open(path, encoding='utf-8') as f:
-        return json.load(f)
+BUILD_HINT = 'name a file area_archetypes.py build wrote, or rerun build'
 
 
-def load_maps(path):
+def load_json(path, hint=BUILD_HINT, error=sys.exit):
+    """The JSON object in path, exiting with hint if it can't be read or isn't JSON, and calling error
+    (--config passes its parser's) if it's JSON of another type."""
+    doc = AA.parse_json(path, AA.read_or_exit(path, hint), hint)
+    if not isinstance(doc, dict):
+        error(f'{path} is not a JSON object; {hint}')
+    return doc
+
+
+def maps_of(doc):
     """emerald_maps.json's maps, without the PokeAPI provenance and base hash build records beside them."""
-    maps = load_json(path)
-    maps.pop(AA.PROVENANCE_KEY, None)
-    maps.pop(AA.BASE_HASH_KEY, None)
-    return maps
+    return {k: v for k, v in doc.items() if k not in (AA.PROVENANCE_KEY, AA.BASE_HASH_KEY)}
 
 
 def skeleton(wild):
     """wild without its stamp and species: equal for two files that differ only by restocking."""
     wild = {k: v for k, v in wild.items() if k != AA.RESTOCK_STAMP}
     return json.loads(json.dumps(wild), object_hook=lambda d: {**d, 'species': None} if 'species' in d else d)
+
+
+def are_level_offsets(v):
+    """Whether v has shift_levels' offsets shape: map -> table field -> a whole number of levels."""
+    return isinstance(v, dict) and all(isinstance(fields, dict) and all(type(s) is int for s in fields.values())
+                                       for fields in v.values())
 
 
 def shift_levels(wild, offsets, info):
@@ -1034,9 +1040,7 @@ def main(argv=None):
 
     cfg = {}
     if args.config:
-        raw = load_json(args.config)
-        if not isinstance(raw, dict):
-            p.error(f'--config {args.config}: expected a JSON object')
+        raw = load_json(args.config, 'fix it; the README lists its keys', p.error)
         cfg, errors = parse_keys(raw, CONFIG_OPTIONS, 'key')
         if errors:
             p.error(f'--config {args.config}: ' + '; '.join(errors))
@@ -1050,8 +1054,9 @@ def main(argv=None):
     if unknown:
         sys.exit(f'unknown species: {", ".join(unknown)}')
     base, base_sha256 = AA.load_base(args.base, args.force)
-    emerald_maps = load_maps(args.maps)
-    AA.warn_if_maps_stale(args.maps, args.base, base_sha256, args.force)
+    maps_doc = load_json(args.maps)
+    AA.warn_if_maps_stale(args.maps, maps_doc, args.base, base_sha256, args.force)
+    emerald_maps = maps_of(maps_doc)
     unknown = sorted(set(settings.maps) - {e['base_label'] for e in AA.map_headers(base)['encounters']})
     if unknown:
         p.error(f'maps: not a gWildMonHeaders base label in {args.base}: {", ".join(unknown)}')
@@ -1070,13 +1075,17 @@ def main(argv=None):
     if args.levels and not os.path.exists(args.levels):
         p.error(f'--levels {args.levels}: no such file')
     levels = args.levels or os.path.join(args.repo, os.path.relpath(AA.LEVEL_OFFSETS, AA.REPO))
-    offsets = load_json(levels) if os.path.exists(levels) else {}
+    levels_hint = 'rerun tools/rebalance/rebalance.py apply'
+    offsets = load_json(levels, levels_hint) if os.path.exists(levels) else {}
+    if not are_level_offsets(offsets):
+        sys.exit(f'{levels} is not map -> table field -> whole-number levels; {levels_hint}')
     # The file --write replaces should be the base raised by the offsets it was written with (its stamp).
     if args.write and not args.force and os.path.exists(args.wild):
-        current = load_json(args.wild)
+        current = load_json(args.wild, 'restore it, or --force to overwrite it')
         written_with = copy.deepcopy(base)
-        stamped = current.get(AA.RESTOCK_STAMP, {}).get('level_offsets', {})
-        shift_levels(written_with, stamped if isinstance(stamped, dict) else {}, info)
+        stamp = current.get(AA.RESTOCK_STAMP)
+        stamped = stamp.get('level_offsets', {}) if isinstance(stamp, dict) else {}
+        shift_levels(written_with, stamped if are_level_offsets(stamped) else {}, info)
         if skeleton(current) != skeleton(written_with):
             sys.exit(f'{args.wild} differs from {args.base} in more than species and the level offsets '
                      f'it was written with (an upstream merge or a hand edit?), and --write would lose '
