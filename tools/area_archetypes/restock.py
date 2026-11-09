@@ -982,7 +982,7 @@ def dump_wild(wild, path):
 # CLI
 # ---------------------------------------------------------------------------
 
-BUILD_HINT = 'rebuild it with area_archetypes.py build'
+BUILD_HINT = 'name a file area_archetypes.py build wrote, or rerun build'
 
 
 def load_json(path, hint=BUILD_HINT, error=sys.exit):
@@ -1003,6 +1003,12 @@ def skeleton(wild):
     """wild without its stamp and species: equal for two files that differ only by restocking."""
     wild = {k: v for k, v in wild.items() if k != AA.RESTOCK_STAMP}
     return json.loads(json.dumps(wild), object_hook=lambda d: {**d, 'species': None} if 'species' in d else d)
+
+
+def are_level_offsets(v):
+    """Whether v has shift_levels' offsets shape: map -> table field -> a whole number of levels."""
+    return isinstance(v, dict) and all(isinstance(fields, dict) and all(type(s) is int for s in fields.values())
+                                       for fields in v.values())
 
 
 def shift_levels(wild, offsets, info):
@@ -1069,13 +1075,17 @@ def main(argv=None):
     if args.levels and not os.path.exists(args.levels):
         p.error(f'--levels {args.levels}: no such file')
     levels = args.levels or os.path.join(args.repo, os.path.relpath(AA.LEVEL_OFFSETS, AA.REPO))
-    offsets = load_json(levels, 'rerun tools/rebalance/rebalance.py apply') if os.path.exists(levels) else {}
+    levels_hint = 'rerun tools/rebalance/rebalance.py apply'
+    offsets = load_json(levels, levels_hint) if os.path.exists(levels) else {}
+    if not are_level_offsets(offsets):
+        sys.exit(f'{levels} is not map -> table field -> whole-number levels; {levels_hint}')
     # The file --write replaces should be the base raised by the offsets it was written with (its stamp).
     if args.write and not args.force and os.path.exists(args.wild):
         current = load_json(args.wild, 'restore it, or --force to overwrite it')
         written_with = copy.deepcopy(base)
-        stamped = current.get(AA.RESTOCK_STAMP, {}).get('level_offsets', {})
-        shift_levels(written_with, stamped if isinstance(stamped, dict) else {}, info)
+        stamp = current.get(AA.RESTOCK_STAMP)
+        stamped = stamp.get('level_offsets', {}) if isinstance(stamp, dict) else {}
+        shift_levels(written_with, stamped if are_level_offsets(stamped) else {}, info)
         if skeleton(current) != skeleton(written_with):
             sys.exit(f'{args.wild} differs from {args.base} in more than species and the level offsets '
                      f'it was written with (an upstream merge or a hand edit?), and --write would lose '
