@@ -120,6 +120,8 @@ CSV_REFS = (
     ('pokemon', 'species_id', 'pokemon_species'),
     ('pokemon_types', 'type_id', 'types'),
 )
+# What json.loads raises on bytes that aren't JSON, or that nest too deep to parse.
+JSON_ERRORS = (ValueError, RecursionError)
 # Species whose share of a pool is below this are dropped from the output.
 MIN_POOL_SHARE = 0.001
 MD_TOP_N = 15
@@ -155,7 +157,7 @@ def parse_json(path, raw, hint):
     """The JSON in bytes read from path, exiting with hint if they aren't JSON or nest too deep to parse."""
     try:
         return json.loads(raw)
-    except (ValueError, RecursionError) as e:
+    except JSON_ERRORS as e:
         sys.exit(f'{path} is not valid JSON ({e}); {hint}')
 
 
@@ -235,7 +237,7 @@ def refresh_baseline(src=SRC_WILD, base=VANILLA_WILD, force=False, out=DEFAULT_O
             maps = json.load(f)
     except FileNotFoundError:
         return
-    except (OSError, ValueError, RecursionError):
+    except (OSError, *JSON_ERRORS):
         maps = None
     warn_if_maps_stale(maps_path, maps, base, hashlib.sha256(raw).hexdigest(), force)
 
@@ -347,7 +349,7 @@ def committed_hashes(out, ref):
     fix = 'restore it, or name other outputs with --out'
     try:
         doc = json.loads(read_or_exit(path, fix))
-    except (ValueError, RecursionError):
+    except JSON_ERRORS:
         doc = None
     if isinstance(doc, dict) and PROVENANCE_KEY not in doc:
         return {}
@@ -401,7 +403,7 @@ def load_provenance(cache):
     record = read_or_exit(path, f'the cache records no PokeAPI ref; {REFETCH_HINT}')
     try:
         provenance = json.loads(record)
-    except (ValueError, RecursionError):
+    except JSON_ERRORS:
         provenance = None
     if (not isinstance(provenance, dict) or not isinstance(provenance.get('csv_sha256'), dict)
             or not all(isinstance(provenance.get(k), str) for k in ('ref', 'pokesearch', 'fetched'))):
