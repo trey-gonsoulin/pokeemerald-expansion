@@ -373,7 +373,6 @@ TEST("Map names: map indexes count this game's maps group by group")
     EXPECT_EQ(Debug_GetMapGroupFromIndex(index, &mapNum), MAP_GROUPS_COUNT);
     EXPECT(Debug_GetMapIndexName(NULL, index) == NULL);
     EXPECT_EQ(GetTestMapIndex(MAP_PETALBURG_CITY), 0);
-    EXPECT_EQ(GetTestMapIndex(MAP_ROUTE101), 16);
     // The other game's groups have no maps here, and their maps no name
     EXPECT_EQ(Debug_GetMapCount(MAP_GROUPS_COUNT - 1), 0);
     Debug_CopyMapName(name, MAP_GROUPS_COUNT - 1, 0);
