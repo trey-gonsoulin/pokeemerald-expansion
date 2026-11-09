@@ -313,6 +313,16 @@ def parse_csv(name, raw, where, hint):
     return rows
 
 
+def check_csv_refs(rows, csv_dir, hint):
+    """Exit with hint unless every CSV_REFS id in rows (CSV name -> parse_csv rows) is an id of its CSV."""
+    for name, column, target in CSV_REFS:
+        ids = {r['id'] for r in rows[target]}
+        dangling = next((r[column] for r in rows[name] if r[column] not in ids), None)
+        if dangling is not None:
+            sys.exit(f'{os.path.join(csv_dir, name + ".csv")} has {column} {dangling}, which no row of '
+                     f'{target}.csv has; {hint}')
+
+
 def pokesearch_sha(pokesearch):
     """The checkout's git HEAD. Its CSVs are gitignored, so this names the code that fetches them."""
     not_checkout = f'{pokesearch} is not a git checkout of pokesearch; pass it with --pokesearch'
@@ -337,7 +347,7 @@ def committed_hashes(out, ref):
     fix = 'restore it, or name other outputs with --out'
     try:
         doc = json.loads(read_or_exit(path, fix))
-    except ValueError:
+    except (ValueError, RecursionError):
         doc = None
     if isinstance(doc, dict) and PROVENANCE_KEY not in doc:
         return {}
@@ -373,13 +383,7 @@ def fetch(cache, pokesearch, out):
         if committed.get(name, hashes[name]) != hashes[name]:
             sys.exit(f'{path} is not the file {out} was built from at PokeAPI {ref}; '
                      f'remove {stamp}, then {POKESEARCH_HINT}')
-    # The cache is only built from as fetch recorded it, so checking the ids here covers build.
-    for name, column, target in CSV_REFS:
-        ids = {r['id'] for r in rows[target]}
-        dangling = next((r[column] for r in rows[name] if r[column] not in ids), None)
-        if dangling is not None:
-            sys.exit(f'{os.path.join(source, name + ".csv")} has {column} {dangling}, which no row of '
-                     f'{target}.csv has; {POKESEARCH_HINT}')
+    check_csv_refs(rows, source, POKESEARCH_HINT)
     os.makedirs(cache, exist_ok=True)
     for name, raw in raws.items():
         write_atomic(os.path.join(cache, name + '.csv'), raw)
@@ -397,7 +401,7 @@ def load_provenance(cache):
     record = read_or_exit(path, f'the cache records no PokeAPI ref; {REFETCH_HINT}')
     try:
         provenance = json.loads(record)
-    except ValueError:
+    except (ValueError, RecursionError):
         provenance = None
     if (not isinstance(provenance, dict) or not isinstance(provenance.get('csv_sha256'), dict)
             or not all(isinstance(provenance.get(k), str) for k in ('ref', 'pokesearch', 'fetched'))):
@@ -423,7 +427,10 @@ class PokeData:
     """The slices of PokeAPI's CSVs the classifier needs, keyed by id."""
 
     def __init__(self, cache):
-        rd = lambda n: read_csv(cache, n)  # noqa: E731
+        rows = {n: read_csv(cache, n) for n in CSV_FILES}
+        # Again here, for a cache an older fetch wrote without this check.
+        check_csv_refs(rows, cache, REFETCH_HINT)
+        rd = rows.__getitem__
         self.regions = {r['id']: r['identifier'] for r in rd('regions')}
         self.locations = {r['id']: r for r in rd('locations')}
         self.areas = {r['id']: r for r in rd('location_areas')}

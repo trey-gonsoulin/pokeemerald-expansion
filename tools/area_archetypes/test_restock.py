@@ -729,6 +729,21 @@ class CliTests(unittest.TestCase):
                             else:
                                 self.assertIn(f'{bad} {message}', cm.exception.code)
                             self.assertFalse(os.path.exists(out))
+            for levels in ({'MAP_ROUTE101': 5}, {'MAP_ROUTE101': {'land_mons': '3'}},
+                           {'MAP_ROUTE101': {'land_mons': True}}):
+                with self.subTest(levels=levels), self.assertRaises(SystemExit) as cm:
+                    with open(bad, 'w', encoding='utf-8') as f:
+                        json.dump(levels, f)
+                    run_quietly(['--out-dir', out, '--levels', bad])
+                self.assertIn(f'{bad} is not map -> table field -> whole-number levels', cm.exception.code)
+                self.assertFalse(os.path.exists(out))
+            # A --wild with a broken stamp is compared as if it recorded no level offsets.
+            for stamp in ([], {'level_offsets': {'MAP_ROUTE101': 5}}):
+                with self.subTest(stamp=stamp):
+                    R.dump_wild({**R.load_json(WILD), AA.RESTOCK_STAMP: stamp}, bad)
+                    run_quietly(['--out-dir', out, '--levels', no_levels(tmp), '--wild', bad, '--write'])
+                    self.assertTrue(os.path.exists(out))
+                    shutil.rmtree(out)
             os.remove(bad)
             for flag in ('--maps', '--pools', '--config'):
                 with self.subTest(flag=flag, text='missing'), self.assertRaises(SystemExit) as cm:

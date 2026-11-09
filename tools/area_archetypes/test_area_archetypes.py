@@ -537,6 +537,18 @@ class CacheTests(unittest.TestCase):
             json.dump(provenance, f)
         self.assertExits(lambda: self.build(out), 'encounters.csv is empty')
         self.assertFalse(os.path.exists(out))
+        # A cache an older fetch wrote without the id check is checked again.
+        shutil.copy(os.path.join(TESTDATA, 'pokeapi', 'encounters.csv'), self.csv_path('encounters'))
+        with open(self.csv_path('pokemon_types'), 'a', encoding='utf-8') as f:
+            f.write('1,99999,2\n')
+        for name in ('encounters', 'pokemon_types'):
+            with open(self.csv_path(name), 'rb') as f:
+                provenance['csv_sha256'][name] = hashlib.sha256(f.read()).hexdigest()
+        with open(os.path.join(self.cache, AA.PROVENANCE_FILE), 'w', encoding='utf-8') as f:
+            json.dump(provenance, f)
+        self.assertExits(lambda: self.build(out), 'pokemon_types.csv has type_id 99999, which no row of types.csv',
+                         'fetch` first')
+        self.assertFalse(os.path.exists(out))
 
     def test_pokesearch_only_applies_to_fetch(self):
         with contextlib.redirect_stderr(io.StringIO()) as err, self.assertRaises(SystemExit):
