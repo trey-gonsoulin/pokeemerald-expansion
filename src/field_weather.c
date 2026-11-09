@@ -857,6 +857,10 @@ void UpdateSpritePaletteWithWeather(u8 spritePaletteIndex, bool8 allowFog)
     u16 paletteIndex = 16 + spritePaletteIndex;
     u16 i;
 
+    // A failed LoadSpritePalette or IndexOfSpritePaletteTag gives 0xFF, which would write past the palette buffers
+    if (spritePaletteIndex >= 16)
+        return;
+
     switch (gWeatherPtr->palProcessingState)
     {
     case WEATHER_PAL_STATE_SCREEN_FADING_IN:
