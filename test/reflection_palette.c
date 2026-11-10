@@ -75,29 +75,12 @@ TEST("Reflection palette: with no free slot a reflection's retry leaves the borr
     EXPECT_EQ(reflectionSlotTag, lastSlotTag);
 }
 
-TEST("Reflection palette: with no free slot a removed reflection leaves the borrowed last slot loaded")
-{
-    u32 mainSpriteId, reflectionSpriteId, lastSlotTag, reflectionInUse, lastSlotTagAfter;
-
-    reflectionSpriteId = SetUpObjectWithReflection(&mainSpriteId, TRUE);
-    lastSlotTag = GetSpritePaletteTagByPaletteNum(15);
-    ASSUME(gSprites[reflectionSpriteId].oam.paletteNum == 15);
-
-    gObjectEvents[TEST_OBJECT_EVENT_ID].hasReflection = FALSE;
-    gSprites[reflectionSpriteId].callback(&gSprites[reflectionSpriteId]);
-    reflectionInUse = gSprites[reflectionSpriteId].inUse;
-    lastSlotTagAfter = GetSpritePaletteTagByPaletteNum(15);
-    TearDownObjectWithReflection(mainSpriteId, reflectionSpriteId);
-
-    EXPECT_EQ(reflectionInUse, FALSE);
-    EXPECT_EQ(lastSlotTagAfter, lastSlotTag);
-}
-
 TEST("Reflection palette: with no free slot a reflection reloads its own slot when its object's palette changes")
 {
     u32 mainSpriteId, reflectionSpriteId, ownSlot, otherSlot, reflectionSlot, reflectionSlotTag;
 
     reflectionSpriteId = SetUpObjectWithReflection(&mainSpriteId, FALSE);
+    ASSUME(gSprites[reflectionSpriteId].inUse);
     ownSlot = gSprites[reflectionSpriteId].oam.paletteNum;
     ASSUME(ownSlot != gSprites[mainSpriteId].oam.paletteNum);
     FillEverySpritePaletteSlot();

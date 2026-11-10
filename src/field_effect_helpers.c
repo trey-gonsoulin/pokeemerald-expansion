@@ -207,8 +207,7 @@ static void UpdateObjectReflectionSprite(struct Sprite *reflectionSprite)
     if (!objectEvent->active || !objectEvent->hasReflection || objectEvent->localId != reflectionSprite->sReflectionObjEventLocalId)
     {
         reflectionSprite->inUse = FALSE;
-        if (!reflectionSprite->sReflectionPaletteBorrowed)
-            FieldEffectFreePaletteIfUnused(reflectionSprite->oam.paletteNum);
+        FieldEffectFreePaletteIfUnused(reflectionSprite->oam.paletteNum);
         return;
     }
 
