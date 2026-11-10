@@ -346,6 +346,7 @@ static void DebugAction_Selection_NextStep(u8 taskId);
 
 static void DebugAction_Util_Fly(u8 taskId);
 static void DebugAction_Util_RecentWarp(u8 taskId, const void *params);
+static UNUSED void DebugAction_Util_FavouriteWarp(u8 taskId, const void *params);
 static void DebugAction_Util_WarpBack(u8 taskId);
 static void DebugAction_Util_WatchCredits(u8 taskId);
 static void DebugAction_Util_CheatStart(u8 taskId);
@@ -617,9 +618,9 @@ static const struct DebugMenuOption sDebugMenu_Actions_FollowerNPCMenu[] =
     { NULL }
 };
 
-// A favourite (DEBUG_WARP_FAVOURITES, include/config/debug.h) warps like a recent warp
+// A favourite's row (DEBUG_WARP_FAVOURITES, include/config/debug.h)
 #define DEBUG_WARP_FAVOURITE(map, warp) \
-    { COMPOUND_STRING(""), DebugAction_Util_RecentWarp, &(const struct DebugWarp){ MAP_GROUP(map), MAP_NUM(map), warp } },
+    { COMPOUND_STRING(""), DebugAction_Util_FavouriteWarp, &(const struct DebugWarp){ MAP_GROUP((map)), MAP_NUM((map)), (warp) } },
 
 // Debug_GenerateListRecentWarpsMenu writes the labels, so the text only has to be non-NULL.
 // The warp back, the favourites, then the recent warps.
@@ -2334,15 +2335,24 @@ static bool32 DebugSelection_SetWarp_OnComplete(u8 taskId)
 
 static void DebugAction_Util_RecentWarp(u8 taskId, const void *params)
 {
+    // The list shows only the recent warps that are set
+    Debug_WarpTo(taskId, *(const struct DebugWarp *)params);
+}
+
+// Warps like a recent warp, but isn't added to the recent warps, which would list it twice.
+// The config can name a map or warp this game lacks. UNUSED: the config ships with no favourites.
+static UNUSED void DebugAction_Util_FavouriteWarp(u8 taskId, const void *params)
+{
     const struct DebugWarp *warp = params;
 
-    // The list shows only the recent warps that are set, but a favourite can name a map or warp this game lacks
     if (!Debug_IsMapWarpInGame(warp->mapGroup, warp->mapNum, warp->warpId))
     {
         PlaySE(SE_FAILURE);
         return;
     }
-    Debug_WarpTo(taskId, *warp);
+    Debug_SaveWarpBack();
+    SetWarpDestinationToMapWarp(warp->mapGroup, warp->mapNum, warp->warpId);
+    Debug_DoWarp(taskId);
 }
 
 // The warp back, the favourites, then the recent warps, most recent first: the map name, then the warp
