@@ -27,6 +27,7 @@ import collections
 import copy
 import dataclasses
 import json
+import math
 import os
 import random
 import re
@@ -994,9 +995,59 @@ def load_json(path, hint=BUILD_HINT, error=sys.exit):
     return doc
 
 
+def exit_if_problem(path, problem):
+    """Exit with load_json's hint if a build output at path has a problem (maps_problem, pools_problem)."""
+    if problem:
+        sys.exit(f'{path} is not a usable build output ({problem}); {BUILD_HINT}')
+
+
 def maps_of(doc):
     """emerald_maps.json's maps, without the PokeAPI provenance and base hash build records beside them."""
     return {k: v for k, v in doc.items() if k not in (AA.PROVENANCE_KEY, AA.BASE_HASH_KEY)}
+
+
+def is_pool_ref(v):
+    """Whether v names an archetype pool, as emerald_maps.json's tables do."""
+    return isinstance(v, dict) and all(isinstance(v.get(k), str) for k in ('archetype', 'pool'))
+
+
+def is_pool_entry(e):
+    """Whether e has the species, share and generation restock reads from a pool entry."""
+    return (isinstance(e, dict) and isinstance(e.get('species'), str) and AA.is_number(e.get('share'))
+            and math.isfinite(e['share']) and type(e.get('introduced_gen')) is int)
+
+
+def maps_problem(maps):
+    """What stops restock reading maps_of(emerald_maps.json), or None. Every entry is checked, even one
+    restock skips (no region, or a label not in the base)."""
+    for label, m in maps.items():
+        if not isinstance(m, dict):
+            return f'{label} is not an object'
+        if not isinstance(m.get('region', ''), str):
+            return f'{label} region is not a string'
+        rods = m.get('fishing_mons', {})
+        if not isinstance(rods, dict):
+            return f'{label} fishing_mons is not an object'
+        tables = [(f, m[f]) for f in TABLE_FIELDS if f in m] + [(f'fishing_mons {r}', v) for r, v in rods.items()]
+        for table, ref in tables:
+            if not is_pool_ref(ref):
+                return f'{label} {table} has no archetype and pool'
+    return None
+
+
+def pools_problem(pools):
+    """What stops restock reading archetype_pools.json, or None."""
+    archetypes = pools.get('archetypes')
+    if not isinstance(archetypes, dict):
+        return 'no archetypes object'
+    for name, arch in archetypes.items():
+        groups = arch.get('pools', {}) if isinstance(arch, dict) else None
+        if not isinstance(groups, dict):
+            return f'{name} has no pools object'
+        for group, pool in groups.items():
+            if not isinstance(pool, list) or not all(map(is_pool_entry, pool)):
+                return f'{name} {group} is not a list of species, share and introduced_gen entries'
+    return None
 
 
 def skeleton(wild):
@@ -1057,6 +1108,7 @@ def main(argv=None):
     maps_doc = load_json(args.maps)
     AA.warn_if_maps_stale(args.maps, maps_doc, args.base, base_sha256, args.force)
     emerald_maps = maps_of(maps_doc)
+    exit_if_problem(args.maps, maps_problem(emerald_maps))
     unknown = sorted(set(settings.maps) - {e['base_label'] for e in AA.map_headers(base)['encounters']})
     if unknown:
         p.error(f'maps: not a gWildMonHeaders base label in {args.base}: {", ".join(unknown)}')
@@ -1068,6 +1120,7 @@ def main(argv=None):
     if unknown:
         p.error(f'unknown region: {", ".join(unknown)} {regions_in}')
     pools = load_json(args.pools)
+    exit_if_problem(args.pools, pools_problem(pools))
     pool_gens = {e['introduced_gen'] for e in pool_entries(pools)}
     if settings.gens and not settings.gens & pool_gens:
         p.error(f'gens: {fmt_gens(settings.gens)} matches no pool species, so nothing would be '
