@@ -471,6 +471,61 @@ class OutputFileTests(unittest.TestCase):
             self.assertEqual(R.load_json(path), {'old': 1})
 
 
+class InputShapeTests(unittest.TestCase):
+    def test_maps_problem_names_an_entry_restock_cannot_read(self):
+        maps = R.maps_of(R.load_json(MAPS))
+        self.assertIsNone(R.maps_problem(maps))
+        self.assertIsNone(R.maps_problem({'gRoute101': {'map': 'MAP_ROUTE101'}}))  # no region or tables
+
+        def route_with(**fields):
+            return {**maps, 'gRoute119': {**maps['gRoute119'], **fields}}
+        cases = [({**maps, 'gRoute101': 5}, 'gRoute101 is not an object'),
+                 (route_with(region=5), 'gRoute119 region is not a string'),
+                 (route_with(land_mons=5), 'gRoute119 land_mons has no archetype and pool'),
+                 (route_with(water_mons={'pool': 'surf'}), 'gRoute119 water_mons has no archetype and pool'),
+                 (route_with(land_mons={'archetype': [], 'pool': 'land'}),
+                  'gRoute119 land_mons has no archetype and pool'),
+                 (route_with(land_mons={'archetype': 'route/mid'}), 'gRoute119 land_mons has no archetype and pool'),
+                 (route_with(fishing_mons=None), 'gRoute119 fishing_mons is not an object'),
+                 (route_with(fishing_mons=5), 'gRoute119 fishing_mons is not an object'),
+                 (route_with(fishing_mons={'old_rod': None}),
+                  'gRoute119 fishing_mons old_rod has no archetype and pool')]
+        for doc, problem in cases:
+            with self.subTest(problem=problem):
+                self.assertEqual(R.maps_problem(doc), problem)
+
+    def test_pools_problem_names_a_pool_restock_cannot_read(self):
+        pools = R.load_json(POOLS)
+        self.assertIsNone(R.pools_problem(pools))
+        arch = next(iter(pools['archetypes']))
+        entry = pools['archetypes'][arch]['pools']['land'][0]
+
+        def arch_with(value):
+            return {**pools, 'archetypes': {**pools['archetypes'], arch: value}}
+
+        def land_with(*entries):
+            return arch_with({**pools['archetypes'][arch], 'pools': {'land': list(entries)}})
+        bad_land = f'{arch} land is not a list of species, share and introduced_gen entries'
+        no_pools = {k: v for k, v in pools['archetypes'][arch].items() if k != 'pools'}
+        self.assertIsNone(R.pools_problem(arch_with(no_pools)))  # restock reads no pools for it
+        cases = [({k: v for k, v in pools.items() if k != 'archetypes'}, 'no archetypes object'),
+                 ({**pools, 'archetypes': []}, 'no archetypes object'),
+                 (arch_with(5), f'{arch} has no pools object'),
+                 (arch_with({**pools['archetypes'][arch], 'pools': 5}), f'{arch} has no pools object'),
+                 (arch_with({**pools['archetypes'][arch], 'pools': {'land': 5}}), bad_land),
+                 (land_with(5), bad_land),
+                 (land_with(entry, 5), bad_land),
+                 (land_with({**entry, 'share': float('inf')}), bad_land),
+                 (land_with({**entry, 'share': float('nan')}), bad_land),
+                 (land_with({**entry, 'species': None}), bad_land),
+                 (land_with({**entry, 'share': '0.5'}), bad_land),
+                 (land_with({**entry, 'introduced_gen': True}), bad_land),
+                 (land_with({k: v for k, v in entry.items() if k != 'share'}), bad_land)]
+        for doc, problem in cases:
+            with self.subTest(problem=problem, doc=str(doc)[-60:]):
+                self.assertEqual(R.pools_problem(doc), problem)
+
+
 class CliTests(unittest.TestCase):
     def test_writes_preview_and_report_without_touching_src(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -749,6 +804,23 @@ class CliTests(unittest.TestCase):
                 with self.subTest(flag=flag, text='missing'), self.assertRaises(SystemExit) as cm:
                     run_quietly(['--out-dir', out, flag, bad])
                 self.assertIn(f'cannot read {bad}: ', cm.exception.code)
+
+    def test_restock_exits_cleanly_on_a_bad_maps_or_pools_entry(self):
+        # The shapes each check refuses are in OutputFileTests; this is the message main() exits with.
+        cases = {'--maps': ({**R.load_json(MAPS), 'gRoute101': 5}, 'gRoute101 is not an object'),
+                 '--pools': ({**R.load_json(POOLS), 'archetypes': []}, 'no archetypes object')}
+        with tempfile.TemporaryDirectory() as tmp:
+            bad = os.path.join(tmp, 'bad.json')
+            out = os.path.join(tmp, 'out')
+            for flag, (doc, problem) in cases.items():
+                with self.subTest(flag=flag):
+                    with open(bad, 'w', encoding='utf-8') as f:
+                        json.dump(doc, f)
+                    with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as cm:
+                        run_quietly(['--out-dir', out, '--levels', no_levels(tmp), flag, bad])
+                    self.assertEqual(cm.exception.code,
+                                     f'{bad} is not a usable build output ({problem}); {R.BUILD_HINT}')
+                    self.assertFalse(os.path.exists(out))
 
     def test_baseline_keeps_the_old_file_on_a_failed_write(self):
         with tempfile.TemporaryDirectory() as tmp:
