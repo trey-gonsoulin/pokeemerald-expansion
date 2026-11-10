@@ -2366,6 +2366,9 @@ static u32 Debug_GenerateListRecentWarpsMenu(const struct DebugMenuOption *items
     u8 *end;
     u32 i, row = 0;
 
+    // The warp back's row, or the empty list's
+    sDebugMenuListData->listItems[0].id = 0;
+    sDebugMenuListData->listItems[0].name = sDebugMenuListData->itemNames[0];
     // The warp back isn't set before the first debug warp. A fly or an x/y warp sets it without
     // adding a recent warp. Its map name keeps its end, as below, after the whole prefix.
     if (Debug_HasWarpBack())
@@ -2374,8 +2377,6 @@ static u32 Debug_GenerateListRecentWarpsMenu(const struct DebugMenuOption *items
         Debug_CopyMapName(gStringVar4, sDebugWarpBack.mapGroup, sDebugWarpBack.mapNum);
         Debug_CopyStringEndToFit(end, ARRAY_COUNT(sDebugMenuListData->itemNames[0]) - StringLength(backPrefix),
             gStringVar4, FONT_NARROWER, labelWidth - GetStringWidth(FONT_NARROWER, backPrefix, 0));
-        sDebugMenuListData->listItems[0].id = 0;
-        sDebugMenuListData->listItems[0].name = sDebugMenuListData->itemNames[0];
         row++;
     }
     for (i = 1; i <= DEBUG_WARP_FAVOURITES_COUNT + sDebugRecentWarpsCount; i++, row++)
@@ -2402,9 +2403,7 @@ static u32 Debug_GenerateListRecentWarpsMenu(const struct DebugMenuOption *items
     if (row == 0)
     {
         StringCopy(sDebugMenuListData->itemNames[0], COMPOUND_STRING("No warps yet"));
-        sDebugMenuListData->listItems[0].id = 0;
-        sDebugMenuListData->listItems[0].name = sDebugMenuListData->itemNames[0];
-        row++;
+        return 1;
     }
     return row;
 }
