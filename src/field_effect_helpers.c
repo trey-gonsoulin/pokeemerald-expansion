@@ -193,12 +193,15 @@ static void LoadObjectHighBridgeReflectionPalette(struct ObjectEvent *objectEven
 {
     u16 blueData[16];
     struct SpritePalette bluePalette = {.tag = HIGH_BRIDGE_PAL_TAG, .data = blueData};
-    u8 paletteNum;
-    CpuFill16(0x55C9, blueData, PLTT_SIZE_4BPP);
-    paletteNum = LoadSpritePalette(&bluePalette);
+    u8 paletteNum = IndexOfSpritePaletteTag(HIGH_BRIDGE_PAL_TAG);
+    if (paletteNum == 0xFF)
+    {
+        CpuFill16(0x55C9, blueData, PLTT_SIZE_4BPP);
+        paletteNum = LoadSpritePalette(&bluePalette);
+        UpdateSpritePaletteWithWeather(paletteNum, TRUE); // Skips a failed load's 0xFF, not the borrowed slot 15
+    }
     sprite->oam.paletteNum = paletteNum;
     sprite->sReflectionPaletteBorrowed = (paletteNum == 0xFF);
-    UpdateSpritePaletteWithWeather(paletteNum, TRUE); // Skips a failed load's 0xFF, not the borrowed slot 15
 }
 
 static void UpdateObjectReflectionSprite(struct Sprite *reflectionSprite)
@@ -213,7 +216,7 @@ static void UpdateObjectReflectionSprite(struct Sprite *reflectionSprite)
         return;
     }
 
-    // Only filter palette if not using the high bridge blue palette (only high bridges set sReflectionVerticalOffset)
+    // Only filter palette if not using the high bridge blue palette (only bridges set sReflectionVerticalOffset)
     // This is basically a copy of LoadObjectRegularReflectionPalette
     if (reflectionSprite->sReflectionVerticalOffset == 0)
     {
