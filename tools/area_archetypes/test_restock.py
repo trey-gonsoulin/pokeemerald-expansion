@@ -525,8 +525,41 @@ class InputShapeTests(unittest.TestCase):
             with self.subTest(problem=problem, doc=str(doc)[-60:]):
                 self.assertEqual(R.pools_problem(doc), problem)
 
+    def test_unresolved_refs_names_each_table_with_no_pool_to_draw_from(self):
+        self.assertEqual(R.unresolved_refs(R.maps_of(R.load_json(MAPS)), R.load_json(POOLS)), [])
+        pools = {'archetypes': {'route/mid': {'pools': {'land': [], 'surf': []}}, 'sea/mid': {'name': 'no pools'}}}
+        maps = {'gRoute119': {'region': 'hoenn',
+                              'land_mons': {'archetype': 'route/mid', 'pool': 'land'},  # empty on purpose
+                              'water_mons': {'archetype': 'sea/mid', 'pool': 'surf'},
+                              'fishing_mons': {'old_rod': {'archetype': 'route/mid', 'pool': 'fish_old'},
+                                               'good_rod': {'archetype': 'gone', 'pool': 'fish_good'}}},
+                'gRoute101': {'land_mons': {'archetype': 'route/mid', 'pool': 'surf'}}}
+        self.assertIsNone(R.maps_problem(maps))
+        self.assertIsNone(R.pools_problem(pools))
+        self.assertEqual(R.unresolved_refs(maps, pools),
+                         ['gRoute119 water_mons (sea/mid surf)', 'gRoute119 fishing_mons old_rod (route/mid fish_old)',
+                          'gRoute119 fishing_mons good_rod (gone fish_good)'])
+
 
 class CliTests(unittest.TestCase):
+    def test_warns_about_tables_the_pools_cannot_restock(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = os.path.join(tmp, 'out')
+
+            def warnings(*extra):
+                with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()) as err:
+                    R.main(['--out-dir', out, *extra])
+                return err.getvalue()
+            self.assertEqual(warnings(), '')
+            maps_doc = R.load_json(MAPS)
+            maps_doc['gRoute101']['land_mons']['archetype'] = 'renamed/beginner'
+            maps = os.path.join(tmp, 'emerald_maps.json')
+            with open(maps, 'w', encoding='utf-8') as f:
+                json.dump(maps_doc, f)
+            self.assertEqual(warnings('--maps', maps),
+                             f'warning: 1 {maps} tables name an archetype or pool that {POOLS} doesn\'t have and '
+                             f'are left alone (rerun build?): gRoute101 land_mons (renamed/beginner land)\n')
+
     def test_writes_preview_and_report_without_touching_src(self):
         with tempfile.TemporaryDirectory() as tmp:
             wild = os.path.join(tmp, 'wild_encounters.json')
