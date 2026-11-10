@@ -261,7 +261,9 @@ a warning.
 `restock` checks the config before it writes anything, and stops with an error
 on a `--config`, `--maps`, `--pools`, `--levels` or (with `--write`) `--wild`
 it can't read or that isn't a JSON object, a `--levels` that isn't map -> table
-field -> whole number, an unknown key (top-level or per-map), a label that isn't a
+field -> whole number, a `--maps` entry without a string region or with a
+table that doesn't name an archetype and pool, a `--pools` archetype whose
+pools aren't lists of entries with a species, share and `introduced_gen`, an unknown key (top-level or per-map), a label that isn't a
 `gWildMonHeaders` base label in `--base`, a region that isn't in
 `emerald_maps.json`, an unknown species, a `gens` set with no pool species,
 or a value of the wrong type: `ratio`
