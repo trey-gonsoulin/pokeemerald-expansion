@@ -27,6 +27,7 @@ import collections
 import copy
 import dataclasses
 import json
+import math
 import os
 import random
 import re
@@ -1013,11 +1014,12 @@ def is_pool_ref(v):
 def is_pool_entry(e):
     """Whether e has the species, share and generation restock reads from a pool entry."""
     return (isinstance(e, dict) and isinstance(e.get('species'), str) and AA.is_number(e.get('share'))
-            and type(e.get('introduced_gen')) is int)
+            and math.isfinite(e['share']) and type(e.get('introduced_gen')) is int)
 
 
 def maps_problem(maps):
-    """What stops restock reading maps_of(emerald_maps.json), or None."""
+    """What stops restock reading maps_of(emerald_maps.json), or None. Every entry is checked, even one
+    restock skips (no region, or a label not in the base)."""
     for label, m in maps.items():
         if not isinstance(m, dict):
             return f'{label} is not an object'

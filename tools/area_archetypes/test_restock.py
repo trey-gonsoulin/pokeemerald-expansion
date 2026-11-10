@@ -470,10 +470,12 @@ class OutputFileTests(unittest.TestCase):
                 R.dump_wild({'new': 1}, path)
             self.assertEqual(R.load_json(path), {'old': 1})
 
+
+class InputShapeTests(unittest.TestCase):
     def test_maps_problem_names_an_entry_restock_cannot_read(self):
         maps = R.maps_of(R.load_json(MAPS))
         self.assertIsNone(R.maps_problem(maps))
-        self.assertIsNone(R.maps_problem({'gRoute101': {'map': 'MAP_ROUTE101'}}))  # no region: left alone
+        self.assertIsNone(R.maps_problem({'gRoute101': {'map': 'MAP_ROUTE101'}}))  # no region or tables
 
         def route_with(**fields):
             return {**maps, 'gRoute119': {**maps['gRoute119'], **fields}}
@@ -483,6 +485,8 @@ class OutputFileTests(unittest.TestCase):
                  (route_with(water_mons={'pool': 'surf'}), 'gRoute119 water_mons has no archetype and pool'),
                  (route_with(land_mons={'archetype': [], 'pool': 'land'}),
                   'gRoute119 land_mons has no archetype and pool'),
+                 (route_with(land_mons={'archetype': 'route/mid'}), 'gRoute119 land_mons has no archetype and pool'),
+                 (route_with(fishing_mons=None), 'gRoute119 fishing_mons is not an object'),
                  (route_with(fishing_mons=5), 'gRoute119 fishing_mons is not an object'),
                  (route_with(fishing_mons={'old_rod': None}),
                   'gRoute119 fishing_mons old_rod has no archetype and pool')]
@@ -502,12 +506,17 @@ class OutputFileTests(unittest.TestCase):
         def land_with(*entries):
             return arch_with({**pools['archetypes'][arch], 'pools': {'land': list(entries)}})
         bad_land = f'{arch} land is not a list of species, share and introduced_gen entries'
+        no_pools = {k: v for k, v in pools['archetypes'][arch].items() if k != 'pools'}
+        self.assertIsNone(R.pools_problem(arch_with(no_pools)))  # restock reads no pools for it
         cases = [({k: v for k, v in pools.items() if k != 'archetypes'}, 'no archetypes object'),
                  ({**pools, 'archetypes': []}, 'no archetypes object'),
                  (arch_with(5), f'{arch} has no pools object'),
                  (arch_with({**pools['archetypes'][arch], 'pools': 5}), f'{arch} has no pools object'),
                  (arch_with({**pools['archetypes'][arch], 'pools': {'land': 5}}), bad_land),
                  (land_with(5), bad_land),
+                 (land_with(entry, 5), bad_land),
+                 (land_with({**entry, 'share': float('inf')}), bad_land),
+                 (land_with({**entry, 'share': float('nan')}), bad_land),
                  (land_with({**entry, 'species': None}), bad_land),
                  (land_with({**entry, 'share': '0.5'}), bad_land),
                  (land_with({**entry, 'introduced_gen': True}), bad_land),
