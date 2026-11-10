@@ -6,6 +6,7 @@
 #include "data.h"
 #include "debug_menu_ui.h"
 #include "difficulty.h"
+#include "overworld.h"
 #include "string_util.h"
 #include "test/test.h"
 #include "text.h"
@@ -377,6 +378,24 @@ TEST("Map names: map indexes count this game's maps group by group")
     EXPECT_EQ(Debug_GetMapCount(MAP_GROUPS_COUNT - 1), 0);
     Debug_CopyMapName(name, MAP_GROUPS_COUNT - 1, 0);
     EXPECT(NameIs(name, COMPOUND_STRING("?")));
+}
+
+TEST("Map names: a warp favourite must be a map and warp of this game")
+{
+    u32 warpCount = Overworld_GetMapHeaderByGroupAndId(MAP_GROUP(MAP_LITTLEROOT_TOWN), MAP_NUM(MAP_LITTLEROOT_TOWN))->events->warpCount;
+
+    ASSUME(warpCount > 1);
+    ASSUME(Overworld_GetMapHeaderByGroupAndId(MAP_GROUP(MAP_ROUTE101), MAP_NUM(MAP_ROUTE101))->events->warpCount == 0);
+    EXPECT(Debug_IsMapWarpInGame(MAP_GROUP(MAP_LITTLEROOT_TOWN), MAP_NUM(MAP_LITTLEROOT_TOWN), 0));
+    EXPECT(Debug_IsMapWarpInGame(MAP_GROUP(MAP_LITTLEROOT_TOWN), MAP_NUM(MAP_LITTLEROOT_TOWN), warpCount - 1));
+    EXPECT(!Debug_IsMapWarpInGame(MAP_GROUP(MAP_LITTLEROOT_TOWN), MAP_NUM(MAP_LITTLEROOT_TOWN), warpCount));
+    // A map without warps has warp 0, its middle
+    EXPECT(Debug_IsMapWarpInGame(MAP_GROUP(MAP_ROUTE101), MAP_NUM(MAP_ROUTE101), 0));
+    EXPECT(!Debug_IsMapWarpInGame(MAP_GROUP(MAP_ROUTE101), MAP_NUM(MAP_ROUTE101), 1));
+    // Past the group's last map, and the other game's groups
+    EXPECT(!Debug_IsMapWarpInGame(MAP_GROUP(MAP_LITTLEROOT_TOWN), Debug_GetMapCount(MAP_GROUP(MAP_LITTLEROOT_TOWN)), 0));
+    EXPECT(!Debug_IsMapWarpInGame(MAP_GROUPS_COUNT - 1, 0, 0));
+    EXPECT(!Debug_IsMapWarpInGame(MAP_GROUPS_COUNT, 0, 0));
 }
 
 TEST("Name order for maps goes by name across every group")
