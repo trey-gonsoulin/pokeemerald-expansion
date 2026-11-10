@@ -83,6 +83,7 @@ const u8 *Debug_GetDecorationStepName(u8 *buffer, u32 decorationId);
 u32 Debug_GetMapCount(u32 mapGroup);
 const u8 *Debug_GetMapGroupName(u32 mapGroup);
 u8 *Debug_CopyMapName(u8 *dest, u32 mapGroup, u32 mapNum);
+bool32 Debug_IsMapWarpInGame(u32 mapGroup, u32 mapNum, u32 warpId);
 u32 Debug_GetMapIndex(u32 mapGroup, u32 mapNum);
 u32 Debug_GetMapIndexCount(void);
 u32 Debug_GetMapGroupFromIndex(u32 index, u32 *mapNum);

@@ -9,6 +9,7 @@
 #include "main.h"
 #include "malloc.h"
 #include "menu.h"
+#include "overworld.h"
 #include "string_util.h"
 #include "task.h"
 #include "text.h"
@@ -544,6 +545,14 @@ u8 *Debug_CopyMapName(u8 *dest, u32 mapGroup, u32 mapNum)
     if (mapNum >= Debug_GetMapCount(mapGroup))
         return StringCopy(dest, COMPOUND_STRING("?"));
     return StringCopy(dest, sDebugMapNames[mapGroup][mapNum]);
+}
+
+// Whether this game has the map and the warp. A map without warps has warp 0, which lands in its middle.
+bool32 Debug_IsMapWarpInGame(u32 mapGroup, u32 mapNum, u32 warpId)
+{
+    if (mapNum >= Debug_GetMapCount(mapGroup))
+        return FALSE;
+    return warpId == 0 || warpId < Overworld_GetMapHeaderByGroupAndId(mapGroup, mapNum)->events->warpCount;
 }
 
 // Map indexes number this game's maps group by group, so that one name order holds every map

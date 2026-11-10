@@ -617,10 +617,16 @@ static const struct DebugMenuOption sDebugMenu_Actions_FollowerNPCMenu[] =
     { NULL }
 };
 
-// Debug_GenerateListRecentWarpsMenu writes the labels, so the text only has to be non-NULL
+// A favourite (DEBUG_WARP_FAVOURITES, include/config/debug.h) warps like a recent warp
+#define DEBUG_WARP_FAVOURITE(map, warp) \
+    { COMPOUND_STRING(""), DebugAction_Util_RecentWarp, &(const struct DebugWarp){ MAP_GROUP(map), MAP_NUM(map), warp } },
+
+// Debug_GenerateListRecentWarpsMenu writes the labels, so the text only has to be non-NULL.
+// The warp back, the favourites, then the recent warps.
 static const struct DebugMenuOption sDebugMenu_Actions_RecentWarps[] =
 {
     { COMPOUND_STRING(""), DebugAction_Util_WarpBack },
+    DEBUG_WARP_FAVOURITES
     { COMPOUND_STRING(""), DebugAction_Util_RecentWarp, &sDebugRecentWarps[0] },
     { COMPOUND_STRING(""), DebugAction_Util_RecentWarp, &sDebugRecentWarps[1] },
     { COMPOUND_STRING(""), DebugAction_Util_RecentWarp, &sDebugRecentWarps[2] },
@@ -631,7 +637,9 @@ static const struct DebugMenuOption sDebugMenu_Actions_RecentWarps[] =
     { COMPOUND_STRING(""), DebugAction_Util_RecentWarp, &sDebugRecentWarps[7] },
     { NULL }
 };
-STATIC_ASSERT(ARRAY_COUNT(sDebugMenu_Actions_RecentWarps) == DEBUG_RECENT_WARPS_COUNT + 2, DebugRecentWarpsOptionCount);
+#define DEBUG_WARP_FAVOURITES_COUNT (ARRAY_COUNT(sDebugMenu_Actions_RecentWarps) - DEBUG_RECENT_WARPS_COUNT - 2)
+// The warp back's row, the favourites and the recent warps fit the list
+STATIC_ASSERT(1 + DEBUG_WARP_FAVOURITES_COUNT + DEBUG_RECENT_WARPS_COUNT <= DEBUG_MAX_MENU_ITEMS, DebugWarpFavouritesCount);
 
 static const struct DebugMenuOption sDebugMenu_Actions_Utilities[] =
 {
@@ -2326,11 +2334,19 @@ static bool32 DebugSelection_SetWarp_OnComplete(u8 taskId)
 
 static void DebugAction_Util_RecentWarp(u8 taskId, const void *params)
 {
-    // The list shows only the recent warps that are set
-    Debug_WarpTo(taskId, *(const struct DebugWarp *)params);
+    const struct DebugWarp *warp = params;
+
+    // The list shows only the recent warps that are set, but a favourite can name a map or warp this game lacks
+    if (!Debug_IsMapWarpInGame(warp->mapGroup, warp->mapNum, warp->warpId))
+    {
+        PlaySE(SE_FAILURE);
+        return;
+    }
+    Debug_WarpTo(taskId, *warp);
 }
 
-// The warp back, then the recent warps, most recent first: the map name, then the warp unless the map has none
+// The warp back, the favourites, then the recent warps, most recent first: the map name, then the warp
+// unless the map has none. The rows' ids are their sDebugMenu_Actions_RecentWarps indexes.
 static u32 Debug_GenerateListRecentWarpsMenu(const struct DebugMenuOption *items)
 {
     // The list's textNarrowWidth (window minus item_X). A label that fits it in FONT_NARROWER,
@@ -2338,41 +2354,49 @@ static u32 Debug_GenerateListRecentWarpsMenu(const struct DebugMenuOption *items
     const u32 labelWidth = sDebugMenuWindowTemplateMain.width * 8 - 8;
     const u8 *backPrefix = COMPOUND_STRING("Back to ");
     u8 *end;
-    u32 i;
+    u32 i, row = 0;
 
-    sDebugMenuListData->listItems[0].id = 0;
-    sDebugMenuListData->listItems[0].name = sDebugMenuListData->itemNames[0];
-    // The empty list's one entry is the warp back, which isn't set before the first debug warp.
-    // A fly or an x/y warp sets it without adding a recent warp.
-    if (!Debug_HasWarpBack())
+    // The warp back isn't set before the first debug warp. A fly or an x/y warp sets it without
+    // adding a recent warp. Its map name keeps its end, as below, after the whole prefix.
+    if (Debug_HasWarpBack())
     {
-        StringCopy(sDebugMenuListData->itemNames[0], COMPOUND_STRING("No warps yet"));
-        return 1;
+        end = StringCopy(sDebugMenuListData->itemNames[0], backPrefix);
+        Debug_CopyMapName(gStringVar4, sDebugWarpBack.mapGroup, sDebugWarpBack.mapNum);
+        Debug_CopyStringEndToFit(end, ARRAY_COUNT(sDebugMenuListData->itemNames[0]) - StringLength(backPrefix),
+            gStringVar4, FONT_NARROWER, labelWidth - GetStringWidth(FONT_NARROWER, backPrefix, 0));
+        sDebugMenuListData->listItems[0].id = 0;
+        sDebugMenuListData->listItems[0].name = sDebugMenuListData->itemNames[0];
+        row++;
     }
-    // Every debug warp sets the warp back. Its map name keeps its end, as below, after the whole prefix.
-    end = StringCopy(sDebugMenuListData->itemNames[0], backPrefix);
-    Debug_CopyMapName(gStringVar4, sDebugWarpBack.mapGroup, sDebugWarpBack.mapNum);
-    Debug_CopyStringEndToFit(end, ARRAY_COUNT(sDebugMenuListData->itemNames[0]) - StringLength(backPrefix),
-        gStringVar4, FONT_NARROWER, labelWidth - GetStringWidth(FONT_NARROWER, backPrefix, 0));
-    for (i = 1; i <= sDebugRecentWarpsCount; i++)
+    for (i = 1; i <= DEBUG_WARP_FAVOURITES_COUNT + sDebugRecentWarpsCount; i++, row++)
     {
-        const struct DebugWarp *warp = &sDebugRecentWarps[i - 1];
+        const struct DebugWarp *warp = items[i].actionParams;
 
         end = Debug_CopyMapName(gStringVar4, warp->mapGroup, warp->mapNum);
 
-        if (Overworld_GetMapHeaderByGroupAndId(warp->mapGroup, warp->mapNum)->events->warpCount > 0)
+        // A favourite that isn't a warp of this game shows its warp too
+        if (!Debug_IsMapWarpInGame(warp->mapGroup, warp->mapNum, warp->warpId)
+         || Overworld_GetMapHeaderByGroupAndId(warp->mapGroup, warp->mapNum)->events->warpCount > 0)
         {
             end = StringCopy(end, COMPOUND_STRING(" ("));
-            end = ConvertIntToDecimalStringN(end, warp->warpId, STR_CONV_MODE_LEFT_ALIGN, 2);
+            end = ConvertIntToDecimalStringN(end, warp->warpId, STR_CONV_MODE_LEFT_ALIGN, 3);
             StringCopy(end, COMPOUND_STRING(")"));
         }
         // An over-long label keeps its end, which tells apart maps such as a house's 1F and 2F
-        Debug_CopyStringEndToFit(sDebugMenuListData->itemNames[i], ARRAY_COUNT(sDebugMenuListData->itemNames[i]),
+        Debug_CopyStringEndToFit(sDebugMenuListData->itemNames[row], ARRAY_COUNT(sDebugMenuListData->itemNames[row]),
             gStringVar4, FONT_NARROWER, labelWidth);
-        sDebugMenuListData->listItems[i].id = i;
-        sDebugMenuListData->listItems[i].name = sDebugMenuListData->itemNames[i];
+        sDebugMenuListData->listItems[row].id = i;
+        sDebugMenuListData->listItems[row].name = sDebugMenuListData->itemNames[row];
     }
-    return i;
+    // The empty list's one entry is the warp back's, which plays the failure sound
+    if (row == 0)
+    {
+        StringCopy(sDebugMenuListData->itemNames[0], COMPOUND_STRING("No warps yet"));
+        sDebugMenuListData->listItems[0].id = 0;
+        sDebugMenuListData->listItems[0].name = sDebugMenuListData->itemNames[0];
+        row++;
+    }
+    return row;
 }
 
 static const struct DebugSelectionStep sMapGroupSelectionStep = {

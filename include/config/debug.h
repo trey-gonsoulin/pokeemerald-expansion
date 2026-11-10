@@ -7,6 +7,10 @@
 #define DEBUG_OVERWORLD_TRIGGER_EVENT   pressedStartButton  // The event that opens the menu when holding the key(s) defined in DEBUG_OVERWORLD_HELD_KEYS.
 #define DEBUG_OVERWORLD_IN_MENU         FALSE               // Replaces the overworld debug menu button combination with a start menu entry (above Pokédex).
 #define DEBUG_FLAG_VAR_NAMES            TRUE                // Shows flag and var constant names in the overworld debug menu's Set Flag and Set Var, with Start for A-Z order. The name tables cost about 50 KB of ROM when the debug menu is on (none in release builds).
+// Debug Warp favourites, listed in Utilities > Recent warps… after "Back to <map>" and before this session's warps.
+// Up to 11 DEBUG_WARP_FAVOURITE(map, warp id) entries, one after another; warp 0 of a map without warps is its middle.
+// For example: #define DEBUG_WARP_FAVOURITES DEBUG_WARP_FAVOURITE(MAP_LITTLEROOT_TOWN, 0) DEBUG_WARP_FAVOURITE(MAP_EVER_GRANDE_CITY, 0)
+#define DEBUG_WARP_FAVOURITES
 
 // Battle Debug Menu
 #define DEBUG_BATTLE_MENU               DISABLED_ON_RELEASE // If set to TRUE, enables a debug menu to use in battles by pressing the Select button.
