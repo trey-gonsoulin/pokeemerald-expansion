@@ -188,10 +188,11 @@ before. The same base, options and seed always give the same output.
 (a baseline refresh without a `build`, say, which leaves it pairing the new base
 with stale archetypes) or when the file records none (one from before this
 check). A test checks the committed file against the committed baseline.
-It also warns, naming each label and table, when a table's archetype, or the
-pool in it, isn't in `--pools` (a stale `emerald_maps.json` beside a newer
-`archetype_pools.json`, say), and leaves those tables alone. A pool that's
-there but empty is left alone without a warning.
+It also warns, naming each label and table, when a table it would restock (in
+the selected regions, in a map that isn't skipped) names an archetype, or a
+pool in it, that `--pools` doesn't have (a stale `emerald_maps.json` beside a
+newer `archetype_pools.json`, say), and leaves those tables alone. A pool
+that's there but empty is left alone without a warning.
 
 Every file `restock` writes (the preview and `--write`) carries a top-level
 `restocked_by` stamp with the base's SHA-256, the seed and the ratio. The game

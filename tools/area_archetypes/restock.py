@@ -866,9 +866,8 @@ def tables_of(enc, emerald, field_defs):
                 yield 'fishing_mons', rod, idxs, emerald['fishing_mons'][rod]
 
 
-def pooled_tables(wild, emerald_maps, pools, settings):
-    """(encounter, field, rod, slot indices, archetype info, pool) for every table of the
-    selected regions that has an archetype pool to draw from."""
+def region_tables(wild, emerald_maps, settings):
+    """(encounter, field, rod, slot indices, archetype info) for every table of the selected regions."""
     group = AA.map_headers(wild)
     field_defs = {fd['type']: fd for fd in group['fields']}
     for enc in group['encounters']:
@@ -876,9 +875,30 @@ def pooled_tables(wild, emerald_maps, pools, settings):
         if not em or em.get('region') not in settings.regions:
             continue
         for field, rod, idxs, arch in tables_of(enc, em, field_defs):
-            pool = pools['archetypes'].get(arch['archetype'], {}).get('pools', {}).get(arch['pool'])
-            if pool:
-                yield enc, field, rod, idxs, arch, pool
+            yield enc, field, rod, idxs, arch
+
+
+def pool_of(pools, arch):
+    """The pool a table's archetype info names, or None when pools has no such archetype or pool."""
+    return pools['archetypes'].get(arch['archetype'], {}).get('pools', {}).get(arch['pool'])
+
+
+def pooled_tables(wild, emerald_maps, pools, settings):
+    """(encounter, field, rod, slot indices, archetype info, pool) for every table of the
+    selected regions that has an archetype pool to draw from."""
+    for *table, arch in region_tables(wild, emerald_maps, settings):
+        pool = pool_of(pools, arch)
+        if pool:
+            yield *table, arch, pool
+
+
+def unresolved_tables(wild, emerald_maps, pools, settings):
+    """'label table (archetype pool)' for each table pooled_tables leaves out because pools has no
+    such archetype or pool (a stale emerald_maps.json beside newer pools), except in a skipped map.
+    A pool that's there but empty is left out on purpose, so it isn't listed."""
+    return [f'{enc["base_label"]} {f"{field}:{rod}" if rod else field} ({arch["archetype"]} {arch["pool"]})'
+            for enc, field, rod, _, arch in region_tables(wild, emerald_maps, settings)
+            if pool_of(pools, arch) is None and not settings.for_map(enc['base_label']).skip]
 
 
 def restock(wild, emerald_maps, pools, info, settings):
@@ -892,6 +912,10 @@ def restock(wild, emerald_maps, pools, info, settings):
     if unmapped:
         print(f'warning: {len(unmapped)} gWildMonHeaders labels have no emerald_maps entry and are '
               f'left alone (rerun build?): {", ".join(unmapped)}', file=sys.stderr)
+    unresolved = unresolved_tables(wild, emerald_maps, pools, settings)
+    if unresolved:
+        print(f'warning: {len(unresolved)} tables name an archetype or pool that archetype_pools.json '
+              f'doesn\'t have and are left alone (rerun build?): {", ".join(unresolved)}', file=sys.stderr)
     for enc, field, rod, idxs, arch, pool in pooled_tables(wild, emerald_maps, pools, settings):
         label = enc['base_label']
         mons = [enc[field]['mons'][i] for i in idxs]
@@ -1017,12 +1041,6 @@ def is_pool_entry(e):
             and math.isfinite(e['share']) and type(e.get('introduced_gen')) is int)
 
 
-def table_refs(m):
-    """(table name, pool ref) for each table of an emerald_maps.json entry, fishing rods one by one."""
-    return ([(f, m[f]) for f in TABLE_FIELDS if f in m]
-            + [(f'fishing_mons {r}', v) for r, v in m.get('fishing_mons', {}).items()])
-
-
 def maps_problem(maps):
     """What stops restock reading maps_of(emerald_maps.json), or None. Every entry is checked, even one
     restock skips (no region, or a label not in the base)."""
@@ -1031,22 +1049,14 @@ def maps_problem(maps):
             return f'{label} is not an object'
         if not isinstance(m.get('region', ''), str):
             return f'{label} region is not a string'
-        if not isinstance(m.get('fishing_mons', {}), dict):
+        rods = m.get('fishing_mons', {})
+        if not isinstance(rods, dict):
             return f'{label} fishing_mons is not an object'
-        for table, ref in table_refs(m):
+        tables = [(f, m[f]) for f in TABLE_FIELDS if f in m] + [(f'fishing_mons {r}', v) for r, v in rods.items()]
+        for table, ref in tables:
             if not is_pool_ref(ref):
                 return f'{label} {table} has no archetype and pool'
     return None
-
-
-def unresolved_refs(maps, pools):
-    """'label table (archetype pool)' for each table of maps (maps_problem-checked) whose archetype, or
-    pool in it, archetype_pools.json (pools_problem-checked) doesn't have: restock leaves those tables
-    alone. A pool that's there but empty is left alone on purpose, so it isn't listed."""
-    archetypes = pools['archetypes']
-    return [f'{label} {table} ({ref["archetype"]} {ref["pool"]})'
-            for label, m in maps.items() for table, ref in table_refs(m)
-            if ref['pool'] not in archetypes.get(ref['archetype'], {}).get('pools', {})]
 
 
 def pools_problem(pools):
@@ -1135,11 +1145,6 @@ def main(argv=None):
         p.error(f'unknown region: {", ".join(unknown)} {regions_in}')
     pools = load_json(args.pools)
     exit_if_problem(args.pools, pools_problem(pools))
-    # A stale --maps with newer --pools: warn, so the rest of the pairing stays usable.
-    unresolved = unresolved_refs(emerald_maps, pools)
-    if unresolved:
-        print(f'warning: {len(unresolved)} {args.maps} tables name an archetype or pool that {args.pools} '
-              f'doesn\'t have and are left alone (rerun build?): {", ".join(unresolved)}', file=sys.stderr)
     pool_gens = {e['introduced_gen'] for e in pool_entries(pools)}
     if settings.gens and not settings.gens & pool_gens:
         p.error(f'gens: {fmt_gens(settings.gens)} matches no pool species, so nothing would be '
