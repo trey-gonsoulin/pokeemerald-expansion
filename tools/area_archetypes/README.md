@@ -265,8 +265,8 @@ field -> whole number, a `--maps` entry that isn't an object, has a region
 that isn't a string, or has a table (or `fishing_mons` rod) that doesn't name an
 archetype and pool, a `--pools` without an `archetypes` object or with an
 archetype whose pools aren't lists of entries with a species, a finite share and
-a whole-number `introduced_gen`, an unknown key (top-level or per-map), a label that isn't a
-`gWildMonHeaders` base label in `--base`, a region that isn't in
+a whole-number `introduced_gen`, an unknown key (top-level or per-map), a
+label that isn't a `gWildMonHeaders` base label in `--base`, a region that isn't in
 `emerald_maps.json`, an unknown species, a `gens` set with no pool species,
 or a value of the wrong type: `ratio`
 is a number from 0 to 1, `seed` and `new_species` whole numbers, `gens` a
