@@ -892,11 +892,16 @@ def pooled_tables(wild, emerald_maps, pools, settings):
             yield *table, arch, pool
 
 
+def table_name(field, rod):
+    """How the report and warnings name a table: the field, with the rod for a fishing table."""
+    return f'{field}:{rod}' if rod else field
+
+
 def unresolved_tables(wild, emerald_maps, pools, settings):
     """'label table (archetype pool)' for each table pooled_tables leaves out because pools has no
     such archetype or pool (a stale emerald_maps.json beside newer pools), except in a skipped map.
     A pool that's there but empty is left out on purpose, so it isn't listed."""
-    return [f'{enc["base_label"]} {f"{field}:{rod}" if rod else field} ({arch["archetype"]} {arch["pool"]})'
+    return [f'{enc["base_label"]} {table_name(field, rod)} ({arch["archetype"]} {arch["pool"]})'
             for enc, field, rod, _, arch in region_tables(wild, emerald_maps, settings)
             if pool_of(pools, arch) is None and not settings.for_map(enc['base_label']).skip]
 
@@ -920,7 +925,7 @@ def restock(wild, emerald_maps, pools, info, settings):
         label = enc['base_label']
         mons = [enc[field]['mons'][i] for i in idxs]
         rates = [field_defs[field]['encounter_rates'][i] for i in idxs]
-        table = f'{field}:{rod}' if rod else field
+        table = table_name(field, rod)
         new = restock_table(mons, rates, pool, info, settings, label, table)
         if new is None or new == [m['species'] for m in mons]:
             continue
