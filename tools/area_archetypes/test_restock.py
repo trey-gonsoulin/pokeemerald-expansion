@@ -750,6 +750,55 @@ class CliTests(unittest.TestCase):
                     run_quietly(['--out-dir', out, flag, bad])
                 self.assertIn(f'cannot read {bad}: ', cm.exception.code)
 
+    def test_restock_exits_cleanly_on_a_bad_maps_or_pools_entry(self):
+        maps, pools = R.load_json(MAPS), R.load_json(POOLS)
+        route = maps['gRoute119']
+        arch = next(iter(pools['archetypes']))
+        entry = pools['archetypes'][arch]['pools']['land'][0]
+
+        def pools_with(archetypes=None, **pool):
+            return {**pools, 'archetypes': archetypes if archetypes is not None else
+                    {**pools['archetypes'], arch: {**pools['archetypes'][arch], **pool}}}
+        cases = [('--maps', {**maps, 'gRoute101': 5}, 'gRoute101 is not an object'),
+                 ('--maps', {**maps, 'gRoute119': {**route, 'region': 5}}, 'gRoute119 region'),
+                 ('--maps', {**maps, 'gRoute119': {**route, 'land_mons': 5}}, 'gRoute119 land_mons'),
+                 ('--maps', {**maps, 'gRoute119': {**route, 'water_mons': {'pool': 'surf'}}},
+                  'gRoute119 water_mons'),
+                 ('--maps', {**maps, 'gRoute119': {**route, 'land_mons': {'archetype': [], 'pool': 'land'}}},
+                  'gRoute119 land_mons'),
+                 ('--maps', {**maps, 'gRoute119': {**route, 'fishing_mons': 5}}, 'gRoute119 fishing_mons'),
+                 ('--maps', {**maps, 'gRoute119': {**route, 'fishing_mons': {'old_rod': None}}},
+                  'gRoute119 fishing_mons old_rod'),
+                 ('--pools', {k: v for k, v in pools.items() if k != 'archetypes'}, 'archetypes'),
+                 ('--pools', pools_with([]), 'archetypes'),
+                 ('--pools', pools_with({**pools['archetypes'], arch: 5}), arch),
+                 ('--pools', pools_with(pools=5), arch),
+                 ('--pools', pools_with(pools={'land': 5}), f'{arch} land'),
+                 ('--pools', pools_with(pools={'land': [5]}), f'{arch} land'),
+                 ('--pools', pools_with(pools={'land': [{**entry, 'species': None}]}), f'{arch} land'),
+                 ('--pools', pools_with(pools={'land': [{**entry, 'share': '0.5'}]}), f'{arch} land'),
+                 ('--pools', pools_with(pools={'land': [{**entry, 'introduced_gen': True}]}), f'{arch} land'),
+                 ('--pools', pools_with(pools={'land': [{k: v for k, v in entry.items() if k != 'share'}]}),
+                  f'{arch} land')]
+        with tempfile.TemporaryDirectory() as tmp:
+            bad = os.path.join(tmp, 'bad.json')
+            out = os.path.join(tmp, 'out')
+            for flag, doc, problem in cases:
+                with self.subTest(flag=flag, problem=problem, doc=str(doc)[-60:]):
+                    with open(bad, 'w', encoding='utf-8') as f:
+                        json.dump(doc, f)
+                    with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as cm:
+                        run_quietly(['--out-dir', out, '--levels', no_levels(tmp), flag, bad])
+                    self.assertIsInstance(cm.exception.code, str)
+                    self.assertIn(f'{bad} is not a usable build output (', cm.exception.code)
+                    self.assertIn(problem, cm.exception.code)
+                    self.assertTrue(cm.exception.code.endswith(f'); {R.BUILD_HINT}'), cm.exception.code)
+                    self.assertFalse(os.path.exists(out))
+        # Every entry of the committed outputs passes, and an entry with no region is left alone, as before.
+        self.assertIsNone(R.maps_problem(R.maps_of(maps)))
+        self.assertIsNone(R.maps_problem({'gRoute101': {'map': 'MAP_ROUTE101'}}))
+        self.assertIsNone(R.pools_problem(pools))
+
     def test_baseline_keeps_the_old_file_on_a_failed_write(self):
         with tempfile.TemporaryDirectory() as tmp:
             base = os.path.join(tmp, 'base.json')
