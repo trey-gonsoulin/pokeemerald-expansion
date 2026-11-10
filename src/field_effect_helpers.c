@@ -55,6 +55,7 @@ u32 FldEff_Shadow(void);
 #define sReflectionObjEventId       data[0]
 #define sReflectionObjEventLocalId  data[1]
 #define sReflectionVerticalOffset   data[2]
+#define sReflectionPaletteBorrowed  data[3] // The palette load failed, so oam.paletteNum is another owner's slot 15
 #define sIsStillReflection          data[7]
 
 void SetUpShadow(struct ObjectEvent *objectEvent)
@@ -182,6 +183,7 @@ static void LoadObjectRegularReflectionPalette(struct ObjectEvent *objectEvent, 
         UpdateSpritePaletteWithWeather(paletteNum, TRUE);
     }
     sprite->oam.paletteNum = paletteNum;
+    sprite->sReflectionPaletteBorrowed = (paletteNum == 0xFF);
     sprite->oam.objMode = ST_OAM_OBJ_BLEND;
 }
 
@@ -193,6 +195,7 @@ static void LoadObjectHighBridgeReflectionPalette(struct ObjectEvent *objectEven
     struct SpritePalette bluePalette = {.tag = HIGH_BRIDGE_PAL_TAG, .data = blueData};
     CpuFill16(0x55C9, blueData, PLTT_SIZE_4BPP);
     sprite->oam.paletteNum = LoadSpritePalette(&bluePalette);
+    sprite->sReflectionPaletteBorrowed = (IndexOfSpritePaletteTag(HIGH_BRIDGE_PAL_TAG) == 0xFF);
     UpdateSpritePaletteWithWeather(sprite->oam.paletteNum, TRUE);
 }
 
@@ -220,9 +223,10 @@ static void UpdateObjectReflectionSprite(struct Sprite *reflectionSprite)
             // Build filtered palette
             u16 filteredData[16];
             struct SpritePalette filteredPal = {.tag = paletteTag, .data = filteredData};
-            // Free palette if unused
+            // Free palette if unused, unless it's another owner's slot borrowed after a failed load
             reflectionSprite->inUse = FALSE;
-            FieldEffectFreePaletteIfUnused(reflectionSprite->oam.paletteNum);
+            if (!reflectionSprite->sReflectionPaletteBorrowed)
+                FieldEffectFreePaletteIfUnused(reflectionSprite->oam.paletteNum);
             reflectionSprite->inUse = TRUE;
             if (reflectionSprite->sIsStillReflection == FALSE)
                 ApplyPondFilter(mainSprite->oam.paletteNum, filteredData);
@@ -232,6 +236,7 @@ static void UpdateObjectReflectionSprite(struct Sprite *reflectionSprite)
             UpdateSpritePaletteWithWeather(paletteNum, TRUE);
         }
         reflectionSprite->oam.paletteNum = paletteNum;
+        reflectionSprite->sReflectionPaletteBorrowed = (paletteNum == 0xFF);
     }
     reflectionSprite->oam.shape = mainSprite->oam.shape;
     reflectionSprite->oam.size = mainSprite->oam.size;
@@ -269,6 +274,7 @@ static void UpdateObjectReflectionSprite(struct Sprite *reflectionSprite)
 #undef sReflectionObjEventId
 #undef sReflectionObjEventLocalId
 #undef sReflectionVerticalOffset
+#undef sReflectionPaletteBorrowed
 #undef sIsStillReflection
 
 extern const struct SpriteTemplate *const gFieldEffectObjectTemplatePointers[];
