@@ -1010,6 +1010,12 @@ def is_pool_ref(v):
     return isinstance(v, dict) and all(isinstance(v.get(k), str) for k in ('archetype', 'pool'))
 
 
+def is_pool_entry(e):
+    """Whether e has the species, share and generation restock reads from a pool entry."""
+    return (isinstance(e, dict) and isinstance(e.get('species'), str) and AA.is_number(e.get('share'))
+            and type(e.get('introduced_gen')) is int)
+
+
 def maps_problem(maps):
     """What stops restock reading maps_of(emerald_maps.json), or None."""
     for label, m in maps.items():
@@ -1017,15 +1023,13 @@ def maps_problem(maps):
             return f'{label} is not an object'
         if not isinstance(m.get('region', ''), str):
             return f'{label} region is not a string'
-        for field in (f for f in TABLE_FIELDS if f in m):
-            if not is_pool_ref(m[field]):
-                return f'{label} {field} has no archetype and pool'
         rods = m.get('fishing_mons', {})
         if not isinstance(rods, dict):
             return f'{label} fishing_mons is not an object'
-        for rod, ref in rods.items():
+        tables = [(f, m[f]) for f in TABLE_FIELDS if f in m] + [(f'fishing_mons {r}', v) for r, v in rods.items()]
+        for table, ref in tables:
             if not is_pool_ref(ref):
-                return f'{label} fishing_mons {rod} has no archetype and pool'
+                return f'{label} {table} has no archetype and pool'
     return None
 
 
@@ -1039,9 +1043,7 @@ def pools_problem(pools):
         if not isinstance(groups, dict):
             return f'{name} has no pools object'
         for group, pool in groups.items():
-            if not isinstance(pool, list) or not all(
-                    isinstance(e, dict) and isinstance(e.get('species'), str) and AA.is_number(e.get('share'))
-                    and type(e.get('introduced_gen')) is int for e in pool):
+            if not isinstance(pool, list) or not all(map(is_pool_entry, pool)):
                 return f'{name} {group} is not a list of species, share and introduced_gen entries'
     return None
 
