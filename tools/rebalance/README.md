@@ -81,8 +81,11 @@ The knobs:
     levelling out at the floor (percent of the exp, at least 1 exp). The
     cutoff and the width are in levels, or in percent of the foe's level
     with `overlevel_unit`. Without a width, the exp drops to the floor
-    straight past the cutoff. The fork's `B_EXP_OVERLEVEL_PENALTY` (#154,
-    #189) is 15%, 4% and 10%.
+    straight past the cutoff. In percent, `overlevel_min_level` counts a
+    foe below that level as that level for the cutoff and width, so an
+    early foe's cutoff is still a few levels. The fork's
+    `B_EXP_OVERLEVEL_PENALTY` (#154, #189) is 15%, 4% and 10%, with a
+    minimum level of 17 (`B_EXP_OVERLEVEL_MIN_LEVEL`).
   - `share_fraction`: the Exp. Share bench's share, the game's half; not a
     game option.
 
