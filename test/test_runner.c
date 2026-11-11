@@ -296,9 +296,12 @@ static const struct BattleStructGuardElement
 // The gBattleStruct whose guard elements were filled (a test can swap in its
 // own), and the first changed byte the check found, reported at the test's end.
 static EWRAM_DATA struct BattleStruct *sGuardedBattleStruct = NULL;
-static EWRAM_DATA const char *sBattleStructGuardName = NULL;
-static EWRAM_DATA u32 sBattleStructGuardByte = 0;
-static EWRAM_DATA u32 sBattleStructGuardValue = 0;
+static EWRAM_DATA struct
+{
+    const char *name; // NULL while no byte changed
+    u32 byte;
+    u32 value;
+} sBattleStructGuardFailure = {0};
 
 static void FillGuardElements(void)
 {
@@ -306,7 +309,7 @@ static void FillGuardElements(void)
     for (i = 0; i < ARRAY_COUNT(sGuardElements); i++)
         memset(sGuardElements[i].address, GUARD_FILL, sGuardElements[i].size);
     sGuardedBattleStruct = NULL;
-    sBattleStructGuardName = NULL;
+    sBattleStructGuardFailure.name = NULL;
 }
 
 // Returns the index of the first byte that isn't GUARD_FILL, or size if none.
@@ -342,15 +345,15 @@ void TestRunner_CheckBattleStructGuards(void)
         return;
     sGuardedBattleStruct = NULL;
 
-    for (i = 0; i < ARRAY_COUNT(sBattleStructGuardElements) && sBattleStructGuardName == NULL; i++)
+    for (i = 0; i < ARRAY_COUNT(sBattleStructGuardElements) && sBattleStructGuardFailure.name == NULL; i++)
     {
         const u8 *guard = (const u8 *)gBattleStruct + sBattleStructGuardElements[i].offset;
         u32 byte = FindChangedGuardByte(guard, sBattleStructGuardElements[i].size);
         if (byte < sBattleStructGuardElements[i].size)
         {
-            sBattleStructGuardName = sBattleStructGuardElements[i].name;
-            sBattleStructGuardByte = byte;
-            sBattleStructGuardValue = guard[byte];
+            sBattleStructGuardFailure.name = sBattleStructGuardElements[i].name;
+            sBattleStructGuardFailure.byte = byte;
+            sBattleStructGuardFailure.value = guard[byte];
         }
     }
 }
@@ -371,8 +374,8 @@ static void CheckGuardElements(void)
         if (byte < sGuardElements[i].size)
             FailGuardElement(sGuardElements[i].name, byte, guard[byte]);
     }
-    if (sBattleStructGuardName != NULL)
-        FailGuardElement(sBattleStructGuardName, sBattleStructGuardByte, sBattleStructGuardValue);
+    if (sBattleStructGuardFailure.name != NULL)
+        FailGuardElement(sBattleStructGuardFailure.name, sBattleStructGuardFailure.byte, sBattleStructGuardFailure.value);
 }
 
 static void ClearSaveBlocks(void)
