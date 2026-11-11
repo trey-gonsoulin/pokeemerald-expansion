@@ -76,7 +76,7 @@ extern s16 gBattleAnimArgs[ANIM_ARGS_COUNT];
 extern u8 gAnimMoveTurn;
 extern enum BattlerId gBattleAnimAttacker;
 extern enum BattlerId gBattleAnimTarget;
-extern enum Species gAnimBattlerSpecies[MAX_BATTLERS_COUNT];
+extern enum Species gAnimBattlerSpecies[MAX_BATTLERS_COUNT + TESTING]; // + TESTING: a guard element, see sGuardElements in test/test_runner.c
 extern u8 gAnimCustomPanning;
 extern u16 gAnimMoveIndex;
 

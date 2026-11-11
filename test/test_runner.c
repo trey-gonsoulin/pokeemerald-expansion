@@ -13,6 +13,7 @@
 #include "test_runner.h"
 #include "test/test.h"
 #include "test/battle.h"
+#include "battle_controllers.h"
 
 #define TIMEOUT_SECONDS 60
 
@@ -209,18 +210,153 @@ static const struct GuardElement
     GUARD_ELEMENT(gBattleMons),
     GUARD_ELEMENT(gBattlerPartyIndexes),
     GUARD_ELEMENT(gObjectEvents),
+    GUARD_ELEMENT(gBattlerPositions),
+    GUARD_ELEMENT(gActionsByTurnOrder),
+    GUARD_ELEMENT(gBattlerByTurnOrder),
+    GUARD_ELEMENT(gBattlersBySpeed),
+    GUARD_ELEMENT(gBattlersByRawSpeed),
+    GUARD_ELEMENT(gBattlerSpriteIds),
+    GUARD_ELEMENT(gBideDmg),
+    GUARD_ELEMENT(gChosenActionByBattler),
+    GUARD_ELEMENT(gSelectionBattleScripts),
+    GUARD_ELEMENT(gPalaceSelectionBattleScripts),
+    GUARD_ELEMENT(gLastPrintedMoves),
+    GUARD_ELEMENT(gLastMoves),
+    GUARD_ELEMENT(gLastLandedMoves),
+    GUARD_ELEMENT(gLastHitByType),
+    GUARD_ELEMENT(gLastUsedMoveType),
+    GUARD_ELEMENT(gLastResultingMoves),
+    GUARD_ELEMENT(gLockedMoves),
+    GUARD_ELEMENT(gLastHitBy),
+    GUARD_ELEMENT(gChosenMoveByBattler),
+    GUARD_ELEMENT(gBideTarget),
+    GUARD_ELEMENT(gProtectStructs),
+    GUARD_ELEMENT(gEnigmaBerries),
+    GUARD_ELEMENT(gActionSelectionCursor),
+    GUARD_ELEMENT(gMoveSelectionCursor),
+    GUARD_ELEMENT(gBattlerStatusSummaryTaskId),
+    GUARD_ELEMENT(gTransformedPersonalities),
+    GUARD_ELEMENT(gTransformedShininess),
+    GUARD_ELEMENT(gHealthboxSpriteIds),
+    GUARD_ELEMENT(gBattlerControllerFuncs),
+    GUARD_ELEMENT(gBattlerControllerEndFuncs),
+    GUARD_ELEMENT(gBattleControllerData),
+    GUARD_ELEMENT(gBattlerBattleController),
+    GUARD_ELEMENT(gAnimBattlerSpecies),
+    // Not gSpecialStatuses or gQueuedStatBoosts: the battle code clears them
+    // with a memset of their sizeof, which takes in the guard element.
 };
+
+// gBattleStruct is allocated for each battle, so the guard elements of its
+// per-battler arrays are filled after AllocateBattleResources allocates it
+// and checked before FreeBattleResources frees it (src/battle_util2.c).
+#define BATTLE_STRUCT_MEMBER(member) (((struct BattleStruct *)0)->member)
+#define BATTLE_STRUCT_GUARD_ELEMENT(member) { offsetof(struct BattleStruct, member[ARRAY_COUNT(BATTLE_STRUCT_MEMBER(member)) - 1]), sizeof(BATTLE_STRUCT_MEMBER(member)[0]), "gBattleStruct->" #member }
+
+static const struct BattleStructGuardElement
+{
+    u32 offset;
+    u32 size;
+    const char *name;
+} sBattleStructGuardElements[] =
+{
+    BATTLE_STRUCT_GUARD_ELEMENT(battlerState),
+    BATTLE_STRUCT_GUARD_ELEMENT(futureSight),
+    BATTLE_STRUCT_GUARD_ELEMENT(wish),
+    BATTLE_STRUCT_GUARD_ELEMENT(moveTarget),
+    BATTLE_STRUCT_GUARD_ELEMENT(battlerPartyIndexes),
+    BATTLE_STRUCT_GUARD_ELEMENT(monToSwitchIntoId),
+    BATTLE_STRUCT_GUARD_ELEMENT(battlerPartyOrders),
+    BATTLE_STRUCT_GUARD_ELEMENT(chosenMovePositions),
+    BATTLE_STRUCT_GUARD_ELEMENT(stateIdAfterSelScript),
+    BATTLE_STRUCT_GUARD_ELEMENT(lastTakenMove),
+    BATTLE_STRUCT_GUARD_ELEMENT(chosenItem),
+    BATTLE_STRUCT_GUARD_ELEMENT(choicedMove),
+    BATTLE_STRUCT_GUARD_ELEMENT(lastTakenMoveFrom),
+    BATTLE_STRUCT_GUARD_ELEMENT(AI_monToSwitchIntoId),
+    BATTLE_STRUCT_GUARD_ELEMENT(abilityPopUpSpriteIds),
+    BATTLE_STRUCT_GUARD_ELEMENT(tracedAbility),
+    BATTLE_STRUCT_GUARD_ELEMENT(illusion),
+    BATTLE_STRUCT_GUARD_ELEMENT(itemPartyIndex),
+    BATTLE_STRUCT_GUARD_ELEMENT(itemMoveIndex),
+    BATTLE_STRUCT_GUARD_ELEMENT(shellSideArmCategory),
+    BATTLE_STRUCT_GUARD_ELEMENT(prevTurnSpecies),
+    BATTLE_STRUCT_GUARD_ELEMENT(passiveHpUpdate),
+    BATTLE_STRUCT_GUARD_ELEMENT(moveDamage),
+    BATTLE_STRUCT_GUARD_ELEMENT(innardsOutHpLost),
+    BATTLE_STRUCT_GUARD_ELEMENT(moveResultFlags),
+    BATTLE_STRUCT_GUARD_ELEMENT(savedMoveResultFlags),
+    BATTLE_STRUCT_GUARD_ELEMENT(trainerSlideSpriteIds),
+};
+
+// The gBattleStruct whose guard elements were filled (a test can swap in its
+// own), and the first changed byte the check found, reported at the test's end.
+static EWRAM_DATA struct BattleStruct *sGuardedBattleStruct = NULL;
+static EWRAM_DATA const char *sBattleStructGuardName = NULL;
+static EWRAM_DATA u32 sBattleStructGuardByte = 0;
+static EWRAM_DATA u32 sBattleStructGuardValue = 0;
 
 static void FillGuardElements(void)
 {
     u32 i;
     for (i = 0; i < ARRAY_COUNT(sGuardElements); i++)
         memset(sGuardElements[i].address, GUARD_FILL, sGuardElements[i].size);
+    sGuardedBattleStruct = NULL;
+    sBattleStructGuardName = NULL;
+}
+
+// Returns the index of the first byte that isn't GUARD_FILL, or size if none.
+static u32 FindChangedGuardByte(const u8 *guard, u32 size)
+{
+    u32 i;
+    for (i = 0; i < size; i++)
+    {
+        if (guard[i] != GUARD_FILL)
+            break;
+    }
+    return i;
+}
+
+static void FailGuardElement(const char *name, u32 byte, u32 value)
+{
+    Test_MgbaPrintf("%s:%d: out-of-bounds write: %s guard element byte %d is %d, not %d", gTestRunnerState.test->filename, SourceLine(0), name, byte, value, GUARD_FILL);
+    gTestRunnerState.result = TEST_RESULT_FAIL;
+}
+
+void TestRunner_FillBattleStructGuards(void)
+{
+    u32 i;
+    sGuardedBattleStruct = gBattleStruct;
+    for (i = 0; i < ARRAY_COUNT(sBattleStructGuardElements); i++)
+        memset((u8 *)gBattleStruct + sBattleStructGuardElements[i].offset, GUARD_FILL, sBattleStructGuardElements[i].size);
+}
+
+void TestRunner_CheckBattleStructGuards(void)
+{
+    u32 i;
+    if (gBattleStruct == NULL || gBattleStruct != sGuardedBattleStruct)
+        return;
+    sGuardedBattleStruct = NULL;
+
+    for (i = 0; i < ARRAY_COUNT(sBattleStructGuardElements) && sBattleStructGuardName == NULL; i++)
+    {
+        const u8 *guard = (const u8 *)gBattleStruct + sBattleStructGuardElements[i].offset;
+        u32 byte = FindChangedGuardByte(guard, sBattleStructGuardElements[i].size);
+        if (byte < sBattleStructGuardElements[i].size)
+        {
+            sBattleStructGuardName = sBattleStructGuardElements[i].name;
+            sBattleStructGuardByte = byte;
+            sBattleStructGuardValue = guard[byte];
+        }
+    }
 }
 
 static void CheckGuardElements(void)
 {
-    u32 i, j;
+    u32 i;
+    // A battle the test left running still has its gBattleStruct.
+    TestRunner_CheckBattleStructGuards();
+
     // Only a test expected to pass: failing a KNOWN_FAILING or EXPECT_FAIL
     // test that passed would report it as the failure it expects.
     if (gTestRunnerState.result != TEST_RESULT_PASS
@@ -230,16 +366,12 @@ static void CheckGuardElements(void)
     for (i = 0; i < ARRAY_COUNT(sGuardElements); i++)
     {
         const u8 *guard = sGuardElements[i].address;
-        for (j = 0; j < sGuardElements[i].size; j++)
-        {
-            if (guard[j] != GUARD_FILL)
-            {
-                Test_MgbaPrintf("%s:%d: out-of-bounds write: %s guard element byte %d is %d, not %d", gTestRunnerState.test->filename, SourceLine(0), sGuardElements[i].name, j, guard[j], GUARD_FILL);
-                gTestRunnerState.result = TEST_RESULT_FAIL;
-                break;
-            }
-        }
+        u32 byte = FindChangedGuardByte(guard, sGuardElements[i].size);
+        if (byte < sGuardElements[i].size)
+            FailGuardElement(sGuardElements[i].name, byte, guard[byte]);
     }
+    if (sBattleStructGuardName != NULL)
+        FailGuardElement(sBattleStructGuardName, sBattleStructGuardByte, sBattleStructGuardValue);
 }
 
 static void ClearSaveBlocks(void)
