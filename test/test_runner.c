@@ -198,7 +198,11 @@ void TestRunner_CheckMemory(void)
 // declarations). Filling it before each test and checking it after catches
 // a write one element past the end. Reads and writes further out aren't caught.
 #define GUARD_FILL 0xFF
-#define GUARD_ELEMENT(array) { &array[ARRAY_COUNT(array) - 1], sizeof(array[0]), #array }
+// GUARD_COUNT_CHECK adds 0, but fails to compile when an array lost its
+// + TESTING (an upstream merge, say), which would fill its last real element.
+#define GUARD_COUNT_CHECK(arrayCount, count, name) (0 * sizeof(struct { _Static_assert((arrayCount) == (count) + TESTING, name " has no + TESTING guard element"); char unused; }))
+#define GUARD_ELEMENT(array, count) { &array[ARRAY_COUNT(array) - 1], sizeof(array[0]) + GUARD_COUNT_CHECK(ARRAY_COUNT(array), count, #array), #array }
+#define BATTLER_GUARD_ELEMENT(array) GUARD_ELEMENT(array, MAX_BATTLERS_COUNT)
 
 static const struct GuardElement
 {
@@ -207,42 +211,42 @@ static const struct GuardElement
     const char *name;
 } sGuardElements[] =
 {
-    GUARD_ELEMENT(gBattleMons),
-    GUARD_ELEMENT(gBattlerPartyIndexes),
-    GUARD_ELEMENT(gObjectEvents),
-    GUARD_ELEMENT(gBattlerPositions),
-    GUARD_ELEMENT(gActionsByTurnOrder),
-    GUARD_ELEMENT(gBattlerByTurnOrder),
-    GUARD_ELEMENT(gBattlersBySpeed),
-    GUARD_ELEMENT(gBattlersByRawSpeed),
-    GUARD_ELEMENT(gBattlerSpriteIds),
-    GUARD_ELEMENT(gBideDmg),
-    GUARD_ELEMENT(gChosenActionByBattler),
-    GUARD_ELEMENT(gSelectionBattleScripts),
-    GUARD_ELEMENT(gPalaceSelectionBattleScripts),
-    GUARD_ELEMENT(gLastPrintedMoves),
-    GUARD_ELEMENT(gLastMoves),
-    GUARD_ELEMENT(gLastLandedMoves),
-    GUARD_ELEMENT(gLastHitByType),
-    GUARD_ELEMENT(gLastUsedMoveType),
-    GUARD_ELEMENT(gLastResultingMoves),
-    GUARD_ELEMENT(gLockedMoves),
-    GUARD_ELEMENT(gLastHitBy),
-    GUARD_ELEMENT(gChosenMoveByBattler),
-    GUARD_ELEMENT(gBideTarget),
-    GUARD_ELEMENT(gProtectStructs),
-    GUARD_ELEMENT(gEnigmaBerries),
-    GUARD_ELEMENT(gActionSelectionCursor),
-    GUARD_ELEMENT(gMoveSelectionCursor),
-    GUARD_ELEMENT(gBattlerStatusSummaryTaskId),
-    GUARD_ELEMENT(gTransformedPersonalities),
-    GUARD_ELEMENT(gTransformedShininess),
-    GUARD_ELEMENT(gHealthboxSpriteIds),
-    GUARD_ELEMENT(gBattlerControllerFuncs),
-    GUARD_ELEMENT(gBattlerControllerEndFuncs),
-    GUARD_ELEMENT(gBattleControllerData),
-    GUARD_ELEMENT(gBattlerBattleController),
-    GUARD_ELEMENT(gAnimBattlerSpecies),
+    BATTLER_GUARD_ELEMENT(gBattleMons),
+    BATTLER_GUARD_ELEMENT(gBattlerPartyIndexes),
+    GUARD_ELEMENT(gObjectEvents, OBJECT_EVENTS_COUNT),
+    BATTLER_GUARD_ELEMENT(gBattlerPositions),
+    BATTLER_GUARD_ELEMENT(gActionsByTurnOrder),
+    BATTLER_GUARD_ELEMENT(gBattlerByTurnOrder),
+    BATTLER_GUARD_ELEMENT(gBattlersBySpeed),
+    BATTLER_GUARD_ELEMENT(gBattlersByRawSpeed),
+    BATTLER_GUARD_ELEMENT(gBattlerSpriteIds),
+    BATTLER_GUARD_ELEMENT(gBideDmg),
+    BATTLER_GUARD_ELEMENT(gChosenActionByBattler),
+    BATTLER_GUARD_ELEMENT(gSelectionBattleScripts),
+    BATTLER_GUARD_ELEMENT(gPalaceSelectionBattleScripts),
+    BATTLER_GUARD_ELEMENT(gLastPrintedMoves),
+    BATTLER_GUARD_ELEMENT(gLastMoves),
+    BATTLER_GUARD_ELEMENT(gLastLandedMoves),
+    BATTLER_GUARD_ELEMENT(gLastHitByType),
+    BATTLER_GUARD_ELEMENT(gLastUsedMoveType),
+    BATTLER_GUARD_ELEMENT(gLastResultingMoves),
+    BATTLER_GUARD_ELEMENT(gLockedMoves),
+    BATTLER_GUARD_ELEMENT(gLastHitBy),
+    BATTLER_GUARD_ELEMENT(gChosenMoveByBattler),
+    BATTLER_GUARD_ELEMENT(gBideTarget),
+    BATTLER_GUARD_ELEMENT(gProtectStructs),
+    BATTLER_GUARD_ELEMENT(gEnigmaBerries),
+    BATTLER_GUARD_ELEMENT(gActionSelectionCursor),
+    BATTLER_GUARD_ELEMENT(gMoveSelectionCursor),
+    BATTLER_GUARD_ELEMENT(gBattlerStatusSummaryTaskId),
+    BATTLER_GUARD_ELEMENT(gTransformedPersonalities),
+    BATTLER_GUARD_ELEMENT(gTransformedShininess),
+    BATTLER_GUARD_ELEMENT(gHealthboxSpriteIds),
+    BATTLER_GUARD_ELEMENT(gBattlerControllerFuncs),
+    BATTLER_GUARD_ELEMENT(gBattlerControllerEndFuncs),
+    BATTLER_GUARD_ELEMENT(gBattleControllerData),
+    BATTLER_GUARD_ELEMENT(gBattlerBattleController),
+    BATTLER_GUARD_ELEMENT(gAnimBattlerSpecies),
     // Not gSpecialStatuses or gQueuedStatBoosts: the battle code clears them
     // with a memset of their sizeof, which takes in the guard element.
 };
@@ -251,7 +255,7 @@ static const struct GuardElement
 // per-battler arrays are filled after AllocateBattleResources allocates it
 // and checked before FreeBattleResources frees it (src/battle_util2.c).
 #define BATTLE_STRUCT_MEMBER(member) (((struct BattleStruct *)0)->member)
-#define BATTLE_STRUCT_GUARD_ELEMENT(member) { offsetof(struct BattleStruct, member[ARRAY_COUNT(BATTLE_STRUCT_MEMBER(member)) - 1]), sizeof(BATTLE_STRUCT_MEMBER(member)[0]), "gBattleStruct->" #member }
+#define BATTLE_STRUCT_GUARD_ELEMENT(member) { offsetof(struct BattleStruct, member[ARRAY_COUNT(BATTLE_STRUCT_MEMBER(member)) - 1]), sizeof(BATTLE_STRUCT_MEMBER(member)[0]) + GUARD_COUNT_CHECK(ARRAY_COUNT(BATTLE_STRUCT_MEMBER(member)), MAX_BATTLERS_COUNT, "gBattleStruct->" #member), "gBattleStruct->" #member }
 
 static const struct BattleStructGuardElement
 {
@@ -354,9 +358,6 @@ void TestRunner_CheckBattleStructGuards(void)
 static void CheckGuardElements(void)
 {
     u32 i;
-    // A battle the test left running still has its gBattleStruct.
-    TestRunner_CheckBattleStructGuards();
-
     // Only a test expected to pass: failing a KNOWN_FAILING or EXPECT_FAIL
     // test that passed would report it as the failure it expects.
     if (gTestRunnerState.result != TEST_RESULT_PASS
