@@ -12,7 +12,7 @@ static s32 Test_ArenaStatMoveSkillPoints(enum BattlerId target, u32 resultFlags,
     s32 points;
 
     gBattleStruct = AllocZeroed(sizeof(*gBattleStruct));
-    memset(gProtectStructs, 0, sizeof(gProtectStructs));
+    memset(gProtectStructs, 0, MAX_BATTLERS_COUNT * sizeof(gProtectStructs[0])); // not its guard element
     gBattlerTarget = target;
     gBattleStruct->moveResultFlags[target] = resultFlags;
     gBattleStruct->statMoveChangedNothing = statMoveChangedNothing;
@@ -23,7 +23,7 @@ static s32 Test_ArenaStatMoveSkillPoints(enum BattlerId target, u32 resultFlags,
 
     points = gBattleStruct->arenaSkillPoints[B_BATTLER_0];
     TRY_FREE_AND_SET_NULL(gBattleStruct);
-    memset(gProtectStructs, 0, sizeof(gProtectStructs));
+    memset(gProtectStructs, 0, MAX_BATTLERS_COUNT * sizeof(gProtectStructs[0])); // not its guard element
     gBattlerTarget = 0;
     return points;
 }

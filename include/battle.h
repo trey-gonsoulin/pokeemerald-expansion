@@ -583,14 +583,15 @@ struct EventStates
 };
 
 // Cleared at the beginning of the battle. Fields need to be cleared when needed manually otherwise.
+// + TESTING on a per-battler array: a guard element, see sBattleStructGuardElements in test/test_runner.c
 struct BattleStruct
 {
-    struct BattlerState battlerState[MAX_BATTLERS_COUNT];
+    struct BattlerState battlerState[MAX_BATTLERS_COUNT + TESTING];
     struct PartyState partyState[MAX_BATTLE_TRAINERS][PARTY_SIZE];
     struct EventStates eventState;
-    struct FutureSight futureSight[MAX_BATTLERS_COUNT];
-    struct Wish wish[MAX_BATTLERS_COUNT];
-    u16 moveTarget[MAX_BATTLERS_COUNT];
+    struct FutureSight futureSight[MAX_BATTLERS_COUNT + TESTING];
+    struct Wish wish[MAX_BATTLERS_COUNT + TESTING];
+    u16 moveTarget[MAX_BATTLERS_COUNT + TESTING];
     u8 faintCounter[MAX_BATTLE_TRAINERS]; // Supreme Overload / Last Respects
     u32 expShareExpValue;
     u32 expValue;
@@ -610,9 +611,9 @@ struct BattleStruct
     u8 moneyMultiplierMove:1;
     u8 savedTurnActionNumber;
     u8 scriptPartyIdx; // for printing the nickname
-    u8 battlerPartyIndexes[MAX_BATTLERS_COUNT];
-    u8 monToSwitchIntoId[MAX_BATTLERS_COUNT];
-    u8 battlerPartyOrders[MAX_BATTLERS_COUNT][PARTY_SIZE / 2];
+    u8 battlerPartyIndexes[MAX_BATTLERS_COUNT + TESTING];
+    u8 monToSwitchIntoId[MAX_BATTLERS_COUNT + TESTING];
+    u8 battlerPartyOrders[MAX_BATTLERS_COUNT + TESTING][PARTY_SIZE / 2];
     u8 runTries;
     u8 caughtMonNick[POKEMON_NAME_LENGTH + 1];
     u8 safariGoNearCounter;
@@ -621,8 +622,8 @@ struct BattleStruct
     u8 safariCatchFactor;
     u8 linkBattleVsSpriteId_V; // The letter "V"
     u8 linkBattleVsSpriteId_S; // The letter "S"
-    u8 chosenMovePositions[MAX_BATTLERS_COUNT];
-    u8 stateIdAfterSelScript[MAX_BATTLERS_COUNT];
+    u8 chosenMovePositions[MAX_BATTLERS_COUNT + TESTING];
+    u8 stateIdAfterSelScript[MAX_BATTLERS_COUNT + TESTING];
     u8 prevSelectedPartySlot;
     u8 stringMoveType;
     u8 palaceFlags; // First 4 bits are "is <= 50% HP and not asleep" for each battler, last 4 bits are selected moves to pass to AI
@@ -631,7 +632,7 @@ struct BattleStruct
     u8 wallyMovesState;
     u8 wallyWaitFrames;
     u8 wallyMoveFrames;
-    u16 lastTakenMove[MAX_BATTLERS_COUNT]; // Last move that a battler was hit with.
+    u16 lastTakenMove[MAX_BATTLERS_COUNT + TESTING]; // Last move that a battler was hit with.
     u32 savedBattleTypeFlags;
     enum Ability abilityPreventingSwitchout;
     u8 hpScale;
@@ -642,10 +643,10 @@ struct BattleStruct
     u8 triAttackBurn:1;
     enum SynchronizeState synchronizeState:3;
     void (*savedCallback)(void);
-    enum Item chosenItem[MAX_BATTLERS_COUNT];
-    enum Move choicedMove[MAX_BATTLERS_COUNT];
+    enum Item chosenItem[MAX_BATTLERS_COUNT + TESTING];
+    enum Move choicedMove[MAX_BATTLERS_COUNT + TESTING];
     u8 switchInBattlerCounter;
-    u16 lastTakenMoveFrom[MAX_BATTLERS_COUNT][MAX_BATTLERS_COUNT]; // a 2-D array [target][attacker]
+    u16 lastTakenMoveFrom[MAX_BATTLERS_COUNT + TESTING][MAX_BATTLERS_COUNT]; // a 2-D array [target][attacker]
     union {
         struct LinkBattlerHeader linkBattlerHeader;
         struct BattleVideo battleVideo;
@@ -658,7 +659,7 @@ struct BattleStruct
     u8 unused1:1;
     struct BattleTvMovePoints tvMovePoints;
     struct BattleTv tv;
-    u8 AI_monToSwitchIntoId[MAX_BATTLERS_COUNT];
+    u8 AI_monToSwitchIntoId[MAX_BATTLERS_COUNT + TESTING];
     s8 arenaMindPoints[NUM_BATTLE_SIDES];
     s8 arenaSkillPoints[NUM_BATTLE_SIDES];
     u16 arenaStartHp[NUM_BATTLE_SIDES];
@@ -671,14 +672,14 @@ struct BattleStruct
     u8 savedBattlerAttacker[5];
     u8 savedTargetCount:4;
     u8 savedAttackerCount:4;
-    u8 abilityPopUpSpriteIds[MAX_BATTLERS_COUNT][NUM_BATTLE_SIDES];    // two per battler
+    u8 abilityPopUpSpriteIds[MAX_BATTLERS_COUNT + TESTING][NUM_BATTLE_SIDES];    // two per battler
     enum Move baseMove; // z-move / dynamax base move
     struct ZMoveData zmove;
     struct DynamaxData dynamax;
     struct BattleGimmickData gimmick;
     const u8 *trainerSlideMsg;
-    enum Ability tracedAbility[MAX_BATTLERS_COUNT];
-    struct Illusion illusion[MAX_BATTLERS_COUNT];
+    enum Ability tracedAbility[MAX_BATTLERS_COUNT + TESTING];
+    struct Illusion illusion[MAX_BATTLERS_COUNT + TESTING];
     enum BattlerId soulheartBattlerId;
     struct LostItem itemLost[MAX_BATTLE_TRAINERS][PARTY_SIZE];
     u8 blunderPolicy:1; // should blunder policy activate
@@ -698,29 +699,29 @@ struct BattleStruct
     enum DamageCategory dynamicMoveCategory:3;
     enum Item flingItem:14;
     enum FlungItem flungItem:2;
-    u8 itemPartyIndex[MAX_BATTLERS_COUNT];
-    u8 itemMoveIndex[MAX_BATTLERS_COUNT];
+    u8 itemPartyIndex[MAX_BATTLERS_COUNT + TESTING];
+    u8 itemMoveIndex[MAX_BATTLERS_COUNT + TESTING];
     s32 aiDelayTimer; // Counts number of frames AI takes to choose an action.
     s32 aiDelayFrames; // Number of frames it took to choose an action.
     s32 aiDelayCycles; // Number of cycles it took to choose an action.
-    u8 shellSideArmCategory[MAX_BATTLERS_COUNT][MAX_BATTLERS_COUNT];
+    u8 shellSideArmCategory[MAX_BATTLERS_COUNT + TESTING][MAX_BATTLERS_COUNT];
     u8 speedTieBreaks; // MAX_BATTLERS_COUNT! values.
     u32 stellarBoostFlags[MAX_BATTLE_TRAINERS]; // bitfield
     struct SleepClause monCausingSleepClause[NUM_BATTLE_SIDES]; // Stores which Pokémon on a given side is causing Sleep Clause to be active as the mon's index in the party
     u8 additionalEffectsCounter:4; // A counter for the additionalEffects applied by the current move in Cmd_setadditionaleffects
     u8 pursuitStoredSwitch:4; // Stored id for the Pursuit target's switch (value between 0 and PARTY_SIZE included)
     s32 battlerExpReward;
-    enum Species prevTurnSpecies[MAX_BATTLERS_COUNT]; // Stores species the AI has in play at start of turn
-    s16 passiveHpUpdate[MAX_BATTLERS_COUNT]; // non-move damage and healing
-    s16 moveDamage[MAX_BATTLERS_COUNT];
-    u16 innardsOutHpLost[MAX_BATTLERS_COUNT];
-    u32 moveResultFlags[MAX_BATTLERS_COUNT];
-    u32 savedMoveResultFlags[MAX_BATTLERS_COUNT]; // for Bounced moves
+    enum Species prevTurnSpecies[MAX_BATTLERS_COUNT + TESTING]; // Stores species the AI has in play at start of turn
+    s16 passiveHpUpdate[MAX_BATTLERS_COUNT + TESTING]; // non-move damage and healing
+    s16 moveDamage[MAX_BATTLERS_COUNT + TESTING];
+    u16 innardsOutHpLost[MAX_BATTLERS_COUNT + TESTING];
+    u32 moveResultFlags[MAX_BATTLERS_COUNT + TESTING];
+    u32 savedMoveResultFlags[MAX_BATTLERS_COUNT + TESTING]; // for Bounced moves
     u8 numSpreadTargets:3;
     u8 moldBreakerActive:1;
     u8 statMoveChangedNothing:MAX_BATTLERS_COUNT; // Battlers whose stat move changed no stat and had no other effect
     struct MessageStatus slideMessageStatus;
-    u8 trainerSlideSpriteIds[MAX_BATTLERS_COUNT];
+    u8 trainerSlideSpriteIds[MAX_BATTLERS_COUNT + TESTING];
     u8 hazardsQueue[NUM_BATTLE_SIDES][HAZARDS_MAX_COUNT];
     u8 numHazards[NUM_BATTLE_SIDES];
     u8 hazardsCounter:4; // Counter for applying hazard on switch in
@@ -1015,22 +1016,23 @@ extern u8 *gBattleAnimBgTileBuffer;
 extern u8 *gBattleAnimBgTilemapBuffer;
 extern u32 gBattleControllerExecFlags;
 extern u8 gBattlersCount;
-extern u16 gBattlerPartyIndexes[MAX_BATTLERS_COUNT + TESTING]; // + TESTING: a guard element, see sGuardElements in test/test_runner.c
-extern u8 gBattlerPositions[MAX_BATTLERS_COUNT];
-extern u8 gActionsByTurnOrder[MAX_BATTLERS_COUNT];
-extern enum BattlerId gBattlerByTurnOrder[MAX_BATTLERS_COUNT];
-extern enum BattlerId gBattlersBySpeed[MAX_BATTLERS_COUNT];
-extern enum BattlerId gBattlersByRawSpeed[MAX_BATTLERS_COUNT];
+// + TESTING on a per-battler array: a guard element, see sGuardElements in test/test_runner.c
+extern u16 gBattlerPartyIndexes[MAX_BATTLERS_COUNT + TESTING];
+extern u8 gBattlerPositions[MAX_BATTLERS_COUNT + TESTING];
+extern u8 gActionsByTurnOrder[MAX_BATTLERS_COUNT + TESTING];
+extern enum BattlerId gBattlerByTurnOrder[MAX_BATTLERS_COUNT + TESTING];
+extern enum BattlerId gBattlersBySpeed[MAX_BATTLERS_COUNT + TESTING];
+extern enum BattlerId gBattlersByRawSpeed[MAX_BATTLERS_COUNT + TESTING];
 extern u8 gCurrentTurnActionNumber;
 extern u8 gCurrentActionFuncId;
-extern struct BattlePokemon gBattleMons[MAX_BATTLERS_COUNT + TESTING]; // + TESTING: a guard element, see sGuardElements in test/test_runner.c
-extern u8 gBattlerSpriteIds[MAX_BATTLERS_COUNT];
+extern struct BattlePokemon gBattleMons[MAX_BATTLERS_COUNT + TESTING];
+extern u8 gBattlerSpriteIds[MAX_BATTLERS_COUNT + TESTING];
 extern u8 gCurrMovePos;
 extern u8 gChosenMovePos;
 extern u16 gCurrentMove;
 extern u16 gChosenMove;
 extern u16 gCalledMove;
-extern s32 gBideDmg[MAX_BATTLERS_COUNT];
+extern s32 gBideDmg[MAX_BATTLERS_COUNT + TESTING];
 extern enum Item gLastUsedItem;
 extern enum Ability gLastUsedAbility;
 extern enum BattlerId gBattlerAttacker;
@@ -1041,33 +1043,33 @@ extern enum BattlerId gPotentialItemEffectBattler;
 extern u8 gAbsentBattlerFlags;
 extern u8 gMultiHitCounter;
 extern const u8 *gBattlescriptCurrInstr;
-extern u8 gChosenActionByBattler[MAX_BATTLERS_COUNT];
-extern const u8 *gSelectionBattleScripts[MAX_BATTLERS_COUNT];
-extern const u8 *gPalaceSelectionBattleScripts[MAX_BATTLERS_COUNT];
-extern u16 gLastPrintedMoves[MAX_BATTLERS_COUNT];
-extern u16 gLastMoves[MAX_BATTLERS_COUNT];
-extern u16 gLastLandedMoves[MAX_BATTLERS_COUNT];
-extern u16 gLastHitByType[MAX_BATTLERS_COUNT];
-extern u16 gLastUsedMoveType[MAX_BATTLERS_COUNT];
-extern u16 gLastResultingMoves[MAX_BATTLERS_COUNT];
-extern u16 gLockedMoves[MAX_BATTLERS_COUNT];
+extern u8 gChosenActionByBattler[MAX_BATTLERS_COUNT + TESTING];
+extern const u8 *gSelectionBattleScripts[MAX_BATTLERS_COUNT + TESTING];
+extern const u8 *gPalaceSelectionBattleScripts[MAX_BATTLERS_COUNT + TESTING];
+extern u16 gLastPrintedMoves[MAX_BATTLERS_COUNT + TESTING];
+extern u16 gLastMoves[MAX_BATTLERS_COUNT + TESTING];
+extern u16 gLastLandedMoves[MAX_BATTLERS_COUNT + TESTING];
+extern u16 gLastHitByType[MAX_BATTLERS_COUNT + TESTING];
+extern u16 gLastUsedMoveType[MAX_BATTLERS_COUNT + TESTING];
+extern u16 gLastResultingMoves[MAX_BATTLERS_COUNT + TESTING];
+extern u16 gLockedMoves[MAX_BATTLERS_COUNT + TESTING];
 extern u16 gLastUsedMove;
-extern u8 gLastHitBy[MAX_BATTLERS_COUNT];
-extern u16 gChosenMoveByBattler[MAX_BATTLERS_COUNT];
+extern u8 gLastHitBy[MAX_BATTLERS_COUNT + TESTING];
+extern u16 gChosenMoveByBattler[MAX_BATTLERS_COUNT + TESTING];
 extern u32 gHitMarker;
-extern u8 gBideTarget[MAX_BATTLERS_COUNT];
+extern u8 gBideTarget[MAX_BATTLERS_COUNT + TESTING];
 extern u32 gSideStatuses[NUM_BATTLE_SIDES];
 extern struct SideTimer gSideTimers[NUM_BATTLE_SIDES];
 extern u16 gPauseCounterBattle;
 extern u16 gPaydayMoney;
 extern u8 gBattleCommunication[BATTLE_COMMUNICATION_ENTRIES_COUNT];
 extern u8 gBattleOutcome;
-extern struct ProtectStruct gProtectStructs[MAX_BATTLERS_COUNT];
+extern struct ProtectStruct gProtectStructs[MAX_BATTLERS_COUNT + TESTING];
 extern struct SpecialStatus gSpecialStatuses[MAX_BATTLERS_COUNT];
 extern u16 gBattleWeather;
 extern u16 gIntroSlideFlags;
 extern u8 gSentPokesToOpponent[2];
-extern struct BattleEnigmaBerry gEnigmaBerries[MAX_BATTLERS_COUNT];
+extern struct BattleEnigmaBerry gEnigmaBerries[MAX_BATTLERS_COUNT + TESTING];
 extern struct BattleScripting gBattleScripting;
 extern struct BattleStruct *gBattleStruct;
 extern struct StartingStatuses gStartingStatuses;
@@ -1079,13 +1081,13 @@ extern struct BattleHistory *gBattleHistory;
 extern u8 *gLinkBattleSendBuffer;
 extern u8 *gLinkBattleRecvBuffer;
 extern struct BattleResources *gBattleResources;
-extern u8 gActionSelectionCursor[MAX_BATTLERS_COUNT];
-extern u8 gMoveSelectionCursor[MAX_BATTLERS_COUNT];
-extern u8 gBattlerStatusSummaryTaskId[MAX_BATTLERS_COUNT];
+extern u8 gActionSelectionCursor[MAX_BATTLERS_COUNT + TESTING];
+extern u8 gMoveSelectionCursor[MAX_BATTLERS_COUNT + TESTING];
+extern u8 gBattlerStatusSummaryTaskId[MAX_BATTLERS_COUNT + TESTING];
 extern u8 gBattlerInMenuId;
 extern bool8 gDoingBattleAnim;
-extern u32 gTransformedPersonalities[MAX_BATTLERS_COUNT];
-extern bool8 gTransformedShininess[MAX_BATTLERS_COUNT];
+extern u32 gTransformedPersonalities[MAX_BATTLERS_COUNT + TESTING];
+extern bool8 gTransformedShininess[MAX_BATTLERS_COUNT + TESTING];
 extern u8 gPlayerDpadHoldFrames;
 extern struct BattleSpriteData *gBattleSpritesDataPtr;
 extern struct MonSpritesGfx *gMonSpritesGfxPtr;
@@ -1101,7 +1103,7 @@ extern MainCallback gPreBattleCallback1;
 extern void (*gBattleMainFunc)(void);
 extern struct BattleResults gBattleResults;
 extern u8 gLeveledUpInBattle;
-extern u8 gHealthboxSpriteIds[MAX_BATTLERS_COUNT];
+extern u8 gHealthboxSpriteIds[MAX_BATTLERS_COUNT + TESTING];
 extern u8 gMultiUsePlayerCursor;
 extern u8 gNumberOfMovesToChoose;
 extern bool8 gHasFetchedBall;

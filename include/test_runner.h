@@ -29,6 +29,8 @@ void TestRunner_Battle_CheckAiMoveScores(enum BattlerId battlerId);
 void TestRunner_Battle_AISetScore(const char *file, u32 line, enum BattlerId battlerId, u32 moveIndex, s32 score);
 void TestRunner_Battle_AIAdjustScore(const char *file, u32 line, enum BattlerId battlerId, u32 moveIndex, s32 score);
 void TestRunner_CheckMemory(void);
+void TestRunner_FillBattleStructGuards(void);
+void TestRunner_CheckBattleStructGuards(void);
 
 void TestRunner_Battle_CheckBattleRecordActionType(enum BattlerId battlerId, u32 recordIndex, u32 actionType);
 
@@ -58,6 +60,8 @@ void TestRunner_Battle_RecordEffectivenessSound(u32 battlerId, u32 soundId);
 #define TestRunner_Battle_GetForcedAbility(...) (u32)0
 #define TestRunner_Battle_GetChosenGimmick(...) (u32)0
 #define TestRunner_Battle_RecordEffectivenessSound(...) (u32)0
+#define TestRunner_FillBattleStructGuards(...) (void)0
+#define TestRunner_CheckBattleStructGuards(...) (void)0
 
 #define TestRunner_Battle_GetForcedEnvironment(...) (u8)0
 
