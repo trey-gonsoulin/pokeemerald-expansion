@@ -41,6 +41,11 @@ class RealRepo(unittest.TestCase):
         self.assertEqual(fam.first, 'SPECIES_WYNAUT')
         self.assertEqual((fam.source.how, fam.source.where), ('gift egg', 'Lavaridge Town'))
 
+    def test_land_tables_say_grass_cave_or_indoors(self):
+        self.assertEqual(self.best['SPECIES_ZIGZAGOON'].how, 'wild, grass')
+        self.assertEqual(self.best['SPECIES_GEODUDE'].how, 'wild, cave')
+        self.assertEqual(self.best['SPECIES_DUSCLOPS'].how, 'wild, indoors')
+
     def test_evolved_forms_report_their_base(self):
         fam = self.family('CROBAT')
         self.assertEqual(fam.first, 'SPECIES_ZUBAT')
