@@ -6,7 +6,8 @@
 #include "exp_formula.h"
 
 // The test override stores these configs in 8 bits (config_changes.h).
-STATIC_ASSERT(B_EXP_OVERLEVEL_CUTOFF <= 255 && B_EXP_OVERLEVEL_WIDTH <= 255 && B_EXP_OVERLEVEL_FLOOR <= 100, ExpOverlevelConfigsFitIn8Bits);
+STATIC_ASSERT(B_EXP_OVERLEVEL_CUTOFF <= 255 && B_EXP_OVERLEVEL_WIDTH <= 255 && B_EXP_OVERLEVEL_FLOOR <= 100
+              && B_EXP_OVERLEVEL_MIN_LEVEL <= 255, ExpOverlevelConfigsFitIn8Bits);
 
 // (i^3.5)/4: the level scaling with B_SCALED_EXP_STEEP, in place of
 // sExperienceScalingFactors' (i^2.5)/4.
@@ -79,12 +80,15 @@ static u32 ExpLogistic(s32 n, s32 d)
 // percent of its level the getter is over it (#189): full at its level, falling
 // fastest at B_EXP_OVERLEVEL_CUTOFF percent over B_EXP_OVERLEVEL_WIDTH percent
 // (0: all at once past the cutoff), down to B_EXP_OVERLEVEL_FLOOR percent of
-// the exp, at least 1. No exp stays no exp.
+// the exp, at least 1. No exp stays no exp. The cutoff and width are percents
+// of at least B_EXP_OVERLEVEL_MIN_LEVEL, so at low levels they're still a few
+// levels rather than a fraction of one.
 s32 ApplyOverlevelPenalty(s32 exp, u32 faintedLevel, u32 expGetterLevel)
 {
+    u32 scale = max(faintedLevel, GetConfig(B_EXP_OVERLEVEL_MIN_LEVEL));
     s32 over = (s32)(expGetterLevel - faintedLevel) * 100;
-    s32 cutoff = faintedLevel * GetConfig(B_EXP_OVERLEVEL_CUTOFF);
-    s32 width = faintedLevel * GetConfig(B_EXP_OVERLEVEL_WIDTH);
+    s32 cutoff = scale * GetConfig(B_EXP_OVERLEVEL_CUTOFF);
+    s32 width = scale * GetConfig(B_EXP_OVERLEVEL_WIDTH);
     u32 floorPercent = min(GetConfig(B_EXP_OVERLEVEL_FLOOR), 100);
     u32 full, here;
 

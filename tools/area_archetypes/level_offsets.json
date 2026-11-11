@@ -14,7 +14,7 @@
     "land_mons": 20
   },
   "MAP_DEWFORD_TOWN": {
-    "fishing_mons": 3,
+    "fishing_mons": 4,
     "water_mons": 7
   },
   "MAP_EVER_GRANDE_CITY": {
@@ -25,17 +25,17 @@
     "land_mons": 2
   },
   "MAP_GRANITE_CAVE_1F": {
-    "land_mons": 3
+    "land_mons": 4
   },
   "MAP_GRANITE_CAVE_B1F": {
-    "land_mons": 3
+    "land_mons": 4
   },
   "MAP_GRANITE_CAVE_B2F": {
-    "land_mons": 3,
-    "rock_smash_mons": 3
+    "land_mons": 4,
+    "rock_smash_mons": 4
   },
   "MAP_GRANITE_CAVE_STEVENS_ROOM": {
-    "land_mons": 3
+    "land_mons": 4
   },
   "MAP_JAGGED_PASS": {
     "land_mons": 2
@@ -139,20 +139,28 @@
     "water_mons": 20
   },
   "MAP_PETALBURG_CITY": {
+    "fishing_mons": 1,
     "water_mons": 7
+  },
+  "MAP_PETALBURG_WOODS": {
+    "land_mons": 1
   },
   "MAP_ROUTE101": {
     "land_mons": 1
   },
   "MAP_ROUTE102": {
-    "water_mons": 7
-  },
-  "MAP_ROUTE103": {
     "fishing_mons": 1,
     "land_mons": 1,
     "water_mons": 7
   },
+  "MAP_ROUTE103": {
+    "fishing_mons": 2,
+    "land_mons": 1,
+    "water_mons": 7
+  },
   "MAP_ROUTE104": {
+    "fishing_mons": 1,
+    "land_mons": 1,
     "water_mons": 7
   },
   "MAP_ROUTE105": {
@@ -172,12 +180,12 @@
     "water_mons": 7
   },
   "MAP_ROUTE109": {
-    "fishing_mons": 1,
+    "fishing_mons": 2,
     "water_mons": 7
   },
   "MAP_ROUTE110": {
-    "fishing_mons": 1,
-    "land_mons": 1,
+    "fishing_mons": 2,
+    "land_mons": 2,
     "water_mons": 7
   },
   "MAP_ROUTE111": {
@@ -202,6 +210,9 @@
     "fishing_mons": 2,
     "land_mons": 2,
     "water_mons": 7
+  },
+  "MAP_ROUTE116": {
+    "land_mons": 1
   },
   "MAP_ROUTE117": {
     "fishing_mons": 2,
@@ -283,7 +294,7 @@
     "water_mons": 20
   },
   "MAP_RUSTURF_TUNNEL": {
-    "land_mons": 3
+    "land_mons": 4
   },
   "MAP_SAFARI_ZONE_NORTH": {
     "land_mons": 16,
@@ -363,7 +374,7 @@
     "land_mons": 20
   },
   "MAP_SLATEPORT_CITY": {
-    "fishing_mons": 1,
+    "fishing_mons": 2,
     "water_mons": 7
   },
   "MAP_SOOTOPOLIS_CITY": {
