@@ -1,0 +1,40 @@
+{
+  "comment": "Hand-kept facts for random_party.py that the map scripts and wild tables don't say. Stage names are tools/rebalance/story_stages.json's; a stage means 'reachable before that stage's bosses'. Maps in no stage (and not *_Frlg) are post-game.",
+
+  "starters_comment": "Birch's bag on Route 101. The starter families come from nowhere else.",
+  "starters": ["SPECIES_TREECKO", "SPECIES_TORCHIC", "SPECIES_MUDKIP"],
+  "starter_map": "Route101",
+
+  "deny_maps_comment": "Maps only an event ticket (Mystery Gift) opens.",
+  "deny_maps": ["SouthernIsland*", "FarawayIsland*", "BirthIsland*", "NavelRock*"],
+  "deny_wild_labels_comment": "Altering Cave's other tables only replace the first through Mystery Gift.",
+  "deny_wild_labels": ["gAlteringCave[2-9]"],
+
+  "table_gates_comment": "The earliest stage a wild table can be used in: Surf and Rock Smash need their badges (OW_FIELD_MOVES_WITHOUT_MON: the badge alone), and each rod comes from Dewford, Route 118 and Mossdeep.",
+  "table_gates": {
+    "water_mons": "Winona",
+    "rock_smash_mons": "Flannery",
+    "old_rod": "Brawly",
+    "good_rod": "Winona",
+    "super_rod": "Tate and Liza"
+  },
+
+  "map_overrides_comment": "Scripted sources whose map's stage isn't when they can be had.",
+  "map_overrides": {
+    "RustboroCity_DevonCorp_2F": {"stage": "Norman", "note": "fossil from Mirage Tower, revived at Devon Corp."},
+    "LittlerootTown_ProfessorBirchsLab": {"stage": "post-game", "note": "after completing the Hoenn Pokedex"},
+    "DesertRuins": {"stage": "Juan", "note": "Sealed Chamber puzzle (needs Dive, Wailord and Relicanth)"},
+    "IslandCave": {"stage": "Juan", "note": "Sealed Chamber puzzle (needs Dive, Wailord and Relicanth)"},
+    "AncientTomb": {"stage": "Juan", "note": "Sealed Chamber puzzle (needs Dive, Wailord and Relicanth)"}
+  },
+
+  "daycare_map": "Route117_PokemonDayCare",
+  "ditto": "SPECIES_DITTO",
+
+  "extra_comment": "Sources the scripts don't spell out with a species constant; where is free text.",
+  "extra": [
+    {"species": "SPECIES_FEEBAS", "where": "Route 119", "method": "fishing on six hidden tiles", "stage": "Winona"},
+    {"species": "SPECIES_LATIAS", "where": "Hoenn routes", "method": "roaming Hoenn (if chosen on the post-game TV interview)", "stage": "post-game"},
+    {"species": "SPECIES_LATIOS", "where": "Hoenn routes", "method": "roaming Hoenn (if chosen on the post-game TV interview)", "stage": "post-game"}
+  ]
+}
