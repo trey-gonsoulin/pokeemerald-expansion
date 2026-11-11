@@ -348,6 +348,14 @@ class Exp(unittest.TestCase):
         # Width 0: the floor straight past the cutoff.
         self.assertEqual(RB.Overlevel(15, True, 0, 10).apply(1000, 20, 23), 1000)
         self.assertEqual(RB.Overlevel(15, True, 0, 10).apply(1000, 20, 24), 100)
+        # A minimum level: a foe below it counts as that level for the cutoff and width, so a level-3
+        # foe's cutoff is 2.55 levels at 17 (0.45 without). At or above it, nothing changes.
+        low = RB.Overlevel(15, True, 4, 10, 17)
+        for foe, getter, exp in ((3, 3, 1000), (3, 4, 935), (3, 5, 737), (3, 6, 413), (3, 7, 198),
+                                 (3, 10, 101), (17, 20, 413), (20, 23, 560), (30, 35, 466)):
+            self.assertEqual(low.apply(1000, foe, getter), exp, (foe, getter))
+        self.assertEqual(game.apply(1000, 3, 5), 100)
+        self.assertEqual(RB.Overlevel(3, False, 1, 10, 17).apply(1000, 20, 23), soft.apply(1000, 20, 23))
 
     def test_scaling_factors(self):
         # The fixture copies the game's table, which is (i^2.5)/4.
@@ -863,7 +871,7 @@ class Analysis(unittest.TestCase):
                       {'scaled_exp': False, 'trainer_exp': '1.5x on', 'share_fraction': 0.25, 'evolve': False},
                       {'scaling_power': 3.0, 'overlevel_cutoff': 2, 'clear': 0.5, 'wild_battles': 4},
                       {'overlevel_cutoff': 10, 'overlevel_unit': 'percent', 'overlevel_width': 5, 'overlevel_floor': 15,
-                       'gap_unit': 'percent', 'margin': 5, 'trainer_gap': 10, 'wild_gap': 20}):
+                       'overlevel_min_level': 17, 'gap_unit': 'percent', 'margin': 5, 'trainer_gap': 10, 'wild_gap': 20}):
             self.assertEqual(RB.explore_run(snap, knobs), RB.explore_run(live, knobs), knobs)
         got = RB.explore_run(snap, {'ko_takers': 6})
         self.assertEqual(got['bosses'][0]['name'], 'Rival A')
@@ -1193,7 +1201,7 @@ class RealRepo(unittest.TestCase):
                          G.parse_scaling_factors(G.REPO, 'gExperienceScalingFactorsSteep', 'exp_formula.c'))
         self.assertEqual(list(RB.LOGISTIC), G.parse_scaling_factors(G.REPO, 'sExpLogistic', 'exp_formula.c'))
         gd = G.load(G.REPO)
-        self.assertEqual(RB.Overlevel.from_configs(gd['modern']), RB.Overlevel(15, True, 4, 10))
+        self.assertEqual(RB.Overlevel.from_configs(gd['modern']), RB.Overlevel(15, True, 4, 10, 17))
         self.assertIsNone(RB.Overlevel.from_configs(gd['vanilla']))
         self.assertEqual(RB.game_scaling(gd['modern'], RB.scaling_factors(2.5)), RB.scaling_factors(3.5))
 
