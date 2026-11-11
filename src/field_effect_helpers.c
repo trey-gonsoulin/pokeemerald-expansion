@@ -193,10 +193,15 @@ static void LoadObjectHighBridgeReflectionPalette(struct ObjectEvent *objectEven
 {
     u16 blueData[16];
     struct SpritePalette bluePalette = {.tag = HIGH_BRIDGE_PAL_TAG, .data = blueData};
-    CpuFill16(0x55C9, blueData, PLTT_SIZE_4BPP);
-    sprite->oam.paletteNum = LoadSpritePalette(&bluePalette);
-    sprite->sReflectionPaletteBorrowed = (IndexOfSpritePaletteTag(HIGH_BRIDGE_PAL_TAG) == 0xFF);
-    UpdateSpritePaletteWithWeather(sprite->oam.paletteNum, TRUE);
+    u8 paletteNum = IndexOfSpritePaletteTag(HIGH_BRIDGE_PAL_TAG);
+    if (paletteNum == 0xFF)
+    {
+        CpuFill16(0x55C9, blueData, PLTT_SIZE_4BPP);
+        paletteNum = LoadSpritePalette(&bluePalette);
+        UpdateSpritePaletteWithWeather(paletteNum, TRUE); // Skips a failed load's 0xFF, not the borrowed slot 15
+    }
+    sprite->oam.paletteNum = paletteNum;
+    sprite->sReflectionPaletteBorrowed = (paletteNum == 0xFF);
 }
 
 static void UpdateObjectReflectionSprite(struct Sprite *reflectionSprite)
@@ -211,9 +216,9 @@ static void UpdateObjectReflectionSprite(struct Sprite *reflectionSprite)
         return;
     }
 
-    // Only filter palette if not using the high bridge blue palette
+    // Only filter palette if not using the high bridge blue palette (only bridges set sReflectionVerticalOffset)
     // This is basically a copy of LoadObjectRegularReflectionPalette
-    if (IndexOfSpritePaletteTag(HIGH_BRIDGE_PAL_TAG) != reflectionSprite->oam.paletteNum)
+    if (reflectionSprite->sReflectionVerticalOffset == 0)
     {
         u16 baseTag = GetSpritePaletteTagByPaletteNum(mainSprite->oam.paletteNum);
         u16 paletteTag = REFLECTION_PAL_TAG(baseTag, mainSprite->oam.paletteNum);
@@ -237,6 +242,11 @@ static void UpdateObjectReflectionSprite(struct Sprite *reflectionSprite)
         }
         reflectionSprite->oam.paletteNum = paletteNum;
         reflectionSprite->sReflectionPaletteBorrowed = (paletteNum == 0xFF);
+    }
+    else if (reflectionSprite->sReflectionPaletteBorrowed)
+    {
+        // Retry the high bridge palette after a failed load
+        LoadObjectHighBridgeReflectionPalette(objectEvent, reflectionSprite);
     }
     reflectionSprite->oam.shape = mainSprite->oam.shape;
     reflectionSprite->oam.size = mainSprite->oam.size;
