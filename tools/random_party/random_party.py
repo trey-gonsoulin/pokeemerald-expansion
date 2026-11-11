@@ -382,9 +382,11 @@ def family_table(game, best):
     return sorted(out, key=lambda f: (f.source.key, f.first))
 
 
-def roll(game, table, rng, starter=True, legendaries=False, postgame=True, size=PARTY_SIZE):
+def roll(game, table, rng, starter=True, legendaries=False, postgame=True, even=False, size=PARTY_SIZE):
     """[(family, rolled species)]: a random starter (if ``starter``) and
-    random other families, each family as likely as any other."""
+    random other families. Each obtainable species is as likely as any
+    other, so a three-stage line comes up three times as often as a
+    single-stage one; with ``even``, each family is as likely instead."""
     pool = [f for f in table if not f.starter and (legendaries or not f.legendary)
             and (postgame or f.source.key[0] < game.stage_index(POSTGAME))]
     party = []
@@ -392,7 +394,17 @@ def roll(game, table, rng, starter=True, legendaries=False, postgame=True, size=
         party.append(rng.choice([f for f in table if f.starter]))
     if len(pool) < size - len(party):
         raise SystemExit(f'only {len(pool)} families fit those options')
-    party += rng.sample(pool, size - len(party))
+    if even:
+        party += rng.sample(pool, size - len(party))
+    else:
+        # Species drawn without replacement, skipping families already in.
+        species = [(f, sp) for f in pool for sp in f.members]
+        rng.shuffle(species)
+        for f, sp in species:
+            if len(party) == size:
+                break
+            if f not in party:
+                party.append(f)
     return [(f, rng.choice(f.members)) for f in party]
 
 
@@ -413,6 +425,8 @@ def main(argv=None):
     p.add_argument('--legendaries', action='store_true', help='let legendaries obtainable in normal play in')
     p.add_argument('--no-postgame', dest='postgame', action='store_false',
                    help="leave out families that can't be had before the Hall of Fame")
+    p.add_argument('--even-families', dest='even', action='store_true',
+                   help='each family as likely as any other (default: each species, so longer lines come up more)')
     p.add_argument('--seed', type=int, help='seed the roll, to repeat it')
     p.add_argument('--list', action='store_true', help='print every obtainable family instead of rolling')
     args = p.parse_args(argv)
@@ -427,9 +441,11 @@ def main(argv=None):
         print(f'\n{len(table)} families')
         return
     seed = args.seed if args.seed is not None else random.randrange(1 << 31)
-    party = roll(game, table, random.Random(seed), args.starter, args.legendaries, args.postgame)
+    party = roll(game, table, random.Random(seed), args.starter, args.legendaries, args.postgame,
+                 args.even)
     print(f'Random party (seed {seed}; starter {"on" if args.starter else "off"}, '
-          f'legendaries {"on" if args.legendaries else "off"}, post-game {"on" if args.postgame else "off"}):\n')
+          f'legendaries {"on" if args.legendaries else "off"}, post-game {"on" if args.postgame else "off"}'
+          f'{", even families" if args.even else ""}):\n')
     for n, (fam, rolled) in enumerate(sorted(party, key=lambda p: p[0].source.key), 1):
         print(f'{n}. {describe(game, fam, rolled)}')
 

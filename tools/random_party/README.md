@@ -9,6 +9,7 @@ python3 tools/random_party/random_party.py                  # a random Hoenn sta
 python3 tools/random_party/random_party.py --no-starter     # six non-starter families
 python3 tools/random_party/random_party.py --legendaries    # Regis, Rayquaza, Kyogre... can be rolled
 python3 tools/random_party/random_party.py --no-postgame    # only what's had before the Hall of Fame
+python3 tools/random_party/random_party.py --even-families  # each family as likely, not each species
 python3 tools/random_party/random_party.py --seed 42        # repeat a roll (each roll prints its seed)
 python3 tools/random_party/random_party.py --list           # every obtainable family, earliest first
 python3 -m unittest discover -s tools/random_party          # tests
@@ -16,14 +17,17 @@ python3 -m unittest discover -s tools/random_party          # tests
 
 ```
 1. Treecko      before Rival (Route 103)   starter - Professor Birch on Route 101
-2. Zigzagoon    before Rival (Route 103)   wild, grass - Route 101
-3. Whismur      before Roxanne             wild, grass - Route 116
-4. Baltoy       before Flannery            wild, grass - Route 111
-5. Numel        before Flannery            wild, grass - Route 112  [rolled Camerupt]
-6. Ledyba       post-game                  wild, grass - Safari Zone Northeast
+2. Wingull      before Rival (Route 103)   wild, grass - Route 103
+3. Tentacool    before Brawly              wild, Old Rod - Dewford Town
+4. Tropius      before Winona              wild, grass - Route 119
+5. Clamperl     before Juan                wild, surfing - Underwater Route 126
+6. Mareep       post-game                  wild, grass - Safari Zone Southeast  [rolled Ampharos]
 ```
 
-The six are different evolution families, each as likely as any other. Each
+The six are different evolution families. Every obtainable species is as
+likely to be rolled as any other, so a line with more obtainable members
+(Wurmple's five) comes up more often than a single-stage one (Sableye);
+`--even-families` gives each family the same odds instead. Each
 is shown as the family member that can be had first, with its earliest
 source; `[rolled X]` names the member the dice picked when it isn't that one.
 "before Roxanne" means reachable before that stage's boss fights, on the
