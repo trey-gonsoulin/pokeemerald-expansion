@@ -48,6 +48,8 @@ FREE_CONDITIONS = frozenset((
 # an item, a trade or Shedinja's split. The rest (Alcremie's spin, the
 # scripted Kubfu and Galarian scroll ones) never happen in Hoenn.
 LEVEL_METHODS = frozenset(('EVO_LEVEL', 'EVO_LEVEL_BATTLE_ONLY', 'EVO_BATTLE_END'))
+# A land table is a cave's or a building's floor, not grass, on those map types.
+LAND_NAMES = {'MAP_TYPE_UNDERGROUND': 'cave', 'MAP_TYPE_INDOOR': 'indoors'}
 TABLE_NAMES = {'land_mons': 'grass', 'water_mons': 'surfing', 'rock_smash_mons': 'Rock Smash',
                'old_rod': 'Old Rod', 'good_rod': 'Good Rod', 'super_rod': 'Super Rod'}
 
@@ -88,6 +90,10 @@ class Game:
         self.names = {sp: (m[1] if (m := re.search(r'\.speciesName\s*=\s*_\("([^"]*)"\)', t)) else species_name(sp))
                       for sp, t in self.texts.items()}
         self.folders = G.map_folders(repo)
+        self.map_types = {}
+        for folder in self.folders:
+            with open(os.path.join(repo, 'data', 'maps', folder, 'map.json'), encoding='utf-8') as f:
+                self.map_types[folder] = json.load(f).get('map_type')
 
     # -- stages ---------------------------------------------------------
 
@@ -190,7 +196,10 @@ class Game:
                         kind = rods.get(k, table) if table == 'fishing_mons' else table
                         gate = gates.get(kind)
                         k2 = max(key, (gate, 0)) if gate is not None else key
-                        yield slot['species'], Source(k2, f'wild, {TABLE_NAMES[kind]}', self.where(folder))
+                        name = TABLE_NAMES[kind]
+                        if kind == 'land_mons':
+                            name = LAND_NAMES.get(self.map_types[folder], name)
+                        yield slot['species'], Source(k2, f'wild, {name}', self.where(folder))
 
     def script_sources(self):
         """(species, Source) for gifts, eggs and static encounters in the
