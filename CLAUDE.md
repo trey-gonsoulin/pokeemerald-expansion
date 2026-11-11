@@ -42,6 +42,7 @@ Details in `docs/fork/features.md` unless noted.
 - Rematch ball over trainers (#207, `src/rematch_indicator.c`).
 - Debug menu (`src/debug_menu_ui.c`; `docs/fork/debug-menu.md`).
 - Exp formula (#154, #189, `src/exp_formula.c`), boss levels, AI, moves and evolutions and the owner's level curve (`tools/rebalance`, `tools/area_archetypes`; `docs/fork/balance.md`).
+- Random obtainable party roller for challenge runs (`tools/random_party`, its README).
 
 ### Rules that apply across changes
 
