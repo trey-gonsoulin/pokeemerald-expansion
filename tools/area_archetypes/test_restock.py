@@ -525,8 +525,50 @@ class InputShapeTests(unittest.TestCase):
             with self.subTest(problem=problem, doc=str(doc)[-60:]):
                 self.assertEqual(R.pools_problem(doc), problem)
 
+    def test_unresolved_tables_names_each_table_whose_archetype_or_pool_is_missing(self):
+        wild, maps, pools = R.load_json(WILD), R.maps_of(R.load_json(MAPS)), R.load_json(POOLS)
+        self.assertEqual(R.unresolved_tables(wild, maps, pools, R.Settings()), [])
+        kanto = 'sSevenIslandTanobyRuinsMoneanChamber_FireRed'
+        stale = {'archetype': 'renamed', 'pool': 'land'}
+        r119 = maps['gRoute119']
+        maps = {**maps,
+                'gRoute101': {**maps['gRoute101'], 'land_mons': stale},
+                'gRoute102': {**maps['gRoute102'], 'land_mons': stale},  # skipped below
+                kanto: {**maps[kanto], 'land_mons': stale},  # not in the selected regions
+                'gRoute119': {**r119, 'water_mons': {'archetype': 'no/pools', 'pool': 'surf'},
+                              'fishing_mons': {**r119['fishing_mons'],
+                                               'old_rod': {**r119['fishing_mons']['old_rod'], 'pool': 'gone'}}}}
+        archetypes = pools['archetypes']
+        pools = {**pools, 'archetypes': {**archetypes, 'no/pools': {},
+                                         'route/mid': {**archetypes['route/mid'], 'pools': {**archetypes['route/mid']['pools'], 'land': []}}}}
+        self.assertIsNone(R.maps_problem(maps))
+        self.assertIsNone(R.pools_problem(pools))
+        settings = R.Settings(maps={'gRoute102': {'skip': True}})
+        # gRoute119's land_mons draws from route/mid's land pool, there but empty: left out without a word.
+        self.assertEqual(sorted(R.unresolved_tables(wild, maps, pools, settings)),
+                         ['gRoute101 land_mons (renamed land)', 'gRoute119 fishing_mons:old_rod (sea/early gone)',
+                          'gRoute119 water_mons (no/pools surf)'])
+
 
 class CliTests(unittest.TestCase):
+    def test_warns_about_tables_the_pools_cannot_restock(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = os.path.join(tmp, 'out')
+
+            def warnings(*extra):
+                with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()) as err:
+                    R.main(['--out-dir', out, *extra])
+                return err.getvalue()
+            self.assertEqual(warnings(), '')
+            maps_doc = R.load_json(MAPS)
+            maps_doc['gRoute101']['land_mons']['archetype'] = 'renamed/beginner'
+            maps = os.path.join(tmp, 'emerald_maps.json')
+            with open(maps, 'w', encoding='utf-8') as f:
+                json.dump(maps_doc, f)
+            self.assertEqual(warnings('--maps', maps),
+                             'warning: 1 tables name an archetype or pool that archetype_pools.json doesn\'t have '
+                             'and are left alone (rerun build?): gRoute101 land_mons (renamed/beginner land)\n')
+
     def test_writes_preview_and_report_without_touching_src(self):
         with tempfile.TemporaryDirectory() as tmp:
             wild = os.path.join(tmp, 'wild_encounters.json')
