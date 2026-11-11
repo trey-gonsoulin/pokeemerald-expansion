@@ -295,10 +295,11 @@ enum
 };
 
 extern struct UnusedControllerStruct gUnusedControllerStruct;
-extern void (*gBattlerControllerFuncs[MAX_BATTLERS_COUNT])(enum BattlerId battler);
-extern void (*gBattlerControllerEndFuncs[MAX_BATTLERS_COUNT])(enum BattlerId battler);
-extern u8 gBattleControllerData[MAX_BATTLERS_COUNT];
-extern u8 gBattlerBattleController[MAX_BATTLERS_COUNT];
+// + TESTING: a guard element, see sGuardElements in test/test_runner.c
+extern void (*gBattlerControllerFuncs[MAX_BATTLERS_COUNT + TESTING])(enum BattlerId battler);
+extern void (*gBattlerControllerEndFuncs[MAX_BATTLERS_COUNT + TESTING])(enum BattlerId battler);
+extern u8 gBattleControllerData[MAX_BATTLERS_COUNT + TESTING];
+extern u8 gBattlerBattleController[MAX_BATTLERS_COUNT + TESTING];
 
 // general functions
 void HandleLinkBattleSetup(void);

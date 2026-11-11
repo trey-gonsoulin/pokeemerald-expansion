@@ -11,6 +11,7 @@
 #include "constants/abilities.h"
 #include "random.h"
 #include "battle_scripts.h"
+#include "test_runner.h"
 #include "window.h"
 #include "constants/battle_string_ids.h"
 
@@ -40,6 +41,7 @@ void AllocateBattleResources(void)
         InitTrainerHillBattleStruct();
 
     gBattleStruct = AllocZeroed(sizeof(*gBattleStruct));
+    TestRunner_FillBattleStructGuards();
     gAiBattleData = AllocZeroed(sizeof(*gAiBattleData));
     gAiThinkingStruct = AllocZeroed(sizeof(*gAiThinkingStruct));
     gAiLogicData = AllocZeroed(sizeof(*gAiLogicData));
@@ -78,6 +80,7 @@ void FreeBattleResources(void)
     gFieldTimers.terrain = 0;
     if (gBattleResources != NULL)
     {
+        TestRunner_CheckBattleStructGuards();
         FREE_AND_SET_NULL(gBattleStruct);
         FREE_AND_SET_NULL(gAiBattleData);
         FREE_AND_SET_NULL(gAiThinkingStruct);
