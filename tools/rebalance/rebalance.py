@@ -596,13 +596,14 @@ def logistic(n, d):
     return LOGISTIC[i] - (LOGISTIC[i] - LOGISTIC[i + 1]) * (t % 16) // 16
 
 
-class Overlevel(collections.namedtuple('Overlevel', 'cutoff relative width floor', defaults=(False, 0, 0))):
+class Overlevel(collections.namedtuple('Overlevel', 'cutoff relative width floor min_level',
+                                         defaults=(False, 0, 0, 0))):
     """An over-level penalty (#151, #189): above the foe, exp follows a
     logistic curve, full at the foe's level, falling fastest at ``cutoff``
-    levels above it (``relative``: percent of the foe's level) over
-    ``width`` levels (percent; 0: all at once past the cutoff), down
-    to ``floor`` percent of the exp, at least 1. The game's is relative:
-    ApplyOverlevelPenalty."""
+    levels above it (``relative``: percent of the foe's level, or of
+    ``min_level`` when that's higher) over ``width`` levels (percent; 0:
+    all at once past the cutoff), down to ``floor`` percent of the exp, at
+    least 1. The game's is relative: ApplyOverlevelPenalty."""
 
     @classmethod
     def from_configs(cls, gd):
@@ -610,7 +611,7 @@ class Overlevel(collections.namedtuple('Overlevel', 'cutoff relative width floor
         if not gd.flag('B_EXP_OVERLEVEL_PENALTY'):
             return None
         return cls(gd.flag('B_EXP_OVERLEVEL_CUTOFF'), True, gd.flag('B_EXP_OVERLEVEL_WIDTH'),
-                   gd.flag('B_EXP_OVERLEVEL_FLOOR'))
+                   gd.flag('B_EXP_OVERLEVEL_FLOOR'), gd.flag('B_EXP_OVERLEVEL_MIN_LEVEL'))
 
     def apply(self, exp, foe_level, getter_level):
         """``exp`` after the penalty, in ApplyOverlevelPenalty's integers:
@@ -619,7 +620,7 @@ class Overlevel(collections.namedtuple('Overlevel', 'cutoff relative width floor
         the foe's level's."""
         if exp <= 0 or getter_level <= foe_level:
             return exp
-        scale = foe_level if self.relative else 1
+        scale = max(foe_level, self.min_level) if self.relative else 1
         over = (getter_level - foe_level) * (100 if self.relative else 1)
         cutoff, width = self.cutoff * scale, self.width * scale
         floor = min(self.floor, 100)
@@ -1273,7 +1274,7 @@ EXPLORER_KNOBS = {
     'ko_takers': 1, 'boss_ref': 'bench', 'clear': 1.0, 'catches': CATCHES_PER_STAGE, 'wild_battles': 0,
     'walk_steps': WALK_STEPS_PER_STAGE, 'affection': 'friendship', 'trainer_exp': '1.5x off',
     'scaled_exp': True, 'scaling_power': 2.5, 'overlevel_cutoff': None, 'overlevel_unit': 'levels',
-    'overlevel_width': None, 'overlevel_floor': 0, 'share_fraction': 0.5, 'gap_unit': 'levels', 'margin': None,
+    'overlevel_width': None, 'overlevel_floor': 0, 'overlevel_min_level': 0, 'share_fraction': 0.5, 'gap_unit': 'levels', 'margin': None,
     'league_steps': True, 'trainer_gap': None, 'wild_gap': None, 'evolve': True, 'rematch_step': None,
 }
 UNITS = ('levels', 'percent')
@@ -1285,7 +1286,8 @@ def explorer_defaults(gd):
     o = Overlevel.from_configs(gd)
     return {**EXPLORER_KNOBS, 'scaling_power': 3.5 if gd.flag('B_SCALED_EXP_STEEP') else 2.5,
             'overlevel_cutoff': o and o.cutoff, 'overlevel_unit': 'percent' if o and o.relative else 'levels',
-            'overlevel_width': o.width or None if o else None, 'overlevel_floor': o.floor if o else 0}
+            'overlevel_width': o.width or None if o else None, 'overlevel_floor': o.floor if o else 0,
+            'overlevel_min_level': o.min_level if o else 0}
 
 
 def explore_run(snap, knobs=None):
@@ -1303,7 +1305,8 @@ def explore_run(snap, knobs=None):
         if k[key] not in UNITS:
             raise ValueError(f'{key} must be one of {UNITS}')
     overlevel = None if k['overlevel_cutoff'] is None else Overlevel(
-        k['overlevel_cutoff'], k['overlevel_unit'] == 'percent', k['overlevel_width'] or 0, k['overlevel_floor'] or 0)
+        k['overlevel_cutoff'], k['overlevel_unit'] == 'percent', k['overlevel_width'] or 0, k['overlevel_floor'] or 0,
+        k['overlevel_min_level'] or 0)
     gd = with_configs(snap['gd'], B_TRAINER_EXP_MULTIPLIER=TRAINER_EXP[k['trainer_exp']],
                       B_SCALED_EXP='GEN_LATEST' if k['scaled_exp'] else 'GEN_6')
     # The game's own table at its exponent (scaling_factors matches it, tested).

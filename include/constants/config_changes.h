@@ -24,6 +24,7 @@
     F(B_EXP_OVERLEVEL_CUTOFF,      expOverlevelCutoff,      (u32, 255))           \
     F(B_EXP_OVERLEVEL_WIDTH,       expOverlevelWidth,       (u32, 255))           \
     F(B_EXP_OVERLEVEL_FLOOR,       expOverlevelFloor,       (u32, 255))           \
+    F(B_EXP_OVERLEVEL_MIN_LEVEL,   expOverlevelMinLevel,    (u32, 255))           \
     /* Stat settings */ \
     F(B_BADGE_BOOST,               badgeBoost,              (u32, GEN_COUNT - 1)) \
     F(B_FRIENDSHIP_BOOST,          friendshipBoost,         (u32, GEN_COUNT - 1)) /* TODO: use in tests */ \

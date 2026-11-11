@@ -709,6 +709,7 @@ TEST("Exp formula: the over-level penalty follows a logistic curve down to its f
     EXPECT_EQ(B_EXP_OVERLEVEL_CUTOFF, 15);
     EXPECT_EQ(B_EXP_OVERLEVEL_WIDTH, 4);
     EXPECT_EQ(B_EXP_OVERLEVEL_FLOOR, 10);
+    EXPECT_EQ(B_EXP_OVERLEVEL_MIN_LEVEL, 17);
     EXPECT_EQ(ApplyOverlevelPenalty(1000, 30, 30), 1000); // full exp at the foe's level
     EXPECT_EQ(ApplyOverlevelPenalty(1000, 30, 25), 1000); // and below it
     EXPECT_EQ(ApplyOverlevelPenalty(1000, 30, 31), 973);  // slowly at first
@@ -721,11 +722,16 @@ TEST("Exp formula: the over-level penalty follows a logistic curve down to its f
     EXPECT_EQ(ApplyOverlevelPenalty(1000, 20, 60), 100);  // the floor
     EXPECT_EQ(ApplyOverlevelPenalty(5, 20, 60), 1);       // at least 1
     EXPECT_EQ(ApplyOverlevelPenalty(0, 20, 60), 0);       // no exp stays no exp
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 3, 4), 935);    // below the minimum level, the foe counts as level 17:
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 3, 5), 737);    // the cutoff is 2.55 levels, not 0.45
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 3, 6), 413);
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 3, 7), 198);
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 3, 10), 101);
 }
 
 WILD_BATTLE_TEST("Exp formula: the over-level penalty applies its configs in battle (#189)", s32 exp)
 {
-    u32 foe = 0, getter = 0, penalty = FALSE, width = 4, floorPercent = 10;
+    u32 foe = 0, getter = 0, penalty = FALSE, width = 4, floorPercent = 10, minLevel = 17;
 
     PARAMETRIZE { foe = 30; getter = 30; penalty = FALSE; }
     PARAMETRIZE { foe = 30; getter = 30; penalty = TRUE; }
@@ -739,12 +745,16 @@ WILD_BATTLE_TEST("Exp formula: the over-level penalty applies its configs in bat
     PARAMETRIZE { foe = 20; getter = 24; penalty = FALSE; }
     PARAMETRIZE { foe = 20; getter = 24; penalty = TRUE; width = 0; }
     PARAMETRIZE { foe = 20; getter = 60; penalty = TRUE; floorPercent = 0; }
+    PARAMETRIZE { foe = 3; getter = 5; penalty = FALSE; }
+    PARAMETRIZE { foe = 3; getter = 5; penalty = TRUE; }
+    PARAMETRIZE { foe = 3; getter = 5; penalty = TRUE; minLevel = 0; }
 
     GIVEN {
         WITH_CONFIG(B_EXP_OVERLEVEL_PENALTY, penalty);
         WITH_CONFIG(B_EXP_OVERLEVEL_CUTOFF, 15);
         WITH_CONFIG(B_EXP_OVERLEVEL_WIDTH, width);
         WITH_CONFIG(B_EXP_OVERLEVEL_FLOOR, floorPercent);
+        WITH_CONFIG(B_EXP_OVERLEVEL_MIN_LEVEL, minLevel);
         PLAYER(SPECIES_WOBBUFFET) { Level(getter); }
         OPPONENT(SPECIES_BLISSEY) { Level(foe); HP(1); }
     } WHEN {
@@ -763,6 +773,9 @@ WILD_BATTLE_TEST("Exp formula: the over-level penalty applies its configs in bat
         EXPECT_EQ(results[8].exp, results[4].exp);                  // width 0: full exp up to the cutoff,
         EXPECT_EQ(results[10].exp, results[9].exp / 10);            // the floor past it
         EXPECT_EQ(results[11].exp, 1);                              // floor 0: at least 1
+        EXPECT_GE(results[13].exp * 1000, results[12].exp * 730);  // 2 over a level-3 foe: 73.7% with the
+        EXPECT_LE(results[13].exp * 1000, results[12].exp * 740);  // minimum level (FINALLY runs with the last configs),
+        EXPECT_LE(results[14].exp * 100, results[12].exp * 11);    // the floor without it
     }
 }
 
