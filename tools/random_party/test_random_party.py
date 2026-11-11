@@ -1,5 +1,6 @@
 """Tests for random_party.py, on the repo's own data (about a second to load)."""
 
+import collections
 import io
 import random
 import unittest
@@ -99,6 +100,16 @@ class RealRepo(unittest.TestCase):
         self.assertFalse(any(f.starter for f in fams))
         self.assertFalse(any(self.stage(f) == RP.POSTGAME for f in fams))
         self.assertTrue(any(f.legendary for f in fams))
+
+    def test_longer_lines_come_up_more_unless_even(self):
+        def count(even):
+            seen = collections.Counter()
+            for seed in range(2000):
+                party = RP.roll(self.game, self.table, random.Random(seed), starter=False, even=even)
+                seen.update(f.first for f, _ in party)
+            return seen['SPECIES_WURMPLE'] / seen['SPECIES_SABLEYE']  # five members to one
+        self.assertGreater(count(False), 3)
+        self.assertLess(count(True), 1.5)
 
     def test_same_seed_same_party(self):
         out = []
