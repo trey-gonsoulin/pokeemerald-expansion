@@ -231,13 +231,13 @@ TEST("Name order returns the value when nothing else has a name")
 
 // The name search's answer, found plainly: the first value along the order whose name starts with
 // prefix, folded as name order folds. FALSE when there is none.
-static bool32 FindPrefixByScan(const struct DebugNameOrder *order, DebugNameFunc getName, const u8 *prefix, u32 *value)
+static bool32 FindPrefixByScan(const struct DebugNameOrder *order, const u8 *prefix, u32 *value)
 {
     u8 buffer[DEBUG_NAME_BUFFER_SIZE];
 
     for (u32 i = 0; i < order->count; i++)
     {
-        const u8 *name = getName(buffer, order->values[i]);
+        const u8 *name = order->getName(buffer, order->values[i]);
         u32 j = 0;
         while (prefix[j] != EOS && name[j] != EOS && FoldTestChar(name[j]) == FoldTestChar(prefix[j]))
             j++;
@@ -250,10 +250,10 @@ static bool32 FindPrefixByScan(const struct DebugNameOrder *order, DebugNameFunc
     return FALSE;
 }
 
-static void ExpectNameSearch(const struct DebugNameOrder *order, DebugNameFunc getName, const u8 *prefix, bool32 found, u32 expected)
+static void ExpectNameSearch(const struct DebugNameOrder *order, const u8 *prefix, bool32 found, u32 expected)
 {
     u32 value = 0xFFFF, scanned = 0xFFFF;
-    bool32 scanFound = FindPrefixByScan(order, getName, prefix, &scanned);
+    bool32 scanFound = FindPrefixByScan(order, prefix, &scanned);
 
     EXPECT_EQ(scanFound, found);
     EXPECT_EQ(Debug_FindNamePrefix(order, prefix, &value), found);
@@ -266,14 +266,14 @@ static void ExpectNameSearch(const struct DebugNameOrder *order, DebugNameFunc g
 TEST("Name search finds the first name that starts with the prefix, ignoring case and accents")
 {
     const struct DebugNameOrder *order = BuildTestOrder(0, TEST_NAMES_MAX);
-    ExpectNameSearch(order, GetTestName, COMPOUND_STRING("AB"), TRUE, 1);
-    ExpectNameSearch(order, GetTestName, COMPOUND_STRING("abras"), TRUE, 8);
+    ExpectNameSearch(order, COMPOUND_STRING("AB"), TRUE, 1);
+    ExpectNameSearch(order, COMPOUND_STRING("abras"), TRUE, 8);
     // Flabébé and Flabebe fold to the same name, which sorts by value
-    ExpectNameSearch(order, GetTestName, COMPOUND_STRING("FLABE"), TRUE, 3);
-    ExpectNameSearch(order, GetTestName, COMPOUND_STRING("flabéb"), TRUE, 3);
-    ExpectNameSearch(order, GetTestName, COMPOUND_STRING("Ekans"), TRUE, 7);
-    ExpectNameSearch(order, GetTestName, COMPOUND_STRING("z"), TRUE, 0);
-    ExpectNameSearch(order, GetTestName, COMPOUND_STRING("10,"), TRUE, 5);
+    ExpectNameSearch(order, COMPOUND_STRING("FLABE"), TRUE, 3);
+    ExpectNameSearch(order, COMPOUND_STRING("flabéb"), TRUE, 3);
+    ExpectNameSearch(order, COMPOUND_STRING("Ekans"), TRUE, 7);
+    ExpectNameSearch(order, COMPOUND_STRING("z"), TRUE, 0);
+    ExpectNameSearch(order, COMPOUND_STRING("10,"), TRUE, 5);
     Debug_FreeNameOrder(&sTestOrder);
 }
 
@@ -281,22 +281,22 @@ TEST("Name search finds nothing when no name starts with the prefix")
 {
     const struct DebugNameOrder *order = BuildTestOrder(0, TEST_NAMES_MAX);
     // Before the first name, between two, past the last, and longer than the name it starts
-    ExpectNameSearch(order, GetTestName, COMPOUND_STRING("0"), FALSE, 0);
-    ExpectNameSearch(order, GetTestName, COMPOUND_STRING("B"), FALSE, 0);
-    ExpectNameSearch(order, GetTestName, COMPOUND_STRING("ZZ"), FALSE, 0);
-    ExpectNameSearch(order, GetTestName, COMPOUND_STRING("ZUBATS"), FALSE, 0);
-    ExpectNameSearch(order, GetTestName, COMPOUND_STRING("ABRAX"), FALSE, 0);
+    ExpectNameSearch(order, COMPOUND_STRING("0"), FALSE, 0);
+    ExpectNameSearch(order, COMPOUND_STRING("B"), FALSE, 0);
+    ExpectNameSearch(order, COMPOUND_STRING("ZZ"), FALSE, 0);
+    ExpectNameSearch(order, COMPOUND_STRING("ZUBATS"), FALSE, 0);
+    ExpectNameSearch(order, COMPOUND_STRING("ABRAX"), FALSE, 0);
     Debug_FreeNameOrder(&sTestOrder);
 }
 
 TEST("Name search stays within min and max and skips values without a name")
 {
     const struct DebugNameOrder *order = BuildTestOrder(1, 4);
-    ExpectNameSearch(order, GetTestName, COMPOUND_STRING("Zu"), FALSE, 0);
-    ExpectNameSearch(order, GetTestName, COMPOUND_STRING("Abras"), FALSE, 0);
-    ExpectNameSearch(order, GetTestName, COMPOUND_STRING("FLA"), TRUE, 3);
+    ExpectNameSearch(order, COMPOUND_STRING("Zu"), FALSE, 0);
+    ExpectNameSearch(order, COMPOUND_STRING("Abras"), FALSE, 0);
+    ExpectNameSearch(order, COMPOUND_STRING("FLA"), TRUE, 3);
     order = BuildTestOrder(6, 6);
-    ExpectNameSearch(order, GetTestName, COMPOUND_STRING("A"), FALSE, 0);
+    ExpectNameSearch(order, COMPOUND_STRING("A"), FALSE, 0);
     Debug_FreeNameOrder(&sTestOrder);
 }
 
@@ -304,9 +304,9 @@ TEST("Name search finds names built in the buffer")
 {
     Debug_FreeNameOrder(&sTestOrder);
     Debug_BuildNameOrder(&sTestOrder, 0, TEST_NAMES_MAX, GetBuiltTestName);
-    ExpectNameSearch(&sTestOrder, GetBuiltTestName, COMPOUND_STRING("abr"), TRUE, 1);
-    ExpectNameSearch(&sTestOrder, GetBuiltTestName, COMPOUND_STRING("Ek"), TRUE, 7);
-    ExpectNameSearch(&sTestOrder, GetBuiltTestName, COMPOUND_STRING("Ex"), FALSE, 0);
+    ExpectNameSearch(&sTestOrder, COMPOUND_STRING("abr"), TRUE, 1);
+    ExpectNameSearch(&sTestOrder, COMPOUND_STRING("Ek"), TRUE, 7);
+    ExpectNameSearch(&sTestOrder, COMPOUND_STRING("Ex"), FALSE, 0);
     Debug_FreeNameOrder(&sTestOrder);
 }
 
@@ -316,11 +316,11 @@ TEST("Name search among long shared prefixes, a typed - matching the names' _")
     // 5 HIDDEN_ITEM_ROUTE_101. HIDE_ROUTE_1 is the shortest name it starts, so the first in order.
     Debug_FreeNameOrder(&sTestOrder);
     Debug_BuildNameOrder(&sTestOrder, 0, 199, GetPrefixName);
-    ExpectNameSearch(&sTestOrder, GetPrefixName, COMPOUND_STRING("HIDE-ROUTE-101-"), TRUE, 0);
-    ExpectNameSearch(&sTestOrder, GetPrefixName, COMPOUND_STRING("hidd"), TRUE, 5);
-    ExpectNameSearch(&sTestOrder, GetPrefixName, COMPOUND_STRING("HIDE-ROUTE-1"), TRUE, 1);
-    ExpectNameSearch(&sTestOrder, GetPrefixName, COMPOUND_STRING("HIDE-ROUTE-2"), FALSE, 0);
-    ExpectNameSearch(&sTestOrder, GetPrefixName, COMPOUND_STRING("-UNDER"), TRUE, 2);
+    ExpectNameSearch(&sTestOrder, COMPOUND_STRING("HIDE-ROUTE-101-"), TRUE, 0);
+    ExpectNameSearch(&sTestOrder, COMPOUND_STRING("hidd"), TRUE, 5);
+    ExpectNameSearch(&sTestOrder, COMPOUND_STRING("HIDE-ROUTE-1"), TRUE, 1);
+    ExpectNameSearch(&sTestOrder, COMPOUND_STRING("HIDE-ROUTE-2"), FALSE, 0);
+    ExpectNameSearch(&sTestOrder, COMPOUND_STRING("-UNDER"), TRUE, 2);
     Debug_FreeNameOrder(&sTestOrder);
 }
 
