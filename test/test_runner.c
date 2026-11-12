@@ -249,8 +249,9 @@ static const struct GuardElement
     BATTLER_GUARD_ELEMENT(gBattleControllerData),
     BATTLER_GUARD_ELEMENT(gBattlerBattleController),
     BATTLER_GUARD_ELEMENT(gAnimBattlerSpecies),
-    // Not gSpecialStatuses or gQueuedStatBoosts: the battle code clears them
-    // with a memset of their sizeof, which takes in the guard element.
+    // Code that clears one of these whole must clear only its real elements
+    // (sizeof(array[0]) * MAX_BATTLERS_COUNT): a memset of its sizeof would
+    // zero the guard element too, which reads as an out-of-bounds write.
 };
 
 // gBattleStruct is allocated for each battle, so the guard elements of its
