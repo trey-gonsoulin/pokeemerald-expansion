@@ -235,6 +235,8 @@ static const struct GuardElement
     BATTLER_GUARD_ELEMENT(gChosenMoveByBattler),
     BATTLER_GUARD_ELEMENT(gBideTarget),
     BATTLER_GUARD_ELEMENT(gProtectStructs),
+    BATTLER_GUARD_ELEMENT(gSpecialStatuses),
+    BATTLER_GUARD_ELEMENT(gQueuedStatBoosts),
     BATTLER_GUARD_ELEMENT(gEnigmaBerries),
     BATTLER_GUARD_ELEMENT(gActionSelectionCursor),
     BATTLER_GUARD_ELEMENT(gMoveSelectionCursor),
