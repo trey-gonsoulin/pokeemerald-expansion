@@ -146,3 +146,42 @@ TEST("Reflection palette: with no free slot a high bridge reflection loads the b
     EXPECT_EQ(reflectionSlot, bridgeSlot);
     EXPECT_EQ(reflectionOffset, bridgeOffset);
 }
+
+TEST("Reflection palette: with no free slot a high bridge reflection's retry leaves the borrowed last slot's fade alone")
+{
+    u32 mainSpriteId, reflectionSpriteId;
+    bool32 retryFaded, controlFaded;
+    u16 lastSlotColors[16];
+    u8 savedState, savedFirstFrame;
+    u16 savedColor;
+
+    reflectionSpriteId = SetUpObjectWithReflection(&mainSpriteId, TRUE, TRUE);
+    ASSUME(gSprites[reflectionSpriteId].inUse);
+    ASSUME(gSprites[reflectionSpriteId].oam.paletteNum == 15);
+    ASSUME(gSprites[reflectionSpriteId].data[3]); // sReflectionPaletteBorrowed, so the callback retries the load
+    ASSUME(IndexOfSpritePaletteTag(HIGH_BRIDGE_PAL_TAG) == 0xFF);
+    CpuCopy16(&gPlttBufferFaded[OBJ_PLTT_ID(15)], lastSlotColors, sizeof(lastSlotColors));
+
+    // The first frame of a weather fade-in writes fadeDestColor over the whole slot it updates
+    savedState = gWeatherPtr->palProcessingState;
+    savedFirstFrame = gWeatherPtr->fadeInFirstFrame;
+    savedColor = gWeatherPtr->fadeDestColor;
+    gWeatherPtr->palProcessingState = WEATHER_PAL_STATE_SCREEN_FADING_IN;
+    gWeatherPtr->fadeInFirstFrame = TRUE;
+    gWeatherPtr->fadeDestColor = ~lastSlotColors[0] & 0x7FFF;
+
+    // The retry's palette load fails again, and the weather update must not land on the borrowed slot 15
+    gSprites[reflectionSpriteId].callback(&gSprites[reflectionSpriteId]);
+    retryFaded = memcmp(&gPlttBufferFaded[OBJ_PLTT_ID(15)], lastSlotColors, sizeof(lastSlotColors)) != 0;
+    // Control: the same fade does land on slot 15 when the weather update is given it
+    UpdateSpritePaletteWithWeather(15, TRUE);
+    controlFaded = memcmp(&gPlttBufferFaded[OBJ_PLTT_ID(15)], lastSlotColors, sizeof(lastSlotColors)) != 0;
+
+    gWeatherPtr->palProcessingState = savedState;
+    gWeatherPtr->fadeInFirstFrame = savedFirstFrame;
+    gWeatherPtr->fadeDestColor = savedColor;
+    TearDownObjectWithReflection(mainSpriteId, reflectionSpriteId);
+
+    EXPECT(controlFaded);
+    EXPECT(!retryFaded);
+}
