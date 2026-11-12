@@ -197,7 +197,7 @@ EWRAM_DATA u16 gPaydayMoney = 0;
 EWRAM_DATA u8 gBattleCommunication[BATTLE_COMMUNICATION_ENTRIES_COUNT] = {0};
 EWRAM_DATA u8 gBattleOutcome = 0;
 EWRAM_DATA struct ProtectStruct gProtectStructs[MAX_BATTLERS_COUNT + TESTING] = {0};
-EWRAM_DATA struct SpecialStatus gSpecialStatuses[MAX_BATTLERS_COUNT] = {0};
+EWRAM_DATA struct SpecialStatus gSpecialStatuses[MAX_BATTLERS_COUNT + TESTING] = {0};
 EWRAM_DATA u16 gBattleWeather = 0;
 EWRAM_DATA u16 gIntroSlideFlags = 0;
 EWRAM_DATA u8 gSentPokesToOpponent[2] = {0};
@@ -230,7 +230,7 @@ EWRAM_DATA u32 gFieldStatuses = 0;
 EWRAM_DATA struct FieldTimer gFieldTimers = {0};
 EWRAM_DATA u16 gBattleTurnCounter = 0;
 EWRAM_DATA enum BattlerId gBattlerAbility = 0;
-EWRAM_DATA struct QueuedStatBoost gQueuedStatBoosts[MAX_BATTLERS_COUNT] = {0};
+EWRAM_DATA struct QueuedStatBoost gQueuedStatBoosts[MAX_BATTLERS_COUNT + TESTING] = {0};
 EWRAM_DATA bool8 gHasFetchedBall = FALSE;
 EWRAM_DATA u16 gLastUsedBall = 0;
 EWRAM_DATA u16 gLastThrownBall = 0;
@@ -2757,7 +2757,7 @@ static void BattleStartClearSetData(void)
     s32 i;
 
     TurnValuesCleanUp(FALSE);
-    memset(&gSpecialStatuses, 0, sizeof(gSpecialStatuses));
+    memset(gSpecialStatuses, 0, sizeof(gSpecialStatuses[0]) * MAX_BATTLERS_COUNT);
 
     memset(&gFieldTimers, 0, sizeof(gFieldTimers));
     memset(&gSideStatuses, 0, sizeof(gSideStatuses));
@@ -3499,7 +3499,7 @@ static void TryDoEventsBeforeFirstTurn(void)
             BattleScriptPushCursorAndCallback(BattleScript_TotemBoost);
             return;
         }
-        memset(gQueuedStatBoosts, 0, sizeof(gQueuedStatBoosts)); // erase all totem boosts for Mirror Herb and Opportunist
+        memset(gQueuedStatBoosts, 0, sizeof(gQueuedStatBoosts[0]) * MAX_BATTLERS_COUNT); // erase all totem boosts for Mirror Herb and Opportunist
         gBattleStruct->eventState.beforeFirstTurn++;
         break;
     case FIRST_TURN_SWITCH_IN_EVENTS:
@@ -3539,8 +3539,8 @@ static void TryDoEventsBeforeFirstTurn(void)
             gChosenMoveByBattler[battler] = MOVE_NONE;
         }
         TurnValuesCleanUp(FALSE);
-        memset(&gSpecialStatuses, 0, sizeof(gSpecialStatuses));
-        memset(gQueuedStatBoosts, 0, sizeof(gQueuedStatBoosts));
+        memset(gSpecialStatuses, 0, sizeof(gSpecialStatuses[0]) * MAX_BATTLERS_COUNT);
+        memset(gQueuedStatBoosts, 0, sizeof(gQueuedStatBoosts[0]) * MAX_BATTLERS_COUNT);
         BattlePutTextOnWindow(gText_EmptyString3, B_WIN_MSG);
         AssignUsableGimmicks();
         SetShellSideArmCategory();

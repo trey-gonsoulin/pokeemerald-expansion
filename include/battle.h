@@ -1065,7 +1065,7 @@ extern u16 gPaydayMoney;
 extern u8 gBattleCommunication[BATTLE_COMMUNICATION_ENTRIES_COUNT];
 extern u8 gBattleOutcome;
 extern struct ProtectStruct gProtectStructs[MAX_BATTLERS_COUNT + TESTING];
-extern struct SpecialStatus gSpecialStatuses[MAX_BATTLERS_COUNT];
+extern struct SpecialStatus gSpecialStatuses[MAX_BATTLERS_COUNT + TESTING];
 extern u16 gBattleWeather;
 extern u16 gIntroSlideFlags;
 extern u8 gSentPokesToOpponent[2];
@@ -1097,7 +1097,7 @@ extern u32 gFieldStatuses;
 extern struct FieldTimer gFieldTimers;
 extern u16 gBattleTurnCounter;
 extern enum BattlerId gBattlerAbility;
-extern struct QueuedStatBoost gQueuedStatBoosts[MAX_BATTLERS_COUNT];
+extern struct QueuedStatBoost gQueuedStatBoosts[MAX_BATTLERS_COUNT + TESTING];
 
 extern MainCallback gPreBattleCallback1;
 extern void (*gBattleMainFunc)(void);

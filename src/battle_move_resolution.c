@@ -5269,7 +5269,7 @@ static enum MoveEndResult MoveEndClearBits(struct BattleCalcValues *cv)
      && !IsBattleMoveStatus(cv->move)
      && IsTypeStellarBoosted(cv->battlerAtk, moveType))
         ExpendTypeStellarBoost(cv->battlerAtk, moveType);
-    memset(gQueuedStatBoosts, 0, sizeof(gQueuedStatBoosts));
+    memset(gQueuedStatBoosts, 0, sizeof(gQueuedStatBoosts[0]) * MAX_BATTLERS_COUNT);
 
     for (enum BattlerId i = 0; i < gBattlersCount; i++)
     {
