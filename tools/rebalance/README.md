@@ -239,9 +239,9 @@ bootstrap). The repo's `.gitignore` ignores `*.js`, so add new ones with
   The build generates the teachables header (gitignored), so
   `gamedata.move_lists` runs the same `tools/learnset_helpers` functions and
   reads their output instead of a header an older build left. `move_allowlist.json`
-  lists the upstream Gen 3 moves that break the rule as trainer, species and
-  move, by cause; the test also fails on an entry that no longer breaks it, so
-  the list only shrinks.
+  lists any set move allowed to break the rule as trainer, species and move;
+  the test also fails on an entry that no longer breaks it. It has been empty
+  since #160 swapped the upstream Gen 3 moves it listed.
 - **Split fit**: for the species in `SPLIT_WATCH`, the better attacking stat
   against the Gen 3 category of each STAB type and the split of its modern
   level-up STAB moves.
