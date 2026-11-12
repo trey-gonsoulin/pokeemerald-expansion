@@ -1133,9 +1133,9 @@ AI: Check Bad Move
 Magneton
 Level: 39
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
-- Sonic Boom
+- Discharge
 - Thunder Wave
-- Metal Sound
+- Flash Cannon
 - Thunderbolt
 
 Exploud
@@ -1144,7 +1144,7 @@ IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Astonish
 - Stomp
 - Supersonic
-- Hyper Voice
+- Double Edge
 
 === TRAINER_LOLA_1 ===
 Name: LOLA
@@ -1403,7 +1403,7 @@ Spinda
 Level: 36
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Teeter Dance
-- Dizzy Punch
+- Double Edge
 - Focus Punch
 
 === TRAINER_GEORGE ===
@@ -1462,7 +1462,7 @@ Level: 50
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 - Bite
 - Dig
-- Feint Attack
+- Earthquake
 - Sand Tomb
 
 Wailord
@@ -1479,13 +1479,13 @@ IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 - Thunderbolt
 - Supersonic
 - Thunder Wave
-- Sonic Boom
+- Discharge
 
 Shiftry
 Level: 50
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 - Giga Drain
-- Feint Attack
+- Leaf Blade
 - Double Team
 - Swagger
 
@@ -1800,7 +1800,7 @@ AI: Basic Trainer
 Delcatty
 Level: 36
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
-- Feint Attack
+- Double Edge
 - Shock Wave
 
 === TRAINER_ALEXIA ===
@@ -1850,7 +1850,7 @@ Mawile
 Level: 51
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 - Baton Pass
-- Feint Attack
+- Play Rough
 - Fake Tears
 - Bite
 
@@ -2444,8 +2444,8 @@ Linoone @ Nugget
 Level: 44
 IVs: 4 HP / 4 Atk / 4 Def / 4 SpA / 4 SpD / 4 Spe
 - Fury Swipes
-- Mud Sport
-- Odor Sleuth
+- Double Edge
+- Take Down
 - Sand Attack
 
 === TRAINER_MELISSA ===
@@ -2502,7 +2502,7 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 - Bind
 - Lick
 - Fury Swipes
-- Feint Attack
+- Double Edge
 
 Seviper
 Level: 51
@@ -2565,7 +2565,7 @@ IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 Lombre
 Level: 66
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
-- Uproar
+- Energy Ball
 - Fury Swipes
 - Fake Out
 - Water Pulse
@@ -2606,7 +2606,7 @@ IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
 - Bind
 - Lick
 - Fury Swipes
-- Feint Attack
+- Double Edge
 
 Seviper
 Level: 54
@@ -2631,7 +2631,7 @@ IVs: 2 HP / 2 Atk / 2 Def / 2 SpA / 2 SpD / 2 Spe
 - Bind
 - Lick
 - Fury Swipes
-- Feint Attack
+- Double Edge
 
 Seviper
 Level: 56
@@ -2656,7 +2656,7 @@ IVs: 3 HP / 3 Atk / 3 Def / 3 SpA / 3 SpD / 3 Spe
 - Bind
 - Lick
 - Fury Swipes
-- Feint Attack
+- Double Edge
 
 Seviper
 Level: 59
@@ -2681,7 +2681,7 @@ IVs: 4 HP / 4 Atk / 4 Def / 4 SpA / 4 SpD / 4 Spe
 - Bind
 - Lick
 - Fury Swipes
-- Feint Attack
+- Double Edge
 
 Seviper
 Level: 62
@@ -2796,8 +2796,8 @@ Linoone @ Nugget
 Level: 44
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 - Fury Swipes
-- Mud Sport
-- Odor Sleuth
+- Double Edge
+- Take Down
 - Sand Attack
 
 === TRAINER_STEVE_1 ===
@@ -3566,7 +3566,7 @@ Level: 22
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 - Quick Attack
 - Thunder Wave
-- Spark
+- Shock Wave
 - Leer
 
 Voltorb
@@ -4810,15 +4810,15 @@ Level: 56
 IVs: 2 HP / 2 Atk / 2 Def / 2 SpA / 2 SpD / 2 Spe
 - Headbutt
 - Sand Attack
-- Odor Sleuth
+- Double Edge
 - Fury Swipes
 
 Manectric
 Level: 56
 IVs: 2 HP / 2 Atk / 2 Def / 2 SpA / 2 SpD / 2 Spe
 - Quick Attack
-- Spark
-- Odor Sleuth
+- Thunderbolt
+- Discharge
 - Roar
 
 === TRAINER_WALTER_4 ===
@@ -4835,15 +4835,15 @@ Level: 59
 IVs: 3 HP / 3 Atk / 3 Def / 3 SpA / 3 SpD / 3 Spe
 - Headbutt
 - Sand Attack
-- Odor Sleuth
+- Double Edge
 - Fury Swipes
 
 Manectric
 Level: 59
 IVs: 3 HP / 3 Atk / 3 Def / 3 SpA / 3 SpD / 3 Spe
 - Quick Attack
-- Spark
-- Odor Sleuth
+- Thunderbolt
+- Discharge
 
 === TRAINER_WALTER_5 ===
 Name: WALTER
@@ -4859,7 +4859,7 @@ Level: 62
 IVs: 4 HP / 4 Atk / 4 Def / 4 SpA / 4 SpD / 4 Spe
 - Headbutt
 - Sand Attack
-- Odor Sleuth
+- Double Edge
 - Fury Swipes
 
 Golduck
@@ -4874,8 +4874,8 @@ Manectric
 Level: 62
 IVs: 4 HP / 4 Atk / 4 Def / 4 SpA / 4 SpD / 4 Spe
 - Quick Attack
-- Spark
-- Odor Sleuth
+- Thunderbolt
+- Discharge
 - Roar
 
 === TRAINER_SIDNEY ===
@@ -4909,8 +4909,8 @@ Cacturne
 Level: 77
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Leech Seed
-- Feint Attack
-- Needle Arm
+- Energy Ball
+- Bullet Seed
 - Cotton Spore
 
 Crawdaunt
@@ -4952,9 +4952,9 @@ Banette
 Level: 79
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Phantom Force
-- Grudge
+- Shadow Ball
 - Will O Wisp
-- Feint Attack
+- Double Edge
 
 Sableye
 Level: 80
@@ -4962,7 +4962,7 @@ IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Shadow Ball
 - Double Team
 - Night Shade
-- Feint Attack
+- Foul Play
 
 Banette
 Level: 79
@@ -5055,7 +5055,7 @@ Level: 82
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Double Edge
 - Dragon Breath
-- Dragon Dance
+- Dragon Pulse
 - Aerial Ace
 
 Kingdra
@@ -5097,7 +5097,7 @@ Level: 13
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 - Tackle
 - Defense Curl
-- Rock Throw
+- Bulldoze
 - Rock Tomb
 
 Geodude
@@ -5105,7 +5105,7 @@ Level: 13
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 - Tackle
 - Defense Curl
-- Rock Throw
+- Bulldoze
 - Rock Tomb
 
 Nosepass @ Oran Berry
@@ -5129,7 +5129,7 @@ AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / 
 Machop
 Level: 16
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
-- Karate Chop
+- Low Sweep
 - Low Kick
 - Seismic Toss
 - Bulk Up
@@ -5146,8 +5146,8 @@ Makuhita @ Sitrus Berry
 Level: 19
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Arm Thrust
-- Vital Throw
-- Reversal
+- Force Palm
+- Knock Off
 - Bulk Up
 
 === TRAINER_WATTSON_1 ===
@@ -5165,7 +5165,7 @@ Level: 22
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Rollout
 - Charge Beam
-- Self Destruct
+- Thunder Shock
 - Shock Wave
 
 Electrike
@@ -5182,7 +5182,7 @@ IVs: 26 HP / 26 Atk / 26 Def / 26 SpA / 26 SpD / 26 Spe
 - Supersonic
 - Shock Wave
 - Thunder Wave
-- Sonic Boom
+- Thunder Shock
 
 Manectric @ Sitrus Berry
 Level: 26
@@ -5207,7 +5207,7 @@ Level: 34
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Overheat
 - Take Down
-- Magnitude
+- Earth Power
 - Sunny Day
 
 Slugma
@@ -5258,7 +5258,7 @@ IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Slash
 - Facade
 - Encore
-- Feint Attack
+- Double Edge
 
 Linoone
 Level: 39
@@ -5274,7 +5274,7 @@ IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Counter
 - Yawn
 - Facade
-- Feint Attack
+- Double Edge
 
 === TRAINER_WINONA_1 ===
 Name: WINONA
@@ -5323,7 +5323,7 @@ Level: 57
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Earthquake
 - Dragon Breath
-- Dragon Dance
+- Dragon Pulse
 - Aerial Ace
 
 === TRAINER_TATE_AND_LIZA_1 ===
@@ -5665,7 +5665,7 @@ Level: 52
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 - Hypnosis
 - Psybeam
-- Dizzy Punch
+- Double Edge
 - Teeter Dance
 
 Slaking
@@ -5674,7 +5674,7 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 - Focus Punch
 - Yawn
 - Slack Off
-- Feint Attack
+- Double Edge
 
 === TRAINER_ANNA_AND_MEG_1 ===
 Name: ANNA & MEG
@@ -5691,7 +5691,7 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 - Growl
 - Tail Whip
 - Headbutt
-- Odor Sleuth
+- Take Down
 
 Makuhita
 Level: 26
@@ -5715,7 +5715,7 @@ IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
 - Growl
 - Tail Whip
 - Headbutt
-- Odor Sleuth
+- Double Edge
 
 Hariyama
 Level: 38
@@ -5739,7 +5739,7 @@ IVs: 2 HP / 2 Atk / 2 Def / 2 SpA / 2 SpD / 2 Spe
 - Growl
 - Tail Whip
 - Headbutt
-- Odor Sleuth
+- Double Edge
 
 Hariyama
 Level: 40
@@ -5763,7 +5763,7 @@ IVs: 3 HP / 3 Atk / 3 Def / 3 SpA / 3 SpD / 3 Spe
 - Growl
 - Tail Whip
 - Headbutt
-- Odor Sleuth
+- Double Edge
 
 Hariyama
 Level: 42
@@ -5787,7 +5787,7 @@ IVs: 4 HP / 4 Atk / 4 Def / 4 SpA / 4 SpD / 4 Spe
 - Growl
 - Tail Whip
 - Headbutt
-- Odor Sleuth
+- Double Edge
 
 Hariyama
 Level: 44
@@ -5838,49 +5838,49 @@ AI: Check Bad Move
 Skitty @ Oran Berry
 Level: 22
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
-- Assist
-- Charm
-- Feint Attack
-- Heal Bell
+- Copycat
+- Growl
+- Fury Swipes
+- Wish
 
 Skitty @ Oran Berry
 Level: 36
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
-- Assist
+- Copycat
 - Charm
-- Feint Attack
-- Heal Bell
+- Facade
+- Wish
 
 Skitty @ Oran Berry
 Level: 40
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
-- Assist
+- Copycat
 - Charm
-- Feint Attack
+- Double Edge
 - Heal Bell
 
 Skitty @ Oran Berry
 Level: 12
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
-- Assist
-- Charm
-- Feint Attack
-- Heal Bell
+- Sleep Talk
+- Growl
+- Tackle
+- Wish
 
 Skitty @ Oran Berry
 Level: 30
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
-- Assist
+- Copycat
 - Charm
-- Feint Attack
-- Heal Bell
+- Fury Swipes
+- Wish
 
 Delcatty @ Oran Berry
 Level: 42
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
-- Assist
+- Copycat
 - Charm
-- Feint Attack
+- Double Edge
 - Heal Bell
 
 === TRAINER_MIGUEL_2 ===
@@ -6168,8 +6168,8 @@ AI: Basic Trainer
 Meditite
 Level: 27
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
-- High Jump Kick
-- Meditate
+- Zen Headbutt
+- Psybeam
 - Confusion
 - Detect
 
@@ -8069,7 +8069,7 @@ Lanturn
 Level: 68
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 - Thunderbolt
-- Earthquake
+- Hydro Pump
 
 === TRAINER_JANI ===
 Name: JANI
@@ -8097,7 +8097,7 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 - Poison Gas
 - Tackle
 - Smog
-- Self Destruct
+- Sludge
 
 Koffing
 Level: 26
@@ -8105,7 +8105,7 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 - Poison Gas
 - Tackle
 - Smog
-- Self Destruct
+- Sludge
 
 Koffing
 Level: 26
@@ -8113,7 +8113,7 @@ IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 - Poison Gas
 - Tackle
 - Sludge
-- Self Destruct
+- Clear Smog
 
 === TRAINER_LUNG ===
 Name: LUNG
@@ -8452,7 +8452,7 @@ Level: 28
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 - Ember
 - Tackle
-- Magnitude
+- Earth Power
 - Sunny Day
 
 === TRAINER_CLARISSA ===
@@ -8511,7 +8511,7 @@ Level: 38
 IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
 - Ember
 - Tackle
-- Magnitude
+- Overheat
 - Sunny Day
 
 === TRAINER_MADELINE_3 ===
@@ -8528,7 +8528,7 @@ Level: 40
 IVs: 2 HP / 2 Atk / 2 Def / 2 SpA / 2 SpD / 2 Spe
 - Ember
 - Take Down
-- Magnitude
+- Overheat
 - Sunny Day
 
 === TRAINER_MADELINE_4 ===
@@ -8553,7 +8553,7 @@ Level: 42
 IVs: 3 HP / 3 Atk / 3 Def / 3 SpA / 3 SpD / 3 Spe
 - Flamethrower
 - Take Down
-- Magnitude
+- Overheat
 - Sunny Day
 
 === TRAINER_MADELINE_5 ===
@@ -9394,7 +9394,7 @@ AI: Check Bad Move
 Duskull
 Level: 10
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
-- Night Shade
+- Shadow Sneak
 - Disable
 
 Shroomish
@@ -10014,15 +10014,15 @@ IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 - Aerial Ace
 - Safeguard
 - Dragon Breath
-- Dragon Dance
+- Dragon Pulse
 
 Delcatty
 Level: 77
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 - Sing
-- Assist
+- Body Slam
 - Charm
-- Feint Attack
+- Double Edge
 
 Roserade
 Level: 78
@@ -12327,7 +12327,7 @@ Wailmer
 Level: 9
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 - Splash
-- Water Gun
+- Astonish
 
 === TRAINER_MIKE_1 ===
 Name: MIKE
@@ -12348,7 +12348,7 @@ Poochyena
 Level: 10
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 - Bite
-- Scary Face
+- Tackle
 
 === TRAINER_MIKE_2 ===
 Name: MIKE
@@ -12630,7 +12630,7 @@ Level: 32
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 - Flamethrower
 - Fury Swipes
-- Feint Attack
+- Double Edge
 - Bind
 
 === TRAINER_VIVIAN ===
@@ -12645,7 +12645,7 @@ AI: Check Bad Move
 Meditite
 Level: 22
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
-- Bide
+- Psybeam
 - Detect
 - Confusion
 - Thunder Punch
@@ -12656,7 +12656,7 @@ IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 - Thunder Punch
 - Detect
 - Confusion
-- Meditate
+- Psybeam
 
 === TRAINER_DANIELLE ===
 Name: DANIELLE
@@ -12670,7 +12670,7 @@ AI: Check Bad Move
 Meditite
 Level: 32
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
-- Bide
+- High Jump Kick
 - Detect
 - Confusion
 - Fire Punch
@@ -12737,7 +12737,7 @@ AI: Check Bad Move / Try To Faint
 Ninjask
 Level: 46
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
-- Leech Life
+- Aerial Ace
 - Fury Swipes
 - Mind Reader
 - Dig
@@ -12833,15 +12833,15 @@ IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 - Aerial Ace
 - Safeguard
 - Dragon Breath
-- Dragon Dance
+- Dragon Pulse
 
 Delcatty
 Level: 80
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 - Sing
-- Assist
+- Body Slam
 - Charm
-- Feint Attack
+- Double Edge
 
 Roserade
 Level: 81
@@ -12883,15 +12883,15 @@ IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 - Aerial Ace
 - Safeguard
 - Dragon Breath
-- Dragon Dance
+- Dragon Pulse
 
 Delcatty
 Level: 84
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 - Sing
-- Assist
+- Body Slam
 - Charm
-- Feint Attack
+- Double Edge
 
 Roserade
 Level: 85
@@ -12933,15 +12933,15 @@ IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 - Aerial Ace
 - Safeguard
 - Dragon Breath
-- Dragon Dance
+- Dragon Pulse
 
 Delcatty
 Level: 88
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 - Sing
-- Assist
+- Body Slam
 - Charm
-- Feint Attack
+- Double Edge
 
 Roserade
 Level: 89
@@ -12983,15 +12983,15 @@ IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 - Aerial Ace
 - Safeguard
 - Dragon Breath
-- Dragon Dance
+- Dragon Pulse
 
 Delcatty
 Level: 93
 IVs: 18 HP / 18 Atk / 18 Def / 18 SpA / 18 SpD / 18 Spe
 - Sing
-- Assist
+- Body Slam
 - Charm
-- Feint Attack
+- Double Edge
 
 Roserade
 Level: 94
@@ -13427,7 +13427,7 @@ Level: 29
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 - Defense Curl
 - Rollout
-- Mud Sport
+- Bulldoze
 - Rock Throw
 
 === TRAINER_MEL_AND_PAUL ===
@@ -15065,7 +15065,7 @@ Level: 77
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Protect
 - Rollout
-- Magnitude
+- Earthquake
 - Explosion
 
 Kabutops @ Sitrus Berry
@@ -15115,7 +15115,7 @@ Level: 81
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Protect
 - Rollout
-- Magnitude
+- Earthquake
 - Explosion
 
 Kabutops @ Sitrus Berry
@@ -15263,7 +15263,7 @@ AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / 
 Machamp @ Sitrus Berry
 Level: 78
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
-- Karate Chop
+- Close Combat
 - Rock Slide
 - Focus Punch
 - Bulk Up
@@ -15305,7 +15305,7 @@ AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / 
 Machamp @ Sitrus Berry
 Level: 82
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
-- Karate Chop
+- Close Combat
 - Rock Slide
 - Focus Punch
 - Bulk Up
@@ -15347,7 +15347,7 @@ AI: Basic Trainer / Smart Switching / Smart Mon Choices / PP Stall Prevention / 
 Hitmonchan
 Level: 83
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
-- Sky Uppercut
+- Close Combat
 - Protect
 - Fire Punch
 - Ice Punch
@@ -15355,7 +15355,7 @@ IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 Machamp @ Sitrus Berry
 Level: 86
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
-- Karate Chop
+- Close Combat
 - Rock Slide
 - Focus Punch
 - Bulk Up
@@ -15405,7 +15405,7 @@ IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 Hitmonchan
 Level: 89
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
-- Sky Uppercut
+- Close Combat
 - Protect
 - Fire Punch
 - Ice Punch
@@ -15498,7 +15498,7 @@ Raichu
 Level: 80
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Thunder
-- Slam
+- Thunderbolt
 - Rain Dance
 - Shock Wave
 
@@ -15548,7 +15548,7 @@ Raichu
 Level: 84
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Thunder
-- Slam
+- Thunderbolt
 - Rain Dance
 - Protect
 
@@ -15606,7 +15606,7 @@ Raichu
 Level: 91
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Thunder
-- Slam
+- Thunderbolt
 - Rain Dance
 - Protect
 
@@ -15666,7 +15666,7 @@ IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Flamethrower
 - Attract
 - Solar Beam
-- Bounce
+- Flare Blitz
 
 Camerupt @ White Herb
 Level: 80
@@ -15716,7 +15716,7 @@ IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Flamethrower
 - Attract
 - Solar Beam
-- Bounce
+- Flare Blitz
 
 Camerupt @ White Herb
 Level: 84
@@ -15774,7 +15774,7 @@ IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Flamethrower
 - Attract
 - Solar Beam
-- Bounce
+- Flare Blitz
 
 Camerupt @ White Herb
 Level: 88
@@ -15832,7 +15832,7 @@ IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Flamethrower
 - Attract
 - Solar Beam
-- Bounce
+- Flare Blitz
 
 Camerupt @ White Herb
 Level: 93
@@ -15922,7 +15922,7 @@ Kangaskhan
 Level: 81
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Fake Out
-- Dizzy Punch
+- Double Edge
 - Endure
 - Reversal
 
@@ -15972,7 +15972,7 @@ Kangaskhan
 Level: 85
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Fake Out
-- Dizzy Punch
+- Double Edge
 - Endure
 - Reversal
 
@@ -16022,14 +16022,14 @@ Kangaskhan
 Level: 90
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Fake Out
-- Dizzy Punch
+- Double Edge
 - Endure
 - Reversal
 
 Tauros
 Level: 92
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
-- Take Down
+- Double Edge
 - Protect
 - Fire Blast
 - Earthquake
@@ -16097,7 +16097,7 @@ Level: 82
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Aerial Ace
 - Rest
-- Dragon Dance
+- Dragon Pulse
 - Earthquake
 
 === TRAINER_WINONA_3 ===
@@ -16155,7 +16155,7 @@ Level: 86
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Aerial Ace
 - Rest
-- Dragon Dance
+- Dragon Pulse
 - Earthquake
 
 === TRAINER_WINONA_4 ===
@@ -16213,7 +16213,7 @@ Level: 90
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Aerial Ace
 - Rest
-- Dragon Dance
+- Dragon Pulse
 - Earthquake
 
 === TRAINER_WINONA_5 ===
@@ -16271,7 +16271,7 @@ Level: 95
 IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe
 - Sky Attack
 - Rest
-- Dragon Dance
+- Dragon Pulse
 - Earthquake
 
 === TRAINER_TATE_AND_LIZA_2 ===
