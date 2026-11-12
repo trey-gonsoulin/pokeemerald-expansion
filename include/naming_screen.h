@@ -12,7 +12,11 @@ enum {
     NAMING_SCREEN_WALDA,
     NAMING_SCREEN_CODE,
     NAMING_SCREEN_RIVAL,
+    NAMING_SCREEN_DEBUG_SEARCH, // the debug menu's name search (src/debug.c)
 };
+
+// The longest prefix NAMING_SCREEN_DEBUG_SEARCH takes; its buffer needs one more byte for the EOS
+#define DEBUG_NAME_SEARCH_LENGTH 12
 
 extern void BattleMainCB2(void);
 
