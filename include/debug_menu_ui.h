@@ -21,8 +21,9 @@ struct WindowTemplate;
 // Numeric input values fit in a u16 (a max can be 0xFFFF), so read the s16 task field back as unsigned
 #define DEBUG_TASK_INPUT(taskId) ((u16)gTasks[taskId].data[DEBUG_DATA_INPUT])
 
-// Any button Debug_HandleInput_Numeric acts on
-#define DEBUG_NUMERIC_INPUT_PRESSED() (JOY_REPEAT(DPAD_UP | DPAD_DOWN) || JOY_NEW(DPAD_LEFT | DPAD_RIGHT | L_BUTTON | R_BUTTON | SELECT_BUTTON))
+// Any button Debug_HandleInput_Numeric acts on, and those other than Select
+#define DEBUG_NUMERIC_INPUT_MOVED() (JOY_REPEAT(DPAD_UP | DPAD_DOWN) || JOY_NEW(DPAD_LEFT | DPAD_RIGHT | L_BUTTON | R_BUTTON))
+#define DEBUG_NUMERIC_INPUT_PRESSED() (DEBUG_NUMERIC_INPUT_MOVED() || JOY_NEW(SELECT_BUTTON))
 
 // "<+1>" ... "<+10000000>", indexed by the highlighted digit
 extern const u8 *const gText_DigitIndicator[];
@@ -64,6 +65,7 @@ void Debug_BuildNameOrder(struct DebugNameOrder *order, u32 first, u32 last, Deb
 void Debug_FreeNameOrder(struct DebugNameOrder *order);
 u32 Debug_StepByName(const struct DebugNameOrder *order, u32 value, bool32 previous);
 u32 Debug_NextNameInitial(const struct DebugNameOrder *order, u32 value);
+bool32 Debug_FindNamePrefix(const struct DebugNameOrder *order, const u8 *prefix, u32 *value);
 
 // Flag and var constant names (DEBUG_FLAG_VAR_NAMES), from the generated src/data/debug_flag_var_names.h
 const u8 *Debug_GetFlagName(u32 flag);

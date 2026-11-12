@@ -386,10 +386,23 @@ static s32 Debug_FindInNameOrder(const struct DebugNameOrder *order, u32 value)
     return -1;
 }
 
-// The position of the first name in order that starts with letter (0 for A) or a later one, or
-// order->count when none does. Folded first characters only grow along the order, so it
-// looks up about log2(count) names, each of which may build a trainer flag's.
-static u32 Debug_FindNameInitial(const struct DebugNameOrder *order, u32 letter)
+// Compares name's first characters with prefix the way name order does: below 0 when name sorts
+// before the names that start with prefix, 0 when it starts with prefix, above 0 when after them
+static s32 Debug_CompareNamePrefix(const u8 *name, const u8 *prefix)
+{
+    for (u32 i = 0; prefix[i] != EOS; i++)
+    {
+        u32 key = Debug_NameCharKey(name[i]), prefixKey = Debug_NameCharKey(prefix[i]);
+        if (key != prefixKey)
+            return key < prefixKey ? -1 : 1;
+    }
+    return 0;
+}
+
+// The position of the first name in order that doesn't sort before the names starting with prefix,
+// or order->count when every name does. The names that start with it sit together in name order,
+// so it looks up about log2(count) names, each of which may build a trainer flag's.
+static u32 Debug_FindPrefixPosition(const struct DebugNameOrder *order, const u8 *prefix)
 {
     u8 buffer[DEBUG_NAME_BUFFER_SIZE];
     u32 low = 0, high = order->count;
@@ -397,15 +410,30 @@ static u32 Debug_FindNameInitial(const struct DebugNameOrder *order, u32 letter)
     while (low < high)
     {
         u32 mid = (low + high) / 2;
-        if (Debug_NameCharKey(order->getName(buffer, order->values[mid])[0]) < CHAR_A + letter + 1)
+        if (Debug_CompareNamePrefix(order->getName(buffer, order->values[mid]), prefix) < 0)
             low = mid + 1;
         else
             high = mid;
     }
-    // Past Z come the names that start with something other than a letter
-    if (low < order->count && Debug_NameInitial(order->getName(buffer, order->values[low])) < 0)
-        return order->count;
     return low;
+}
+
+// The position of the first name in order that starts with letter (0 for A) or a later one, or
+// order->count when none does
+static u32 Debug_FindNameInitial(const struct DebugNameOrder *order, u32 letter)
+{
+    u8 buffer[DEBUG_NAME_BUFFER_SIZE];
+    const u8 initial[] = {CHAR_A + letter, EOS};
+    u32 pos;
+
+    // Past Z there's no letter (CHAR_A + 26 is CHAR_a, which would fold back to A)
+    if (letter > CHAR_Z - CHAR_A)
+        return order->count;
+    pos = Debug_FindPrefixPosition(order, initial);
+    // Past Z come the names that start with something other than a letter
+    if (pos < order->count && Debug_NameInitial(order->getName(buffer, order->values[pos])) < 0)
+        return order->count;
+    return pos;
 }
 
 // The value after value in name order (with previous, the one before it). Past the last name it
@@ -422,6 +450,19 @@ u32 Debug_StepByName(const struct DebugNameOrder *order, u32 value, bool32 previ
     else
         pos = (pos < 0 || pos == order->count - 1) ? 0 : pos + 1;
     return order->values[pos];
+}
+
+// The first value in name order whose name starts with prefix, ignoring case and the acute accent
+// as name order does. Returns FALSE, leaving value alone, when no name starts with prefix.
+bool32 Debug_FindNamePrefix(const struct DebugNameOrder *order, const u8 *prefix, u32 *value)
+{
+    u8 buffer[DEBUG_NAME_BUFFER_SIZE];
+    u32 pos = Debug_FindPrefixPosition(order, prefix);
+
+    if (pos == order->count || Debug_CompareNamePrefix(order->getName(buffer, order->values[pos]), prefix) != 0)
+        return FALSE;
+    *value = order->values[pos];
+    return TRUE;
 }
 
 // The first value in name order whose name starts with a later letter than value's name, so
