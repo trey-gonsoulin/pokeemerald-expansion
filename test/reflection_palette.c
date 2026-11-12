@@ -149,7 +149,7 @@ TEST("Reflection palette: with no free slot a high bridge reflection loads the b
 
 TEST("Reflection palette: with no free slot a high bridge reflection's retry leaves the borrowed last slot's fade alone")
 {
-    u32 mainSpriteId, reflectionSpriteId, i, changedColors = 0;
+    u32 mainSpriteId, reflectionSpriteId, i, changedColors = 0, fadedColors = 0;
     u16 lastSlotColors[16];
     u8 savedState, savedFirstFrame;
     u16 savedColor;
@@ -157,6 +157,8 @@ TEST("Reflection palette: with no free slot a high bridge reflection's retry lea
     reflectionSpriteId = SetUpObjectWithReflection(&mainSpriteId, TRUE, TRUE);
     ASSUME(gSprites[reflectionSpriteId].inUse);
     ASSUME(gSprites[reflectionSpriteId].oam.paletteNum == 15);
+    ASSUME(gSprites[reflectionSpriteId].data[3]); // sReflectionPaletteBorrowed, so the callback retries the load
+    ASSUME(IndexOfSpritePaletteTag(HIGH_BRIDGE_PAL_TAG) == 0xFF);
     CpuCopy16(&gPlttBufferFaded[OBJ_PLTT_ID(15)], lastSlotColors, sizeof(lastSlotColors));
 
     // The first frame of a weather fade-in writes fadeDestColor over the whole slot it updates
@@ -174,11 +176,19 @@ TEST("Reflection palette: with no free slot a high bridge reflection's retry lea
         if (gPlttBufferFaded[OBJ_PLTT_ID(15) + i] != lastSlotColors[i])
             changedColors++;
     }
+    // Control: the same fade does land on slot 15 when the weather update is given it
+    UpdateSpritePaletteWithWeather(15, TRUE);
+    for (i = 0; i < 16; i++)
+    {
+        if (gPlttBufferFaded[OBJ_PLTT_ID(15) + i] != lastSlotColors[i])
+            fadedColors++;
+    }
 
     gWeatherPtr->palProcessingState = savedState;
     gWeatherPtr->fadeInFirstFrame = savedFirstFrame;
     gWeatherPtr->fadeDestColor = savedColor;
     TearDownObjectWithReflection(mainSpriteId, reflectionSpriteId);
 
+    EXPECT_NE(fadedColors, 0);
     EXPECT_EQ(changedColors, 0);
 }
