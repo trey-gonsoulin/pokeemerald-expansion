@@ -251,7 +251,12 @@ struct DebugMenuListData
     u8 itemNames[DEBUG_MAX_MENU_ITEMS + 1][32]; // room for a submenu label's font codes and arrow (#88)
     enum DebugMenuTypes menuType:3;
     u32 nameOrder:1; // Up/Down on a named selection step go A-Z instead of turning a digit
-    u32 padding:28;
+    // Select, pressed before Start for the name search, has just reset the input and turned name order
+    // off: the search puts back inputBeforeSelect and this
+    u32 selectUndo:1;
+    u32 nameOrderBeforeSelect:1;
+    u32 padding:26;
+    u16 inputBeforeSelect;
     struct DebugNameOrder sortedNames[DEBUG_STEP_NAMES_COUNT]; // built on a step's first Start, freed with this data
     s16 data[8];
     s16 savedData[8]; // data as Choose trainer from map found it, restored when B cancels the picker
@@ -1301,8 +1306,9 @@ static void Debug_DestroyMenu(u8 taskId)
     DestroyTask(taskId);
 }
 
-// For exits that hand over to another main callback (fly map, naming screen).
-// Every way out of the debug menu must free its data: map loads don't reset the heap.
+// For exits that hand over to another main callback (fly map, Change name's naming screen).
+// Every way out of the debug menu must free its data: map loads don't reset the heap. The name
+// search (DebugSelection_StartNameSearch) isn't a way out: it keeps the data and comes back to it.
 static void Debug_DestroyMenu_Leave(u8 taskId)
 {
     Debug_DestroyMenu(taskId);
@@ -1559,6 +1565,8 @@ static void DebugAction_Selection_PrepareStep(u8 taskId, const struct DebugSelec
 
     if (Debug_IsNameOrder())
         sDebugMenuListData->nameOrder = FALSE;
+    if (sDebugMenuListData != NULL)
+        sDebugMenuListData->selectUndo = FALSE;
 
     // Clamp as u32: the s16 tInput would turn stored values above 32767 negative
     input = DebugSelection_GetData(taskId, DebugSelection_DataIndex(taskId));
@@ -1620,6 +1628,11 @@ static void DebugAction_Selection_StepUpdate(u8 taskId)
     }
     else if (DebugSelection_StepHasNames(selectionStep) && JOY_NEW(START_BUTTON) && JOY_HELD(SELECT_BUTTON))
     {
+        if (sDebugMenuListData->selectUndo)
+        {
+            gTasks[taskId].tInput = sDebugMenuListData->inputBeforeSelect;
+            sDebugMenuListData->nameOrder = sDebugMenuListData->nameOrderBeforeSelect;
+        }
         PlaySE(SE_SELECT);
         DebugSelection_StartNameSearch(taskId);
     }
@@ -1627,11 +1640,18 @@ static void DebugAction_Selection_StepUpdate(u8 taskId)
     {
         u32 min, max;
         u32 oldValue = DebugSelection_GetNameOrderValue(taskId, selectionStep);
+        u16 oldInput = DEBUG_TASK_INPUT(taskId);
         s16 oldDigit = gTasks[taskId].tDigit;
         bool32 oldNameOrder = Debug_IsNameOrder();
         u32 digits = DebugSelection_GetRange(taskId, selectionStep, &min, &max);
         if (!DebugSelection_StepHasNames(selectionStep) || !DebugSelection_HandleInput_NameOrder(taskId, selectionStep, min, max))
             Debug_HandleInput_Numeric(taskId, min, max, digits, selectionStep->hex);
+        if (DebugSelection_StepHasNames(selectionStep))
+        {
+            sDebugMenuListData->selectUndo = JOY_NEW(SELECT_BUTTON);
+            sDebugMenuListData->inputBeforeSelect = oldInput;
+            sDebugMenuListData->nameOrderBeforeSelect = oldNameOrder;
+        }
         // Holding Up/Down at min/max changes nothing, so don't beep or redraw every repeat
         if (DebugSelection_GetNameOrderValue(taskId, selectionStep) == oldValue && gTasks[taskId].tDigit == oldDigit && Debug_IsNameOrder() == oldNameOrder)
             return;
@@ -1669,7 +1689,8 @@ static void DebugSelection_ResumeAfterNameSearch(void)
     SelectionStep selectionStep;
     u32 min, max, value;
 
-    // The windows and the icon went with the field: only the new menu's ids are good
+    // The windows and the icon went with the field: only the new menu's ids are good. A step that
+    // kept another window, sprite or task id in its task data would need it reset here too.
     memcpy(gTasks[taskId].data, sDebugMenuListData->searchTaskData, sizeof(sDebugMenuListData->searchTaskData));
     gTasks[taskId].tMenuTaskId = menuTaskId;
     gTasks[taskId].tWindowId = windowId;
@@ -1713,6 +1734,9 @@ static void DebugSelection_Task_OpenNameSearch(u8 taskId)
 {
     if (gPaletteFade.active)
         return;
+    // The field's sprites go, but the objects' frozen flags stay, and a frozen object isn't frozen
+    // again: unfreeze them now so the return can freeze their new sprites
+    UnfreezeObjectEvents();
     Debug_DestroyMenu(taskId);
     DoNamingScreen(NAMING_SCREEN_DEBUG_SEARCH, sDebugMenuListData->searchPrefix, 0, 0, 0, CB2_Debug_ReturnFromNameSearch);
 }
