@@ -1485,7 +1485,7 @@ Shiftry
 Level: 50
 IVs: 12 HP / 12 Atk / 12 Def / 12 SpA / 12 SpD / 12 Spe
 - Giga Drain
-- Leaf Blade
+- Foul Play
 - Double Team
 - Swagger
 
@@ -2445,7 +2445,7 @@ Level: 44
 IVs: 4 HP / 4 Atk / 4 Def / 4 SpA / 4 SpD / 4 Spe
 - Fury Swipes
 - Double Edge
-- Take Down
+- Body Slam
 - Sand Attack
 
 === TRAINER_MELISSA ===
@@ -2797,7 +2797,7 @@ Level: 44
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 - Fury Swipes
 - Double Edge
-- Take Down
+- Body Slam
 - Sand Attack
 
 === TRAINER_STEVE_1 ===
@@ -4909,8 +4909,8 @@ Cacturne
 Level: 77
 IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Leech Seed
+- Sucker Punch
 - Energy Ball
-- Bullet Seed
 - Cotton Spore
 
 Crawdaunt
@@ -5258,7 +5258,7 @@ IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Slash
 - Facade
 - Encore
-- Double Edge
+- Body Slam
 
 Linoone
 Level: 39
@@ -5274,7 +5274,7 @@ IVs: 30 HP / 30 Atk / 30 Def / 30 SpA / 30 SpD / 30 Spe
 - Counter
 - Yawn
 - Facade
-- Double Edge
+- Body Slam
 
 === TRAINER_WINONA_1 ===
 Name: WINONA
@@ -6168,7 +6168,7 @@ AI: Basic Trainer
 Meditite
 Level: 27
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
-- Zen Headbutt
+- Force Palm
 - Psybeam
 - Confusion
 - Detect
@@ -8511,7 +8511,7 @@ Level: 38
 IVs: 1 HP / 1 Atk / 1 Def / 1 SpA / 1 SpD / 1 Spe
 - Ember
 - Tackle
-- Overheat
+- Earth Power
 - Sunny Day
 
 === TRAINER_MADELINE_3 ===
@@ -8528,7 +8528,7 @@ Level: 40
 IVs: 2 HP / 2 Atk / 2 Def / 2 SpA / 2 SpD / 2 Spe
 - Ember
 - Take Down
-- Overheat
+- Earthquake
 - Sunny Day
 
 === TRAINER_MADELINE_4 ===
@@ -8553,7 +8553,7 @@ Level: 42
 IVs: 3 HP / 3 Atk / 3 Def / 3 SpA / 3 SpD / 3 Spe
 - Flamethrower
 - Take Down
-- Overheat
+- Earthquake
 - Sunny Day
 
 === TRAINER_MADELINE_5 ===
@@ -12327,7 +12327,7 @@ Wailmer
 Level: 9
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
 - Splash
-- Astonish
+- Water Pulse
 
 === TRAINER_MIKE_1 ===
 Name: MIKE
@@ -12737,7 +12737,7 @@ AI: Check Bad Move / Try To Faint
 Ninjask
 Level: 46
 IVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
-- Aerial Ace
+- Bug Bite
 - Fury Swipes
 - Mind Reader
 - Dig
