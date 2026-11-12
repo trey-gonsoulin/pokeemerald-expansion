@@ -348,10 +348,6 @@ static void DebugTask_HandleMenuInput_General(u8 taskId);
 static void DebugAction_Selection_StepUpdate(u8 taskId);
 static void DebugSelection_RedrawStep(u8 taskId, const struct DebugSelectionStep *selectionStep);
 static void DebugSelection_StartNameSearch(u8 taskId);
-static void DebugSelection_Task_OpenNameSearch(u8 taskId);
-static void CB2_Debug_ReturnFromNameSearch(void);
-static void DebugSelection_FieldCB_ReturnFromNameSearch(void);
-static void DebugSelection_ResumeAfterNameSearch(void);
 static void DebugAction_Selection_NextStep(u8 taskId);
 
 static void DebugAction_Util_Fly(u8 taskId);
@@ -1657,41 +1653,6 @@ static void DebugSelection_RedrawStep(u8 taskId, const struct DebugSelectionStep
     selectionStep->stepUpdate(taskId, digits, min, max);
 }
 
-// Select + Start on a named step types the start of a name on the naming screen's keyboard (#122).
-// The naming screen leaves the field, so this takes the menu down but keeps its data, with the
-// step's task data and window, and DebugSelection_ResumeAfterNameSearch puts them back.
-static void DebugSelection_StartNameSearch(u8 taskId)
-{
-    memcpy(sDebugMenuListData->searchTaskData, gTasks[taskId].data, sizeof(sDebugMenuListData->searchTaskData));
-    sDebugMenuListData->searchWindow = gWindows[gTasks[taskId].tSubWindowId].window;
-    sDebugMenuListData->searchPrefix[0] = EOS;
-    FadeScreen(FADE_TO_BLACK, 0);
-    gTasks[taskId].func = DebugSelection_Task_OpenNameSearch;
-}
-
-static void DebugSelection_Task_OpenNameSearch(u8 taskId)
-{
-    if (gPaletteFade.active)
-        return;
-    Debug_DestroyMenu(taskId);
-    DoNamingScreen(NAMING_SCREEN_DEBUG_SEARCH, sDebugMenuListData->searchPrefix, 0, 0, 0, CB2_Debug_ReturnFromNameSearch);
-}
-
-static void CB2_Debug_ReturnFromNameSearch(void)
-{
-    gFieldCallback = DebugSelection_FieldCB_ReturnFromNameSearch;
-    CB2_ReturnToField();
-}
-
-// The field is back as the debug menu left it: controls locked and objects frozen
-static void DebugSelection_FieldCB_ReturnFromNameSearch(void)
-{
-    LockPlayerFieldControls();
-    FreezeObjectEvents();
-    FadeInFromBlack();
-    DebugSelection_ResumeAfterNameSearch();
-}
-
 // Takes input once the field has faded in
 static void DebugSelection_Task_WaitForFadeIn(u8 taskId)
 {
@@ -1731,6 +1692,41 @@ static void DebugSelection_ResumeAfterNameSearch(void)
         }
     }
     DebugSelection_RedrawStep(taskId, selectionStep);
+}
+
+// The field is back as the debug menu left it: controls locked and objects frozen
+static void DebugSelection_FieldCB_ReturnFromNameSearch(void)
+{
+    LockPlayerFieldControls();
+    FreezeObjectEvents();
+    FadeInFromBlack();
+    DebugSelection_ResumeAfterNameSearch();
+}
+
+static void CB2_Debug_ReturnFromNameSearch(void)
+{
+    gFieldCallback = DebugSelection_FieldCB_ReturnFromNameSearch;
+    CB2_ReturnToField();
+}
+
+static void DebugSelection_Task_OpenNameSearch(u8 taskId)
+{
+    if (gPaletteFade.active)
+        return;
+    Debug_DestroyMenu(taskId);
+    DoNamingScreen(NAMING_SCREEN_DEBUG_SEARCH, sDebugMenuListData->searchPrefix, 0, 0, 0, CB2_Debug_ReturnFromNameSearch);
+}
+
+// Select + Start on a named step types the start of a name on the naming screen's keyboard (#122).
+// The naming screen leaves the field, so this takes the menu down but keeps its data, with the
+// step's task data and window, and DebugSelection_ResumeAfterNameSearch puts them back.
+static void DebugSelection_StartNameSearch(u8 taskId)
+{
+    memcpy(sDebugMenuListData->searchTaskData, gTasks[taskId].data, sizeof(sDebugMenuListData->searchTaskData));
+    sDebugMenuListData->searchWindow = gWindows[gTasks[taskId].tSubWindowId].window;
+    sDebugMenuListData->searchPrefix[0] = EOS;
+    FadeScreen(FADE_TO_BLACK, 0);
+    gTasks[taskId].func = DebugSelection_Task_OpenNameSearch;
 }
 
 static void DebugAction_Selection_NextStep(u8 taskId)
