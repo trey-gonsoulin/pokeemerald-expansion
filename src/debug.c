@@ -251,12 +251,8 @@ struct DebugMenuListData
     u8 itemNames[DEBUG_MAX_MENU_ITEMS + 1][32]; // room for a submenu label's font codes and arrow (#88)
     enum DebugMenuTypes menuType:3;
     u32 nameOrder:1; // Up/Down on a named selection step go A-Z instead of turning a digit
-    // Select, pressed before Start for the name search, has just reset the input and turned name order
-    // off: the search puts back inputBeforeSelect and this
-    u32 selectUndo:1;
-    u32 nameOrderBeforeSelect:1;
-    u32 padding:26;
-    u16 inputBeforeSelect;
+    u32 selectPending:1; // Select was pressed on a named step: it goes back to the start value once let go
+    u32 padding:27;
     struct DebugNameOrder sortedNames[DEBUG_STEP_NAMES_COUNT]; // built on a step's first Start, freed with this data
     s16 data[8];
     s16 savedData[8]; // data as Choose trainer from map found it, restored when B cancels the picker
@@ -1566,7 +1562,7 @@ static void DebugAction_Selection_PrepareStep(u8 taskId, const struct DebugSelec
     if (Debug_IsNameOrder())
         sDebugMenuListData->nameOrder = FALSE;
     if (sDebugMenuListData != NULL)
-        sDebugMenuListData->selectUndo = FALSE;
+        sDebugMenuListData->selectPending = FALSE;
 
     // Clamp as u32: the s16 tInput would turn stored values above 32767 negative
     input = DebugSelection_GetData(taskId, DebugSelection_DataIndex(taskId));
@@ -1628,30 +1624,36 @@ static void DebugAction_Selection_StepUpdate(u8 taskId)
     }
     else if (DebugSelection_StepHasNames(selectionStep) && JOY_NEW(START_BUTTON) && JOY_HELD(SELECT_BUTTON))
     {
-        if (sDebugMenuListData->selectUndo)
-        {
-            gTasks[taskId].tInput = sDebugMenuListData->inputBeforeSelect;
-            sDebugMenuListData->nameOrder = sDebugMenuListData->nameOrderBeforeSelect;
-        }
+        sDebugMenuListData->selectPending = FALSE;
         PlaySE(SE_SELECT);
         DebugSelection_StartNameSearch(taskId);
+    }
+    else if (DebugSelection_StepHasNames(selectionStep) && JOY_NEW(SELECT_BUTTON))
+    {
+        // On a named step Select acts when it's let go, so holding it for Select + Start doesn't
+        // reset the value first
+        sDebugMenuListData->selectPending = TRUE;
+    }
+    else if (DebugSelection_StepHasNames(selectionStep) && sDebugMenuListData->selectPending && !JOY_HELD(SELECT_BUTTON))
+    {
+        sDebugMenuListData->selectPending = FALSE;
+        if (DEBUG_TASK_INPUT(taskId) == (u16)gTasks[taskId].tInputStart && !Debug_IsNameOrder())
+            return;
+        // Name order goes off, as for any key other than Start and Up/Down
+        sDebugMenuListData->nameOrder = FALSE;
+        gTasks[taskId].tInput = gTasks[taskId].tInputStart;
+        PlaySE(SE_SELECT);
+        DebugSelection_RedrawStep(taskId, selectionStep);
     }
     else if (DEBUG_NUMERIC_INPUT_PRESSED() || (DebugSelection_StepHasNames(selectionStep) && JOY_NEW(START_BUTTON)))
     {
         u32 min, max;
         u32 oldValue = DebugSelection_GetNameOrderValue(taskId, selectionStep);
-        u16 oldInput = DEBUG_TASK_INPUT(taskId);
         s16 oldDigit = gTasks[taskId].tDigit;
         bool32 oldNameOrder = Debug_IsNameOrder();
         u32 digits = DebugSelection_GetRange(taskId, selectionStep, &min, &max);
         if (!DebugSelection_StepHasNames(selectionStep) || !DebugSelection_HandleInput_NameOrder(taskId, selectionStep, min, max))
             Debug_HandleInput_Numeric(taskId, min, max, digits, selectionStep->hex);
-        if (DebugSelection_StepHasNames(selectionStep))
-        {
-            sDebugMenuListData->selectUndo = JOY_NEW(SELECT_BUTTON);
-            sDebugMenuListData->inputBeforeSelect = oldInput;
-            sDebugMenuListData->nameOrderBeforeSelect = oldNameOrder;
-        }
         // Holding Up/Down at min/max changes nothing, so don't beep or redraw every repeat
         if (DebugSelection_GetNameOrderValue(taskId, selectionStep) == oldValue && gTasks[taskId].tDigit == oldDigit && Debug_IsNameOrder() == oldNameOrder)
             return;
@@ -1719,6 +1721,9 @@ static void DebugSelection_ResumeAfterNameSearch(void)
 static void DebugSelection_FieldCB_ReturnFromNameSearch(void)
 {
     LockPlayerFieldControls();
+    // The objects kept their frozen flags, but their sprites are new and running, and a frozen
+    // object isn't frozen again: unfreeze, then freeze the new sprites
+    UnfreezeObjectEvents();
     FreezeObjectEvents();
     FadeInFromBlack();
     DebugSelection_ResumeAfterNameSearch();
@@ -1734,9 +1739,6 @@ static void DebugSelection_Task_OpenNameSearch(u8 taskId)
 {
     if (gPaletteFade.active)
         return;
-    // The field's sprites go, but the objects' frozen flags stay, and a frozen object isn't frozen
-    // again: unfreeze them now so the return can freeze their new sprites
-    UnfreezeObjectEvents();
     Debug_DestroyMenu(taskId);
     DoNamingScreen(NAMING_SCREEN_DEBUG_SEARCH, sDebugMenuListData->searchPrefix, 0, 0, 0, CB2_Debug_ReturnFromNameSearch);
 }
