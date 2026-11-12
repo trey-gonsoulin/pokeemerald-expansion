@@ -1,14 +1,6 @@
 {
-  "rematch": {
-    "note": "Upstream's Gen 3 set moves on the rematch teams #139 raised and evolved: the species and its pre-evolutions can't learn them by level up, on evolving, from the Emerald TM and tutor list or as egg moves.",
-    "moves": []
-  },
-  "story": {
-    "note": "Upstream's Gen 3 set moves on the first-fight teams #127 and #150 raised or evolved, unlearnable the same way.",
-    "moves": []
-  },
-  "unchanged": {
-    "note": "Upstream's Gen 3 set moves on teams the fork left as they were, unlearnable the same way.",
+  "allowed": {
+    "note": "Set moves allowed to break the learnable rule, as trainer, species and move. #160 swapped the 127 upstream Gen 3 moves that were here.",
     "moves": []
   }
 }
