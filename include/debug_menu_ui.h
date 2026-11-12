@@ -21,8 +21,9 @@ struct WindowTemplate;
 // Numeric input values fit in a u16 (a max can be 0xFFFF), so read the s16 task field back as unsigned
 #define DEBUG_TASK_INPUT(taskId) ((u16)gTasks[taskId].data[DEBUG_DATA_INPUT])
 
-// Any button Debug_HandleInput_Numeric acts on
-#define DEBUG_NUMERIC_INPUT_PRESSED() (JOY_REPEAT(DPAD_UP | DPAD_DOWN) || JOY_NEW(DPAD_LEFT | DPAD_RIGHT | L_BUTTON | R_BUTTON | SELECT_BUTTON))
+// Any button Debug_HandleInput_Numeric acts on, and those other than Select
+#define DEBUG_NUMERIC_INPUT_MOVED() (JOY_REPEAT(DPAD_UP | DPAD_DOWN) || JOY_NEW(DPAD_LEFT | DPAD_RIGHT | L_BUTTON | R_BUTTON))
+#define DEBUG_NUMERIC_INPUT_PRESSED() (DEBUG_NUMERIC_INPUT_MOVED() || JOY_NEW(SELECT_BUTTON))
 
 // "<+1>" ... "<+10000000>", indexed by the highlighted digit
 extern const u8 *const gText_DigitIndicator[];

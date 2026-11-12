@@ -1597,6 +1597,9 @@ static void DebugAction_Selection_StepUpdate(u8 taskId)
     SelectionStep selectionStep = ((struct DebugSelection *)GetWordTaskArg(taskId, DEBUG_SELECTION_PTR_ARG))->steps[gTasks[taskId].tStep];
     bool32 hasNames = DebugSelection_StepHasNames(selectionStep);
 
+    // A or B takes a held Select over, like the keys below
+    if (hasNames && JOY_NEW(A_BUTTON | B_BUTTON))
+        sDebugMenuListData->selectPending = FALSE;
     if (JOY_NEW(A_BUTTON))
     {
         if (selectionStep->canConfirm != NULL && !selectionStep->canConfirm(taskId))
@@ -1631,11 +1634,11 @@ static void DebugAction_Selection_StepUpdate(u8 taskId)
         PlaySE(SE_SELECT);
         DebugSelection_StartNameSearch(taskId);
     }
-    else if (hasNames && JOY_NEW(SELECT_BUTTON) && !JOY_REPEAT(DPAD_UP | DPAD_DOWN) && !JOY_NEW(DPAD_LEFT | DPAD_RIGHT | L_BUTTON | R_BUTTON))
+    else if (hasNames && JOY_NEW(SELECT_BUTTON) && !DEBUG_NUMERIC_INPUT_MOVED())
     {
         // On a named step Select goes back to the start value when it's let go, not when it's
         // pressed, so that holding it for Select + Start doesn't reset the value first.
-        // Another key while it's held takes the hold over, and it doesn't reset.
+        // Another key while it's held, or as it's let go, takes the hold over, and it doesn't reset.
         sDebugMenuListData->selectPending = TRUE;
     }
     else if (DEBUG_NUMERIC_INPUT_PRESSED() || (hasNames && (JOY_NEW(START_BUTTON) || (sDebugMenuListData->selectPending && !JOY_HELD(SELECT_BUTTON)))))
@@ -1645,21 +1648,19 @@ static void DebugAction_Selection_StepUpdate(u8 taskId)
         s16 oldDigit = gTasks[taskId].tDigit;
         bool32 oldNameOrder = Debug_IsNameOrder();
         u32 digits = DebugSelection_GetRange(taskId, selectionStep, &min, &max);
+        bool32 keyPressed = DEBUG_NUMERIC_INPUT_PRESSED() || (hasNames && JOY_NEW(START_BUTTON));
         if (hasNames)
         {
-            // Select let go: what it does on a numeric step, and name order goes off as for any other key
-            if (sDebugMenuListData->selectPending && !JOY_HELD(SELECT_BUTTON))
+            // Select let go alone: what it does on a numeric step, and name order goes off as for any other key
+            if (sDebugMenuListData->selectPending && !keyPressed)
             {
                 gTasks[taskId].tInput = gTasks[taskId].tInputStart;
                 sDebugMenuListData->nameOrder = FALSE;
             }
             sDebugMenuListData->selectPending = FALSE;
         }
-        if (DEBUG_NUMERIC_INPUT_PRESSED() || (hasNames && JOY_NEW(START_BUTTON)))
-        {
-            if (!hasNames || !DebugSelection_HandleInput_NameOrder(taskId, selectionStep, min, max))
-                Debug_HandleInput_Numeric(taskId, min, max, digits, selectionStep->hex);
-        }
+        if (keyPressed && (!hasNames || !DebugSelection_HandleInput_NameOrder(taskId, selectionStep, min, max)))
+            Debug_HandleInput_Numeric(taskId, min, max, digits, selectionStep->hex);
         // Holding Up/Down at min/max changes nothing, so don't beep or redraw every repeat
         if (DebugSelection_GetNameOrderValue(taskId, selectionStep) == oldValue && gTasks[taskId].tDigit == oldDigit && Debug_IsNameOrder() == oldNameOrder)
             return;
@@ -1735,9 +1736,9 @@ static void DebugSelection_FieldCB_ReturnFromNameSearch(void)
 static void CB2_Debug_ReturnFromNameSearch(void)
 {
     // The objects kept their frozen flags, and a frozen object isn't frozen again, so the field's new
-    // sprites would run. Unfreezing here, before the field comes back, only touches sprite slots
-    // the naming screen has left, which CreateSprite resets.
-    UnfreezeObjectEvents();
+    // sprites would run. Clear the flags alone: their sprites, and the backups of them, are gone.
+    for (u32 i = 0; i < OBJECT_EVENTS_COUNT; i++)
+        gObjectEvents[i].frozen = FALSE;
     gFieldCallback = DebugSelection_FieldCB_ReturnFromNameSearch;
     CB2_ReturnToField();
 }
