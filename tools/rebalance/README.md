@@ -241,7 +241,7 @@ bootstrap). The repo's `.gitignore` ignores `*.js`, so add new ones with
   reads their output instead of a header an older build left. `move_allowlist.json`
   lists the upstream Gen 3 moves that break the rule as trainer, species and
   move, by cause; the test also fails on an entry that no longer breaks it, so
-  the list only shrinks.
+  the list only shrinks. It has been empty since #160 swapped those moves.
 - **Split fit**: for the species in `SPLIT_WATCH`, the better attacking stat
   against the Gen 3 category of each STAB type and the split of its modern
   level-up STAB moves.

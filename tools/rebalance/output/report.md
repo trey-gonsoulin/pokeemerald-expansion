@@ -407,51 +407,50 @@ Flags (all default Pokemon / story trainers only):
 | measure | value |
 |---|---|
 | trainer Pokemon with set moves | 669 |
-| attacking set moves whose data changed | 630 |
-|   category flips (physical <-> special) | 282 |
-|   of them now on a weaker / similar / stronger stat | 35 / 97 / 150 |
-|   Pokemon with at least one flip | 248 |
-|   Pokemon with a flip onto a weaker stat | 33 |
+| attacking set moves whose data changed | 632 |
+|   category flips (physical <-> special) | 265 |
+|   of them now on a weaker / similar / stronger stat | 32 / 101 / 132 |
+|   Pokemon with at least one flip | 230 |
+|   Pokemon with a flip onto a weaker stat | 30 |
 |   type changes | 0 |
-|   power changes | 366 |
+|   power changes | 393 |
 |   accuracy changes | 79 |
 
 Changed attacking moves (set-move slots; weaker/similar/stronger: the category flipped onto that stat; data: only power, accuracy or type changed):
 
 | move | slots |
 |---|---|
-| Tackle | data 43 |
+| Tackle | data 45 |
 | Crunch | stronger 21, similar 10 |
 | Ice Beam | data 28 |
-| Feint Attack | stronger 25, similar 2 |
+| Thunderbolt | data 27 |
 | Flamethrower | data 26 |
 | Thunder | data 26 |
 | Surf | data 24 |
-| Sludge | similar 22 |
+| Sludge | similar 24 |
 | Giga Drain | data 21 |
-| Thunderbolt | data 21 |
+| Dragon Pulse | data 21 |
 | Bite | stronger 7, similar 7, weaker 5 |
 | Dig | data 19 |
-| Shadow Ball | weaker 13, stronger 1, similar 2 |
-| Overheat | data 16 |
-| Knock Off | stronger 15 |
+| Overheat | data 19 |
+| Shadow Ball | weaker 14, stronger 1, similar 2 |
+| Knock Off | stronger 16 |
 | Ancient Power | similar 5, stronger 9, weaker 1 |
-| Night Shade | data 13 |
+| Night Shade | data 12 |
 | Rock Tomb | data 12 |
-| Dragon Pulse | data 10 |
+| Clear Smog | stronger 9, similar 1 |
+| Zen Headbutt | similar 8, stronger 2 |
 | Fury Cutter | data 10 |
-| Clear Smog | stronger 9 |
-| Zen Headbutt | similar 7, stronger 2 |
-| Uproar | stronger 2, weaker 4, similar 2 |
-| Hydro Pump | data 8 |
+| Earth Power | similar 9 |
+| Hydro Pump | data 9 |
 | Fire Punch | similar 6, stronger 2 |
 | Air Slash | stronger 7 |
-| Earth Power | similar 7 |
 | High Jump Kick | data 7 |
 | Tri Attack | weaker 2, stronger 5 |
+| Uproar | weaker 4, similar 2, stronger 1 |
 | Covet | data 6 |
 | Bind | data 6 |
-| Spark | weaker 6 |
+| Energy Ball | data 6 |
 | Blizzard | data 6 |
 | Lick | data 5 |
 | Night Slash | stronger 5 |
@@ -462,15 +461,15 @@ Changed attacking moves (set-move slots; weaker/similar/stronger: the category f
 | Pin Missile | data 4 |
 | Rapid Spin | data 4 |
 | Smog | stronger 1, similar 3 |
-| Energy Ball | data 4 |
 | Blaze Kick | similar 4 |
 | Pursuit | stronger 4 |
+| Flare Blitz | stronger 4 |
 | Ice Fang | stronger 3 |
 | Dual Chop | stronger 3 |
 | Echoed Voice | similar 3 |
-| Sonic Boom | data 3 |
 | Crabhammer | stronger 3 |
 | Mud Slap | similar 3 |
+| Foul Play | stronger 3 |
 | Rock Smash | data 3 |
 | Gust | stronger 2, similar 1 |
 | Thunder Punch | similar 2, stronger 1 |
@@ -483,21 +482,22 @@ Changed attacking moves (set-move slots; weaker/similar/stronger: the category f
 | Weather Ball | similar 2 |
 | Round | similar 2 |
 | Petal Dance | data 2 |
+| Spark | weaker 2 |
 | Flame Charge | similar 2 |
 | Sucker Punch | stronger 2 |
-| Foul Play | stronger 2 |
 | Incinerate | data 2 |
-| Bide | data 2 |
 | Ice Punch | stronger 2 |
-| Hyper Voice | similar 1 |
+| Flash Cannon | stronger 1 |
 | Sand Tomb | data 1 |
+| Leaf Blade | similar 1 |
 | Zap Cannon | data 1 |
+| Play Rough | stronger 1 |
 | Fly | data 1 |
-| Needle Arm | similar 1 |
+| Bullet Seed | similar 1 |
+| Low Sweep | data 1 |
 | Hyper Beam | similar 1 |
 | Thief | stronger 1 |
 | Struggle Bug | stronger 1 |
-| Leech Life | data 1 |
 | Psycho Cut | weaker 1 |
 | Swift | weaker 1 |
 | Meteor Mash | data 1 |
@@ -508,25 +508,23 @@ Changed attacking moves (set-move slots; weaker/similar/stronger: the category f
 |---|---|---|---|---|---|---|
 | Matt | Mightyena | 67 | Crunch | Special -> Physical | 60 -> 90 | stronger |
 | Sidney | Mightyena | 77 | Crunch | Special -> Physical | 60 -> 90 | stronger |
-| Sidney | Cacturne | 77 | Feint Attack | Special -> Physical | 115 -> 115 | similar |
-| Sidney | Cacturne | 77 | Needle Arm | Special -> Physical | 115 -> 115 | similar |
-| Phoebe | Banette | 79 | Feint Attack | Special -> Physical | 83 -> 115 | stronger |
+| Sidney | Cacturne | 77 | Bullet Seed | Special -> Physical | 115 -> 115 | similar |
+| Phoebe | Banette | 79 | Shadow Ball | Physical -> Special | 115 -> 83 | weaker |
 | Phoebe | Sableye | 80 | Shadow Ball | Physical -> Special | 75 -> 65 | similar |
-| Phoebe | Sableye | 80 | Feint Attack | Special -> Physical | 65 -> 75 | stronger |
+| Phoebe | Sableye | 80 | Foul Play | Special -> Physical | 65 -> 75 | stronger |
 | Phoebe | Dusknoir | 81 | Shadow Ball | Physical -> Special | 100 -> 65 | weaker |
 | Glacia | Glalie | 79 | Crunch | Special -> Physical | 80 -> 80 | similar |
 | Glacia | Glalie | 81 | Shadow Ball | Physical -> Special | 80 -> 80 | similar |
 | Drake | Shelgon | 80 | Dragon Claw | Special -> Physical | 60 -> 95 | stronger |
 | Drake | Salamence | 83 | Dragon Claw | Special -> Physical | 110 -> 135 | stronger |
 | Drake | Salamence | 83 | Crunch | Special -> Physical | 110 -> 135 | stronger |
+| Brawly 1 | Makuhita | 19 | Knock Off | Special -> Physical | 20 -> 60 | stronger |
+| Flannery 1 | Numel | 34 | Earth Power | Physical -> Special | 60 -> 65 | similar |
 | Flannery 1 | Slugma | 34 | Smog | Physical -> Special | 40 -> 70 | stronger |
-| Norman 1 | Vigoroth | 37 | Feint Attack | Special -> Physical | 55 -> 80 | stronger |
-| Norman 1 | Slaking | 41 | Feint Attack | Special -> Physical | 95 -> 160 | stronger |
 | Tate And Liza 1 | Claydol | 66 | Ancient Power | Physical -> Special | 70 -> 70 | similar |
 | Juan 1 | Crawdaunt | 73 | Crabhammer | Special -> Physical | 90 -> 120 | stronger |
 | Wallace | Tentacruel | 83 | Sludge Bomb | Physical -> Special | 70 -> 80 | similar |
 | Wallace | Whiscash | 84 | Hyper Beam | Physical -> Special | 78 -> 76 | similar |
-| Wally Vr 1 | Delcatty | 77 | Feint Attack | Special -> Physical | 55 -> 65 | stronger |
 | Wally Vr 1 | Magnezone | 75 | Tri Attack | Physical -> Special | 70 -> 130 | stronger |
 | May Route 110 Mudkip | Slugma | 24 | Clear Smog | Physical -> Special | 40 -> 70 | stronger |
 | May Route 110 Mudkip | Slugma | 24 | Ancient Power | Physical -> Special | 40 -> 70 | stronger |
@@ -665,8 +663,7 @@ Per boss Pokemon: retyping, defensive multipliers that changed (attacking type: 
 
 ### Norman 1
 
-- Vigoroth 37: hits Steel 0.5x->1x
-- Slaking 41: hits Steel 0.5x->1x
+- no change
 
 ### May Route 119 Mudkip
 
@@ -743,7 +740,6 @@ Per boss Pokemon: retyping, defensive multipliers that changed (attacking type: 
 ### Wally Vr 1
 
 - Altaria 78: takes Fairy new->2x
-- Delcatty 77: hits Steel 0.5x->1x, Fairy new->0.5x
 - Roserade 78: takes Fairy new->0.5x
 - Magnezone 75: takes Dark 0.5x->1x, Ghost 0.5x->1x, Fairy new->0.5x
 - Gardevoir 79: retyped Psychic -> Psychic/Fairy; takes Bug 2x->1x, Dark 2x->1x, Dragon 1x->0x, Fighting 0.5x->0.25x, Poison 1x->2x, Steel 1x->2x
@@ -752,7 +748,7 @@ Per boss Pokemon: retyping, defensive multipliers that changed (attacking type: 
 
 - Mightyena 77: takes Fairy new->2x; hits Steel 0.5x->1x, Fairy new->2x
 - Shiftry 79: takes Fairy new->2x
-- Cacturne 77: takes Fairy new->2x; hits Steel 0.5x->1x
+- Cacturne 77: takes Fairy new->2x
 - Crawdaunt 79: takes Fairy new->2x
 - Absol 80: takes Fairy new->2x
 
@@ -783,80 +779,80 @@ Per boss Pokemon: retyping, defensive multipliers that changed (attacking type: 
 
 `power.py` scores each Pokemon one-on-one against a reference Pokemon of its own level (base 80 in every stat, IV 15, no type) on turns to KO, with its best expected damage per turn (STAB, accuracy, strikes, half for recharge and two-turn moves) and up to 0.5 turn for the faster side. Its effective level is the level at which the reference itself would score the same: what level of typical Pokemon it fights like. Types, abilities, items, status and stat moves are left out (README, "Matchup-relative strength").
 
-The reference's expected power is fitted to every trainer Pokemon's best move: 11.47 + 25.17 ln(level), 52 at 5, 93 at 25, 110 at 50, 120 at 75, 127 at 100.
+The reference's expected power is fitted to every trainer Pokemon's best move: 3.47 + 28.07 ln(level), 49 at 5, 94 at 25, 113 at 50, 125 at 75, 133 at 100.
 
 Bench: the Exp. Share bench before the fight (1.5x off, full / friendship, the Exp. Share curve's). Strongest: the highest effective level on the team.
 
 | stage | boss | ace level | strongest (level -> effective) | mean level | mean effective | bench | strongest - bench |
 |---|---|---|---|---|---|---|---|
-| Rival (Route 103) | May Route 103 Mudkip | 6 | Treecko 6 -> 4.2 | 6.0 | 4.2 | 5 | -0.8 |
-| Roxanne | Roxanne 1 | 16 | Nosepass 16 -> 14.1 | 14.0 | 11.9 | 15 | -0.9 |
-| Brawly | May Rustboro Mudkip | 18 | Grovyle 18 -> 14.6 | 17.0 | 12.3 | 17 | -2.4 |
-| Brawly | Brawly 1 | 19 | Makuhita 19 -> 15.7 | 17.0 | 14.6 | 17 | -1.3 |
-| Wattson | May Route 110 Mudkip | 26 | Grovyle 26 -> 21.3 | 24.7 | 17.9 | 23 | -1.7 |
+| Rival (Route 103) | May Route 103 Mudkip | 6 | Treecko 6 -> 4.3 | 6.0 | 4.3 | 5 | -0.7 |
+| Roxanne | Roxanne 1 | 16 | Nosepass 16 -> 14.2 | 14.0 | 12.1 | 15 | -0.8 |
+| Brawly | May Rustboro Mudkip | 18 | Grovyle 18 -> 14.7 | 17.0 | 12.4 | 17 | -2.3 |
+| Brawly | Brawly 1 | 19 | Makuhita 19 -> 15.2 | 17.0 | 14.5 | 17 | -1.8 |
+| Wattson | May Route 110 Mudkip | 26 | Grovyle 26 -> 21.2 | 24.7 | 17.8 | 23 | -1.8 |
 | Wattson | Wally Mauville | 26 | Ralts 26 -> 15.3 | 26.0 | 15.3 | 24 | -8.7 |
-| Wattson | Wattson 1 | 26 | Manectric 26 -> 27.5 | 23.5 | 22.4 | 24 | +3.5 |
-| Flannery | Tabitha Mt Chimney | 38 | Crobat 38 -> 36.7 | 36.5 | 32.2 | 36 | +0.7 |
-| Flannery | Maxie Mt Chimney | 39 | Crobat 38 -> 38.0 | 38.3 | 36.9 | 36 | +2.0 |
-| Flannery | Flannery 1 | 39 | Torkoal 39 -> 44.7 | 35.8 | 36.9 | 37 | +7.7 |
-| Norman | Norman 1 | 41 | Slaking 41 -> 46.6 | 38.5 | 38.9 | 39 | +7.6 |
-| Winona | May Route 119 Mudkip | 56 | Sceptile 56 -> 62.5 | 54.7 | 56.6 | 53 | +9.5 |
-| Winona | Shelly Weather Institute | 56 | Sharpedo 56 -> 54.1 | 56.0 | 52.2 | 53 | +1.1 |
-| Winona | Winona 1 | 57 | Altaria 57 -> 59.1 | 54.4 | 53.3 | 54 | +5.1 |
-| Tate and Liza | May Lilycove Mudkip | 66 | Sceptile 66 -> 74.3 | 64.2 | 66.8 | 63 | +11.3 |
-| Tate and Liza | Tabitha Magma Hideout | 66 | Camerupt 66 -> 65.6 | 62.2 | 60.4 | 63 | +2.6 |
-| Tate and Liza | Maxie Magma Hideout | 67 | Camerupt 67 -> 68.4 | 66.0 | 65.8 | 64 | +4.4 |
-| Tate and Liza | Matt | 67 | Crobat 67 -> 64.8 | 67.0 | 63.1 | 64 | +0.8 |
-| Tate and Liza | Tate And Liza 1 | 67 | Lunatone 67 -> 73.7 | 66.5 | 71.8 | 64 | +9.7 |
-| Juan | Tabitha Mossdeep | 75 | Crobat 75 -> 73.5 | 73.0 | 70.4 | 71 | +2.5 |
-| Juan | Maxie Mossdeep | 75 | Camerupt 75 -> 76.2 | 74.0 | 72.8 | 71 | +5.2 |
-| Juan | Shelly Seafloor Cavern | 75 | Sharpedo 75 -> 73.5 | 75.0 | 70.9 | 71 | +2.5 |
-| Juan | Archie | 75 | Sharpedo 75 -> 75.3 | 73.7 | 72.2 | 71 | +4.3 |
-| Juan | Juan 1 | 76 | Kingdra 76 -> 80.1 | 72.8 | 72.9 | 72 | +8.1 |
-| Elite Four | Wally Vr 1 | 79 | Gardevoir 79 -> 91.8 | 77.4 | 79.0 | 75 | +16.8 |
-| Elite Four | Sidney | 80 | Crawdaunt 79 -> 78.8 | 78.4 | 76.4 | 76 | +2.8 |
-| Elite Four | Phoebe | 81 | Dusknoir 81 -> 85.0 | 79.4 | 75.7 | 76 | +9.0 |
-| Elite Four | Glacia | 82 | Walrein 82 -> 94.4 | 80.4 | 84.4 | 76 | +18.4 |
-| Elite Four | Drake | 83 | Salamence 83 -> 100.6 | 81.4 | 90.9 | 77 | +23.6 |
-| Elite Four | Wallace | 86 | Milotic 86 -> 102.4 | 84.3 | 94.8 | 78 | +24.4 |
+| Wattson | Wattson 1 | 26 | Manectric 26 -> 27.4 | 23.5 | 22.3 | 24 | +3.4 |
+| Flannery | Tabitha Mt Chimney | 38 | Crobat 38 -> 36.5 | 36.5 | 32.1 | 36 | +0.5 |
+| Flannery | Maxie Mt Chimney | 39 | Crobat 38 -> 37.8 | 38.3 | 36.7 | 36 | +1.8 |
+| Flannery | Flannery 1 | 39 | Torkoal 39 -> 44.4 | 35.8 | 36.6 | 37 | +7.4 |
+| Norman | Norman 1 | 41 | Slaking 41 -> 52.5 | 38.5 | 41.4 | 39 | +13.5 |
+| Winona | May Route 119 Mudkip | 56 | Sceptile 56 -> 62.0 | 54.7 | 56.2 | 53 | +9.0 |
+| Winona | Shelly Weather Institute | 56 | Sharpedo 56 -> 53.8 | 56.0 | 52.0 | 53 | +0.8 |
+| Winona | Winona 1 | 57 | Altaria 57 -> 61.8 | 54.4 | 53.6 | 54 | +7.8 |
+| Tate and Liza | May Lilycove Mudkip | 66 | Sceptile 66 -> 73.7 | 64.2 | 66.3 | 63 | +10.7 |
+| Tate and Liza | Tabitha Magma Hideout | 66 | Camerupt 66 -> 65.1 | 62.2 | 60.0 | 63 | +2.1 |
+| Tate and Liza | Maxie Magma Hideout | 67 | Camerupt 67 -> 67.9 | 66.0 | 65.4 | 64 | +3.9 |
+| Tate and Liza | Matt | 67 | Crobat 67 -> 64.3 | 67.0 | 62.6 | 64 | +0.3 |
+| Tate and Liza | Tate And Liza 1 | 67 | Lunatone 67 -> 73.2 | 66.5 | 71.2 | 64 | +9.2 |
+| Juan | Tabitha Mossdeep | 75 | Crobat 75 -> 73.0 | 73.0 | 69.8 | 71 | +2.0 |
+| Juan | Maxie Mossdeep | 75 | Camerupt 75 -> 75.6 | 74.0 | 72.3 | 71 | +4.6 |
+| Juan | Shelly Seafloor Cavern | 75 | Sharpedo 75 -> 73.0 | 75.0 | 70.4 | 71 | +2.0 |
+| Juan | Archie | 75 | Sharpedo 75 -> 74.8 | 73.7 | 71.7 | 71 | +3.8 |
+| Juan | Juan 1 | 76 | Kingdra 76 -> 79.5 | 72.8 | 72.3 | 72 | +7.5 |
+| Elite Four | Wally Vr 1 | 79 | Gardevoir 79 -> 91.0 | 77.4 | 82.8 | 75 | +16.0 |
+| Elite Four | Sidney | 80 | Cacturne 77 -> 78.5 | 78.4 | 76.9 | 76 | +2.5 |
+| Elite Four | Phoebe | 81 | Dusknoir 81 -> 84.3 | 79.4 | 77.3 | 76 | +8.3 |
+| Elite Four | Glacia | 82 | Walrein 82 -> 93.5 | 80.4 | 83.7 | 76 | +17.5 |
+| Elite Four | Drake | 83 | Salamence 83 -> 99.7 | 81.4 | 90.3 | 77 | +22.7 |
+| Elite Four | Wallace | 86 | Milotic 86 -> 101.4 | 84.3 | 93.9 | 78 | +23.4 |
 
 Boss Pokemon at least 10% from their level, strongest first (best move; "default" for a default moveset):
 
 | boss | Pokemon | level | effective | off | best move |
 |---|---|---|---|---|---|
-| Drake | Salamence | 83 | 100.6 | +21% | Dragon Claw |
-| Wallace | Milotic | 86 | 102.4 | +19% | Surf |
-| Wallace | Gyarados | 84 | 100.0 | +19% | Double Edge |
-| Drake | Flygon | 81 | 95.3 | +18% | Earthquake |
-| Wally Vr 1 | Gardevoir | 79 | 91.8 | +16% | Psychic |
-| Glacia | Walrein | 82 | 94.4 | +15% | Surf |
-| Drake | Kingdra | 81 | 93.0 | +15% | Surf |
-| Flannery 1 | Torkoal | 39 | 44.7 | +15% | Overheat |
-| Norman 1 | Slaking | 41 | 46.6 | +14% | Facade |
-| Flannery 1 | Camerupt | 36 | 40.8 | +13% | Overheat |
-| May Lilycove Mudkip | Sceptile | 66 | 74.3 | +13% | Energy Ball |
-| Wally Vr 1 | Magnezone | 75 | 83.9 | +12% | Thunderbolt |
-| May Route 119 Mudkip | Sceptile | 56 | 62.5 | +12% | Energy Ball |
-| Wallace | Tentacruel | 83 | 92.6 | +12% | Sludge Bomb |
-| Tate And Liza 1 | Claydol | 66 | 73.4 | +11% | Earthquake |
-| Tate And Liza 1 | Lunatone | 67 | 73.7 | +10% | Psychic |
-| Flannery 1 | Slugma | 34 | 30.4 | -11% | Overheat |
-| Winona 1 | Pelipper | 54 | 48.2 | -11% | Water Gun |
-| Tabitha Mt Chimney | Mightyena | 36 | 32.1 | -11% | Assurance (default) |
-| Norman 1 | Spinda | 37 | 32.7 | -12% | Facade |
-| Roxanne 1 | Nosepass | 16 | 14.1 | -12% | Rock Tomb |
+| Norman 1 | Slaking | 41 | 52.5 | +28% | Double Edge |
+| Drake | Salamence | 83 | 99.7 | +20% | Dragon Claw |
+| Wallace | Gyarados | 84 | 99.1 | +18% | Double Edge |
+| Wallace | Milotic | 86 | 101.4 | +18% | Surf |
+| Drake | Flygon | 81 | 94.4 | +17% | Earthquake |
+| Wally Vr 1 | Gardevoir | 79 | 91.0 | +15% | Psychic |
+| Norman 1 | Vigoroth | 37 | 42.4 | +15% | Double Edge |
+| Glacia | Walrein | 82 | 93.5 | +14% | Surf |
+| Flannery 1 | Torkoal | 39 | 44.4 | +14% | Overheat |
+| Drake | Kingdra | 81 | 92.2 | +14% | Surf |
+| Flannery 1 | Camerupt | 36 | 40.5 | +12% | Overheat |
+| May Lilycove Mudkip | Sceptile | 66 | 73.7 | +12% | Energy Ball |
+| Wally Vr 1 | Magnezone | 75 | 83.1 | +11% | Thunderbolt |
+| May Route 119 Mudkip | Sceptile | 56 | 62.0 | +11% | Energy Ball |
+| Wallace | Tentacruel | 83 | 91.8 | +11% | Sludge Bomb |
+| Tate And Liza 1 | Claydol | 66 | 72.8 | +10% | Earthquake |
+| Shelly Weather Institute | Mightyena | 56 | 50.1 | -11% | Sucker Punch (default) |
+| Flannery 1 | Slugma | 34 | 30.3 | -11% | Overheat |
+| Roxanne 1 | Nosepass | 16 | 14.2 | -11% | Rock Tomb |
+| Winona 1 | Pelipper | 54 | 47.9 | -11% | Water Gun |
+| Tabitha Mt Chimney | Mightyena | 36 | 31.9 | -11% | Assurance (default) |
+| Norman 1 | Spinda | 37 | 32.5 | -12% | Facade |
 | Wattson 1 | Voltorb | 22 | 19.1 | -13% | Shock Wave |
-| Brawly 1 | Machop | 16 | 13.6 | -15% | Seismic Toss |
-| Roxanne 1 | Geodude | 13 | 10.8 | -17% | Rock Tomb |
-| Roxanne 1 | Geodude | 13 | 10.8 | -17% | Rock Tomb |
-| Brawly 1 | Makuhita | 19 | 15.7 | -17% | Vital Throw |
-| May Route 110 Mudkip | Grovyle | 26 | 21.3 | -18% | Mega Drain |
-| May Rustboro Mudkip | Grovyle | 18 | 14.6 | -19% | Mega Drain (default) |
+| Brawly 1 | Machop | 16 | 13.8 | -14% | Low Sweep |
+| Roxanne 1 | Geodude | 13 | 11.0 | -15% | Bulldoze |
+| Roxanne 1 | Geodude | 13 | 11.0 | -15% | Bulldoze |
+| May Rustboro Mudkip | Grovyle | 18 | 14.7 | -18% | Mega Drain (default) |
+| May Route 110 Mudkip | Grovyle | 26 | 21.2 | -18% | Mega Drain |
 | Wattson 1 | Electrike | 22 | 17.7 | -20% | Shock Wave |
-| Wally Vr 1 | Delcatty | 77 | 61.1 | -21% | Feint Attack |
-| Juan 1 | Luvdisc | 71 | 56.2 | -21% | Water Pulse |
+| Brawly 1 | Makuhita | 19 | 15.2 | -20% | Force Palm |
+| Juan 1 | Luvdisc | 71 | 55.8 | -21% | Water Pulse |
 | Tabitha Mt Chimney | Numel | 34 | 25.1 | -26% | Incinerate |
-| May Route 103 Mudkip | Treecko | 6 | 4.2 | -30% | Leafage (default) |
+| May Route 103 Mudkip | Treecko | 6 | 4.3 | -28% | Leafage (default) |
 | May Route 110 Mudkip | Wingull | 24 | 16.7 | -30% | Water Pulse (default) |
 | May Route 110 Mudkip | Slugma | 24 | 15.6 | -35% | Ember |
 | May Rustboro Mudkip | Wingull | 16 | 10.1 | -37% | Water Gun (default) |
@@ -873,16 +869,16 @@ Hardest: the boss Pokemon whose best answer on the team is lowest, with that ans
 | stage | boss | ace | bench | Treecko hardest | Treecko cover | Treecko lead | Torchic hardest | Torchic cover | Torchic lead | Mudkip hardest | Mudkip cover | Mudkip lead |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Rival (Route 103) | May Route 103 | 6 | 5 | Torchic 6: 0.52 (Treecko) | 0/1 | 0.52 | Mudkip 6: 0.55 (Torchic) | 0/1 | 0.55 | Treecko 6: 0.55 (Mudkip) | 0/1 | 0.55 |
-| Roxanne | Roxanne 1 | 16 | 15 | Nosepass 16: 1.73 (Grovyle) | 3/3 | 9.04 | Nosepass 16: 1.28 (Lombre) | 3/3 | 6.69 | Nosepass 16: 3.38 (Marshtomp) | 3/3 | 17.56 |
+| Roxanne | Roxanne 1 | 16 | 15 | Nosepass 16: 1.73 (Grovyle) | 3/3 | 9.04 | Nosepass 16: 1.28 (Lombre) | 3/3 | 6.69 | Nosepass 16: 3.38 (Marshtomp) | 3/3 | 9.73 |
 | Brawly | May Rustboro | 18 | 17 | Combusken 18: 2.36 (Kadabra) | 2/2 | 18.24 | Torkoal 16: 2.07 (Combusken) | 2/2 | 2.07 | Wingull 16: 5.59 (Marshtomp) | 2/2 | 5.59 |
-| Brawly | Brawly 1 | 19 | 17 | Machop 16: inf (Sableye) | 3/3 | inf | Machop 16: inf (Sableye) | 3/3 | inf | Machop 16: inf (Sableye) | 3/3 | inf |
+| Brawly | Brawly 1 | 19 | 17 | Makuhita 19: 1.82 (Kadabra) | 3/3 | inf | Makuhita 19: 1.82 (Kadabra) | 3/3 | inf | Makuhita 19: 1.82 (Kadabra) | 3/3 | inf |
 | Wattson | May Route 110 | 26 | 23 | Combusken 26: 2.35 (Azumarill) | 3/3 | 3.43 | Marshtomp 26: 1.46 (Azumarill) | 3/3 | 1.91 | Grovyle 26: 2.55 (Breloom) | 3/3 | 3.81 |
 | Wattson | Wally Mauville | 26 | 24 | Ralts 26: inf (Mightyena) | 1/1 | inf | Ralts 26: inf (Mightyena) | 1/1 | inf | Ralts 26: inf (Mightyena) | 1/1 | inf |
 | Wattson | Wattson 1 | 26 | 24 | Manectric 26: 1.38 (Grovyle) | 4/4 | 5.65 | Magneton 24: 0.57 (Mightyena) | 2/4 | 2.94 | Manectric 26: 1.41 (Marshtomp) | 4/4 | 13.13 |
 | Flannery | Tabitha Mt Chimney | 38 | 36 | Camerupt 38: 1.35 (Slaking) | 4/4 | 4.75 | Camerupt 38: 1.35 (Slaking) | 4/4 | 4.75 | Mightyena 36: 2.60 (Cacturne) | 4/4 | 23.41 |
 | Flannery | Maxie Mt Chimney | 39 | 36 | Camerupt 39: 1.51 (Sceptile) | 3/3 | 1.73 | Crobat 38: 1.23 (Weezing) | 3/3 | 2.53 | Mightyena 38: 1.81 (Cacturne) | 3/3 | 1.81 |
-| Flannery | Flannery 1 | 39 | 37 | Torkoal 39: 0.99 (Gardevoir) | 3/4 | 3.01 | Torkoal 39: 1.29 (Blaziken) | 4/4 | 4.33 | Torkoal 39: 3.37 (Swampert) | 4/4 | 20.48 |
-| Norman | Norman 1 | 41 | 39 | Slaking 41: 0.71 (Slaking) | 3/4 | 3.26 | Slaking 41: 1.29 (Blaziken) | 4/4 | 4.12 | Slaking 41: 1.02 (Swampert) | 4/4 | 3.33 |
+| Flannery | Flannery 1 | 39 | 37 | Torkoal 39: 0.99 (Gardevoir) | 3/4 | 3.01 | Torkoal 39: 1.29 (Blaziken) | 4/4 | 3.01 | Torkoal 39: 3.37 (Swampert) | 4/4 | 13.55 |
+| Norman | Norman 1 | 41 | 39 | Slaking 41: 0.44 (Manectric) | 3/4 | 3.26 | Slaking 41: 0.77 (Blaziken) | 3/4 | 4.12 | Slaking 41: 0.61 (Swampert) | 3/4 | 3.33 |
 | Winona | May Route 119 | 56 | 53 | Ludicolo 54: 2.85 (Sceptile) | 3/3 | 112.73 | Ludicolo 54: 1.99 (Gardevoir) | 3/3 | 1.99 | Ludicolo 54: 2.18 (Muk) | 3/3 | 12.14 |
 | Winona | Shelly Weather Institute | 56 | 53 | Mightyena 56: 3.52 (Gardevoir) | 2/2 | 3.52 | Sharpedo 56: 2.13 (Slaking) | 2/2 | 3.58 | Sharpedo 56: 2.13 (Slaking) | 2/2 | 3.52 |
 | Winona | Winona 1 | 57 | 54 | Altaria 57: 1.55 (Gardevoir) | 5/5 | 2.80 | Altaria 57: 1.55 (Gardevoir) | 5/5 | 2.80 | Altaria 57: 1.55 (Gardevoir) | 5/5 | 2.80 |
@@ -896,14 +892,14 @@ Hardest: the boss Pokemon whose best answer on the team is lowest, with that ans
 | Juan | Shelly Seafloor Cavern | 75 | 71 | Mightyena 75: 3.07 (Gardevoir) | 2/2 | 3.07 | Sharpedo 75: 2.46 (Slaking) | 2/2 | 3.42 | Sharpedo 75: 2.46 (Slaking) | 2/2 | 3.07 |
 | Juan | Archie | 75 | 71 | Mightyena 73: 3.04 (Gardevoir) | 3/3 | 3.04 | Sharpedo 75: 2.18 (Slaking) | 3/3 | 3.43 | Sharpedo 75: 2.18 (Slaking) | 3/3 | 3.04 |
 | Juan | Juan 1 | 76 | 72 | Walrein 73: 1.95 (Sceptile) | 5/5 | 26.82 | Walrein 73: 1.61 (Gardevoir) | 5/5 | 10.69 | Kingdra 76: 2.27 (Gardevoir) | 5/5 | 6.32 |
-| Elite Four | Wally Vr 1 | 79 | 75 | Gardevoir 79: 1.31 (Gardevoir) | 5/5 | 4.41 | Gardevoir 79: 1.31 (Gardevoir) | 5/5 | 4.41 | Gardevoir 79: 1.31 (Gardevoir) | 5/5 | 3.66 |
+| Elite Four | Wally Vr 1 | 79 | 75 | Gardevoir 79: 1.31 (Gardevoir) | 5/5 | 3.16 | Gardevoir 79: 1.31 (Gardevoir) | 5/5 | 3.16 | Gardevoir 79: 1.31 (Gardevoir) | 5/5 | 2.70 |
 | Elite Four | Sidney | 80 | 76 | Mightyena 77: 2.32 (Slaking) | 5/5 | 2.32 | Mightyena 77: 2.50 (Blaziken) | 5/5 | 2.50 | Mightyena 77: 3.20 (Heracross) | 5/5 | 3.20 |
 | Elite Four | Phoebe | 81 | 76 | Dusknoir 81: 1.17 (Sceptile) | 5/5 | inf | Dusknoir 81: 0.89 (Blaziken) | 4/5 | inf | Dusknoir 81: 1.47 (Swampert) | 5/5 | inf |
 | Elite Four | Glacia | 82 | 76 | Walrein 82: 1.25 (Sceptile) | 5/5 | 2.88 | Walrein 82: 1.01 (Gardevoir) | 5/5 | 4.48 | Walrein 82: 1.82 (Heracross) | 5/5 | 5.39 |
 | Elite Four | Drake | 83 | 77 | Salamence 83: 1.37 (Walrein) | 5/5 | 3.68 | Salamence 83: 1.37 (Walrein) | 5/5 | 3.68 | Salamence 83: 1.34 (Swampert) | 5/5 | 3.68 |
 | Elite Four | Wallace | 86 | 78 | Gyarados 84: 0.85 (Gardevoir) | 5/6 | 2.38 | Milotic 86: 0.78 (Walrein) | 3/6 | 0.96 | Gyarados 84: 0.85 (Gardevoir) | 4/6 | 1.19 |
 
-Fights with a boss Pokemon the team has no answer of 1 for, hardest first: May Route 103 with Treecko (Torchic, 0.52); May Route 103 with Torchic (Mudkip, 0.55); May Route 103 with Mudkip (Treecko, 0.55); Wattson 1 with Torchic (Magneton, 0.57); Norman 1 with Treecko (Slaking, 0.71); Wallace with Torchic (Milotic, 0.78); Wallace with Treecko (Gyarados, 0.85); Wallace with Mudkip (Gyarados, 0.85); Phoebe with Torchic (Dusknoir, 0.89); Flannery 1 with Treecko (Torkoal, 0.99).
+Fights with a boss Pokemon the team has no answer of 1 for, hardest first: Norman 1 with Treecko (Slaking, 0.44); May Route 103 with Treecko (Torchic, 0.52); May Route 103 with Torchic (Mudkip, 0.55); May Route 103 with Mudkip (Treecko, 0.55); Wattson 1 with Torchic (Magneton, 0.57); Norman 1 with Mudkip (Slaking, 0.61); Norman 1 with Torchic (Slaking, 0.77); Wallace with Torchic (Milotic, 0.78); Wallace with Treecko (Gyarados, 0.85); Wallace with Mudkip (Gyarados, 0.85); Phoebe with Torchic (Dusknoir, 0.89); Flannery 1 with Treecko (Torkoal, 0.99).
 
 The stand-in teams at each stage's last boss, with their attacks:
 
