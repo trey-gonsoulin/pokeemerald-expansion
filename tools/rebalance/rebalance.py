@@ -418,8 +418,8 @@ def summarize_handwritten(changes, trainers):
     return out
 
 
-# Set moves no species or pre-evolution can learn that the data had before #145's
-# check: cause -> {note, moves [trainer, species, move]}.
+# Set moves allowed to break #145's learnable check (empty since #160):
+# group -> {note, moves [trainer, species, move]}.
 MOVE_ALLOWLIST = os.path.join(G.HERE, 'move_allowlist.json')
 
 
