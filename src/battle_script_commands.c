@@ -10044,7 +10044,7 @@ void BS_ClearMoveResultFlags(void)
 void BS_ClearSpecialStatuses(void)
 {
     NATIVE_ARGS();
-    memset(&gSpecialStatuses, 0, sizeof(gSpecialStatuses));
+    memset(gSpecialStatuses, 0, sizeof(gSpecialStatuses[0]) * MAX_BATTLERS_COUNT);
     gBattlescriptCurrInstr = cmd->nextInstr;
 }
 

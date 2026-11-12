@@ -1011,7 +1011,7 @@ void HandleAction_ActionFinished(void)
     gBattleStruct->monToSwitchIntoId[gBattlerByTurnOrder[gCurrentTurnActionNumber]] = gSelectedMonPartyId = PARTY_SIZE;
     gCurrentTurnActionNumber++;
     gCurrentActionFuncId = gActionsByTurnOrder[gCurrentTurnActionNumber];
-    memset(&gSpecialStatuses, 0, sizeof(gSpecialStatuses));
+    memset(gSpecialStatuses, 0, sizeof(gSpecialStatuses[0]) * MAX_BATTLERS_COUNT);
 
     gCurrentMove = MOVE_NONE;
     ClearDamageCalcResults(); // Relies on gCurrentMove
