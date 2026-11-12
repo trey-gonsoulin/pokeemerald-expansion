@@ -64,6 +64,7 @@ void Debug_BuildNameOrder(struct DebugNameOrder *order, u32 first, u32 last, Deb
 void Debug_FreeNameOrder(struct DebugNameOrder *order);
 u32 Debug_StepByName(const struct DebugNameOrder *order, u32 value, bool32 previous);
 u32 Debug_NextNameInitial(const struct DebugNameOrder *order, u32 value);
+bool32 Debug_FindNamePrefix(const struct DebugNameOrder *order, const u8 *prefix, u32 *value);
 
 // Flag and var constant names (DEBUG_FLAG_VAR_NAMES), from the generated src/data/debug_flag_var_names.h
 const u8 *Debug_GetFlagName(u32 flag);

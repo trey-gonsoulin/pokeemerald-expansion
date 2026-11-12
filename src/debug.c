@@ -258,6 +258,10 @@ struct DebugMenuListData
     // The sound test's song ID range, found once when it opens (#37)
     u16 firstSong;
     u16 lastSong;
+    // The name search (#122): the step's task data and window, kept while the keyboard is up, and the typed prefix
+    s16 searchTaskData[NUM_TASK_DATA];
+    struct WindowTemplate searchWindow;
+    u8 searchPrefix[DEBUG_NAME_SEARCH_LENGTH + 1];
 };
 
 struct DebugSelectionStep
@@ -318,7 +322,7 @@ EWRAM_DATA u64 gDebugAIFlags = 0;
 
 // *******************************
 // Define functions
-static void Debug_ShowMenu(DebugFunc HandleInput, const struct DebugMenuOption *items);
+static u8 Debug_ShowMenu(DebugFunc HandleInput, const struct DebugMenuOption *items);
 static u32 Debug_GenerateListBasicMenu(const struct DebugMenuOption *items);
 static u32 Debug_GenerateListTrainerMenu(const struct DebugMenuOption *items);
 static u32 Debug_GenerateListFlagsMenu(const struct DebugMenuOption *items);
@@ -342,6 +346,12 @@ static void DebugAction_ToggleFlag(u8 taskId, void *flagToggleFunc);
 
 static void DebugTask_HandleMenuInput_General(u8 taskId);
 static void DebugAction_Selection_StepUpdate(u8 taskId);
+static void DebugSelection_RedrawStep(u8 taskId, const struct DebugSelectionStep *selectionStep);
+static void DebugSelection_StartNameSearch(u8 taskId);
+static void DebugSelection_Task_OpenNameSearch(u8 taskId);
+static void CB2_Debug_ReturnFromNameSearch(void);
+static void DebugSelection_FieldCB_ReturnFromNameSearch(void);
+static void DebugSelection_ResumeAfterNameSearch(void);
 static void DebugAction_Selection_NextStep(u8 taskId);
 
 static void DebugAction_Util_Fly(u8 taskId);
@@ -1087,7 +1097,8 @@ static void DebugTask_StartMenuInput(u8 taskId)
     gTasks[taskId].func = sDebugMenuListData->pendingInputFunc;
 }
 
-static void Debug_ShowMenu(DebugFunc HandleInput, const struct DebugMenuOption *items)
+// Returns the input task's id
+static u8 Debug_ShowMenu(DebugFunc HandleInput, const struct DebugMenuOption *items)
 {
     struct ListMenuTemplate menuTemplate = {0};
     u8 windowId;
@@ -1145,6 +1156,7 @@ static void Debug_ShowMenu(DebugFunc HandleInput, const struct DebugMenuOption *
 
     // draw everything
     CopyWindowToVram(windowId, COPYWIN_FULL);
+    return inputTaskId;
 }
 
 // Closes a window whose id is stored in task data and marks it as gone, so
@@ -1503,6 +1515,20 @@ static void DebugSelection_SetNameOrderValue(u8 taskId, const struct DebugSelect
     gTasks[taskId].tInputStart = mapNum;
 }
 
+// Sorts the step's min..max by name, once per menu session. Warp's map step orders every map.
+static struct DebugNameOrder *DebugSelection_BuildNameOrder(const struct DebugSelectionStep *selectionStep, u32 min, u32 max)
+{
+    struct DebugNameOrder *sortedNames = &sDebugMenuListData->sortedNames[selectionStep->names];
+
+    if (selectionStep->names == DEBUG_STEP_NAMES_MAPS)
+    {
+        min = 0;
+        max = Debug_GetMapIndexCount() - 1;
+    }
+    Debug_BuildNameOrder(sortedNames, min, max, sDebugStepNameFuncs[selectionStep->names]);
+    return sortedNames;
+}
+
 // Start turns on name order and jumps to the next initial letter, and Up/Down then go A-Z (Down
 // goes back). Any other key turns name order off and returns FALSE, for the numeric input to handle.
 static bool32 DebugSelection_HandleInput_NameOrder(u8 taskId, const struct DebugSelectionStep *selectionStep, u32 min, u32 max)
@@ -1510,14 +1536,9 @@ static bool32 DebugSelection_HandleInput_NameOrder(u8 taskId, const struct Debug
     struct DebugNameOrder *sortedNames = &sDebugMenuListData->sortedNames[selectionStep->names];
     u32 input = DebugSelection_GetNameOrderValue(taskId, selectionStep);
 
-    if (selectionStep->names == DEBUG_STEP_NAMES_MAPS)
-    {
-        min = 0;
-        max = Debug_GetMapIndexCount() - 1;
-    }
     if (JOY_NEW(START_BUTTON))
     {
-        Debug_BuildNameOrder(sortedNames, min, max, sDebugStepNameFuncs[selectionStep->names]);
+        DebugSelection_BuildNameOrder(selectionStep, min, max);
         // With no names to order, Up/Down keep turning digits (Alloc never fails: it stops the game)
         sDebugMenuListData->nameOrder = sortedNames->count > 0;
         input = Debug_NextNameInitial(sortedNames, input);
@@ -1601,6 +1622,11 @@ static void DebugAction_Selection_StepUpdate(u8 taskId)
         }
         gTasks[taskId].func = DebugAction_Selection_Cancel;
     }
+    else if (DebugSelection_StepHasNames(selectionStep) && JOY_NEW(START_BUTTON) && JOY_HELD(SELECT_BUTTON))
+    {
+        PlaySE(SE_SELECT);
+        DebugSelection_StartNameSearch(taskId);
+    }
     else if (DEBUG_NUMERIC_INPUT_PRESSED() || (DebugSelection_StepHasNames(selectionStep) && JOY_NEW(START_BUTTON)))
     {
         u32 min, max;
@@ -1613,17 +1639,98 @@ static void DebugAction_Selection_StepUpdate(u8 taskId)
         // Holding Up/Down at min/max changes nothing, so don't beep or redraw every repeat
         if (DebugSelection_GetNameOrderValue(taskId, selectionStep) == oldValue && gTasks[taskId].tDigit == oldDigit && Debug_IsNameOrder() == oldNameOrder)
             return;
-        // Name order on Warp's map step can change the group, and with it the last map number's digits
-        if (selectionStep->names == DEBUG_STEP_NAMES_MAPS)
-        {
-            digits = DebugSelection_GetRange(taskId, selectionStep, &min, &max);
-            if (gTasks[taskId].tDigit >= digits)
-                gTasks[taskId].tDigit = digits - 1;
-        }
         PlaySE(SE_SELECT);
-        selectionStep->stepUpdate(taskId, digits, min, max);
+        DebugSelection_RedrawStep(taskId, selectionStep);
         return;
     }
+}
+
+// Redraws the step after its value changed. Name order on Warp's map step can change the group,
+// and with it the last map number's digits.
+static void DebugSelection_RedrawStep(u8 taskId, const struct DebugSelectionStep *selectionStep)
+{
+    u32 min, max;
+    u32 digits = DebugSelection_GetRange(taskId, selectionStep, &min, &max);
+
+    if (gTasks[taskId].tDigit >= digits)
+        gTasks[taskId].tDigit = digits - 1;
+    selectionStep->stepUpdate(taskId, digits, min, max);
+}
+
+// Select + Start on a named step types the start of a name on the naming screen's keyboard (#122).
+// The naming screen leaves the field, so this takes the menu down but keeps its data, with the
+// step's task data and window, and DebugSelection_ResumeAfterNameSearch puts them back.
+static void DebugSelection_StartNameSearch(u8 taskId)
+{
+    memcpy(sDebugMenuListData->searchTaskData, gTasks[taskId].data, sizeof(sDebugMenuListData->searchTaskData));
+    sDebugMenuListData->searchWindow = gWindows[gTasks[taskId].tSubWindowId].window;
+    sDebugMenuListData->searchPrefix[0] = EOS;
+    FadeScreen(FADE_TO_BLACK, 0);
+    gTasks[taskId].func = DebugSelection_Task_OpenNameSearch;
+}
+
+static void DebugSelection_Task_OpenNameSearch(u8 taskId)
+{
+    if (gPaletteFade.active)
+        return;
+    Debug_DestroyMenu(taskId);
+    DoNamingScreen(NAMING_SCREEN_DEBUG_SEARCH, sDebugMenuListData->searchPrefix, 0, 0, 0, CB2_Debug_ReturnFromNameSearch);
+}
+
+static void CB2_Debug_ReturnFromNameSearch(void)
+{
+    gFieldCallback = DebugSelection_FieldCB_ReturnFromNameSearch;
+    CB2_ReturnToField();
+}
+
+// The field is back as the debug menu left it: controls locked and objects frozen
+static void DebugSelection_FieldCB_ReturnFromNameSearch(void)
+{
+    LockPlayerFieldControls();
+    FreezeObjectEvents();
+    FadeInFromBlack();
+    DebugSelection_ResumeAfterNameSearch();
+}
+
+// Takes input once the field has faded in
+static void DebugSelection_Task_WaitForFadeIn(u8 taskId)
+{
+    if (IsWeatherNotFadingIn())
+        gTasks[taskId].func = DebugAction_Selection_StepUpdate;
+}
+
+// Shows the menu and the step again, then jumps to the first name that starts with the typed
+// prefix, with name order on. No name with it plays the failure sound, and an empty one changes nothing.
+static void DebugSelection_ResumeAfterNameSearch(void)
+{
+    u8 taskId = Debug_ShowMenu(DebugSelection_Task_WaitForFadeIn, NULL);
+    s16 menuTaskId = gTasks[taskId].tMenuTaskId, windowId = gTasks[taskId].tWindowId;
+    SelectionStep selectionStep;
+    u32 min, max, value;
+
+    // The windows and the icon went with the field: only the new menu's ids are good
+    memcpy(gTasks[taskId].data, sDebugMenuListData->searchTaskData, sizeof(sDebugMenuListData->searchTaskData));
+    gTasks[taskId].tMenuTaskId = menuTaskId;
+    gTasks[taskId].tWindowId = windowId;
+    gTasks[taskId].tSubWindowId = WINDOW_NONE;
+    gTasks[taskId].tSpriteId = SPRITE_NONE;
+    Debug_CreateInputDisplayWindowFromTemplate(taskId, &sDebugMenuListData->searchWindow);
+
+    selectionStep = ((struct DebugSelection *)GetWordTaskArg(taskId, DEBUG_SELECTION_PTR_ARG))->steps[gTasks[taskId].tStep];
+    if (sDebugMenuListData->searchPrefix[0] != EOS)
+    {
+        DebugSelection_GetRange(taskId, selectionStep, &min, &max);
+        if (Debug_FindNamePrefix(DebugSelection_BuildNameOrder(selectionStep, min, max), sDebugMenuListData->searchPrefix, &value))
+        {
+            DebugSelection_SetNameOrderValue(taskId, selectionStep, value);
+            sDebugMenuListData->nameOrder = TRUE;
+        }
+        else
+        {
+            PlaySE(SE_FAILURE);
+        }
+    }
+    DebugSelection_RedrawStep(taskId, selectionStep);
 }
 
 static void DebugAction_Selection_NextStep(u8 taskId)
