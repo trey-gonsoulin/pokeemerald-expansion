@@ -222,6 +222,9 @@ def load_stages(path, trainers, repo):
 
 FORCED_TRAINERS = os.path.join(G.HERE, 'forced_trainers.json')
 Forced = collections.namedtuple('Forced', 'trainers optional_bosses')
+# The report flags a staged boss whose ace the skip-everything lead meets
+# more than this percent of the ace under (#350).
+OUTLIER_SKIP = 25
 
 
 def load_forced(path):
@@ -1436,9 +1439,11 @@ def curve_snapshot(stages, trainers, gd, scaling, wilds, info, postgame, forced=
     """share_run's inputs as JSON data (output/curve_data.json), so the
     explorer runs the same model without the repo: the story stages and
     their trainers, the rematch ladders (rematch_ladders) and theirs, the
-    exp yields, the level evolutions, the scaling table, both regimes' land
-    slots (the only ones share_run reads) and the config defines, and with
-    ``forced`` (a Forced, #350) the skip player's trainers and bosses."""
+    exp yields, the level evolutions, each team Pokemon's devolve line (its
+    forms back down the line, with their min levels: what devolver reads),
+    the scaling table, both regimes' land slots (the only ones share_run
+    reads) and the config defines, and with ``forced`` (a Forced, #350) the
+    skip player's trainers and bosses."""
     story = sorted({t for st in stages for t in st['regular'] + st['bosses']}
                    | {t for kind in ('boss', 'regular') for lad in postgame[kind] for t in lad}
                    | set(postgame['final']))
@@ -1450,6 +1455,9 @@ def curve_snapshot(stages, trainers, gd, scaling, wilds, info, postgame, forced=
         'exp_yield': {sp: s.exp_yield for sp, s in gd.species.items()},
         'alias': info.alias,
         'evolutions': {sp: lv for sp, evos in info.evos.items() if (lv := [e for e in evos if e[0] == 'EVO_LEVEL'])},
+        'devolve_lines': {sp: [[f, info.min_level(f)] for f in line]
+                          for sp in sorted({m.species for t in story for m in trainers[t].mons})
+                          if len(line := info.devolve_line(sp, 0)) > 1},
         'scaling': scaling,
         'wilds': {regime: {i: [(field, {k: slot[k] for k in ('species', 'min_level', 'max_level')}, rate)
                                for field, slot, rate in slots if field == 'land_mons']
@@ -1464,8 +1472,8 @@ def curve_snapshot(stages, trainers, gd, scaling, wilds, info, postgame, forced=
 
 def load_snapshot(data):
     """curve_snapshot's data back as share_run's inputs: {stages, trainers,
-    gd, scaling, wilds, evolve, postgame, forced (a Forced, or None)}, as
-    explore_run takes them."""
+    gd, scaling, wilds, evolve, devolve, postgame, forced (a Forced, or
+    None)}, as explore_run takes them."""
     gd = G.GameData.from_parts(data['defines'], {sp: G.Species((), {}, y, '', '')
                                                  for sp, y in data['exp_yield'].items()})
     trainers = {t: G.Trainer(t, '', v['class'], [], False,
@@ -1474,8 +1482,19 @@ def load_snapshot(data):
     info = G.R.SpeciesInfo.from_evolutions(data['alias'], data['evolutions'])
     wilds = {regime: {int(i): slots for i, slots in by_stage.items()} for regime, by_stage in data['wilds'].items()}
     forced = data.get('forced')
+
+    def devolve_line(species, level):
+        """SpeciesInfo.devolve_line from the stored line: its forms while the last's min level is over ``level``."""
+        line = data['devolve_lines'].get(species, [[species, 0]])
+        out = [species]
+        for (_, need), (form, _) in zip(line, line[1:]):
+            if need <= level:
+                break
+            out.append(form)
+        return out
     return {'stages': data['stages'], 'trainers': trainers, 'gd': gd, 'scaling': data['scaling'],
             'wilds': wilds, 'evolve': evolver(info, gd), 'postgame': data['postgame'],
+            'devolve': devolver(types.SimpleNamespace(devolve_line=devolve_line), gd),
             'forced': forced and Forced(*(frozenset(forced[k]) for k in Forced._fields))}
 
 
@@ -1547,15 +1566,20 @@ def explore_run(snap, knobs=None):
 
 
 def print_curve(res):
-    """explore_run's result as text tables, for the ``curve`` command."""
-    print(table(['boss', 'stage', 'boss ace (now)', 'raise', 'boss ace', 'party levels', 'reference'],
-                [[r['name'], r['stage'], r['base_ace'], f"+{r['raise']}", r['boss_ace'],
-                  ' '.join(map(str, r['levels'])), r['ref']] for r in res['bosses']]))
+    """explore_run's result as text tables, for the ``curve`` command (with
+    the skip player's columns when the data has it, #350)."""
+    skip = bool(res['bosses']) and 'skip_ref' in res['bosses'][0]
+    print(table(['boss', 'stage', 'boss ace (now)', 'raise', 'boss ace', 'party levels', 'reference']
+                + ['skip party levels', 'skip reference'] * skip,
+                [[r['name'], r['stage'], r['base_ace'], f"{r['raise']:+}", r['boss_ace'],
+                  ' '.join(map(str, r['levels'])), r['ref']]
+                 + ([' '.join(map(str, r['skip_levels'])) if r['skip_levels'] else 'skipped', r['skip_ref'] or '-']
+                    if skip else []) for r in res['bosses']]))
     print()
     print(table(['stage', 'reference at start', 'trainers', 'trainer raise', 'trainer ace mean', 'gap when fought',
-                 'wild offset', 'wild land mean'],
-                [[s['stage'], round(s['start_ref'], 1), s['trainers'], f"+{s['raise']}", s['trainer_ace_mean'],
-                  s['gap'], s['wild_offset'], s['wild_land_mean']] for s in res['stages']]))
+                 'wild offset', 'wild land mean'] + ['skip gap'] * skip,
+                [[s['stage'], round(s['start_ref'], 1), s['trainers'], f"{s['raise']:+}", s['trainer_ace_mean'],
+                  s['gap'], s['wild_offset'], s['wild_land_mean']] + [s['skip_gap']] * skip for s in res['stages']]))
     if res['rematches']:
         ladders = {}
         for r in res['rematches']:
@@ -1885,6 +1909,45 @@ def matchup_report(mu):
     return out
 
 
+def two_players(bosses, stages):
+    """Per staged boss in explore_run's ``bosses`` rows (with the skip
+    player, #350): its ace, each player's lead (the KO-taker, ``full`` and
+    ``skip``, None when the skip player skips the boss), how far each sits
+    from the ace in percent of the ace, and ``outlier``: the skip lead more
+    than OUTLIER_SKIP percent under."""
+    staged = {b for st in stages for b in st['bosses']}
+    out = []
+    for r in bosses:
+        if r['boss'] not in staged:
+            continue
+        ace, full = r['boss_ace'], r['levels'][0]
+        skip = r['skip_levels'][0] if r['skip_levels'] else None
+        skip_pct = None if skip is None else (skip - ace) * 100 / ace
+        out.append({'stage': r['stage'], 'boss': r['boss'], 'ace': ace, 'full': full,
+                    'full_pct': round((full - ace) * 100 / ace, 1), 'skip': skip,
+                    'skip_pct': None if skip is None else round(skip_pct, 1),
+                    'outlier': skip_pct is not None and skip_pct < -OUTLIER_SKIP})
+    return out
+
+
+def two_players_report(rows):
+    """The ``## Two players`` section for two_players' rows (none without the forced data)."""
+    if rows is None:
+        return []
+    return ['## Two players', '',
+            'The Exp. Share lead (the KO-taker) just before each staged boss, on today\'s levels: '
+            'curve_settings.json\'s knobs with the level rules (margins and gaps) off. Fight everyone: every '
+            'story trainer and both optional rivals. Skip everything: forced_trainers.json\'s FORCED trainers, '
+            'the first of each choose-one group and the required bosses, with the same walking, catches and '
+            'wild battles. %: the lead over the boss\'s ace, in percent of the ace. outlier: the skip lead more '
+            f'than {OUTLIER_SKIP}% under (#350).', '',
+            table(['boss', 'ace', 'full lead', '%', 'skip lead', '%', 'flag'],
+                  [[short(r['boss']), r['ace'], r['full'], f"{r['full_pct']:+.0f}%",
+                    'skipped' if r['skip'] is None else r['skip'],
+                    '-' if r['skip_pct'] is None else f"{r['skip_pct']:+.0f}%", 'outlier' if r['outlier'] else '']
+                   for r in rows]), '']
+
+
 def write_report(path, res):
     c, d, h, curve = res['census'], res['defaults'], res['handwritten'], res['level_curve']
     out = ['# Rebalance measurements (#113)', '',
@@ -1920,6 +1983,7 @@ def write_report(path, res):
                                  r['vanilla_rotate4'], r['modern_solo'], r['modern_rotate4'], r['modern_share6'],
                                  r['modern_share6_bench']] for r in rows]), '']
     out += share_report(res['share_curve'], res['raised_defaults'], res['stage_trainers'])
+    out += two_players_report(res['two_players'])
 
     out += ['## Default movesets (Gen 3 vs Gen 9 learnsets)', '',
             table(['measure', 'value'], [
@@ -2082,7 +2146,9 @@ def combat_power(trainers, gd, stages, share):
             'bosses': bosses}
 
 
-def analyze(repo, stages_path):
+def analyze(repo, stages_path, forced_path=FORCED_TRAINERS):
+    """Everything the report shows; ``forced_path`` gives the skip player
+    (two_players, and the explorer's snapshot), None for none."""
     gd = G.load(repo)
     trainers = G.parse_trainers(os.path.join(repo, 'src', 'data', 'trainers.party'))
     stages = load_stages(stages_path, trainers, repo)
@@ -2106,6 +2172,14 @@ def analyze(repo, stages_path):
         out = info.evolve(species, level, grace=0)
         return out if out in m.species else species
     bench_rows = {r['boss']: r for r in share[POWER_BENCH[0]]['now'][POWER_BENCH[1]]}
+    forced = load_forced(forced_path) if forced_path else None
+    two = None
+    if forced is not None:
+        with open(CURVE_SETTINGS, encoding='utf-8') as f:
+            knobs = {k: v for k, v in json.load(f).items() if k not in CURVE_RULES}
+        snap = {'stages': stages, 'trainers': trainers, 'gd': m, 'scaling': base_scaling, 'wilds': wilds,
+                'evolve': evolver(info, m), 'devolve': devolver(info, m), 'postgame': ladders, 'forced': forced}
+        two = two_players(explore_run(snap, knobs)['bosses'], stages)
     return {
         'census': census(trainers),
         'story_trainers': len(story),
@@ -2127,7 +2201,8 @@ def analyze(repo, stages_path):
         'tms': tm_availability(repo, stages, gd),
         'wild': wild_availability(wilds, stages, gd),
         'economy': economy(stages, trainers, gd, G.parse_class_money(repo)),
-        'curve_data': curve_snapshot(stages, trainers, gd['modern'], base_scaling, wilds, info, ladders),
+        'curve_data': curve_snapshot(stages, trainers, m, base_scaling, wilds, info, ladders, forced),
+        'two_players': two,
         'nonlevel': nonlevel_candidates(trainers, set(boss_teams(stages, ladders)), evolver(info, gd['modern']),
                                         evolver(info, gd['modern'], nonlevel=True)),
     }
@@ -2140,6 +2215,8 @@ def analyze(repo, stages_path):
 # The owner's explorer settings (#151) that the data is built for: apply
 # writes them, and a test checks the data still asks nothing more of them.
 CURVE_SETTINGS = os.path.join(G.HERE, 'curve_settings.json')
+# The knobs that set levels: two_players' run turns them off, to measure the data as it is.
+CURVE_RULES = ('margin', 'trainer_gap', 'wild_gap', 'rematch_step', 'full_margin', 'skip_margin')
 # restock's wild level offsets (map -> table field -> levels over vanilla), which apply writes.
 LEVEL_OFFSETS = os.path.relpath(G.R.AA.LEVEL_OFFSETS, G.R.AA.REPO)
 RESTOCK_SETTINGS = os.path.relpath(G.R.AA.RESTOCK_SETTINGS, G.R.AA.REPO)
@@ -2151,10 +2228,11 @@ SURF_STAGE = 'Winona'
 PARTNER_FIGHTS = {'PARTNER_STEVEN': ('TRAINER_MAXIE_MOSSDEEP', 'TRAINER_TABITHA_MOSSDEEP')}
 
 
-def repo_inputs(repo, stages_path=DEFAULT_STAGES, info=None, forced_path=None):
+def repo_inputs(repo, stages_path=DEFAULT_STAGES, info=None, forced_path=FORCED_TRAINERS):
     """explore_run's inputs parsed from ``repo`` (load_snapshot's, plus the
-    stages' rival variants and ``devolve``); ``info``, a restock.SpeciesInfo,
-    for the evolutions and devolutions; ``forced_path`` (FORCED_TRAINERS) for the skip player."""
+    stages' rival variants); ``info``, a restock.SpeciesInfo, for the
+    evolutions and devolutions; ``forced_path`` for the skip player (None
+    for none)."""
     gd = G.load(repo)['modern']
     trainers = G.parse_trainers(os.path.join(repo, 'src', 'data', 'trainers.party'))
     stages = load_stages(stages_path, trainers, repo)

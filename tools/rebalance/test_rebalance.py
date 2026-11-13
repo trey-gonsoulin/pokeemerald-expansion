@@ -6,6 +6,7 @@
 import contextlib
 import copy
 import fnmatch
+import functools
 import io
 import json
 import os
@@ -25,6 +26,8 @@ import rebalance as RB  # noqa: E402
 
 FIXTURE = os.path.join(G.HERE, 'testdata', 'repo')
 FIXTURE_STAGES = os.path.join(G.HERE, 'testdata', 'stages.json')
+# Names no fixture trainer, so its skip player fights the bosses alone and skips Leader X (#350).
+FIXTURE_FORCED = os.path.join(G.HERE, 'testdata', 'forced_trainers.json')
 
 
 def fake_regime(**overrides):
@@ -34,7 +37,8 @@ def fake_regime(**overrides):
     return types.SimpleNamespace(flag=lambda expr: G.R.c_eval(expr, defines))
 
 
-curve_inputs = RB.repo_inputs
+# The fixture's inputs without the real forced trainers, which name none of its trainers.
+curve_inputs = functools.partial(RB.repo_inputs, forced_path=None)
 
 
 class Expressions(unittest.TestCase):
@@ -767,7 +771,7 @@ class Matchup(unittest.TestCase):
 class Analysis(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.res = RB.analyze(FIXTURE, FIXTURE_STAGES)
+        cls.res = RB.analyze(FIXTURE, FIXTURE_STAGES, FIXTURE_FORCED)
 
     def test_matchup_skips_starters_the_data_lacks(self):
         self.assertEqual(self.res['matchup'], {'starters': [], 'fights': []})
@@ -1006,6 +1010,7 @@ class Analysis(unittest.TestCase):
             with contextlib.redirect_stdout(text):
                 self.assertEqual(RB.main(['curve', '{"ko_takers": 6}', '--data', data]), 0)
             self.assertIn('Leader X', text.getvalue())
+            self.assertIn('skip reference', text.getvalue())  # the data has the forced trainers (#350)
             knobs = os.path.join(out, 'knobs.json')
             with open(knobs, 'w', encoding='utf-8') as f:
                 f.write('{"margin": 1}')
@@ -1013,6 +1018,40 @@ class Analysis(unittest.TestCase):
             with contextlib.redirect_stdout(text):
                 self.assertEqual(RB.main(['curve', knobs, '--data', data]), 0)
             self.assertIn('Lv 100 by: -', text.getvalue())
+
+    def test_report_has_two_players_section(self):
+        # The skip player passes the hiker by, so it meets the rival lower, and skips Leader X.
+        rival, leader = self.res['two_players']
+        self.assertEqual((rival['boss'], leader['boss']), ('TRAINER_RIVAL_A', 'TRAINER_LEADER_X'))
+        self.assertLess(rival['skip'], rival['full'])
+        self.assertEqual(rival['skip_pct'], round((rival['skip'] - rival['ace']) * 100 / rival['ace'], 1))
+        self.assertIsNone(leader['skip'])
+        self.assertIsNone(leader['skip_pct'])
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, 'report.md')
+            RB.write_report(path, self.res)
+            with open(path, encoding='utf-8') as f:
+                section = f.read().split('## Two players\n', 1)[1].split('\n## ', 1)[0]
+        self.assertIn('| boss | ace | full lead | % | skip lead | % | flag |', section)
+        pct = (rival['full'] - rival['ace']) * 100 / rival['ace']
+        self.assertIn(f"| Rival A | {rival['ace']} | {rival['full']} | {pct:+.0f}% | {rival['skip']} |", section)
+        self.assertIn(f"| Leader X | {leader['ace']} | {leader['full']} |", section)
+        self.assertIn('| skipped | - |  |', section)
+
+    def test_outlier_flag_at_25_percent(self):
+        def row(bid, ace, full, skip, stage='One'):
+            return {'stage': stage, 'boss': bid, 'boss_ace': ace, 'levels': [full, 1],
+                    'skip_levels': None if skip is None else [skip, 1]}
+        stages = [{'name': 'One', 'bosses': ['TRAINER_A', 'TRAINER_B', 'TRAINER_C', 'TRAINER_D']}]
+        rows = RB.two_players([row('TRAINER_A', 100, 110, 75), row('TRAINER_B', 100, 110, 74),
+                               row('TRAINER_C', 38, 39, 26), row('TRAINER_D', 20, 22, None),
+                               row('TRAINER_STEVEN', 100, 90, 10, 'Post-game')], stages)
+        self.assertEqual(RB.OUTLIER_SKIP, 25)
+        self.assertEqual([r['boss'] for r in rows], ['TRAINER_A', 'TRAINER_B', 'TRAINER_C', 'TRAINER_D'])
+        self.assertEqual([r['skip_pct'] for r in rows], [-25.0, -26.0, -31.6, None])
+        self.assertEqual([r['full_pct'] for r in rows], [10.0, 10.0, 2.6, 10.0])
+        # More than 25% under: -25% exactly is not flagged; Tabitha at Mt Chimney's -32% is.
+        self.assertEqual([r['outlier'] for r in rows], [False, True, True, False])
 
 
 def team(tid, cls, *levels, species='SPECIES_SABLEYE'):
@@ -1401,12 +1440,16 @@ class RealRepo(unittest.TestCase):
     def test_committed_curve_data_runs_the_repo_model(self):
         """output/curve_data.json (the explorer's data) gives the curve the
         repo's own data gives: rerun rebalance.py after a data change."""
-        live = curve_inputs(G.REPO, RB.DEFAULT_STAGES, G.R.SpeciesInfo(G.REPO))
+        live = RB.repo_inputs(G.REPO, RB.DEFAULT_STAGES, G.R.SpeciesInfo(G.REPO))
+        self.assertTrue(live['forced'])
         with open(os.path.join(RB.DEFAULT_OUT_DIR, RB.CURVE_DATA), encoding='utf-8') as f:
             snap = RB.load_snapshot(json.load(f))
         for knobs in ({}, {'ko_takers': 6, 'boss_ref': 'party_mean', 'margin': 1, 'trainer_gap': 5, 'wild_gap': 10},
                       {'scaled_exp': False, 'trainer_exp': '1.5x on', 'affection': 'always', 'wild_battles': 5},
-                      {'margin': 5, 'gap_unit': 'percent', 'trainer_gap': 10, 'rematch_step': 5}):
+                      {'margin': 5, 'gap_unit': 'percent', 'trainer_gap': 10, 'rematch_step': 5},
+                      # #350: the two players, lowering (and devolving) the bosses and trainers.
+                      {'full_margin': 10, 'skip_margin': 15, 'lower': True, 'gap_unit': 'percent',
+                       'trainer_gap': 10, 'wild_gap': 20}):
             self.assertEqual(RB.explore_run(snap, knobs), RB.explore_run(live, knobs), knobs)
 
     def test_stage_bosses_exist(self):
@@ -1531,7 +1574,7 @@ class RealMoveReplacement(unittest.TestCase):
 
 
 class TwoPlayers(unittest.TestCase):
-    FORCED = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'testdata', 'forced_trainers.json')
+    FORCED = FIXTURE_FORCED
 
     @staticmethod
     def stages():
@@ -1746,6 +1789,30 @@ class TwoPlayers(unittest.TestCase):
             *(live[k] for k in ('stages', 'trainers', 'gd', 'scaling', 'wilds')),
             G.R.SpeciesInfo.from_evolutions({}, {}), live['postgame']))
         self.assertNotIn('skip_ref', RB.explore_run(self.inputs, knobs)['bosses'][0])
+
+    def test_snapshot_devolves_as_the_repo_inputs(self):
+        # The fixture has no evolutions: give Sableye a line (Ralts, Magikarp at 8, Sableye at 15).
+        info = G.R.SpeciesInfo.from_evolutions({}, {
+            'SPECIES_RALTS': [('EVO_LEVEL', '8', 'SPECIES_MAGIKARP', [])],
+            'SPECIES_MAGIKARP': [('EVO_LEVEL', '15', 'SPECIES_SABLEYE', [])]})
+        live = curve_inputs(FIXTURE, FIXTURE_STAGES, info, forced_path=FIXTURE_FORCED)
+        data = json.loads(json.dumps(RB.curve_snapshot(
+            *(live[k] for k in ('stages', 'trainers', 'gd', 'scaling', 'wilds')), info, live['postgame'],
+            forced=live['forced'])))
+        self.assertEqual(data['devolve_lines'], {
+            'SPECIES_MAGIKARP': [['SPECIES_MAGIKARP', 8], ['SPECIES_RALTS', 1]],
+            'SPECIES_SABLEYE': [['SPECIES_SABLEYE', 15], ['SPECIES_MAGIKARP', 8], ['SPECIES_RALTS', 1]]})
+        snap = RB.load_snapshot(data)
+        for level in range(1, 25):
+            for species in ('SPECIES_SABLEYE', 'SPECIES_MAGIKARP', 'SPECIES_MR_MIME'):
+                for taken in ((), {'SPECIES_RALTS'}):
+                    self.assertEqual(snap['devolve'](species, level, taken), live['devolve'](species, level, taken),
+                                     (species, level, taken))
+        # apply's path (repo_inputs) and the explorer's give the same rows, lowered and devolved.
+        for knobs in ({**self.MARGINS, 'lower': True}, {**self.MARGINS, 'lower': True, 'trainer_gap': 0}):
+            self.assertEqual(RB.explore_run(snap, knobs), RB.explore_run(live, knobs), knobs)
+        # The hiker's lowered Sableye (20 -> 5) devolves into a Ralts, which gives the rival's party less exp.
+        self.assertNotEqual(RB.explore_run(snap, knobs), RB.explore_run(dict(live, devolve=None), knobs))
 
 
 if __name__ == '__main__':

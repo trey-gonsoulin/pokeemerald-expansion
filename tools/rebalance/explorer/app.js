@@ -13,7 +13,8 @@ const REFS = {
 // key -> control. type: range, optional (a range with an on/off box; off
 // sends null), select, check. help is the line under the control. A knob
 // with a unit (the key of a levels/percent select) takes its range from pct
-// in percent, and fmt gets the unit's suffix.
+// in percent, and fmt gets the unit's suffix. Two optional knobs with each
+// other's key as pair go on and off together (share_run takes both or neither).
 const KNOBS = [
     { group: 'Play style' },
     { key: 'ko_takers', label: 'KO rotation', type: 'range', min: 1, max: 6, step: 1,
@@ -58,9 +59,17 @@ const KNOBS = [
     { key: 'gap_unit', label: 'Margin and gaps in', type: 'select', options: UNITS('the reference level') },
     { key: 'margin', label: 'Boss margin', type: 'optional', min: -3, max: 8, step: 1,
       unit: 'gap_unit', pct: [-5, 20, 1], fmt: (v, u) => `ace ${v >= 0 ? '+' : ''}${v}${u}`,
-      help: 'Raise each boss (never lower) so its ace sits this far above the reference. Off: today\'s levels.' },
+      help: 'Raise each boss (never lower, unless Lower levels too is on) so its ace sits this far above the reference. Off: today\'s levels.' },
     { key: 'league_steps', label: 'Elite Four spacing', type: 'check',
       help: 'With the margin: each Elite Four member at least 1 above the last, Wallace 3 above Drake.' },
+    { key: 'full_margin', label: 'Fight-everyone margin', type: 'optional', min: 0, max: 20, step: 1,
+      pair: 'skip_margin', fmt: v => `lead ${v}% over the ace`,
+      help: 'With the skip-everything margin, replaces the boss margin: each staged boss\'s ace sits where a player who fights every trainer has their lead this far over it (in percent of the ace), or lower for the skip-everything margin. The two go on and off together.' },
+    { key: 'skip_margin', label: 'Skip-everything margin', type: 'optional', min: 0, max: 30, step: 1,
+      pair: 'full_margin', fmt: v => `lead ${v}% under the ace`,
+      help: 'A player who skips every trainer they can (forced_trainers.json: the forced ones, one of each choose-one group, the required bosses) meets each boss they fight with their lead this far under its ace, where that puts the ace lower.' },
+    { key: 'lower', label: 'Lower levels too', type: 'check',
+      help: 'The margins and the route trainer and wild gaps move levels down as well as up (wild tables down to vanilla). A lowered Pokémon devolves to the form that fits, with Evolve on.' },
     { key: 'trainer_gap', label: 'Route trainer gap', type: 'optional', min: 0, max: 15, step: 1,
       unit: 'gap_unit', pct: [0, 40, 1], fmt: (v, u) => `${v}${u} below`,
       help: 'Raise each stage\'s ordinary trainers until their aces average this far below the reference when fought.' },
@@ -108,6 +117,8 @@ function buildControls() {
         row.innerHTML = `<label>${k.label} <output></output></label><div class="control">${control}</div>`
             + (k.help ? `<p class="help">${k.help}</p>` : '');
         row.addEventListener('input', () => {
+            if (k.pair)
+                pairOn(k, row.querySelector('.on').checked);
             showValue(k, row);
             for (const d of KNOBS.filter(d => d.unit === k.key))
                 applyUnit(d);
@@ -115,6 +126,13 @@ function buildControls() {
         });
         panel.append(row);
     }
+}
+
+// Turns knob k's pair on or off with it.
+function pairOn(k, on) {
+    const other = $(`.knob[data-key="${k.pair}"]`);
+    other.querySelector('.on').checked = on;
+    showValue(KNOBS.find(d => d.key === k.pair), other);
 }
 
 const inPercent = k => k.unit && $(`.knob[data-key="${k.unit}"] select`).value === 'percent';
@@ -166,6 +184,9 @@ function setKnobs(knobs) {
         }
         showValue(k, row);
     }
+    // Settings with one of a pair on (a hand-edited box or URL) turn the other on at its slider's value.
+    for (const k of keyed.filter(k => k.pair && knobs[k.key] !== null))
+        pairOn(k, true);
 }
 
 function showValue(k, row) {
@@ -261,6 +282,8 @@ function draw(res) {
         { label: `Party: ${refName}`, data: res.bosses.map(b => b.ref), borderColor: '#2471a3', borderWidth: 2.5 },
         { label: `Party: ${refName}, default knobs`, data: today ? today.bosses.map(b => b.refs[res.knobs.boss_ref]) : [],
           borderColor: '#2471a3', borderDash: [6, 4], borderWidth: 1.5 },
+        { label: `Skip-everything party: ${refName}`, data: res.bosses.map(b => b.skip_ref ?? null),
+          borderColor: '#8e44ad', borderWidth: 2 },
         { label: 'Party: highest', data: res.bosses.map(b => Math.max(...b.levels)), borderColor: '#85c1e9',
           borderWidth: 1, pointRadius: 0 },
         { label: 'Party: lowest', data: res.bosses.map(b => Math.min(...b.levels)), borderColor: '#85c1e9',
@@ -308,7 +331,8 @@ function drawTables(res) {
         + (res.lv100 ? ` · <b class="warn">Lv 100 by ${res.lv100}</b>` : '');
     $('#bosses tbody').innerHTML = res.bosses.map(b => `<tr><td>${b.name}</td><td>${b.stage}</td><td>${b.base_ace}</td>
         <td>${b.raise ? '+' + b.raise : ''}</td><td><b>${b.boss_ace}</b></td>
-        <td>${Math.min(...b.levels)}–${Math.max(...b.levels)}</td><td>${b.ref}</td></tr>`).join('');
+        <td>${Math.min(...b.levels)}–${Math.max(...b.levels)}</td><td>${b.ref}</td>
+        <td>${b.skip_ref ?? ''}</td></tr>`).join('');
     $('#stages tbody').innerHTML = res.stages.map(s => `<tr><td>${s.stage}</td><td>${+s.start_ref.toFixed(1)}</td>
         <td>${s.trainers}</td><td>${s.raise ? '+' + s.raise : ''}</td><td>${s.trainer_ace_mean ?? ''}</td>
         <td>${s.gap ?? ''}${s.gap !== null && res.knobs.gap_unit === 'percent' ? '%' : ''}</td><td>${s.wild_offset ? '+' + s.wild_offset : ''}</td>

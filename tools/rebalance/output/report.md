@@ -334,6 +334,43 @@ Full clear: 22 of 30 bosses have the bench (friendship) within 1 of their ace; t
 
 20 raised boss Pokemon are on default moves; 0 get a different moveset or flags at the raised level (the flags as in "Default movesets" below).
 
+## Two players
+
+The Exp. Share lead (the KO-taker) just before each staged boss, on today's levels: curve_settings.json's knobs with the level rules (margins and gaps) off. Fight everyone: every story trainer and both optional rivals. Skip everything: forced_trainers.json's FORCED trainers, the first of each choose-one group and the required bosses, with the same walking, catches and wild battles. %: the lead over the boss's ace, in percent of the ace. outlier: the skip lead more than 25% under (#350).
+
+| boss | ace | full lead | % | skip lead | % | flag |
+|---|---|---|---|---|---|---|
+| May Route 103 Mudkip | 6 | 7 | +17% | 7 | +17% |  |
+| Roxanne 1 | 16 | 16 | +0% | 13 | -19% |  |
+| May Rustboro Mudkip | 18 | 19 | +6% | skipped | - |  |
+| Brawly 1 | 19 | 19 | +0% | 16 | -16% |  |
+| May Route 110 Mudkip | 26 | 25 | -4% | 21 | -19% |  |
+| Wally Mauville | 26 | 25 | -4% | 23 | -12% |  |
+| Wattson 1 | 26 | 26 | +0% | 23 | -12% |  |
+| Tabitha Mt Chimney | 38 | 39 | +3% | 26 | -32% | outlier |
+| Maxie Mt Chimney | 39 | 40 | +3% | 30 | -23% |  |
+| Flannery 1 | 39 | 41 | +5% | 32 | -18% |  |
+| Norman 1 | 41 | 43 | +5% | 36 | -12% |  |
+| May Route 119 Mudkip | 56 | 56 | +0% | 43 | -23% |  |
+| Shelly Weather Institute | 56 | 56 | +0% | 45 | -20% |  |
+| Winona 1 | 57 | 57 | +0% | 46 | -19% |  |
+| May Lilycove Mudkip | 66 | 66 | +0% | skipped | - |  |
+| Tabitha Magma Hideout | 66 | 67 | +2% | 55 | -17% |  |
+| Maxie Magma Hideout | 67 | 68 | +2% | 56 | -16% |  |
+| Matt | 67 | 68 | +2% | 57 | -15% |  |
+| Tate And Liza 1 | 67 | 69 | +3% | 58 | -13% |  |
+| Tabitha Mossdeep | 75 | 75 | +0% | 61 | -19% |  |
+| Maxie Mossdeep | 75 | 75 | +0% | 62 | -17% |  |
+| Shelly Seafloor Cavern | 75 | 76 | +1% | 63 | -16% |  |
+| Archie | 75 | 76 | +1% | 64 | -15% |  |
+| Juan 1 | 76 | 76 | +0% | 65 | -14% |  |
+| Wally Vr 1 | 79 | 80 | +1% | 68 | -14% |  |
+| Sidney | 80 | 81 | +1% | 70 | -12% |  |
+| Phoebe | 81 | 81 | +0% | 71 | -12% |  |
+| Glacia | 82 | 82 | +0% | 72 | -12% |  |
+| Drake | 83 | 83 | +0% | 74 | -11% |  |
+| Wallace | 86 | 84 | -2% | 75 | -13% |  |
+
 ## Default movesets (Gen 3 vs Gen 9 learnsets)
 
 | measure | value |
