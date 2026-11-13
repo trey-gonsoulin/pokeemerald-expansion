@@ -366,14 +366,19 @@ class SpeciesInfo:
 
     def devolve(self, species, level):
         """Walk back down the evolution line until the species fits ``level``."""
+        return self.devolve_line(species, level)[-1]
+
+    def devolve_line(self, species, level):
+        """The forms devolve walks through: ``species`` first, the one that fits ``level`` last."""
+        line = [species]
         seen = {self.canon(species)}
-        while self.min_level(species) > level:
-            pres = [p[0] for p in self.pre_evos.get(self.canon(species), ()) if p[0] not in seen]
+        while self.min_level(line[-1]) > level:
+            pres = [p[0] for p in self.pre_evos.get(self.canon(line[-1]), ()) if p[0] not in seen]
             if not pres:
                 break
-            species = min(pres, key=lambda s: (self.min_level(s), s))
-            seen.add(species)
-        return species
+            line.append(min(pres, key=lambda s: (self.min_level(s), s)))
+            seen.add(line[-1])
+        return line
 
     def level_evolution(self, species, level, grace=EVOLVE_GRACE, gender=None):
         """The EVO_LEVEL evolution a Pokemon of ``species`` takes at ``level``

@@ -31,6 +31,7 @@ import re
 import shutil
 import sys
 import tempfile
+import types
 
 import gamedata as G
 import matchup as M
@@ -925,13 +926,17 @@ def evolver(info, gd, nonlevel=False):
 
 
 def devolver(info, gd):
-    """restock.SpeciesInfo.devolve as ``devolve(species, level)`` for a
-    lowered Pokemon (#350): the form that fits ``level`` less EVOLVE_GRACE,
-    kept to the species ``gd`` has (else the species stays)."""
+    """restock.SpeciesInfo.devolve as ``devolve(species, level, taken=())``
+    for a lowered Pokemon (#350): the form that fits ``level`` less
+    EVOLVE_GRACE. When ``gd`` lacks that form, or it is in ``taken`` (the
+    species a boss's team already has), the nearest form back up the line
+    toward ``species`` that ``gd`` has and isn't taken; else ``species``."""
     @functools.lru_cache(maxsize=None)
-    def devolve(species, level):
-        out = info.devolve(species, level - G.R.EVOLVE_GRACE)
-        return out if out in gd.species else species
+    def line(species, level):
+        return tuple(info.devolve_line(species, level - G.R.EVOLVE_GRACE))
+
+    def devolve(species, level, taken=()):
+        return next((f for f in reversed(line(species, level)[1:]) if f in gd.species and f not in taken), species)
     return devolve
 
 
@@ -960,34 +965,51 @@ def land_mean(slots):
 def evolve_team(mons, delta, evolve, unique=False, devolve=None):
     """The species of a team's Pokemon ([(species, level, gender)]) after a
     raise of ``delta``: each evolves for its raised level (``evolve``, None
-    for none), or for a negative ``delta`` devolves for its lowered one
-    (``devolve(species, level)``, #350), except, with ``unique`` (a boss's
-    team, #150), into a species the team already has (Drake's Shelgon
-    beside his Salamence)."""
+    for none), except, with ``unique`` (a boss's team, #150), into a species
+    the team already has (Drake's Shelgon beside his Salamence). For a
+    negative ``delta``, each devolves for its lowered level (devolver's
+    ``devolve``, #350), with ``unique`` to the nearest form the team
+    doesn't have yet, the highest level first (the last slot on a tie, as
+    nonlevel_evolve_party)."""
     species = [s for s, _, _ in mons]
-    if not (delta > 0 and evolve or delta < 0 and devolve):
-        return species
-    for i, (s, level, gender) in enumerate(mons):
-        out = evolve(s, min(level + delta, 100), gender) if delta > 0 else devolve(s, max(1, level + delta))
-        if not (unique and out != s and out in species):
-            species[i] = out
+    if delta > 0 and evolve:
+        for i, (s, level, gender) in enumerate(mons):
+            out = evolve(s, min(level + delta, 100), gender)
+            if not (unique and out != s and out in species):
+                species[i] = out
+    elif delta < 0 and devolve:
+        for i in sorted(range(len(mons)), key=lambda i: (-mons[i][1], -i)):
+            s, level, _ = mons[i]
+            species[i] = devolve(s, max(1, level + delta), frozenset(species) if unique else ())
     return species
 
 
-def shifted_slots(slots, shift, evolve=None, devolve=None):
+def shifted_slots(slots, shift, evolve=None):
     """``slots`` ([(field, slot, rate)]) with every level ``shift`` higher,
     between 1 and 100. A raised slot's species evolves for its new min level
-    (``evolve(species, level)``), as the restock does (#150); a lowered
-    one devolves (``devolve(species, level)``, #350)."""
+    (``evolve(species, level)``), as the restock does (#150)."""
     if not shift:
         return slots
-    change = evolve if shift > 0 else devolve
     out = []
     for field, slot, rate in slots:
         lo, hi = (max(1, min(slot[k] + shift, 100)) for k in ('min_level', 'max_level'))
-        species = change(slot['species'], lo) if change else slot['species']
+        species = evolve(slot['species'], lo) if evolve and shift > 0 else slot['species']
         out.append((field, {**slot, 'species': species, 'min_level': lo, 'max_level': hi}, rate))
     return out
+
+
+def restocked_slots(vanilla, offset, evolve, species):
+    """What restock.shift_levels writes for a stage's ``vanilla`` slots
+    (shifted_slots' shape) at ``offset`` over them: rebuilt from vanilla,
+    evolved (``evolve(species, level)``, kept to ``species``) only for a
+    positive offset and never devolved, so a lowered offset gives the
+    vanilla species back (#350)."""
+    wild = {'wild_encounter_groups': [{'label': G.R.AA.MAP_HEADERS_LABEL, 'encounters': [
+        {'map': 'STAGE', field: {'mons': [dict(slot)]}} for field, slot, _ in vanilla]}]}
+    info = types.SimpleNamespace(evolve=evolve or (lambda sp, level: sp), enabled=species)
+    G.R.shift_levels(wild, {'STAGE': dict.fromkeys({field for field, _, _ in vanilla}, offset)}, info)
+    encounters = wild['wild_encounter_groups'][0]['encounters']
+    return [(field, enc[field]['mons'][0], rate) for (field, _, rate), enc in zip(vanilla, encounters)]
 
 
 def share_curve(*args, **kwargs):
@@ -1016,8 +1038,9 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
     tables in ``vanilla_wilds``) moves the catches' levels; the difference
     between ``wilds`` and ``vanilla_wilds`` is what is already applied.
     ``evolve(species, level, gender)`` evolves the raised Pokemon (not
-    EVOLVE_EXEMPT's teams) and the raised wild slots, ``devolve(species,
-    level)`` (devolver) devolves the lowered ones.
+    EVOLVE_EXEMPT's teams) and the raised wild slots, ``devolve`` (devolver)
+    the lowered Pokemon. A wild table whose offset changes is rebuilt from
+    ``vanilla_wilds`` as restock writes it (restocked_slots).
 
     With ``margin``, each boss is raised, when its ace is lower, to the
     reference level plus ``margin`` and then (``league_steps``) to
@@ -1154,7 +1177,10 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
             offset = max(0, round(above(start, -wild_gap, relative_gaps) - base), 0 if lower else applied)
         else:
             offset = wild_offsets.get(st['name'], applied)
-        here = shifted_slots(slots, offset - applied, evolve, devolve)
+        if offset != applied and (vanilla_wilds or {}).get(i):
+            here = restocked_slots(vanilla_wilds[i], offset, evolve, gd.species)  # as apply writes it
+        else:
+            here = shifted_slots(slots, offset - applied, evolve)
         foes = wild_battle_foes(gd, here)
         for p in players:
             for _ in range((catch + wild_battles) if foes else 0):

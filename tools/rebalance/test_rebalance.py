@@ -1118,9 +1118,6 @@ Aron
         # Grovyle 18 lowered by 2 is 16, under 16 + EVOLVE_GRACE: Treecko.
         self.assertEqual(RB.evolve_team([('SPECIES_GROVYLE', 18, None)], -2, None, devolve=self.devolve),
                          ['SPECIES_TREECKO'])
-        slots = [('land_mons', {'species': 'SPECIES_GROVYLE', 'min_level': 18, 'max_level': 20}, 60)]
-        self.assertEqual(RB.shifted_slots(slots, -2, devolve=self.devolve)[0][1],
-                         {'species': 'SPECIES_TREECKO', 'min_level': 16, 'max_level': 18})
         # Without devolve, a lowered team keeps its species.
         self.assertEqual(RB.evolve_team([('SPECIES_GROVYLE', 18, None)], -2, None), ['SPECIES_GROVYLE'])
 
@@ -1135,7 +1132,10 @@ Aron
         self.assertEqual(self.devolve('SPECIES_ARON', 1), 'SPECIES_ARON')
         no_treecko = RB.devolver(self.info, types.SimpleNamespace(species={'SPECIES_GROVYLE'}))
         self.assertEqual(no_treecko('SPECIES_GROVYLE', 5), 'SPECIES_GROVYLE')
-        party = '=== TRAINER_C ===\nName: C\n\nAron\nLevel: 20\n\nGrovyle\nLevel: 20\n'
+        # The fitting base missing: the nearest form back up the line that the regime has.
+        no_base = RB.devolver(self.info, types.SimpleNamespace(species={'SPECIES_GROVYLE', 'SPECIES_SCEPTILE'}))
+        self.assertEqual(no_base('SPECIES_SCEPTILE', 5), 'SPECIES_GROVYLE')
+        party ='=== TRAINER_C ===\nName: C\n\nAron\nLevel: 20\n\nGrovyle\nLevel: 20\n'
         text, devolved = RB.raise_party(party, {'TRAINER_C': -10}, devolve=no_treecko)
         self.assertEqual(text, party.replace('Level: 20', 'Level: 10'))
         self.assertEqual(devolved, [])
@@ -1144,12 +1144,37 @@ Aron
         party = '=== TRAINER_C ===\nName: C\n\nAron\nLevel: 5\n'
         self.assertEqual(RB.raise_party(party, {'TRAINER_C': -10}, devolve=self.devolve),
                          (party.replace('Level: 5', 'Level: 1'), []))
+        # A lowered wild slot never devolves (restock doesn't).
         slots = [('land_mons', {'species': 'SPECIES_SCEPTILE', 'min_level': 3, 'max_level': 40}, 60)]
-        self.assertEqual(RB.shifted_slots(slots, -10, devolve=self.devolve)[0][1],
-                         {'species': 'SPECIES_TREECKO', 'min_level': 1, 'max_level': 30})
+        self.assertEqual(RB.shifted_slots(slots, -10)[0][1],
+                         {'species': 'SPECIES_SCEPTILE', 'min_level': 1, 'max_level': 30})
         seen = []
-        RB.evolve_team([('SPECIES_ARON', 5, None)], -10, None, devolve=lambda sp, level: seen.append(level) or sp)
+        RB.evolve_team([('SPECIES_ARON', 5, None)], -10, None,
+                       devolve=lambda sp, level, taken=(): seen.append(level) or sp)
         self.assertEqual(seen, [1])
+
+    def test_lowered_wild_offset_is_what_restock_writes(self):
+        # Abandoned Ship's case: vanilla Tentacruel 20-30 and Tentacool 30-35. At +6 the Tentacool
+        # evolved (36 >= 30 + 3); at +2 restock rebuilds from vanilla: Tentacool again, and the
+        # vanilla Tentacruel stays one at 22, though below Tentacool's evolution level + grace.
+        gd = types.SimpleNamespace(species={'SPECIES_TENTACOOL', 'SPECIES_TENTACRUEL'})
+        vanilla = [('fishing_mons', {'species': 'SPECIES_TENTACRUEL', 'min_level': 20, 'max_level': 30}, 60),
+                   ('fishing_mons', {'species': 'SPECIES_TENTACOOL', 'min_level': 30, 'max_level': 35}, 40)]
+        evolve = RB.evolver(self.info, gd)
+        for offset, want in ((6, ['SPECIES_TENTACRUEL', 'SPECIES_TENTACRUEL']),
+                             (2, ['SPECIES_TENTACRUEL', 'SPECIES_TENTACOOL']),
+                             (0, ['SPECIES_TENTACRUEL', 'SPECIES_TENTACOOL'])):
+            got = RB.restocked_slots(vanilla, offset, evolve, gd.species)
+            self.assertEqual([s['species'] for _, s, _ in got], want, offset)
+            self.assertEqual([(f, s['min_level'], s['max_level'], r) for f, s, r in got],
+                             [(f, s['min_level'] + offset, s['max_level'] + offset, r) for f, s, r in vanilla])
+            # Pinned to restock's own shift_levels with the real SpeciesInfo.
+            wild = {'wild_encounter_groups': [{'label': 'gWildMonHeaders', 'encounters': [
+                {'map': 'MAP_X', 'fishing_mons': {'mons': [dict(s) for _, s, _ in vanilla]}}]}]}
+            G.R.shift_levels(wild, {'MAP_X': {'fishing_mons': offset}}, self.info)
+            self.assertEqual([s for _, s, _ in got], wild['wild_encounter_groups'][0]['encounters'][0]
+                             ['fishing_mons']['mons'])
+        self.assertEqual(vanilla[1][1]['min_level'], 30)  # vanilla untouched
 
     def test_raise_party_lowers_text_and_reports_devolutions(self):
         party = ('=== TRAINER_C ===\nName: C\n\nLeaf (Grovyle) (M) @ Oran Berry\nLevel: 18\n- Tackle\n\n'
@@ -1170,12 +1195,22 @@ Aron
         text, devolved = RB.raise_party(party, {'TRAINER_C': -2}, devolve=self.devolve, unique={'TRAINER_C'})
         self.assertEqual(text, party.replace('Level: 10', 'Level: 8').replace('Level: 18', 'Level: 16'))
         self.assertEqual(devolved, [('TRAINER_C', 'SPECIES_GROVYLE', 'SPECIES_GROVYLE', 16)])
-        # Two evolved Pokemon devolving to one base: the first takes it, the second stays.
+        # The fitting form taken, an intermediate one that is free: Sceptile 10 beside Treecko is Grovyle.
+        party = '=== TRAINER_C ===\nName: C\n\nTreecko\nLevel: 10\n\nSceptile\nLevel: 40\n'
+        text, devolved = RB.raise_party(party, {'TRAINER_C': -30}, devolve=self.devolve, unique={'TRAINER_C'})
+        self.assertEqual(text, '=== TRAINER_C ===\nName: C\n\nTreecko\nLevel: 1\n\nGrovyle\nLevel: 10\n')
+        self.assertEqual(devolved, [('TRAINER_C', 'SPECIES_SCEPTILE', 'SPECIES_GROVYLE', 10)])
+        # Two evolved Pokemon devolving to one base: the ace (Sceptile 40) takes it, as in
+        # nonlevel_evolve_party, and the Grovyle has no other form, so it stays.
         party = '=== TRAINER_C ===\nName: C\n\nGrovyle\nLevel: 18\n\nSceptile\nLevel: 40\n'
         text, devolved = RB.raise_party(party, {'TRAINER_C': -30}, devolve=self.devolve, unique={'TRAINER_C'})
-        self.assertEqual(text, '=== TRAINER_C ===\nName: C\n\nTreecko\nLevel: 1\n\nSceptile\nLevel: 10\n')
-        self.assertEqual(devolved, [('TRAINER_C', 'SPECIES_GROVYLE', 'SPECIES_TREECKO', 1),
-                                    ('TRAINER_C', 'SPECIES_SCEPTILE', 'SPECIES_SCEPTILE', 10)])
+        self.assertEqual(text, '=== TRAINER_C ===\nName: C\n\nGrovyle\nLevel: 1\n\nTreecko\nLevel: 10\n')
+        self.assertEqual(devolved, [('TRAINER_C', 'SPECIES_GROVYLE', 'SPECIES_GROVYLE', 1),
+                                    ('TRAINER_C', 'SPECIES_SCEPTILE', 'SPECIES_TREECKO', 10)])
+        # On a tie of levels the last slot goes first.
+        party = '=== TRAINER_C ===\nName: C\n\nGrovyle\nLevel: 18\n\nGrovyle\nLevel: 18\n'
+        text, _ = RB.raise_party(party, {'TRAINER_C': -2}, devolve=self.devolve, unique={'TRAINER_C'})
+        self.assertEqual(text, '=== TRAINER_C ===\nName: C\n\nGrovyle\nLevel: 16\n\nTreecko\nLevel: 16\n')
         # Not a unique team: both devolve.
         _, devolved = RB.raise_party(party, {'TRAINER_C': -30}, devolve=self.devolve)
         self.assertEqual([d[2] for d in devolved], ['SPECIES_TREECKO', 'SPECIES_TREECKO'])
@@ -1508,7 +1543,7 @@ class TwoPlayers(unittest.TestCase):
     @staticmethod
     def recording_devolve(seen):
         """A devolve that turns Sableye into Magikarp and records its calls."""
-        def devolve(species, level):
+        def devolve(species, level, taken=()):
             seen.append((species, level))
             return 'SPECIES_MAGIKARP' if species == 'SPECIES_SABLEYE' else species
         return devolve
@@ -1524,11 +1559,17 @@ class TwoPlayers(unittest.TestCase):
         self.assertIn(('SPECIES_SABLEYE', rows[1]['boss_ace']), seen)
         # The devolved Magikarp gives less exp than the Sableye.
         self.assertLess(sum(rows[0]['levels']), sum(plain[0]['levels']))
-        # Lowered wild tables devolve too.
-        raised = {i: RB.shifted_slots(s, 6) for i, s in self.inputs['wilds']['modern'].items()}
+        # A lowered wild table is rebuilt from vanilla, as restock writes it, and never devolved:
+        # tables raised 6 with their Magikarp evolved into Sableye come back as vanilla's Magikarp.
+        raised = {i: RB.shifted_slots(s, 6, lambda sp, lvl: 'SPECIES_SABLEYE')
+                  for i, s in self.inputs['wilds']['vanilla'].items()}
+        self.assertIn('SPECIES_SABLEYE', {slot['species'] for s in raised.values() for _, slot, _ in s})
         seen.clear()
-        self.run_share(raised, wild_gap=100, lower=True, devolve=self.recording_devolve(seen))
-        self.assertTrue(seen)
+        lowered = self.run_share(raised, wild_gap=100, lower=True, devolve=self.recording_devolve(seen))
+        self.assertEqual(seen, [])
+        vanilla = self.run_share(self.inputs['wilds']['vanilla'], wild_gap=100, lower=True)
+        self.assertEqual(lowered[0], vanilla[0])
+        self.assertNotEqual(self.run_share(raised, wild_gap=100)[0], vanilla[0])
         # Without lower nothing goes down, so nothing devolves.
         seen.clear()
         self.run_share(trainer_gap=0, devolve=self.recording_devolve(seen), **self.MARGINS)
