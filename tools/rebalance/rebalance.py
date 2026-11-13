@@ -31,6 +31,7 @@ import re
 import shutil
 import sys
 import tempfile
+import types
 
 import gamedata as G
 import matchup as M
@@ -217,6 +218,35 @@ def load_stages(path, trainers, repo):
         if i is not None:
             stages[i]['regular'].append(tid)
     return stages
+
+
+FORCED_TRAINERS = os.path.join(G.HERE, 'forced_trainers.json')
+Forced = collections.namedtuple('Forced', 'trainers optional_bosses')
+# The report flags a staged boss whose ace the skip-everything lead meets
+# more than this percent of the ace under (#350).
+OUTLIER_SKIP = 25
+
+
+def load_forced(path):
+    """The trainers a skip-everything run still fights, and the bosses it may skip.
+
+    That is every FORCED trainer plus the first member of each choose-one group.
+    """
+    with open(path, encoding='utf-8') as f:
+        data = json.load(f)
+    trainers = {tid for tid, e in data['regular'].items() if e['class'] == 'FORCED'}
+    trainers.update(e['one_of'][0] for e in data['regular'].values() if 'one_of' in e)
+    optional = {bid for bid, e in data['bosses'].items() if not e['required']}
+    return Forced(frozenset(trainers), frozenset(optional))
+
+
+def skip_stages(stages, forced):
+    """Copies of the stages with only the forced trainers and the required bosses."""
+    out = copy.deepcopy(stages)
+    for st in out:
+        st['regular'] = [t for t in st['regular'] if t in forced.trainers]
+        st['bosses'] = [b for b in st['bosses'] if b not in forced.optional_bosses]
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -434,14 +464,19 @@ def evolution_line(info, species):
     return line
 
 
+def level_up_moves(gd, info, species, level):
+    """The level-up moves of ``species`` and its pre-evolutions at or below
+    ``level``, with their evolution moves (level 0)."""
+    return {mv for sp in evolution_line(info, species) for lvl, mv in gd.learnset(sp) if lvl <= level}
+
+
 def learnable_moves(gd, info, move_lists, species, level):
     """The moves a ``species`` at ``level`` can know (#145): the level-up moves
     of it and its pre-evolutions at or below ``level``, their evolution moves
     (level 0), their teachables (TMs, tutors, near-universal moves) and their
     egg moves (``move_lists``: gamedata.move_lists)."""
-    moves = set()
+    moves = level_up_moves(gd, info, species, level)
     for sp in evolution_line(info, species):
-        moves.update(mv for lvl, mv in gd.learnset(sp) if lvl <= level)
         if sp in gd.species:
             for name in (gd.species[sp].teachables, gd.species[sp].egg_moves):
                 moves |= move_lists.get(name, frozenset())
@@ -457,6 +492,92 @@ def unlearnable_set_moves(teams, gd, info, move_lists):
             learnable = learnable_moves(gd, info, move_lists, mon.species, mon.level)
             out.update(((t.id, mon.species, mv), None) for mv in mon.moves if mv not in learnable)
     return list(out)
+
+
+# Effects of the two-turn attacks (Fly, Dig, Solar Beam, Sky Attack, Sky Drop),
+# which a replacement set move never is (#139, #159), nor a recharge or self-KO move.
+TWO_TURN_EFFECTS = frozenset(('EFFECT_TWO_TURNS_ATTACK', 'EFFECT_SEMI_INVULNERABLE', 'EFFECT_SOLAR_BEAM',
+                              'EFFECT_SKY_DROP'))
+# At or below this level a replacement is the best same-type level-up move
+# when there is one, ahead of a stronger TM or egg move (#160).
+LEVEL_UP_REPLACEMENT_LEVEL = 30
+
+
+def replacement_move(gd, info, move_lists, species, level, replaced, kept):
+    """The set move to put in place of ``replaced``, which ``species`` at
+    ``level`` can't learn, beside the ``kept`` moves, by #131's and #160's
+    rule (docs/fork/balance.md): the strongest attack it can learn
+    (learnable_moves), scored by power.move_power times the base stat the move
+    attacks with. When ``kept`` has no attack of ``replaced``'s type and that
+    is one of the species' types, a move of that type; else, when ``kept`` has
+    no same-type attack, a same-type move. At LEVEL_UP_REPLACEMENT_LEVEL or
+    below, the best same-type level-up move ahead of a TM or egg move. Never a
+    recharge, self-KO (move_power scores it 0) or TWO_TURN_EFFECTS move, nor an
+    HM move (``move_lists``' G.HM_LIST: Surf on a level-9 Wailmer is the early
+    spike #350 removes, and #160 picked none), nor a move in ``kept``. None
+    when the species can learn no such attack."""
+    types = gd.species[species].types
+
+    def score(mv):
+        return P.move_power(gd, mv, types) * attack_stat(gd, species, mv.category)
+    pool = {}
+    hms = move_lists.get(G.HM_LIST, frozenset())
+    for m in learnable_moves(gd, info, move_lists, species, level) - hms:
+        mv = gd.move(m) if m in gd.moves else None
+        if mv and m not in kept and not mv.recharge and mv.effect not in TWO_TURN_EFFECTS and score(mv):
+            pool[m] = mv
+    replaced_type = gd.move(replaced).type
+    wanted = []
+    if replaced_type in types and not any(mv.type == replaced_type and not mv.fixed_damage
+                                          for mv in attacks(gd, kept)):
+        wanted.append({replaced_type})
+    if not has_stab(gd, species, kept):
+        wanted.append(set(types))
+    for want in wanted:
+        typed = {m: mv for m, mv in pool.items() if mv.type in want}
+        if typed:
+            pool = typed
+            break
+    if level <= LEVEL_UP_REPLACEMENT_LEVEL:
+        level_up = level_up_moves(gd, info, species, level)
+        same = {m: mv for m, mv in pool.items() if m in level_up and mv.type in types}
+        pool = same or pool
+    return max(pool, key=lambda m: (score(pool[m]), m), default=None)
+
+
+def party_move_name(move):
+    """How a .party file names ``move`` (MOVE_EARTH_POWER -> Earth Power), or
+    the constant where the name wouldn't map back to it (trainerproc takes both)."""
+    name = ' '.join(w.capitalize() for w in move[len('MOVE_'):].split('_'))
+    return name if G.constant('MOVE', name) == move else move
+
+
+def rewrite_unlearnable(text, gd, info, move_lists):
+    """.party ``text`` with each set move its Pokemon can't learn (the rule
+    of unlearnable_set_moves) replaced by replacement_move, beside the moves
+    the Pokemon keeps and the replacements before it. Every other byte is
+    kept. Returns (text, [(team, species, old move, new move)]); new is None,
+    and the line kept, where the species can learn no attack to replace it."""
+    lines = text.split('\n')
+    changes = []
+    for tid, paras in party_teams(lines)[1:]:  # not the text before the first team
+        for first, last in paras:
+            species = species_line(lines[first])[0]
+            level = mon_level(lines, first, last)[1]
+            learnable = learnable_moves(gd, info, move_lists, species, level)
+            names = {n: lines[n].strip()[2:].strip() for n in range(first + 1, last)
+                     if lines[n].lstrip().startswith('- ')}
+            moves = {n: G.constant('MOVE', name) for n, name in names.items()}
+            for n, move in list(moves.items()):
+                if move in learnable:
+                    continue
+                kept = [m for k, m in moves.items() if k != n and m in learnable]  # replacements are learnable
+                new = replacement_move(gd, info, move_lists, species, level, move, kept)
+                changes.append((tid, species, move, new))
+                if new:
+                    moves[n] = new
+                    lines[n] = lines[n].replace(names[n], party_move_name(new), 1)
+    return '\n'.join(lines), changes
 
 
 def better_stat(stats):
@@ -629,9 +750,10 @@ class Overlevel(collections.namedtuple('Overlevel', 'cutoff relative width floor
 
 
 def exp_award(gd, scaling, yield_, foe_level, getter_level, trainer, sent_in, sent_out=True, holders=0,
-              affection=False, unevolved=False, share_fraction=0.5, overlevel=GAME):
+              affection=False, unevolved=False, share_fraction=0.5, overlevel=GAME, bonus=4096):
     """Cmd_getexp + ApplyExperienceMultipliers for one getter (no Lucky Egg
-    or traded bonuses).
+    or traded bonuses; ``bonus``, in 4096ths, stands in for any: solo.py's
+    grind gives max friendship's 4915 this way).
 
     ``sent_in`` is viaSentIn (party members that faced the foe), ``sent_out``
     whether the getter is one of them, and ``holders`` viaExpShare (members
@@ -665,6 +787,7 @@ def exp_award(gd, scaling, yield_, foe_level, getter_level, trainer, sent_in, se
         return 0  # the game skips a getter that neither faced the foe nor holds a share
     if overlevel == GAME:
         overlevel = Overlevel.from_configs(gd)
+    reward = reward * bonus // 4096
     if unevolved and gd.flag('B_UNEVOLVED_EXP_MULTIPLIER >= GEN_6'):
         reward = reward * 4915 // 4096
     if affection and gd.flag('B_AFFECTION_MECHANICS == TRUE'):
@@ -898,6 +1021,21 @@ def evolver(info, gd, nonlevel=False):
     return evolve
 
 
+def devolver(info, gd):
+    """restock.SpeciesInfo.devolve as ``devolve(species, level, taken=())``
+    for a lowered Pokemon (#350): the form that fits ``level`` less
+    EVOLVE_GRACE. When ``gd`` lacks that form, or it is in ``taken`` (the
+    species a boss's team already has), the nearest form back up the line
+    toward ``species`` that ``gd`` has and isn't taken; else ``species``."""
+    @functools.lru_cache(maxsize=None)
+    def line(species, level):
+        return tuple(info.devolve_line(species, level - G.R.EVOLVE_GRACE))
+
+    def devolve(species, level, taken=()):
+        return next((f for f in reversed(line(species, level)[1:]) if f in gd.species and f not in taken), species)
+    return devolve
+
+
 def team_ace(trainer):
     """A team's highest level."""
     return max(mon.level for mon in trainer.mons)
@@ -920,24 +1058,31 @@ def land_mean(slots):
     return sum(lvl * w for _, lvl, w in foes) / total if total else None
 
 
-def evolve_team(mons, delta, evolve, unique=False):
+def evolve_team(mons, delta, evolve, unique=False, devolve=None):
     """The species of a team's Pokemon ([(species, level, gender)]) after a
     raise of ``delta``: each evolves for its raised level (``evolve``, None
     for none), except, with ``unique`` (a boss's team, #150), into a species
-    the team already has (Drake's Shelgon beside his Salamence)."""
+    the team already has (Drake's Shelgon beside his Salamence). For a
+    negative ``delta``, each devolves for its lowered level (devolver's
+    ``devolve``, #350), with ``unique`` to the nearest form the team
+    doesn't have yet, the highest level first (the last slot on a tie, as
+    nonlevel_evolve_party)."""
     species = [s for s, _, _ in mons]
-    if delta <= 0 or not evolve:
-        return species
-    for i, (s, level, gender) in enumerate(mons):
-        out = evolve(s, min(level + delta, 100), gender)
-        if not (unique and out != s and out in species):
-            species[i] = out
+    if delta > 0 and evolve:
+        for i, (s, level, gender) in enumerate(mons):
+            out = evolve(s, min(level + delta, 100), gender)
+            if not (unique and out != s and out in species):
+                species[i] = out
+    elif delta < 0 and devolve:
+        for i in sorted(range(len(mons)), key=lambda i: (-mons[i][1], -i)):
+            s, level, _ = mons[i]
+            species[i] = devolve(s, max(1, level + delta), frozenset(species) if unique else ())
     return species
 
 
 def shifted_slots(slots, shift, evolve=None):
     """``slots`` ([(field, slot, rate)]) with every level ``shift`` higher,
-    capped at 100. A raised slot's species evolves for its new min level
+    between 1 and 100. A raised slot's species evolves for its new min level
     (``evolve(species, level)``), as the restock does (#150)."""
     if not shift:
         return slots
@@ -947,6 +1092,20 @@ def shifted_slots(slots, shift, evolve=None):
         species = evolve(slot['species'], lo) if evolve and shift > 0 else slot['species']
         out.append((field, {**slot, 'species': species, 'min_level': lo, 'max_level': hi}, rate))
     return out
+
+
+def restocked_slots(vanilla, offset, evolve, species):
+    """What restock.shift_levels writes for a stage's ``vanilla`` slots
+    (shifted_slots' shape) at ``offset`` over them: rebuilt from vanilla,
+    evolved (``evolve(species, level)``, kept to ``species``) only for a
+    positive offset and never devolved, so a lowered offset gives the
+    vanilla species back (#350)."""
+    wild = {'wild_encounter_groups': [{'label': G.R.AA.MAP_HEADERS_LABEL, 'encounters': [
+        {'map': 'STAGE', field: {'mons': [dict(slot)]}} for field, slot, _ in vanilla]}]}
+    info = types.SimpleNamespace(evolve=evolve or (lambda sp, level: sp), enabled=species)
+    G.R.shift_levels(wild, {'STAGE': dict.fromkeys({field for field, _, _ in vanilla}, offset)}, info)
+    encounters = wild['wild_encounter_groups'][0]['encounters']
+    return [(field, enc[field]['mons'][0], rate) for (field, _, rate), enc in zip(vanilla, encounters)]
 
 
 def share_curve(*args, **kwargs):
@@ -959,7 +1118,7 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
               margin=None, unevolved=False, stage_raises=None, wild_offsets=None, trainer_gap=None,
               wild_gap=None, vanilla_wilds=None, evolve=None, ko_takers=1, boss_ref='bench',
               share_fraction=0.5, overlevel=GAME, league_steps=True, wild_battles=0, relative_gaps=False,
-              postgame=None):
+              postgame=None, skip=None, full_margin=None, skip_margin=None, lower=False, devolve=None):
     """The share6 party (KO-taker plus five on the Gen 6 Exp. Share bench)
     just before each story boss, on ``gd``'s data and configs: (boss rows,
     stage rows).
@@ -975,7 +1134,9 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
     tables in ``vanilla_wilds``) moves the catches' levels; the difference
     between ``wilds`` and ``vanilla_wilds`` is what is already applied.
     ``evolve(species, level, gender)`` evolves the raised Pokemon (not
-    EVOLVE_EXEMPT's teams) and the raised wild slots.
+    EVOLVE_EXEMPT's teams) and the raised wild slots, ``devolve`` (devolver)
+    the lowered Pokemon. A wild table whose offset changes is rebuilt from
+    ``vanilla_wilds`` as restock writes it (restocked_slots).
 
     With ``margin``, each boss is raised, when its ace is lower, to the
     reference level plus ``margin`` and then (``league_steps``) to
@@ -1002,7 +1163,27 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
     go up to one ace, the margin rule at the round's start, and at least 1
     above their ladder's previous fight; a final boss to the margin rule and
     at least POSTGAME_FINAL_STEP above the last round's highest ace. Capped
-    at 100."""
+    at 100.
+
+    ``skip`` (a Forced, #350) adds the skip-everything player: a second
+    party in lockstep with the first, with the same walking, catches and
+    wild battles, that fights only each stage's forced trainers (at the
+    stage's shift, which the full party alone decides) and its required
+    bosses (at their raise: one team per boss), and no post-game. Its boss
+    rows gain ``skip_levels`` and ``skip_ref`` (None for a boss it skips),
+    its stage rows ``skip_gap`` and ``skip_trainers`` ([{trainer, ace,
+    lead}]: each trainer it fights, with its ace and the skip lead that
+    meets it). With ``full_margin`` and ``skip_margin``
+    (percent, both or neither), their rule replaces ``margin``'s: a boss's
+    ace sits ``full_margin`` percent of itself under the full party's
+    reference, or ``skip_margin`` percent of itself over the skip party's
+    if that is lower (the full rule alone for a boss the skip player skips,
+    and after the story). ``lower`` lets the boss raises, the stage shifts
+    (searched from -100 up) and the wild offsets (down to the vanilla
+    tables) go negative."""
+    if (full_margin is None) != (skip_margin is None):
+        raise ValueError('full_margin and skip_margin go together')
+    boss_rule = full_margin is not None or margin is not None
     raises = dict(raises or {})
     stage_raises, wild_offsets = stage_raises or {}, wild_offsets or {}
     reference = REFERENCES[boss_ref]
@@ -1013,6 +1194,10 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
     party = Party(6, affection=affection, friendship=friendship, unevolved=unevolved, ko_takers=ko_takers,
                   share_fraction=share_fraction, overlevel=overlevel)
     catch = catches if gd.flag('B_EXP_CATCH >= GEN_6') else 0
+    skipper = Party(6, affection=affection, friendship=friendship, unevolved=unevolved, ko_takers=ko_takers,
+                    share_fraction=share_fraction, overlevel=overlevel) if skip else None
+    skip_story = skip_stages(stages, skip) if skip else None
+    players = [party] + ([skipper] if skip else [])
     rows, stage_rows = [], []
 
     def ref(p):
@@ -1023,81 +1208,112 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
 
     def fight(p, tid, delta=0):
         mons = trainers[tid].mons
+        exempt = tid in EVOLVE_EXEMPT
         species = evolve_team([(m.species, m.level, m.gender) for m in mons], delta,
-                              None if tid in EVOLVE_EXEMPT else evolve, tid in boss_ids)
+                              None if exempt else evolve, tid in boss_ids, None if exempt else devolve)
         for mon, sp in zip(mons, species):
-            p.defeat(gd, scaling, [(gd.species[sp].exp_yield, min(mon.level + delta, 100), 1.0)], True, True)
+            p.defeat(gd, scaling, [(gd.species[sp].exp_yield, max(1, min(mon.level + delta, 100)), 1.0)],
+                     True, True)
 
-    def fight_trainers(p, st, d):
-        """The stage's cleared trainers: each one's gap below the reference
-        (gap_of), and its ace."""
-        gaps, aces = [], []
-        for tid in cleared(st['regular'], clear):
-            aces.append(min(team_ace(trainers[tid]) + trainer_raise + d, 100))
+    def fight_trainers(p, st, d, regular=None):
+        """The stage's cleared trainers (or ``regular``): each one's gap
+        below the reference (gap_of), its ace, and the lead (the first
+        KO-taker) that meets it."""
+        gaps, aces, leads = [], [], []
+        for tid in cleared(st['regular'], clear) if regular is None else regular:
+            aces.append(max(1, min(team_ace(trainers[tid]) + trainer_raise + d, 100)))
             gaps.append(gap_of(ref(p), aces[-1]))
+            leads.append(p.levels()[0])
             fight(p, tid, trainer_raise + d)
-        return gaps, aces
+        return gaps, aces, leads
 
     def meets_gap(st, d):
-        gaps, _ = fight_trainers(copy.deepcopy(party), st, d)
+        gaps, _, _ = fight_trainers(copy.deepcopy(party), st, d)
         return not gaps or sum(gaps) / len(gaps) <= trainer_gap
 
-    def target(level):
-        """The margin rule's ace for a boss fought at reference ``level``."""
-        return int(above(level, margin, relative_gaps) + 0.5)
+    def target(level, skip_level=None):
+        """The boss rule's ace for a boss fought at reference ``level`` (and
+        ``skip_level``, the skip party's, when it fights the boss too)."""
+        if full_margin is None:
+            return int(above(level, margin, relative_gaps) + 0.5)
+        want = level * 100 / (100 + full_margin)
+        if skip_level is not None:
+            want = min(want, skip_level * 100 / (100 - skip_margin))
+        return int(want + 0.5)
 
-    def meet(stage, bid, ace):
-        """Fight boss ``bid`` (a row), first raised to ``ace`` when its own is lower."""
+    def meet(stage, bid, ace, skipped=True):
+        """Fight boss ``bid`` (a row), first raised to ``ace`` when its own
+        is lower (with ``lower``, either way); the skip party too, unless it
+        ``skipped`` the boss."""
         levels = party.levels()
         base_ace = team_ace(trainers[bid])
         if ace is not None:
-            raises[bid] = max(0, ace - base_ace)
+            raises[bid] = ace - base_ace if lower else max(0, ace - base_ace)
         delta = raises.get(bid, 0)
-        rows.append({'stage': stage, 'boss': bid, 'class': trainers[bid].trainer_class,
-                     'base_ace': base_ace, 'raise': delta, 'boss_ace': min(base_ace + delta, 100),
-                     'ace': max(levels), 'bench': REFERENCES['bench'](levels, ko_takers),
-                     'ref': round(reference(levels, ko_takers), 1), 'levels': levels,
-                     'friendship': int(party.friendship[-1])})
-        if trainers[bid].trainer_class in CURVE_CLASSES:
-            party.befriend('league')
-        fight(party, bid, delta)
+        row = {'stage': stage, 'boss': bid, 'class': trainers[bid].trainer_class,
+               'base_ace': base_ace, 'raise': delta, 'boss_ace': min(base_ace + delta, 100),
+               'ace': max(levels), 'bench': REFERENCES['bench'](levels, ko_takers),
+               'ref': round(reference(levels, ko_takers), 1), 'levels': levels,
+               'friendship': int(party.friendship[-1])}
+        if skip:
+            skip_levels = None if skipped else skipper.levels()
+            row.update(skip_levels=skip_levels,
+                       skip_ref=None if skipped else round(reference(skip_levels, ko_takers), 1))
+        rows.append(row)
+        for p in [party] if skipped else players:
+            if trainers[bid].trainer_class in CURVE_CLASSES:
+                p.befriend('league')
+            fight(p, bid, delta)
 
     for i, st in enumerate(stages):
-        party.befriend('walk', walk_steps // 128, chance=0.5)
+        for p in players:
+            p.befriend('walk', walk_steps // 128, chance=0.5)
         start = ref(party)
         slots = wilds.get(i, ())
         base, now = land_mean((vanilla_wilds or {}).get(i, ())), land_mean(slots)
         applied = round(now - base) if base is not None and now is not None else 0
         if wild_gap is not None and base is not None:
-            offset = max(0, applied, round(above(start, -wild_gap, relative_gaps) - base))  # only ever raised
+            # Only ever raised, or with ``lower`` down to the vanilla tables.
+            offset = max(0, round(above(start, -wild_gap, relative_gaps) - base), 0 if lower else applied)
         else:
             offset = wild_offsets.get(st['name'], applied)
-        here = shifted_slots(slots, offset - applied, evolve)
+        if offset != applied and (vanilla_wilds or {}).get(i):
+            here = restocked_slots(vanilla_wilds[i], offset, evolve, gd.species)  # as apply writes it
+        else:
+            here = shifted_slots(slots, offset - applied, evolve)
         foes = wild_battle_foes(gd, here)
-        for _ in range((catch + wild_battles) if foes else 0):
-            party.defeat(gd, scaling, foes, False, True)
+        for p in players:
+            for _ in range((catch + wild_battles) if foes else 0):
+                p.defeat(gd, scaling, foes, False, True)
         if trainer_gap is not None and st['regular']:
-            d = next((d for d in range(100) if meets_gap(st, d)), 100)
+            d = next((d for d in range(-100 if lower else 0, 100) if meets_gap(st, d)), 100)
         else:
             d = stage_raises.get(st['name'], 0)
-        gaps, aces = fight_trainers(party, st, d)
+        gaps, aces, _ = fight_trainers(party, st, d)
         mean = land_mean(here)
         stage_rows.append({'stage': st['name'], 'start_ref': start, 'trainers': len(gaps),
                            'gap': round(sum(gaps) / len(gaps), 1) if gaps else None, 'raise': d,
                            'trainer_ace_mean': round(sum(aces) / len(aces), 1) if aces else None,
                            'wild_land_mean': round(mean, 1) if mean is not None else None,
                            'wild_offset': offset, 'wild_applied': applied})
+        if skip:
+            skip_ids = skip_story[i]['regular']
+            skip_gaps, skip_aces, skip_leads = fight_trainers(skipper, st, d, skip_ids)
+            stage_rows[-1]['skip_gap'] = round(sum(skip_gaps) / len(skip_gaps), 1) if skip_gaps else None
+            stage_rows[-1]['skip_trainers'] = [{'trainer': t, 'ace': a, 'lead': lv}
+                                               for t, a, lv in zip(skip_ids, skip_aces, skip_leads)]
         for bid in st['bosses']:
+            skipped = not skip or bid not in skip_story[i]['bosses']
             ace = None
-            if margin is not None:
-                ace = target(ref(party))
+            if boss_rule:
+                ace = target(ref(party), None if skipped else ref(skipper))
                 if league_steps and bid in LEAGUE_STEPS:
                     prev, step = LEAGUE_STEPS[bid]
                     ace = max(ace, raised_ace(trainers, raises, prev) + step)
-            meet(st['name'], bid, ace)
+            meet(st['name'], bid, ace, skipped)
     last = []  # the last round's aces
     for n in range(1, max(map(len, ladders), default=0)):
-        ace = None if margin is None else target(ref(party))  # one ace per round, set at its start
+        ace = target(ref(party)) if boss_rule else None  # one ace per round, set at its start
         last = []
         for lad in ladders:
             if n < len(lad):
@@ -1105,7 +1321,7 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
                 meet(f'Rematch {n + 1}', lad[n], None if ace is None else min(max(ace, floor), 100))
                 last.append(rows[-1]['boss_ace'])
     for bid in finals:
-        ace = None if margin is None else min(max([target(ref(party))] + [a + POSTGAME_FINAL_STEP for a in last]), 100)
+        ace = min(max([target(ref(party))] + [a + POSTGAME_FINAL_STEP for a in last]), 100) if boss_rule else None
         meet('Post-game', bid, ace)
     return rows, stage_rows
 
@@ -1128,14 +1344,15 @@ def stage_variants(stages, trainers):
     return {bid: {v: team_ace(trainers[v]) for v in ids} for st in stages for bid, ids in st['variants'].items()}
 
 
-def variant_raises(variants, trainers, raises):
+def variant_raises(variants, trainers, raises, lower=False):
     """The raise for each of ``variants`` (from stage_variants) that lifts
-    its ace to its staged boss's raised ace."""
+    its ace to its staged boss's raised ace (with ``lower``, or drops it,
+    #350)."""
     out = {}
     for bid, aces in variants.items():
         target = raised_ace(trainers, raises, bid)
         for v, ace in aces.items():
-            out[v] = max(0, target - ace)
+            out[v] = target - ace if lower else max(0, target - ace)
     return out
 
 
@@ -1227,16 +1444,19 @@ def share_curves(stages, trainers, gd, scaling, wilds):
 # Curve explorer (#151)
 # ---------------------------------------------------------------------------
 
-def curve_snapshot(stages, trainers, gd, scaling, wilds, info, postgame):
+def curve_snapshot(stages, trainers, gd, scaling, wilds, info, postgame, forced=None):
     """share_run's inputs as JSON data (output/curve_data.json), so the
     explorer runs the same model without the repo: the story stages and
     their trainers, the rematch ladders (rematch_ladders) and theirs, the
-    exp yields, the level evolutions, the scaling table, both regimes' land
-    slots (the only ones share_run reads) and the config defines."""
+    exp yields, the level evolutions, each team Pokemon's devolve line (its
+    forms back down the line, with their min levels: what devolver reads),
+    the scaling table, both regimes' land slots (the only ones share_run
+    reads) and the config defines, and with ``forced`` (a Forced, #350) the
+    skip player's trainers and bosses."""
     story = sorted({t for st in stages for t in st['regular'] + st['bosses']}
                    | {t for kind in ('boss', 'regular') for lad in postgame[kind] for t in lad}
                    | set(postgame['final']))
-    return {
+    out = {
         'stages': [{k: st[k] for k in ('name', 'regular', 'bosses')} for st in stages],
         'postgame': postgame,
         'trainers': {t: {'class': trainers[t].trainer_class,
@@ -1244,6 +1464,9 @@ def curve_snapshot(stages, trainers, gd, scaling, wilds, info, postgame):
         'exp_yield': {sp: s.exp_yield for sp, s in gd.species.items()},
         'alias': info.alias,
         'evolutions': {sp: lv for sp, evos in info.evos.items() if (lv := [e for e in evos if e[0] == 'EVO_LEVEL'])},
+        'devolve_lines': {sp: [[f, info.min_level(f)] for f in line]
+                          for sp in sorted({m.species for t in story for m in trainers[t].mons})
+                          if len(line := info.devolve_line(sp, 0)) > 1},
         'scaling': scaling,
         'wilds': {regime: {i: [(field, {k: slot[k] for k in ('species', 'min_level', 'max_level')}, rate)
                                for field, slot, rate in slots if field == 'land_mons']
@@ -1251,11 +1474,15 @@ def curve_snapshot(stages, trainers, gd, scaling, wilds, info, postgame):
                   for regime, by_stage in wilds.items()},
         'defines': gd.defines,
     }
+    if forced is not None:
+        out['forced'] = {k: sorted(v) for k, v in forced._asdict().items()}
+    return out
 
 
 def load_snapshot(data):
     """curve_snapshot's data back as share_run's inputs: {stages, trainers,
-    gd, scaling, wilds, evolve}, as explore_run takes them."""
+    gd, scaling, wilds, evolve, devolve, postgame, forced (a Forced, or
+    None)}, as explore_run takes them."""
     gd = G.GameData.from_parts(data['defines'], {sp: G.Species((), {}, y, '', '')
                                                  for sp, y in data['exp_yield'].items()})
     trainers = {t: G.Trainer(t, '', v['class'], [], False,
@@ -1263,8 +1490,21 @@ def load_snapshot(data):
                 for t, v in data['trainers'].items()}
     info = G.R.SpeciesInfo.from_evolutions(data['alias'], data['evolutions'])
     wilds = {regime: {int(i): slots for i, slots in by_stage.items()} for regime, by_stage in data['wilds'].items()}
+    forced = data.get('forced')
+
+    def devolve_line(species, level):
+        """SpeciesInfo.devolve_line from the stored line: its forms while the last's min level is over ``level``."""
+        line = data['devolve_lines'].get(species, [[species, 0]])
+        out = [species]
+        for (_, need), (form, _) in zip(line, line[1:]):
+            if need <= level:
+                break
+            out.append(form)
+        return out
     return {'stages': data['stages'], 'trainers': trainers, 'gd': gd, 'scaling': data['scaling'],
-            'wilds': wilds, 'evolve': evolver(info, gd), 'postgame': data['postgame']}
+            'wilds': wilds, 'evolve': evolver(info, gd), 'postgame': data['postgame'],
+            'devolve': devolver(types.SimpleNamespace(devolve_line=devolve_line), gd),
+            'forced': forced and Forced(*(frozenset(forced[k]) for k in Forced._fields))}
 
 
 # The explorer's knobs and their defaults before the game's formula configs
@@ -1276,6 +1516,7 @@ EXPLORER_KNOBS = {
     'scaled_exp': True, 'scaling_power': 2.5, 'overlevel_cutoff': None, 'overlevel_unit': 'levels',
     'overlevel_width': None, 'overlevel_floor': 0, 'overlevel_min_level': 0, 'share_fraction': 0.5, 'gap_unit': 'levels', 'margin': None,
     'league_steps': True, 'trainer_gap': None, 'wild_gap': None, 'evolve': True, 'rematch_step': None,
+    'full_margin': None, 'skip_margin': None, 'lower': False,
 }
 UNITS = ('levels', 'percent')
 
@@ -1296,7 +1537,8 @@ def explore_run(snap, knobs=None):
     (share_run's rows, the post-game rounds included, plus a short name and
     every REFERENCES level), stages, rematches (rematch_raises' rows, with
     ``rematch_step``; else none), lv100 (the first boss the party's highest
-    member meets at 100, or None)}."""
+    member meets at 100, or None)}. The skip player (#350) plays when
+    ``snap`` has its ``forced`` data."""
     unknown = set(knobs or {}) - set(EXPLORER_KNOBS)
     if unknown:
         raise ValueError(f'unknown knobs {sorted(unknown)}')
@@ -1319,7 +1561,9 @@ def explore_run(snap, knobs=None):
         trainer_gap=k['trainer_gap'], wild_gap=k['wild_gap'], vanilla_wilds=snap['wilds']['vanilla'],
         evolve=snap['evolve'] if k['evolve'] else None, ko_takers=k['ko_takers'], boss_ref=k['boss_ref'],
         share_fraction=k['share_fraction'], overlevel=overlevel, league_steps=k['league_steps'],
-        wild_battles=k['wild_battles'], relative_gaps=relative, postgame=snap['postgame'])
+        wild_battles=k['wild_battles'], relative_gaps=relative, postgame=snap['postgame'],
+        skip=snap.get('forced'), full_margin=k['full_margin'], skip_margin=k['skip_margin'], lower=k['lower'],
+        devolve=snap.get('devolve') if k['evolve'] else None)
     for r in bosses:
         r['name'] = short(r['boss'])
         r['refs'] = {name: round(f(r['levels'], k['ko_takers']), 1) for name, f in REFERENCES.items()}
@@ -1331,15 +1575,20 @@ def explore_run(snap, knobs=None):
 
 
 def print_curve(res):
-    """explore_run's result as text tables, for the ``curve`` command."""
-    print(table(['boss', 'stage', 'boss ace (now)', 'raise', 'boss ace', 'party levels', 'reference'],
-                [[r['name'], r['stage'], r['base_ace'], f"+{r['raise']}", r['boss_ace'],
-                  ' '.join(map(str, r['levels'])), r['ref']] for r in res['bosses']]))
+    """explore_run's result as text tables, for the ``curve`` command (with
+    the skip player's columns when the data has it, #350)."""
+    skip = bool(res['bosses']) and 'skip_ref' in res['bosses'][0]
+    print(table(['boss', 'stage', 'boss ace (now)', 'raise', 'boss ace', 'party levels', 'reference']
+                + ['skip party levels', 'skip reference'] * skip,
+                [[r['name'], r['stage'], r['base_ace'], f"{r['raise']:+}", r['boss_ace'],
+                  ' '.join(map(str, r['levels'])), r['ref']]
+                 + ([' '.join(map(str, r['skip_levels'])) if r['skip_levels'] else 'skipped', r['skip_ref'] or '-']
+                    if skip else []) for r in res['bosses']]))
     print()
     print(table(['stage', 'reference at start', 'trainers', 'trainer raise', 'trainer ace mean', 'gap when fought',
-                 'wild offset', 'wild land mean'],
-                [[s['stage'], round(s['start_ref'], 1), s['trainers'], f"+{s['raise']}", s['trainer_ace_mean'],
-                  s['gap'], s['wild_offset'], s['wild_land_mean']] for s in res['stages']]))
+                 'wild offset', 'wild land mean'] + ['skip gap'] * skip,
+                [[s['stage'], round(s['start_ref'], 1), s['trainers'], f"{s['raise']:+}", s['trainer_ace_mean'],
+                  s['gap'], s['wild_offset'], s['wild_land_mean']] + [s['skip_gap']] * skip for s in res['stages']]))
     if res['rematches']:
         ladders = {}
         for r in res['rematches']:
@@ -1669,6 +1918,104 @@ def matchup_report(mu):
     return out
 
 
+def two_players(bosses, stages):
+    """Per staged boss in explore_run's ``bosses`` rows (with the skip
+    player, #350): its ace, each player's lead (the KO-taker, ``full`` and
+    ``skip``, None when the skip player skips the boss), how far each sits
+    from the ace in percent of the ace, and ``outlier``: the skip lead more
+    than OUTLIER_SKIP percent under."""
+    staged = {b for st in stages for b in st['bosses']}
+    out = []
+    for r in bosses:
+        if r['boss'] not in staged:
+            continue
+        ace, full = r['boss_ace'], r['levels'][0]
+        skip = r['skip_levels'][0] if r['skip_levels'] else None
+        skip_pct = None if skip is None else (skip - ace) * 100 / ace
+        out.append({'stage': r['stage'], 'boss': r['boss'], 'ace': ace, 'full': full,
+                    'full_pct': round((full - ace) * 100 / ace, 1), 'skip': skip,
+                    'skip_pct': None if skip is None else round(skip_pct, 1),
+                    'outlier': skip_pct is not None and skip_pct < -OUTLIER_SKIP})
+    return out
+
+
+def forced_outliers(stage_rows):
+    """The forced trainers (the skip player's, in share_run's stage rows'
+    ``skip_trainers``) its lead meets more than OUTLIER_SKIP percent of
+    their ace under it (#350): [{trainer, stage, ace, skip, skip_pct}]."""
+    out = []
+    for st in stage_rows:
+        for t in st.get('skip_trainers', ()):
+            pct = (t['lead'] - t['ace']) * 100 / t['ace']
+            if pct < -OUTLIER_SKIP:
+                out.append({'trainer': t['trainer'], 'stage': st['stage'], 'ace': t['ace'], 'skip': t['lead'],
+                            'skip_pct': round(pct, 1)})
+    return out
+
+
+def two_players_report(rows, forced=()):
+    """The ``## Two players`` section for two_players' rows (none without
+    the forced data) and forced_outliers' ``forced``."""
+    if rows is None:
+        return []
+    if forced:
+        trainers = [f'The forced trainers a skip lead meets more than {OUTLIER_SKIP}% under their ace:', '',
+                    table(['trainer', 'stage', 'ace', 'skip lead', '%'],
+                          [[short(r['trainer']), r['stage'], r['ace'], r['skip'], f"{r['skip_pct']:+.0f}%"]
+                           for r in forced]), '']
+    else:
+        trainers = [f'No forced trainer is met more than {OUTLIER_SKIP}% under its ace.', '']
+    return ['## Two players', '',
+            'The Exp. Share lead (the KO-taker) just before each staged boss, on today\'s levels: '
+            'curve_settings.json\'s knobs with the level rules (margins and gaps) off. Fight everyone: every '
+            'story trainer and both optional rivals. Skip everything: forced_trainers.json\'s FORCED trainers, '
+            'the first of each choose-one group and the required bosses, with the same walking, catches and '
+            'wild battles. %: the lead over the boss\'s ace, in percent of the ace. outlier: the skip lead more '
+            f'than {OUTLIER_SKIP}% under (#350).', '',
+            table(['boss', 'ace', 'full lead', '%', 'skip lead', '%', 'flag'],
+                  [[short(r['boss']), r['ace'], r['full'], f"{r['full_pct']:+.0f}%",
+                    'skipped' if r['skip'] is None else r['skip'],
+                    '-' if r['skip_pct'] is None else f"{r['skip_pct']:+.0f}%", 'outlier' if r['outlier'] else '']
+                   for r in rows]), ''] + trainers
+
+
+def solo_walls_report(rows):
+    """The ``## Solo walls`` section for solo.solo_walls' rows: a table per
+    starter, and its worst wall."""
+    if not rows:
+        return []
+    import solo as S  # not at the top: solo imports this module, and the explorer needs neither
+    out = ['## Solo walls', '',
+           'Per starter and staged story boss (#350), the starter line alone: its default moves plus the TMs open '
+           'by then, picked for coverage, IV 15 and full EVs spread evenly, against the boss team on '
+           '`power.score` with the type chart. lead: the fight-everyone lead (Two players\' full lead). wall: the '
+           'lowest level at which it wins each one-on-one (healing between Pokemon; unwinnable: not by 100). '
+           'sweep: the lowest at which it beats the team without healing. KOs: the grind from the lead to the '
+           'wall against the best wild Pokemon reachable by then (source: the highest exp yield x level, grass before '
+           f'{SURF_STAGE}, Surf from {SURF_STAGE}, no rods; DexNav can hunt it), with max friendship and no Lucky '
+           "Egg, under the game's exp configs. After Norman, source also gives the battles the same climb takes "
+           'against the strongest rematch team open by then. Tate and Liza is a double battle; the model fights '
+           f'it one-on-one. The grind budget is {S.GRIND_BUDGET} KOs.', '']
+    for name in dict.fromkeys(r['starter'] for r in rows):
+        rows_ = [r for r in rows if r['starter'] == name]
+        cells = []
+        for r in rows_:
+            source = f"{short(r['source'][0])} {r['source'][1]}" if r['source'] else '-'
+            if r['battles']:  # no climb, no battles
+                source += f"; {r['battles']} battles vs {short(r['rematch'])}"
+            cells.append([short(r['boss']) + (' (double)' if r['double'] else ''), r['ace'], r['lead'],
+                          'unwinnable' if r['wall'] is None else r['wall'], '-' if r['sweep'] is None else r['sweep'],
+                          '-' if r['kos'] is None else r['kos'], source])
+        worst = [f"{short(r['boss'])} (unwinnable)" for r in rows_ if r['wall'] is None]
+        most = max((r for r in rows_ if r['kos']), key=lambda r: r['kos'], default=None)
+        if most:
+            worst.append(f"{short(most['boss'])} ({most['kos']} KOs to level {most['wall']})")
+        out += [f"### {short('X_' + name)} line", '',
+                table(['boss', 'ace', 'lead', 'wall', 'sweep', 'KOs', 'source'], cells), '',
+                f"Worst wall: {'; then '.join(worst) or 'none above the lead'}.", '']
+    return out
+
+
 def write_report(path, res):
     c, d, h, curve = res['census'], res['defaults'], res['handwritten'], res['level_curve']
     out = ['# Rebalance measurements (#113)', '',
@@ -1704,6 +2051,8 @@ def write_report(path, res):
                                  r['vanilla_rotate4'], r['modern_solo'], r['modern_rotate4'], r['modern_share6'],
                                  r['modern_share6_bench']] for r in rows]), '']
     out += share_report(res['share_curve'], res['raised_defaults'], res['stage_trainers'])
+    out += two_players_report(res['two_players'], res['forced_outliers'])
+    out += solo_walls_report(res['solo_walls'])
 
     out += ['## Default movesets (Gen 3 vs Gen 9 learnsets)', '',
             table(['measure', 'value'], [
@@ -1866,7 +2215,10 @@ def combat_power(trainers, gd, stages, share):
             'bosses': bosses}
 
 
-def analyze(repo, stages_path):
+def analyze(repo, stages_path, forced_path=FORCED_TRAINERS):
+    """Everything the report shows; ``forced_path`` gives the skip player
+    (two_players, forced_outliers and the explorer's snapshot), None for
+    none. The solo walls (solo.py) climb from the same run's full lead."""
     gd = G.load(repo)
     trainers = G.parse_trainers(os.path.join(repo, 'src', 'data', 'trainers.party'))
     stages = load_stages(stages_path, trainers, repo)
@@ -1890,6 +2242,17 @@ def analyze(repo, stages_path):
         out = info.evolve(species, level, grace=0)
         return out if out in m.species else species
     bench_rows = {r['boss']: r for r in share[POWER_BENCH[0]]['now'][POWER_BENCH[1]]}
+    forced = load_forced(forced_path) if forced_path else None
+    with open(CURVE_SETTINGS, encoding='utf-8') as f:
+        knobs = {k: v for k, v in json.load(f).items() if k not in CURVE_RULES}
+    snap = {'stages': stages, 'trainers': trainers, 'gd': m, 'scaling': base_scaling, 'wilds': wilds,
+            'evolve': evolver(info, m), 'devolve': devolver(info, m), 'postgame': ladders, 'forced': forced}
+    run = explore_run(snap, knobs)
+    two = two_players(run['bosses'], stages) if forced is not None else None
+    import solo as S  # not at the top: solo imports this module, and the explorer needs neither
+    map_tms = G.map_tms(repo)
+    solo = S.solo_walls(trainers, m, stages, run['bosses'], wilds['modern'], map_tms, teachables, evolve_on_time,
+                        scaling, Overlevel.from_configs(m), M.load_settings(), ladders['regular'])
     return {
         'census': census(trainers),
         'story_trainers': len(story),
@@ -1900,8 +2263,7 @@ def analyze(repo, stages_path):
         'handwritten_rows': changes,
         'matchups': boss_matchups(trainers, gd, boss_ids),
         'power': combat_power(trainers, gd['modern'], stages, share),
-        'matchup': M.matchups(trainers, m, stages, bench_rows, wilds['modern'], G.map_tms(repo), teachables,
-                              evolve_on_time),
+        'matchup': M.matchups(trainers, m, stages, bench_rows, wilds['modern'], map_tms, teachables, evolve_on_time),
         'split_fit': split_fit(gd, SPLIT_WATCH),
         'level_curve': {name: level_curve(stages, trainers, gd, scaling, wilds, clear, wild)
                         for name, (clear, wild) in SCENARIOS.items()},
@@ -1911,7 +2273,10 @@ def analyze(repo, stages_path):
         'tms': tm_availability(repo, stages, gd),
         'wild': wild_availability(wilds, stages, gd),
         'economy': economy(stages, trainers, gd, G.parse_class_money(repo)),
-        'curve_data': curve_snapshot(stages, trainers, gd['modern'], base_scaling, wilds, info, ladders),
+        'curve_data': curve_snapshot(stages, trainers, m, base_scaling, wilds, info, ladders, forced),
+        'two_players': two,
+        'forced_outliers': forced_outliers(run['stages']) if forced is not None else [],
+        'solo_walls': solo,
         'nonlevel': nonlevel_candidates(trainers, set(boss_teams(stages, ladders)), evolver(info, gd['modern']),
                                         evolver(info, gd['modern'], nonlevel=True)),
     }
@@ -1924,6 +2289,8 @@ def analyze(repo, stages_path):
 # The owner's explorer settings (#151) that the data is built for: apply
 # writes them, and a test checks the data still asks nothing more of them.
 CURVE_SETTINGS = os.path.join(G.HERE, 'curve_settings.json')
+# The knobs that set levels: two_players' run turns them off, to measure the data as it is.
+CURVE_RULES = ('margin', 'trainer_gap', 'wild_gap', 'rematch_step', 'full_margin', 'skip_margin')
 # restock's wild level offsets (map -> table field -> levels over vanilla), which apply writes.
 LEVEL_OFFSETS = os.path.relpath(G.R.AA.LEVEL_OFFSETS, G.R.AA.REPO)
 RESTOCK_SETTINGS = os.path.relpath(G.R.AA.RESTOCK_SETTINGS, G.R.AA.REPO)
@@ -1935,17 +2302,20 @@ SURF_STAGE = 'Winona'
 PARTNER_FIGHTS = {'PARTNER_STEVEN': ('TRAINER_MAXIE_MOSSDEEP', 'TRAINER_TABITHA_MOSSDEEP')}
 
 
-def repo_inputs(repo, stages_path=DEFAULT_STAGES, info=None):
+def repo_inputs(repo, stages_path=DEFAULT_STAGES, info=None, forced_path=FORCED_TRAINERS):
     """explore_run's inputs parsed from ``repo`` (load_snapshot's, plus the
     stages' rival variants); ``info``, a restock.SpeciesInfo, for the
-    evolutions."""
+    evolutions and devolutions; ``forced_path`` for the skip player (None
+    for none)."""
     gd = G.load(repo)['modern']
     trainers = G.parse_trainers(os.path.join(repo, 'src', 'data', 'trainers.party'))
     stages = load_stages(stages_path, trainers, repo)
     return {'stages': stages, 'trainers': trainers, 'gd': gd, 'scaling': G.parse_scaling_factors(repo),
             'wilds': load_wilds(repo, stages), 'evolve': evolver(info, gd) if info else None,
+            'devolve': devolver(info, gd) if info else None,
             'evolve_nonlevel': evolver(info, gd, nonlevel=True) if info else None,
-            'postgame': rematch_ladders(G.parse_rematches(repo), stages, trainers)}
+            'postgame': rematch_ladders(G.parse_rematches(repo), stages, trainers),
+            'forced': load_forced(forced_path) if forced_path else None}
 
 
 def apply_plan(inputs, knobs, partners, wild, folders):
@@ -1955,7 +2325,8 @@ def apply_plan(inputs, knobs, partners, wild, folders):
     post-game bosses and rematch ladders), wild: map -> table field -> its
     stage's offset over the vanilla levels, for every table of the stage's
     maps, unique: the teams that keep their species distinct}. Only
-    non-zero entries."""
+    non-zero entries; with the ``lower`` knob a raise may be negative, and
+    the variants and partners follow a lowered team down (#350)."""
     res = explore_run(inputs, knobs)
     stages, trainers = inputs['stages'], inputs['trainers']
     raises = {r['boss']: r['raise'] for r in res['bosses']}
@@ -1964,12 +2335,13 @@ def apply_plan(inputs, knobs, partners, wild, folders):
     if staged:
         raise ValueError(f'rematch teams staged as regular trainers: {sorted(staged)}')
     raises.update(rematches)
-    raises.update(variant_raises(stage_variants(stages, trainers), trainers, raises))
+    lower = res['knobs']['lower']
+    raises.update(variant_raises(stage_variants(stages, trainers), trainers, raises, lower))
     for st, row in zip(stages, res['stages']):
         raises.update(dict.fromkeys(st['regular'], row['raise']))
     for pid, foes in PARTNER_FIGHTS.items():
         target = max(raised_ace(trainers, raises, f) for f in foes)
-        raises[pid] = max(0, target - team_ace(partners[pid]))
+        raises[pid] = target - team_ace(partners[pid]) if lower else max(0, target - team_ace(partners[pid]))
     offsets = collections.defaultdict(dict)
     for _, enc, field, i in stage_tables(wild, stages, folders):
         if res['stages'][i]['wild_offset']:
@@ -2062,12 +2434,14 @@ def mon_level(lines, first, last):
     return level_at, int(lines[level_at].split(':', 1)[1]) if level_at is not None else 100  # trainerproc's default
 
 
-def raise_party(text, raises, evolve=None, unique=()):
+def raise_party(text, raises, evolve=None, unique=(), devolve=None):
     """.party ``text`` with every Pokemon of each team in ``raises`` (id ->
-    levels) that many levels higher, capped at 100. Its species follow
-    evolve_team (``unique``: the teams that keep their species distinct);
-    EVOLVE_EXEMPT's and the partners' teams never evolve. Every other byte
-    is kept. Returns (text, [(team, species before, after, level)])."""
+    levels) that many levels higher (or, negative, lower: #350), between 1
+    and 100. Its species follow evolve_team (``unique``: the teams that keep
+    their species distinct); EVOLVE_EXEMPT's and the partners' teams never
+    evolve or devolve. Every other byte is kept. Returns (text, [(team,
+    species before, after, level)]), where after is before for a Pokemon
+    ``unique`` kept from devolving into a species its team has."""
     lines = text.split('\n')
     evolved = []
     for tid, paras in party_teams(lines):
@@ -2077,16 +2451,19 @@ def raise_party(text, raises, evolve=None, unique=()):
         mons = []
         for first, last in paras:
             level_at, level = mon_level(lines, first, last)
+            new = max(1, min(level + delta, 100))
             if level_at is not None:
-                lines[level_at] = lines[level_at].replace(str(level), str(min(level + delta, 100)), 1)
-            mons.append((first, level, species_line(lines[first])))
-        allowed = evolve if may_evolve(tid) else None
-        after = evolve_team([(sp, level, gender) for _, level, (sp, gender, _) in mons], delta, allowed,
-                            tid in unique)
-        for (first, level, (sp, _, replace)), out in zip(mons, after):
+                lines[level_at] = lines[level_at].replace(str(level), str(new), 1)
+            mons.append((first, level, new, species_line(lines[first])))
+        allowed = may_evolve(tid)
+        after = evolve_team([(sp, level, gender) for _, level, _, (sp, gender, _) in mons], delta,
+                            evolve if allowed else None, tid in unique, devolve if allowed else None)
+        for (first, _, new, (sp, _, replace)), out in zip(mons, after):
             if out != sp:
                 lines[first] = replace(out)
-                evolved.append((tid, sp, out, min(level + delta, 100)))
+                evolved.append((tid, sp, out, new))
+            elif delta < 0 and allowed and devolve and devolve(sp, new) != sp:
+                evolved.append((tid, sp, sp, new))  # unique kept it from a species the team has
     return '\n'.join(lines), evolved
 
 
@@ -2157,7 +2534,7 @@ def apply_round(argv):
     unique = set(plan['unique'])
     for name, file in files.items():
         with open(file, encoding='utf-8') as f:
-            text, evolved = raise_party(f.read(), plan['raises'], inputs['evolve'], unique)
+            text, evolved = raise_party(f.read(), plan['raises'], inputs['evolve'], unique, inputs['devolve'])
         text, boss_evolved = nonlevel_evolve_party(text, unique, inputs['evolve_nonlevel'])
         raised[name] = text, evolved, boss_evolved
     with tempfile.TemporaryDirectory() as tmp:
@@ -2173,8 +2550,11 @@ def apply_round(argv):
         with open(files[name], 'w', encoding='utf-8') as f:
             f.write(text)
         teams = len(set(plan['raises']) & set(G.parse_trainers_text(text)))
-        print(f'{name}: {teams} teams raised, {len(evolved)} Pokemon evolved, '
+        kept = [e for e in evolved if e[1] == e[2]]
+        print(f'{name}: {teams} teams raised or lowered, {len(evolved) - len(kept)} Pokemon evolved or devolved, '
               f'{len(boss_evolved)} more on boss and rival teams by evolutions that aren\'t by level (#181)')
+        for tid, species, _, level in kept:
+            print(f'  {tid}: {species} at {level} kept, not devolved into a species its team has')
     return any(boss_evolved for _, _, boss_evolved in raised.values())
 
 

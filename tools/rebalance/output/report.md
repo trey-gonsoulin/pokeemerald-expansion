@@ -334,6 +334,160 @@ Full clear: 22 of 30 bosses have the bench (friendship) within 1 of their ace; t
 
 20 raised boss Pokemon are on default moves; 0 get a different moveset or flags at the raised level (the flags as in "Default movesets" below).
 
+## Two players
+
+The Exp. Share lead (the KO-taker) just before each staged boss, on today's levels: curve_settings.json's knobs with the level rules (margins and gaps) off. Fight everyone: every story trainer and both optional rivals. Skip everything: forced_trainers.json's FORCED trainers, the first of each choose-one group and the required bosses, with the same walking, catches and wild battles. %: the lead over the boss's ace, in percent of the ace. outlier: the skip lead more than 25% under (#350).
+
+| boss | ace | full lead | % | skip lead | % | flag |
+|---|---|---|---|---|---|---|
+| May Route 103 Mudkip | 6 | 7 | +17% | 7 | +17% |  |
+| Roxanne 1 | 16 | 16 | +0% | 13 | -19% |  |
+| May Rustboro Mudkip | 18 | 19 | +6% | skipped | - |  |
+| Brawly 1 | 19 | 19 | +0% | 16 | -16% |  |
+| May Route 110 Mudkip | 26 | 25 | -4% | 21 | -19% |  |
+| Wally Mauville | 26 | 25 | -4% | 23 | -12% |  |
+| Wattson 1 | 26 | 26 | +0% | 23 | -12% |  |
+| Tabitha Mt Chimney | 38 | 39 | +3% | 26 | -32% | outlier |
+| Maxie Mt Chimney | 39 | 40 | +3% | 30 | -23% |  |
+| Flannery 1 | 39 | 41 | +5% | 32 | -18% |  |
+| Norman 1 | 41 | 43 | +5% | 36 | -12% |  |
+| May Route 119 Mudkip | 56 | 56 | +0% | 43 | -23% |  |
+| Shelly Weather Institute | 56 | 56 | +0% | 45 | -20% |  |
+| Winona 1 | 57 | 57 | +0% | 46 | -19% |  |
+| May Lilycove Mudkip | 66 | 66 | +0% | skipped | - |  |
+| Tabitha Magma Hideout | 66 | 67 | +2% | 55 | -17% |  |
+| Maxie Magma Hideout | 67 | 68 | +2% | 56 | -16% |  |
+| Matt | 67 | 68 | +2% | 57 | -15% |  |
+| Tate And Liza 1 | 67 | 69 | +3% | 58 | -13% |  |
+| Tabitha Mossdeep | 75 | 75 | +0% | 61 | -19% |  |
+| Maxie Mossdeep | 75 | 75 | +0% | 62 | -17% |  |
+| Shelly Seafloor Cavern | 75 | 76 | +1% | 63 | -16% |  |
+| Archie | 75 | 76 | +1% | 64 | -15% |  |
+| Juan 1 | 76 | 76 | +0% | 65 | -14% |  |
+| Wally Vr 1 | 79 | 80 | +1% | 68 | -14% |  |
+| Sidney | 80 | 81 | +1% | 70 | -12% |  |
+| Phoebe | 81 | 81 | +0% | 71 | -12% |  |
+| Glacia | 82 | 82 | +0% | 72 | -12% |  |
+| Drake | 83 | 83 | +0% | 74 | -11% |  |
+| Wallace | 86 | 84 | -2% | 75 | -13% |  |
+
+No forced trainer is met more than 25% under its ace.
+
+## Solo walls
+
+Per starter and staged story boss (#350), the starter line alone: its default moves plus the TMs open by then, picked for coverage, IV 15 and full EVs spread evenly, against the boss team on `power.score` with the type chart. lead: the fight-everyone lead (Two players' full lead). wall: the lowest level at which it wins each one-on-one (healing between Pokemon; unwinnable: not by 100). sweep: the lowest at which it beats the team without healing. KOs: the grind from the lead to the wall against the best wild Pokemon reachable by then (source: the highest exp yield x level, grass before Winona, Surf from Winona, no rods; DexNav can hunt it), with max friendship and no Lucky Egg, under the game's exp configs. After Norman, source also gives the battles the same climb takes against the strongest rematch team open by then. Tate and Liza is a double battle; the model fights it one-on-one. The grind budget is 50 KOs.
+
+### Treecko line
+
+| boss | ace | lead | wall | sweep | KOs | source |
+|---|---|---|---|---|---|---|
+| May Route 103 Treecko | 6 | 7 | 8 | 8 | 3 | Zigzagoon 5 |
+| Roxanne 1 | 16 | 16 | 14 | 16 | 0 | Marill 6 |
+| May Rustboro Treecko | 18 | 19 | 23 | 24 | 82 | Sableye 16 |
+| Brawly 1 | 19 | 19 | 16 | 19 | 0 | Sableye 16 |
+| May Route 110 Treecko | 26 | 25 | 32 | 34 | 853 | Plusle 15 |
+| Wally Mauville | 26 | 25 | 16 | 16 | 0 | Plusle 15 |
+| Wattson 1 | 26 | 26 | 25 | 29 | 0 | Plusle 15 |
+| Tabitha Mt Chimney | 38 | 39 | 40 | 51 | 75 | Pelipper 28 |
+| Maxie Mt Chimney | 39 | 40 | 41 | 50 | 83 | Pelipper 28 |
+| Flannery 1 | 39 | 41 | 54 | 58 | 2181 | Pelipper 28 |
+| Norman 1 | 41 | 43 | 48 | 56 | 394 | Sandslash 33 |
+| May Route 119 Treecko | 56 | 56 | 68 | 70 | 1342 | Azumarill 42; 32 battles vs Jeffrey 5 |
+| Shelly Weather Institute | 56 | 56 | 48 | 53 | 0 | Azumarill 42 |
+| Winona 1 | 57 | 57 | 71 | 95 | 1802 | Azumarill 42; 67 battles vs Jeffrey 5 |
+| May Lilycove Treecko | 66 | 66 | 77 | 93 | 1184 | Walrein 48; 56 battles vs Gabrielle 5 |
+| Tabitha Magma Hideout | 66 | 67 | 65 | 75 | 0 | Walrein 48 |
+| Maxie Magma Hideout | 67 | 68 | 70 | 79 | 184 | Walrein 48; 5 battles vs Gabrielle 5 |
+| Matt | 67 | 68 | 68 | 73 | 0 | Walrein 48 |
+| Tate And Liza 1 (double) | 67 | 69 | 63 | 77 | 0 | Walrein 48 |
+| Tabitha Mossdeep | 75 | 75 | 80 | 88 | 744 | Walrein 48; 73 battles vs Gabrielle 5 |
+| Maxie Mossdeep | 75 | 75 | 81 | 90 | 918 | Walrein 48; 94 battles vs Gabrielle 5 |
+| Shelly Seafloor Cavern | 75 | 76 | 56 | 62 | 0 | Walrein 48 |
+| Archie | 75 | 76 | 80 | 87 | 611 | Walrein 48; 63 battles vs Gabrielle 5 |
+| Juan 1 | 76 | 76 | 72 | 85 | 0 | Walrein 48 |
+| Wally Vr 1 | 79 | 80 | 81 | - | 45 | Aggron 64; 21 battles vs Gabrielle 5 |
+| Sidney | 80 | 81 | 72 | - | 0 | Aggron 64 |
+| Phoebe | 81 | 81 | 73 | - | 0 | Aggron 64 |
+| Glacia | 82 | 82 | 79 | - | 0 | Aggron 64 |
+| Drake | 83 | 83 | 96 | - | 1460 | Aggron 64; 452 battles vs Gabrielle 5 |
+| Wallace | 86 | 84 | 84 | - | 0 | Aggron 64 |
+
+Worst wall: Flannery 1 (2181 KOs to level 54).
+
+### Torchic line
+
+| boss | ace | lead | wall | sweep | KOs | source |
+|---|---|---|---|---|---|---|
+| May Route 103 Torchic | 6 | 7 | 8 | 8 | 3 | Zigzagoon 5 |
+| Roxanne 1 | 16 | 16 | 20 | 29 | 1252 | Marill 6 |
+| May Rustboro Torchic | 18 | 19 | 20 | 21 | 6 | Sableye 16 |
+| Brawly 1 | 19 | 19 | 16 | 19 | 0 | Sableye 16 |
+| May Route 110 Torchic | 26 | 25 | 29 | 33 | 375 | Plusle 15 |
+| Wally Mauville | 26 | 25 | 19 | 19 | 0 | Plusle 15 |
+| Wattson 1 | 26 | 26 | 35 | 36 | 1471 | Plusle 15 |
+| Tabitha Mt Chimney | 38 | 39 | 40 | 50 | 75 | Pelipper 28 |
+| Maxie Mt Chimney | 39 | 40 | 42 | 52 | 175 | Pelipper 28 |
+| Flannery 1 | 39 | 41 | 36 | 49 | 0 | Pelipper 28 |
+| Norman 1 | 41 | 43 | 39 | 47 | 0 | Sandslash 33 |
+| May Route 119 Torchic | 56 | 56 | 63 | 67 | 646 | Azumarill 42; 9 battles vs Jeffrey 5 |
+| Shelly Weather Institute | 56 | 56 | 58 | 60 | 148 | Azumarill 42; 2 battles vs Jeffrey 5 |
+| Winona 1 | 57 | 57 | 60 | 77 | 256 | Azumarill 42; 4 battles vs Jeffrey 5 |
+| May Lilycove Torchic | 66 | 66 | 74 | 89 | 784 | Walrein 48; 25 battles vs Gabrielle 5 |
+| Tabitha Magma Hideout | 66 | 67 | 65 | 86 | 0 | Walrein 48 |
+| Maxie Magma Hideout | 67 | 68 | 69 | 84 | 89 | Walrein 48; 2 battles vs Gabrielle 5 |
+| Matt | 67 | 68 | 63 | 67 | 0 | Walrein 48 |
+| Tate And Liza 1 (double) | 67 | 69 | 79 | - | 1240 | Walrein 48; 83 battles vs Gabrielle 5 |
+| Tabitha Mossdeep | 75 | 75 | 72 | 90 | 0 | Walrein 48 |
+| Maxie Mossdeep | 75 | 75 | 77 | 94 | 274 | Walrein 48; 23 battles vs Gabrielle 5 |
+| Shelly Seafloor Cavern | 75 | 76 | 75 | 79 | 0 | Walrein 48 |
+| Archie | 75 | 76 | 77 | 91 | 141 | Walrein 48; 13 battles vs Gabrielle 5 |
+| Juan 1 | 76 | 76 | 83 | - | 1160 | Walrein 48; 130 battles vs Gabrielle 5 |
+| Wally Vr 1 | 79 | 80 | 82 | - | 99 | Aggron 64; 43 battles vs Gabrielle 5 |
+| Sidney | 80 | 81 | 71 | 93 | 0 | Aggron 64 |
+| Phoebe | 81 | 81 | 79 | - | 0 | Aggron 64 |
+| Glacia | 82 | 82 | 83 | 96 | 63 | Aggron 64; 24 battles vs Gabrielle 5 |
+| Drake | 83 | 83 | 99 | - | 1951 | Aggron 64; 599 battles vs Gabrielle 5 |
+| Wallace | 86 | 84 | unwinnable | - | - | Aggron 64 |
+
+Worst wall: Wallace (unwinnable); then Drake (1951 KOs to level 99).
+
+### Mudkip line
+
+| boss | ace | lead | wall | sweep | KOs | source |
+|---|---|---|---|---|---|---|
+| May Route 103 Mudkip | 6 | 7 | 8 | 8 | 3 | Zigzagoon 5 |
+| Roxanne 1 | 16 | 16 | 14 | 16 | 0 | Marill 6 |
+| May Rustboro Mudkip | 18 | 19 | 24 | 24 | 129 | Sableye 16 |
+| Brawly 1 | 19 | 19 | 17 | 20 | 0 | Sableye 16 |
+| May Route 110 Mudkip | 26 | 25 | 30 | 31 | 513 | Plusle 15 |
+| Wally Mauville | 26 | 25 | 16 | 16 | 0 | Plusle 15 |
+| Wattson 1 | 26 | 26 | 22 | 24 | 0 | Plusle 15 |
+| Tabitha Mt Chimney | 38 | 39 | 35 | 37 | 0 | Pelipper 28 |
+| Maxie Mt Chimney | 39 | 40 | 36 | 39 | 0 | Pelipper 28 |
+| Flannery 1 | 39 | 41 | 32 | 36 | 0 | Pelipper 28 |
+| Norman 1 | 41 | 43 | 42 | 51 | 0 | Sandslash 33 |
+| May Route 119 Mudkip | 56 | 56 | 76 | 79 | 2993 | Azumarill 42; 179 battles vs Jeffrey 5 |
+| Shelly Weather Institute | 56 | 56 | 51 | 57 | 0 | Azumarill 42 |
+| Winona 1 | 57 | 57 | 56 | 78 | 0 | Azumarill 42 |
+| May Lilycove Mudkip | 66 | 66 | 91 | 99 | 4138 | Walrein 48; 418 battles vs Gabrielle 5 |
+| Tabitha Magma Hideout | 66 | 67 | 50 | 63 | 0 | Walrein 48 |
+| Maxie Magma Hideout | 67 | 68 | 57 | 67 | 0 | Walrein 48 |
+| Matt | 67 | 68 | 55 | 63 | 0 | Walrein 48 |
+| Tate And Liza 1 (double) | 67 | 69 | 60 | 82 | 0 | Walrein 48 |
+| Tabitha Mossdeep | 75 | 75 | 60 | 72 | 0 | Walrein 48 |
+| Maxie Mossdeep | 75 | 75 | 61 | 74 | 0 | Walrein 48 |
+| Shelly Seafloor Cavern | 75 | 76 | 72 | 80 | 0 | Walrein 48 |
+| Archie | 75 | 76 | 74 | 87 | 0 | Walrein 48 |
+| Juan 1 | 76 | 76 | 76 | - | 0 | Walrein 48 |
+| Wally Vr 1 | 79 | 80 | 93 | - | 1189 | Aggron 64; 389 battles vs Gabrielle 5 |
+| Sidney | 80 | 81 | 85 | - | 268 | Aggron 64; 99 battles vs Gabrielle 5 |
+| Phoebe | 81 | 81 | 69 | 97 | 0 | Aggron 64 |
+| Glacia | 82 | 82 | 79 | - | 0 | Aggron 64 |
+| Drake | 83 | 83 | 77 | - | 0 | Aggron 64 |
+| Wallace | 86 | 84 | unwinnable | - | - | Aggron 64 |
+
+Worst wall: Wallace (unwinnable); then May Lilycove Mudkip (4138 KOs to level 91).
+
 ## Default movesets (Gen 3 vs Gen 9 learnsets)
 
 | measure | value |

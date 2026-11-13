@@ -1,0 +1,13 @@
+{
+  "regular": {
+    "TRAINER_A": {"stage": "One", "map": "RouteA", "class": "AVOIDABLE", "reason": "one_of", "one_of": ["TRAINER_A", "TRAINER_B"]},
+    "TRAINER_B": {"stage": "One", "map": "RouteA", "class": "AVOIDABLE", "reason": "one_of", "one_of": ["TRAINER_A", "TRAINER_B"]},
+    "TRAINER_C": {"stage": "One", "map": "RouteA", "class": "FORCED", "reason": "blocks the path"},
+    "TRAINER_D": {"stage": "Two", "map": "TownA_1", "class": "AVOIDABLE", "reason": "off the path"},
+    "TRAINER_E": {"stage": "Two", "map": "TownA_1", "class": "UNCERTAIN", "reason": "unclear"}
+  },
+  "bosses": {
+    "TRAINER_RIVAL_A": {"stage": "One", "required": true, "reason": "scripted"},
+    "TRAINER_LEADER_X": {"stage": "Two", "required": false, "reason": "optional"}
+  }
+}

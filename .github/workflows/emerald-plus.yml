@@ -97,6 +97,11 @@ jobs:
           python3 tools/rebalance/rebalance.py
           git diff --exit-code tools/rebalance/output/report.md tools/rebalance/output/curve_data.json
 
+      # The forced-trainer classifier. Its RealRepo tests also fail when the committed output,
+      # tools/rebalance/forced_trainers.json, is stale.
+      - name: Forced trainer unit tests
+        run: python3 -m unittest discover -s tools/forced_trainers
+
       # tools/random_party reads the real repo through the rebalance and area_archetypes parsers.
       - name: Random party unit tests
         run: python3 -m unittest discover -s tools/random_party

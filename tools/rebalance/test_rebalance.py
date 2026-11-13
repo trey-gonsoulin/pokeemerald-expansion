@@ -6,6 +6,7 @@
 import contextlib
 import copy
 import fnmatch
+import functools
 import io
 import json
 import os
@@ -14,6 +15,7 @@ import sys
 import tempfile
 import types
 import unittest
+import unittest.mock
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -21,9 +23,12 @@ import gamedata as G  # noqa: E402
 import matchup as M  # noqa: E402
 import power as P  # noqa: E402
 import rebalance as RB  # noqa: E402
+import solo as S  # noqa: E402
 
 FIXTURE = os.path.join(G.HERE, 'testdata', 'repo')
 FIXTURE_STAGES = os.path.join(G.HERE, 'testdata', 'stages.json')
+# Names no fixture trainer, so its skip player fights the bosses alone and skips Leader X (#350).
+FIXTURE_FORCED = os.path.join(G.HERE, 'testdata', 'forced_trainers.json')
 
 
 def fake_regime(**overrides):
@@ -33,7 +38,8 @@ def fake_regime(**overrides):
     return types.SimpleNamespace(flag=lambda expr: G.R.c_eval(expr, defines))
 
 
-curve_inputs = RB.repo_inputs
+# The fixture's inputs without the real forced trainers, which name none of its trainers.
+curve_inputs = functools.partial(RB.repo_inputs, forced_path=None)
 
 
 class Expressions(unittest.TestCase):
@@ -148,6 +154,71 @@ class MoveLegality(unittest.TestCase):
                                       '\nRaichu\nLevel: 25\n- Slam\n')
         self.assertEqual(RB.unlearnable_set_moves(teams, self.gd, self.info, self.lists),
                          [('TRAINER_A', 'SPECIES_RAICHU', 'MOVE_SLAM')])
+
+    def scored(self):
+        """The Pichu line with stats and moves to score: an Electric Raichu with
+        Attack 40 and Special Attack 90, Boomburst (Normal) from its teachables
+        and Hyper Beam, Explosion and Sky Attack beside them."""
+        for sp in self.gd.species.values():
+            sp.types = ('TYPE_ELECTRIC',)
+            sp.stats = {'baseAttack': 40, 'baseSpAttack': 90}
+        phys, spec, status = 'DAMAGE_CATEGORY_PHYSICAL', 'DAMAGE_CATEGORY_SPECIAL', 'DAMAGE_CATEGORY_STATUS'
+        self.gd.moves = {
+            'MOVE_CHARM': G.Move('TYPE_FAIRY', 0, 100, status), 'MOVE_NASTY_PLOT': G.Move('TYPE_DARK', 0, 0, status),
+            'MOVE_GROWL': G.Move('TYPE_NORMAL', 0, 100, status), 'MOVE_SLAM': G.Move('TYPE_NORMAL', 80, 75, phys),
+            'MOVE_MEGA_KICK': G.Move('TYPE_NORMAL', 120, 75, phys),
+            'MOVE_THUNDER_PUNCH': G.Move('TYPE_ELECTRIC', 75, 100, phys),
+            'MOVE_THUNDERBOLT': G.Move('TYPE_ELECTRIC', 90, 100, spec),
+            'MOVE_VOLT_TACKLE': G.Move('TYPE_ELECTRIC', 120, 100, phys),
+            'MOVE_SURF': G.Move('TYPE_WATER', 90, 100, spec), 'MOVE_BOOMBURST': G.Move('TYPE_NORMAL', 140, 100, spec),
+            'MOVE_HYPER_BEAM': G.Move('TYPE_NORMAL', 300, 100, spec, recharge=True),
+            'MOVE_EXPLOSION': G.Move('TYPE_NORMAL', 250, 100, phys, explosion=True),
+            'MOVE_SKY_ATTACK': G.Move('TYPE_FLYING', 500, 100, phys, 'EFFECT_TWO_TURNS_ATTACK')}
+        self.lists['sRaichuTeachables'] |= {'MOVE_BOOMBURST', 'MOVE_HYPER_BEAM', 'MOVE_EXPLOSION', 'MOVE_SKY_ATTACK'}
+
+    def replace(self, level, replaced, kept, species='SPECIES_RAICHU'):
+        return RB.replacement_move(self.gd, self.info, self.lists, species, level, replaced, kept)
+
+    def test_replacement_restores_stab(self):
+        self.scored()
+        # Boomburst (140 x 90) outscores Thunderbolt (90 x 1.5 x 90) while the set keeps its STAB...
+        self.assertEqual(self.replace(50, 'MOVE_MEGA_KICK', ['MOVE_GROWL', 'MOVE_THUNDERBOLT']), 'MOVE_BOOMBURST')
+        # ...but a set that would lose it takes the best Electric move.
+        self.assertEqual(self.replace(50, 'MOVE_MEGA_KICK', ['MOVE_GROWL', 'MOVE_SURF']), 'MOVE_THUNDERBOLT')
+
+    def test_replacement_is_never_a_recharge_self_ko_or_two_turn_move(self):
+        self.scored()
+        # Hyper Beam, Explosion and Sky Attack outscore Surf, the best of the rest.
+        kept = ['MOVE_THUNDERBOLT', 'MOVE_BOOMBURST']
+        self.assertEqual(self.replace(50, 'MOVE_MEGA_KICK', kept), 'MOVE_SURF')
+
+    def test_replacement_is_never_an_hm_fixture(self):
+        self.scored()
+        self.lists[G.HM_LIST] = G.parse_hms('#define FOREACH_HM(F) \\\n    F(CUT) \\\n    F(SURF)\n\n'
+                                            '#define FOREACH_TMHM(F) \\\n')
+        self.assertEqual(self.lists[G.HM_LIST], {'MOVE_CUT', 'MOVE_SURF'})
+        # Surf was the best of the rest; Volt Tackle is the best that isn't an HM.
+        self.assertEqual(self.replace(50, 'MOVE_MEGA_KICK', ['MOVE_THUNDERBOLT', 'MOVE_BOOMBURST']),
+                         'MOVE_VOLT_TACKLE')
+
+    def test_replacement_prefers_level_up_at_30_or_below_fixture(self):
+        self.scored()
+        # Thunder Punch (on evolving) over the stronger Thunderbolt from the teachables, up to level 30.
+        self.assertEqual(self.replace(30, 'MOVE_MEGA_KICK', ['MOVE_GROWL', 'MOVE_SURF']), 'MOVE_THUNDER_PUNCH')
+        self.assertEqual(self.replace(31, 'MOVE_MEGA_KICK', ['MOVE_GROWL', 'MOVE_SURF']), 'MOVE_THUNDERBOLT')
+
+    def test_rewrite_unlearnable_reports_each_change(self):
+        self.scored()
+        text = ('=== TRAINER_A ===\nName: A\n\nRaichu\nLevel: 25\n- Slam\n- Thunder Punch\n'
+                '\nSparky (Raichu) (M) @ Oran Berry\nLevel: 50\nIVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe\n'
+                '- Growl  \n- Mega Kick\n- Surf\n\n=== TRAINER_B ===\nName: B\n\nPikachu\nLevel: 30\n- Slam\n')
+        out, changes = RB.rewrite_unlearnable(text, self.gd, self.info, self.lists)
+        # Slam at 25 keeps the set's STAB, and no other Electric move comes by level up: Boomburst.
+        # The Mega Kick on a set without STAB: Thunderbolt. Pikachu's Slam at 30 is learnable.
+        self.assertEqual(out, text.replace('- Slam\n- Thunder', '- Boomburst\n- Thunder')
+                         .replace('- Mega Kick', '- Thunderbolt'))
+        self.assertEqual(changes, [('TRAINER_A', 'SPECIES_RAICHU', 'MOVE_SLAM', 'MOVE_BOOMBURST'),
+                                   ('TRAINER_A', 'SPECIES_RAICHU', 'MOVE_MEGA_KICK', 'MOVE_THUNDERBOLT')])
 
 
 class GameDataFixture(unittest.TestCase):
@@ -701,7 +772,7 @@ class Matchup(unittest.TestCase):
 class Analysis(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.res = RB.analyze(FIXTURE, FIXTURE_STAGES)
+        cls.res = RB.analyze(FIXTURE, FIXTURE_STAGES, FIXTURE_FORCED)
 
     def test_matchup_skips_starters_the_data_lacks(self):
         self.assertEqual(self.res['matchup'], {'starters': [], 'fights': []})
@@ -940,6 +1011,7 @@ class Analysis(unittest.TestCase):
             with contextlib.redirect_stdout(text):
                 self.assertEqual(RB.main(['curve', '{"ko_takers": 6}', '--data', data]), 0)
             self.assertIn('Leader X', text.getvalue())
+            self.assertIn('skip reference', text.getvalue())  # the data has the forced trainers (#350)
             knobs = os.path.join(out, 'knobs.json')
             with open(knobs, 'w', encoding='utf-8') as f:
                 f.write('{"margin": 1}')
@@ -947,6 +1019,40 @@ class Analysis(unittest.TestCase):
             with contextlib.redirect_stdout(text):
                 self.assertEqual(RB.main(['curve', knobs, '--data', data]), 0)
             self.assertIn('Lv 100 by: -', text.getvalue())
+
+    def test_report_has_two_players_section(self):
+        # The skip player passes the hiker by, so it meets the rival lower, and skips Leader X.
+        rival, leader = self.res['two_players']
+        self.assertEqual((rival['boss'], leader['boss']), ('TRAINER_RIVAL_A', 'TRAINER_LEADER_X'))
+        self.assertLess(rival['skip'], rival['full'])
+        self.assertEqual(rival['skip_pct'], round((rival['skip'] - rival['ace']) * 100 / rival['ace'], 1))
+        self.assertIsNone(leader['skip'])
+        self.assertIsNone(leader['skip_pct'])
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, 'report.md')
+            RB.write_report(path, self.res)
+            with open(path, encoding='utf-8') as f:
+                section = f.read().split('## Two players\n', 1)[1].split('\n## ', 1)[0]
+        self.assertIn('| boss | ace | full lead | % | skip lead | % | flag |', section)
+        pct = (rival['full'] - rival['ace']) * 100 / rival['ace']
+        self.assertIn(f"| Rival A | {rival['ace']} | {rival['full']} | {pct:+.0f}% | {rival['skip']} |", section)
+        self.assertIn(f"| Leader X | {leader['ace']} | {leader['full']} |", section)
+        self.assertIn('| skipped | - |  |', section)
+
+    def test_outlier_flag_at_25_percent(self):
+        def row(bid, ace, full, skip, stage='One'):
+            return {'stage': stage, 'boss': bid, 'boss_ace': ace, 'levels': [full, 1],
+                    'skip_levels': None if skip is None else [skip, 1]}
+        stages = [{'name': 'One', 'bosses': ['TRAINER_A', 'TRAINER_B', 'TRAINER_C', 'TRAINER_D']}]
+        rows = RB.two_players([row('TRAINER_A', 100, 110, 75), row('TRAINER_B', 100, 110, 74),
+                               row('TRAINER_C', 38, 39, 26), row('TRAINER_D', 20, 22, None),
+                               row('TRAINER_STEVEN', 100, 90, 10, 'Post-game')], stages)
+        self.assertEqual(RB.OUTLIER_SKIP, 25)
+        self.assertEqual([r['boss'] for r in rows], ['TRAINER_A', 'TRAINER_B', 'TRAINER_C', 'TRAINER_D'])
+        self.assertEqual([r['skip_pct'] for r in rows], [-25.0, -26.0, -31.6, None])
+        self.assertEqual([r['full_pct'] for r in rows], [10.0, 10.0, 2.6, 10.0])
+        # More than 25% under: -25% exactly is not flagged; Tabitha at Mt Chimney's -32% is.
+        self.assertEqual([r['outlier'] for r in rows], [False, True, True, False])
 
 
 def team(tid, cls, *levels, species='SPECIES_SABLEYE'):
@@ -1105,6 +1211,115 @@ Aron
         self.assertEqual(evolved, [('TRAINER_C', 'SPECIES_DUSCLOPS', 'SPECIES_DUSKNOIR', 80)])
         self.assertEqual(RB.nonlevel_evolve_party(text, teams, evolver), (text, []))  # idempotent
 
+    # Lowering (#350): a real SpeciesInfo, and a regime's species list.
+    GD = types.SimpleNamespace(species={'SPECIES_TREECKO', 'SPECIES_GROVYLE', 'SPECIES_SCEPTILE', 'SPECIES_ARON'})
+
+    @classmethod
+    def setUpClass(cls):
+        cls.info = G.R.SpeciesInfo(G.REPO)
+        cls.devolve = staticmethod(RB.devolver(cls.info, cls.GD))
+
+    def test_lowered_grovyle_devolves_below_grace(self):
+        # Grovyle 18 lowered by 2 is 16, under 16 + EVOLVE_GRACE: Treecko.
+        self.assertEqual(RB.evolve_team([('SPECIES_GROVYLE', 18, None)], -2, None, devolve=self.devolve),
+                         ['SPECIES_TREECKO'])
+        # Without devolve, a lowered team keeps its species.
+        self.assertEqual(RB.evolve_team([('SPECIES_GROVYLE', 18, None)], -2, None), ['SPECIES_GROVYLE'])
+
+    def test_lowered_grovyle_kept_at_grace(self):
+        self.assertEqual(RB.evolve_team([('SPECIES_GROVYLE', 22, None)], -2, None, devolve=self.devolve),
+                         ['SPECIES_GROVYLE'])
+        self.assertEqual(self.devolve('SPECIES_GROVYLE', 19), 'SPECIES_GROVYLE')
+        self.assertEqual(self.devolve('SPECIES_GROVYLE', 18), 'SPECIES_TREECKO')
+
+    def test_devolve_without_pre_evolution_keeps_species(self):
+        # Review Focus 1: no pre-evolution (Aron), or one the regime doesn't have: only the level drops.
+        self.assertEqual(self.devolve('SPECIES_ARON', 1), 'SPECIES_ARON')
+        no_treecko = RB.devolver(self.info, types.SimpleNamespace(species={'SPECIES_GROVYLE'}))
+        self.assertEqual(no_treecko('SPECIES_GROVYLE', 5), 'SPECIES_GROVYLE')
+        # The fitting base missing: the nearest form back up the line that the regime has.
+        no_base = RB.devolver(self.info, types.SimpleNamespace(species={'SPECIES_GROVYLE', 'SPECIES_SCEPTILE'}))
+        self.assertEqual(no_base('SPECIES_SCEPTILE', 5), 'SPECIES_GROVYLE')
+        party ='=== TRAINER_C ===\nName: C\n\nAron\nLevel: 20\n\nGrovyle\nLevel: 20\n'
+        text, devolved = RB.raise_party(party, {'TRAINER_C': -10}, devolve=no_treecko)
+        self.assertEqual(text, party.replace('Level: 20', 'Level: 10'))
+        self.assertEqual(devolved, [])
+
+    def test_level_floor_is_1(self):
+        party = '=== TRAINER_C ===\nName: C\n\nAron\nLevel: 5\n'
+        self.assertEqual(RB.raise_party(party, {'TRAINER_C': -10}, devolve=self.devolve),
+                         (party.replace('Level: 5', 'Level: 1'), []))
+        # A lowered wild slot never devolves (restock doesn't).
+        slots = [('land_mons', {'species': 'SPECIES_SCEPTILE', 'min_level': 3, 'max_level': 40}, 60)]
+        self.assertEqual(RB.shifted_slots(slots, -10)[0][1],
+                         {'species': 'SPECIES_SCEPTILE', 'min_level': 1, 'max_level': 30})
+        seen = []
+        RB.evolve_team([('SPECIES_ARON', 5, None)], -10, None,
+                       devolve=lambda sp, level, taken=(): seen.append(level) or sp)
+        self.assertEqual(seen, [1])
+
+    def test_lowered_wild_offset_is_what_restock_writes(self):
+        # Abandoned Ship's case: vanilla Tentacruel 20-30 and Tentacool 30-35. At +6 the Tentacool
+        # evolved (36 >= 30 + 3); at +2 restock rebuilds from vanilla: Tentacool again, and the
+        # vanilla Tentacruel stays one at 22, though below Tentacool's evolution level + grace.
+        gd = types.SimpleNamespace(species={'SPECIES_TENTACOOL', 'SPECIES_TENTACRUEL'})
+        vanilla = [('fishing_mons', {'species': 'SPECIES_TENTACRUEL', 'min_level': 20, 'max_level': 30}, 60),
+                   ('fishing_mons', {'species': 'SPECIES_TENTACOOL', 'min_level': 30, 'max_level': 35}, 40)]
+        evolve = RB.evolver(self.info, gd)
+        for offset, want in ((6, ['SPECIES_TENTACRUEL', 'SPECIES_TENTACRUEL']),
+                             (2, ['SPECIES_TENTACRUEL', 'SPECIES_TENTACOOL']),
+                             (0, ['SPECIES_TENTACRUEL', 'SPECIES_TENTACOOL'])):
+            got = RB.restocked_slots(vanilla, offset, evolve, gd.species)
+            self.assertEqual([s['species'] for _, s, _ in got], want, offset)
+            self.assertEqual([(f, s['min_level'], s['max_level'], r) for f, s, r in got],
+                             [(f, s['min_level'] + offset, s['max_level'] + offset, r) for f, s, r in vanilla])
+            # Pinned to restock's own shift_levels with the real SpeciesInfo.
+            wild = {'wild_encounter_groups': [{'label': 'gWildMonHeaders', 'encounters': [
+                {'map': 'MAP_X', 'fishing_mons': {'mons': [dict(s) for _, s, _ in vanilla]}}]}]}
+            G.R.shift_levels(wild, {'MAP_X': {'fishing_mons': offset}}, self.info)
+            self.assertEqual([s for _, s, _ in got], wild['wild_encounter_groups'][0]['encounters'][0]
+                             ['fishing_mons']['mons'])
+        self.assertEqual(vanilla[1][1]['min_level'], 30)  # vanilla untouched
+
+    def test_raise_party_lowers_text_and_reports_devolutions(self):
+        party = ('=== TRAINER_C ===\nName: C\n\nLeaf (Grovyle) (M) @ Oran Berry\nLevel: 18\n- Tackle\n\n'
+                 'Aron\nLevel: 30\n\n'
+                 '=== TRAINER_WALLY_MAUVILLE ===\nName: WALLY\n\nGrovyle\nLevel: 18\n\n'
+                 '=== PARTNER_B ===\nName: B\n\nGrovyle\nLevel: 18\n')
+        lower = {'TRAINER_C': -2, 'TRAINER_WALLY_MAUVILLE': -2, 'PARTNER_B': -2}
+        text, devolved = RB.raise_party(party, lower, devolve=self.devolve)
+        # The nickname, gender and item stay; EVOLVE_EXEMPT's and the partner's Grovyle only drop.
+        self.assertEqual(text, party.replace('Leaf (Grovyle) (M)', 'Leaf (Treecko) (M)')
+                         .replace('Level: 18', 'Level: 16').replace('Level: 30', 'Level: 28'))
+        self.assertEqual(devolved, [('TRAINER_C', 'SPECIES_GROVYLE', 'SPECIES_TREECKO', 16)])
+        self.assertEqual(G.parse_trainers_text(text)['TRAINER_C'].mons[0].species, 'SPECIES_TREECKO')
+
+    def test_unique_team_never_devolves_into_a_duplicate(self):
+        # A boss team keeps the species it would duplicate, and the report says so (before == after).
+        party = '=== TRAINER_C ===\nName: C\n\nTreecko\nLevel: 10\n\nGrovyle\nLevel: 18\n'
+        text, devolved = RB.raise_party(party, {'TRAINER_C': -2}, devolve=self.devolve, unique={'TRAINER_C'})
+        self.assertEqual(text, party.replace('Level: 10', 'Level: 8').replace('Level: 18', 'Level: 16'))
+        self.assertEqual(devolved, [('TRAINER_C', 'SPECIES_GROVYLE', 'SPECIES_GROVYLE', 16)])
+        # The fitting form taken, an intermediate one that is free: Sceptile 10 beside Treecko is Grovyle.
+        party = '=== TRAINER_C ===\nName: C\n\nTreecko\nLevel: 10\n\nSceptile\nLevel: 40\n'
+        text, devolved = RB.raise_party(party, {'TRAINER_C': -30}, devolve=self.devolve, unique={'TRAINER_C'})
+        self.assertEqual(text, '=== TRAINER_C ===\nName: C\n\nTreecko\nLevel: 1\n\nGrovyle\nLevel: 10\n')
+        self.assertEqual(devolved, [('TRAINER_C', 'SPECIES_SCEPTILE', 'SPECIES_GROVYLE', 10)])
+        # Two evolved Pokemon devolving to one base: the ace (Sceptile 40) takes it, as in
+        # nonlevel_evolve_party, and the Grovyle has no other form, so it stays.
+        party = '=== TRAINER_C ===\nName: C\n\nGrovyle\nLevel: 18\n\nSceptile\nLevel: 40\n'
+        text, devolved = RB.raise_party(party, {'TRAINER_C': -30}, devolve=self.devolve, unique={'TRAINER_C'})
+        self.assertEqual(text, '=== TRAINER_C ===\nName: C\n\nGrovyle\nLevel: 1\n\nTreecko\nLevel: 10\n')
+        self.assertEqual(devolved, [('TRAINER_C', 'SPECIES_GROVYLE', 'SPECIES_GROVYLE', 1),
+                                    ('TRAINER_C', 'SPECIES_SCEPTILE', 'SPECIES_TREECKO', 10)])
+        # On a tie of levels the last slot goes first.
+        party = '=== TRAINER_C ===\nName: C\n\nGrovyle\nLevel: 18\n\nGrovyle\nLevel: 18\n'
+        text, _ = RB.raise_party(party, {'TRAINER_C': -2}, devolve=self.devolve, unique={'TRAINER_C'})
+        self.assertEqual(text, '=== TRAINER_C ===\nName: C\n\nGrovyle\nLevel: 16\n\nTreecko\nLevel: 16\n')
+        # Not a unique team: both devolve.
+        _, devolved = RB.raise_party(party, {'TRAINER_C': -30}, devolve=self.devolve)
+        self.assertEqual([d[2] for d in devolved], ['SPECIES_TREECKO', 'SPECIES_TREECKO'])
+
     def test_party_species_name(self):
         self.assertEqual(RB.party_species_name('SPECIES_KIRLIA'), 'Kirlia')
         self.assertEqual(RB.party_species_name('SPECIES_MR_MIME'), 'Mr Mime')
@@ -1226,12 +1441,16 @@ class RealRepo(unittest.TestCase):
     def test_committed_curve_data_runs_the_repo_model(self):
         """output/curve_data.json (the explorer's data) gives the curve the
         repo's own data gives: rerun rebalance.py after a data change."""
-        live = curve_inputs(G.REPO, RB.DEFAULT_STAGES, G.R.SpeciesInfo(G.REPO))
+        live = RB.repo_inputs(G.REPO, RB.DEFAULT_STAGES, G.R.SpeciesInfo(G.REPO))
+        self.assertTrue(live['forced'])
         with open(os.path.join(RB.DEFAULT_OUT_DIR, RB.CURVE_DATA), encoding='utf-8') as f:
             snap = RB.load_snapshot(json.load(f))
         for knobs in ({}, {'ko_takers': 6, 'boss_ref': 'party_mean', 'margin': 1, 'trainer_gap': 5, 'wild_gap': 10},
                       {'scaled_exp': False, 'trainer_exp': '1.5x on', 'affection': 'always', 'wild_battles': 5},
-                      {'margin': 5, 'gap_unit': 'percent', 'trainer_gap': 10, 'rematch_step': 5}):
+                      {'margin': 5, 'gap_unit': 'percent', 'trainer_gap': 10, 'rematch_step': 5},
+                      # #350: the two players, lowering (and devolving) the bosses and trainers.
+                      {'full_margin': 10, 'skip_margin': 15, 'lower': True, 'gap_unit': 'percent',
+                       'trainer_gap': 10, 'wild_gap': 20}):
             self.assertEqual(RB.explore_run(snap, knobs), RB.explore_run(live, knobs), knobs)
 
     def test_stage_bosses_exist(self):
@@ -1307,6 +1526,464 @@ class RealRepo(unittest.TestCase):
                 self.assertEqual(flag, 'FLAG_SYS_GAME_CLEAR')
                 self.assertIsNone(G.stage_of(folder, cfg['stages']), folder)
                 self.assertTrue(any(fnmatch.fnmatchcase(folder, g) for g in cfg['unstaged']), folder)
+
+
+class RealMoveReplacement(unittest.TestCase):
+    """replacement_move on #160's worked examples (docs/fork/balance.md), and
+    rewrite_unlearnable on the committed teams, in the real data."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.gd = G.GameData(G.REPO, G.regime_defines(G.REPO)['modern'])
+        cls.info = G.R.SpeciesInfo(G.REPO)
+        cls.lists = G.move_lists(G.REPO)
+
+    def replace(self, species, level, replaced, kept):
+        return RB.replacement_move(self.gd, self.info, self.lists, species, level, replaced, kept)
+
+    def test_replacement_keeps_the_replaced_type(self):
+        # Madeline 2's Camerupt (Fire/Ground) loses Magnitude and keeps no other Ground attack:
+        # the Earthquake TM outscores Earth Power (#160 hand-picked Earth Power here).
+        self.assertEqual(self.replace('SPECIES_CAMERUPT', 38, 'MOVE_MAGNITUDE',
+                                      ['MOVE_EMBER', 'MOVE_TACKLE', 'MOVE_SUNNY_DAY']), 'MOVE_EARTHQUAKE')
+        # Braxton's Shiftry (Grass/Dark) loses Feint Attack: a Dark move, not a stronger Grass one.
+        self.assertEqual(self.gd.moves[self.replace('SPECIES_SHIFTRY', 50, 'MOVE_FEINT_ATTACK',
+                                                    ['MOVE_GIGA_DRAIN', 'MOVE_DOUBLE_TEAM', 'MOVE_SWAGGER'])].type,
+                         'TYPE_DARK')
+
+    def test_replacement_prefers_level_up_at_30_or_below(self):
+        # Roxanne's Geodude 13: Bulldoze over the stronger Earthquake and Rock Slide TMs.
+        self.assertEqual(self.replace('SPECIES_GEODUDE', 13, 'MOVE_ROCK_THROW',
+                                      ['MOVE_TACKLE', 'MOVE_DEFENSE_CURL', 'MOVE_ROCK_TOMB']), 'MOVE_BULLDOZE')
+        # Wattson's Voltorb and Magneton: Thunder Shock beats the physical Spark on their Special Attack.
+        self.assertEqual(self.replace('SPECIES_VOLTORB', 22, 'MOVE_SELF_DESTRUCT',
+                                      ['MOVE_ROLLOUT', 'MOVE_CHARGE_BEAM', 'MOVE_SHOCK_WAVE']), 'MOVE_THUNDER_SHOCK')
+        self.assertEqual(self.replace('SPECIES_MAGNETON', 24, 'MOVE_SONIC_BOOM',
+                                      ['MOVE_SUPERSONIC', 'MOVE_SHOCK_WAVE', 'MOVE_THUNDER_WAVE']),
+                         'MOVE_THUNDER_SHOCK')
+
+    def test_replacement_is_never_an_hm(self):
+        # Lucas 2's Wailmer at 9 learns no Water move by level up: Water Pulse from the TMs, not Surf.
+        self.assertEqual(self.replace('SPECIES_WAILMER', 9, 'MOVE_WATER_GUN', ['MOVE_SPLASH']), 'MOVE_WATER_PULSE')
+
+    def test_rewrite_unlearnable_changes_nothing_today(self):
+        """move_allowlist.json is empty since #160, so every committed set move is learnable."""
+        for name in ('trainers.party', 'battle_partners.party'):
+            with open(os.path.join(G.REPO, 'src', 'data', name), encoding='utf-8') as f:
+                text = f.read()
+            self.assertEqual(RB.rewrite_unlearnable(text, self.gd, self.info, self.lists), (text, []), name)
+
+
+class TwoPlayers(unittest.TestCase):
+    FORCED = FIXTURE_FORCED
+
+    @staticmethod
+    def stages():
+        return [
+            {'name': 'One', 'regular': ['TRAINER_A', 'TRAINER_B', 'TRAINER_C'], 'bosses': ['TRAINER_RIVAL_A']},
+            {'name': 'Two', 'regular': ['TRAINER_D', 'TRAINER_E'], 'bosses': ['TRAINER_LEADER_X']},
+        ]
+
+    def test_load_forced_takes_one_of_each_group(self):
+        forced = RB.load_forced(self.FORCED)
+        self.assertEqual(forced.trainers, frozenset({'TRAINER_A', 'TRAINER_C'}))
+        self.assertEqual(forced.optional_bosses, frozenset({'TRAINER_LEADER_X'}))
+
+    def test_skip_stages_drops_optional_bosses_and_skippable_trainers(self):
+        out = RB.skip_stages(self.stages(), RB.load_forced(self.FORCED))
+        self.assertEqual([st['regular'] for st in out], [['TRAINER_A', 'TRAINER_C'], []])
+        self.assertEqual([st['bosses'] for st in out], [['TRAINER_RIVAL_A'], []])
+
+    def test_skip_stages_leaves_the_input_alone(self):
+        stages = self.stages()
+        RB.skip_stages(stages, RB.load_forced(self.FORCED))
+        self.assertEqual(stages, self.stages())
+
+    # The fixture's story: stage One has the hiker (ace 20) and the rival
+    # (ace 5), stage Two Leader X (ace 20).
+    NONE_FORCED = RB.Forced(frozenset(), frozenset())
+    HIKER_FORCED = RB.Forced(frozenset({'TRAINER_HIKER_A'}), frozenset())
+    LEADER_OPTIONAL = RB.Forced(frozenset(), frozenset({'TRAINER_LEADER_X'}))
+    MARGINS = {'full_margin': 10, 'skip_margin': 15}
+
+    @classmethod
+    def setUpClass(cls):
+        cls.inputs = curve_inputs(FIXTURE, FIXTURE_STAGES)
+
+    def run_share(self, wilds=None, **kw):
+        inp = self.inputs
+        return RB.share_run(inp['stages'], inp['trainers'], inp['gd'], inp['scaling'],
+                            wilds or inp['wilds']['modern'], vanilla_wilds=inp['wilds']['vanilla'], **kw)
+
+    def test_without_skip_rows_match_today(self):
+        # share_run's rows before the skip player (#350), snapshotted.
+        def boss(stage, bid, cls, base, raise_, ace, bench, ref, levels, friendship):
+            return {'stage': stage, 'boss': bid, 'class': f'TRAINER_CLASS_{cls}', 'base_ace': base,
+                    'raise': raise_, 'boss_ace': base + raise_, 'ace': max(levels), 'bench': bench,
+                    'ref': ref, 'levels': levels, 'friendship': friendship}
+
+        def stage(name, start, n, gap, raise_, mean, land, offset):
+            return {'stage': name, 'start_ref': start, 'trainers': n, 'gap': gap, 'raise': raise_,
+                    'trainer_ace_mean': mean, 'wild_land_mean': land, 'wild_offset': offset, 'wild_applied': 0}
+        rows = self.run_share(skip=None, margin=5, relative_gaps=True, trainer_gap=10, wild_gap=20, wild_battles=6)
+        self.assertEqual(rows, (
+            [boss('One', 'TRAINER_RIVAL_A', 'PKMN_TRAINER_1', 5, 7, 12, 11, 11, [13, 11, 11, 11, 11, 11], 96),
+             boss('Two', 'TRAINER_LEADER_X', 'LEADER', 20, 0, 13, 11, 11, [13, 11, 11, 11, 11, 11], 112)],
+            [stage('One', 5, 1, -185.7, 0, 20.0, 4.0, 0), stage('Two', 11, 0, None, 0, None, None, 0)]))
+        rows = self.run_share(margin=1, trainer_gap=-20, wild_gap=0, ko_takers=3, boss_ref='ko_mean')
+        self.assertEqual(rows, (
+            [boss('One', 'TRAINER_RIVAL_A', 'PKMN_TRAINER_1', 5, 9, 14, 12, 12.7, [12, 14, 12, 12, 12, 12], 101),
+             boss('Two', 'TRAINER_LEADER_X', 'LEADER', 20, 0, 15, 12, 13.7, [13, 15, 13, 12, 12, 12], 117)],
+            [stage('One', 5.0, 1, -20.0, 6, 26.0, 5.0, 1),
+             stage('Two', 13.666666666666666, 0, None, 0, None, None, 0)]))
+
+    def test_boss_ace_is_the_lower_of_the_two_rules(self):
+        rows, st = self.run_share(skip=self.NONE_FORCED, lower=True, **self.MARGINS)
+        rival, leader = rows
+        # The skip player passes the hiker by, so it meets the rival (and then
+        # Leader X) lower: its reference / 0.85 is the lower rule at both.
+        # The rival: 11 / 1.10 = 10, 5 / 0.85 = 5.9 -> 6.
+        self.assertEqual((rival['ref'], rival['skip_ref']), (11, 5))
+        self.assertEqual(rival['skip_levels'], [6, 5, 5, 5, 5, 5])
+        self.assertEqual(rival['boss_ace'], min(int(11 / 1.10 + 0.5), int(5 / 0.85 + 0.5)))
+        self.assertEqual((rival['boss_ace'], rival['raise']), (6, 1))
+        # Leader X: 11 / 1.10 = 10, 6 / 0.85 = 7.1 -> 7.
+        self.assertEqual((leader['ref'], leader['skip_ref'], leader['boss_ace']), (11, 6, 7))
+        self.assertEqual(st[0]['skip_gap'], None)  # no forced trainer to fight
+        # The full player's rule wins once the skip player fights the hiker too
+        # (at the same shift, so the same gap: the two are level until then).
+        rows, st = self.run_share(skip=self.HIKER_FORCED, lower=True, **self.MARGINS)
+        self.assertEqual(rows[0]['skip_levels'], rows[0]['levels'])
+        self.assertEqual(rows[0]['boss_ace'], 10)  # 11 / 0.85 = 12.9 is the higher
+        self.assertEqual(st[0]['skip_gap'], st[0]['gap'])
+        # One raise per boss: both players fight the same team.
+        self.assertEqual(rows[1]['skip_levels'], rows[1]['levels'])
+
+    def test_skipped_boss_uses_the_full_rule(self):
+        rows, _ = self.run_share(skip=self.LEADER_OPTIONAL, lower=True, **self.MARGINS)
+        leader = rows[1]
+        self.assertIsNone(leader['skip_ref'])
+        self.assertIsNone(leader['skip_levels'])
+        self.assertEqual(leader['boss_ace'], int(leader['ref'] / 1.10 + 0.5))
+        self.assertIsNotNone(rows[0]['skip_ref'])
+        # Without skip at all, the full rule alone.
+        rows, _ = self.run_share(lower=True, **self.MARGINS)
+        self.assertEqual([r['boss_ace'] for r in rows], [int(r['ref'] / 1.10 + 0.5) for r in rows])
+        with self.assertRaises(ValueError):
+            self.run_share(full_margin=10)
+
+    def test_forced_trainer_outliers(self):
+        # The skip player fights the forced hiker (ace 20) at 6, after the stage's catches.
+        _, st = self.run_share(skip=self.HIKER_FORCED)
+        self.assertEqual(st[0]['skip_trainers'], [{'trainer': 'TRAINER_HIKER_A', 'ace': 20, 'lead': 6}])
+        self.assertEqual(st[1]['skip_trainers'], [])
+        self.assertNotIn('skip_trainers', self.run_share()[1][0])  # no skip player, no list
+        self.assertEqual(RB.forced_outliers(st), [{'trainer': 'TRAINER_HIKER_A', 'stage': 'One', 'ace': 20,
+                                                   'skip': 6, 'skip_pct': -70.0}])
+        # More than OUTLIER_SKIP percent under, as for the bosses: -25% exactly is not flagged.
+        rows = [{'stage': 'One', 'skip_trainers': [{'trainer': 'TRAINER_A', 'ace': 100, 'lead': 75},
+                                                   {'trainer': 'TRAINER_B', 'ace': 100, 'lead': 74}]}]
+        self.assertEqual([r['trainer'] for r in RB.forced_outliers(rows)], ['TRAINER_B'])
+        self.assertEqual(RB.forced_outliers([{'stage': 'One'}]), [])
+        section = '\n'.join(RB.two_players_report([], RB.forced_outliers(st)))
+        self.assertIn('| trainer | stage | ace | skip lead | % |', section)
+        self.assertIn('| Hiker A | One | 20 | 6 | -70% |', section)
+        section = '\n'.join(RB.two_players_report([], []))
+        self.assertIn(f'No forced trainer is met more than {RB.OUTLIER_SKIP}% under its ace.', section)
+
+    def test_lower_lets_raises_go_negative(self):
+        # Leader X (ace 20) is above both targets.
+        lowered, _ = self.run_share(skip=self.NONE_FORCED, lower=True, **self.MARGINS)
+        kept, _ = self.run_share(skip=self.NONE_FORCED, **self.MARGINS)
+        self.assertEqual((lowered[1]['raise'], lowered[1]['boss_ace']), (7 - 20, 7))
+        self.assertEqual((kept[1]['raise'], kept[1]['boss_ace']), (0, 20))
+        # The stage shift too: the smallest (most negative) that meets the gap.
+        # The hiker (ace 20) is fought at reference 5: 15 lower puts it at 0.
+        _, st = self.run_share(trainer_gap=0, lower=True)
+        self.assertEqual((st[0]['raise'], st[0]['gap']), (-15, 0))
+        _, above = self.run_share(stage_raises={'One': -16})
+        self.assertGreater(above[0]['gap'], 0)
+        self.assertEqual(self.run_share(trainer_gap=0)[1][0]['raise'], 0)
+
+    def test_wild_offset_never_below_vanilla(self):
+        raised = {i: RB.shifted_slots(s, 6) for i, s in self.inputs['wilds']['modern'].items()}
+        _, st = self.run_share(raised, wild_gap=100, lower=True)
+        self.assertEqual((st[0]['wild_applied'], st[0]['wild_offset']), (6, 0))
+        _, st = self.run_share(raised, wild_gap=100)
+        self.assertEqual(st[0]['wild_offset'], 6)
+        _, st = self.run_share(wild_gap=100, lower=True)
+        self.assertEqual(st[0]['wild_offset'], 0)
+
+    @staticmethod
+    def recording_devolve(seen):
+        """A devolve that turns Sableye into Magikarp and records its calls."""
+        def devolve(species, level, taken=()):
+            seen.append((species, level))
+            return 'SPECIES_MAGIKARP' if species == 'SPECIES_SABLEYE' else species
+        return devolve
+
+    def test_lowered_teams_devolve_in_the_model(self):
+        seen = []
+        rows, st = self.run_share(lower=True, trainer_gap=0, devolve=self.recording_devolve(seen), **self.MARGINS)
+        plain, _ = self.run_share(lower=True, trainer_gap=0, **self.MARGINS)
+        # The hiker's stage shift (-15): Ralts 7 -> 1, Sableye 20 -> 5; Leader X lowered to its ace.
+        self.assertEqual(st[0]['raise'], -15)
+        self.assertIn(('SPECIES_RALTS', 1), seen)
+        self.assertIn(('SPECIES_SABLEYE', 5), seen)
+        self.assertIn(('SPECIES_SABLEYE', rows[1]['boss_ace']), seen)
+        # The devolved Magikarp gives less exp than the Sableye.
+        self.assertLess(sum(rows[0]['levels']), sum(plain[0]['levels']))
+        # A lowered wild table is rebuilt from vanilla, as restock writes it, and never devolved:
+        # tables raised 6 with their Magikarp evolved into Sableye come back as vanilla's Magikarp.
+        raised = {i: RB.shifted_slots(s, 6, lambda sp, lvl: 'SPECIES_SABLEYE')
+                  for i, s in self.inputs['wilds']['vanilla'].items()}
+        self.assertIn('SPECIES_SABLEYE', {slot['species'] for s in raised.values() for _, slot, _ in s})
+        seen.clear()
+        lowered = self.run_share(raised, wild_gap=100, lower=True, devolve=self.recording_devolve(seen))
+        self.assertEqual(seen, [])
+        vanilla = self.run_share(self.inputs['wilds']['vanilla'], wild_gap=100, lower=True)
+        self.assertEqual(lowered[0], vanilla[0])
+        self.assertNotEqual(self.run_share(raised, wild_gap=100)[0], vanilla[0])
+        # Without lower nothing goes down, so nothing devolves.
+        seen.clear()
+        self.run_share(trainer_gap=0, devolve=self.recording_devolve(seen), **self.MARGINS)
+        self.assertEqual(seen, [])
+
+    def test_explore_run_devolves_with_evolve_on(self):
+        seen = []
+        live = dict(self.inputs, devolve=self.recording_devolve(seen))
+        RB.explore_run(live, {**self.MARGINS, 'lower': True, 'evolve': False})
+        self.assertEqual(seen, [])
+        RB.explore_run(live, {**self.MARGINS, 'lower': True})
+        self.assertTrue(any(sp == 'SPECIES_SABLEYE' for sp, _ in seen))
+        self.assertIsNone(curve_inputs(FIXTURE, FIXTURE_STAGES)['devolve'])
+
+    def lowering_plan(self, lower):
+        """apply_plan on the fixture with Leader X's fight given a rival
+        variant two levels lower (Leader Y) and a partner (ace 40)."""
+        trainers = dict(self.inputs['trainers'])
+        variant = copy.deepcopy(trainers['TRAINER_LEADER_X'])
+        partner = copy.deepcopy(trainers['TRAINER_LEADER_X'])
+        for mon in variant.mons:
+            mon.level -= 2
+        for mon in partner.mons:
+            mon.level += 20
+        trainers['TRAINER_LEADER_Y'] = variant
+        stages = copy.deepcopy(self.inputs['stages'])
+        stages[1]['variants'] = {'TRAINER_LEADER_X': ['TRAINER_LEADER_Y']}
+        inputs = dict(self.inputs, trainers=trainers, stages=stages)
+        with open(os.path.join(FIXTURE, RB.VANILLA_WILD), encoding='utf-8') as f:
+            wild = json.load(f)
+        with unittest.mock.patch.dict(RB.PARTNER_FIGHTS, {'PARTNER_X': ('TRAINER_LEADER_X',)}, clear=True):
+            return RB.apply_plan(inputs, {**self.MARGINS, 'lower': lower, 'evolve': False},
+                                 {'PARTNER_X': partner}, wild, G.map_folders(FIXTURE))['raises']
+
+    def test_rival_variants_and_partners_follow_a_lowered_boss(self):
+        raises = self.lowering_plan(True)
+        ace = 20 + raises['TRAINER_LEADER_X']
+        self.assertLess(ace, 18)
+        # The variant (ace 18) and the partner (ace 40) end at the lowered boss's ace.
+        self.assertEqual(18 + raises['TRAINER_LEADER_Y'], ace)
+        self.assertEqual(40 + raises['PARTNER_X'], ace)
+        # Without lower, today's: never below their own levels.
+        raises = self.lowering_plan(False)
+        self.assertNotIn('TRAINER_LEADER_X', raises)
+        self.assertEqual(raises['TRAINER_LEADER_Y'], 2)
+        self.assertNotIn('PARTNER_X', raises)
+
+    def test_explore_run_takes_the_forced_data_from_the_snapshot(self):
+        for key, value in (('full_margin', None), ('skip_margin', None), ('lower', False)):
+            self.assertIs(RB.EXPLORER_KNOBS[key], value)
+        live = dict(self.inputs, forced=self.NONE_FORCED)
+        data = json.loads(json.dumps(RB.curve_snapshot(
+            *(live[k] for k in ('stages', 'trainers', 'gd', 'scaling', 'wilds')),
+            G.R.SpeciesInfo.from_evolutions({}, {}), live['postgame'], forced=live['forced'])))
+        snap = RB.load_snapshot(data)
+        self.assertEqual(snap['forced'], self.NONE_FORCED)
+        knobs = {**self.MARGINS, 'lower': True, 'evolve': False}
+        self.assertEqual(RB.explore_run(snap, knobs), RB.explore_run(live, knobs))
+        res = RB.explore_run(snap, knobs)
+        self.assertEqual([r['skip_ref'] for r in res['bosses']], [5, 6])
+        # Without the forced data, no skip player.
+        self.assertNotIn('forced', RB.curve_snapshot(
+            *(live[k] for k in ('stages', 'trainers', 'gd', 'scaling', 'wilds')),
+            G.R.SpeciesInfo.from_evolutions({}, {}), live['postgame']))
+        self.assertNotIn('skip_ref', RB.explore_run(self.inputs, knobs)['bosses'][0])
+
+    def test_snapshot_devolves_as_the_repo_inputs(self):
+        # The fixture has no evolutions: give Sableye a line (Ralts, Magikarp at 8, Sableye at 15).
+        info = G.R.SpeciesInfo.from_evolutions({}, {
+            'SPECIES_RALTS': [('EVO_LEVEL', '8', 'SPECIES_MAGIKARP', [])],
+            'SPECIES_MAGIKARP': [('EVO_LEVEL', '15', 'SPECIES_SABLEYE', [])]})
+        live = curve_inputs(FIXTURE, FIXTURE_STAGES, info, forced_path=FIXTURE_FORCED)
+        data = json.loads(json.dumps(RB.curve_snapshot(
+            *(live[k] for k in ('stages', 'trainers', 'gd', 'scaling', 'wilds')), info, live['postgame'],
+            forced=live['forced'])))
+        self.assertEqual(data['devolve_lines'], {
+            'SPECIES_MAGIKARP': [['SPECIES_MAGIKARP', 8], ['SPECIES_RALTS', 1]],
+            'SPECIES_SABLEYE': [['SPECIES_SABLEYE', 15], ['SPECIES_MAGIKARP', 8], ['SPECIES_RALTS', 1]]})
+        snap = RB.load_snapshot(data)
+        for level in range(1, 25):
+            for species in ('SPECIES_SABLEYE', 'SPECIES_MAGIKARP', 'SPECIES_MR_MIME'):
+                for taken in ((), {'SPECIES_RALTS'}):
+                    self.assertEqual(snap['devolve'](species, level, taken), live['devolve'](species, level, taken),
+                                     (species, level, taken))
+        # apply's path (repo_inputs) and the explorer's give the same rows, lowered and devolved.
+        for knobs in ({**self.MARGINS, 'lower': True}, {**self.MARGINS, 'lower': True, 'trainer_gap': 0}):
+            self.assertEqual(RB.explore_run(snap, knobs), RB.explore_run(live, knobs), knobs)
+        # The hiker's lowered Sableye (20 -> 5) devolves into a Ralts, which gives the rival's party less exp.
+        self.assertNotEqual(RB.explore_run(snap, knobs), RB.explore_run(dict(live, devolve=None), knobs))
+
+
+class Solo(unittest.TestCase):
+    """solo.py: each starter's solo walls and the grind to them (#350)."""
+
+    IVS = dict.fromkeys(G.IV_STATS, 15)
+    TARGETS = ['TYPE_FIRE', 'TYPE_GRASS', 'TYPE_WATER']
+
+    @staticmethod
+    def regime():
+        species = {'SPECIES_SEED': power_species(60, ('TYPE_GRASS',)),
+                   'SPECIES_TREE': power_species(90, ('TYPE_GRASS',)),
+                   'SPECIES_LAKE': power_species(85, ('TYPE_WATER',)),
+                   'SPECIES_FIRE': power_species(70, ('TYPE_FIRE',)),
+                   'SPECIES_FLASH': power_species(70, ('TYPE_FIRE',), ('ABILITY_FLASH_FIRE', 'ABILITY_NONE'))}
+        defaults = {'SPECIES_SEED': ['MOVE_LEAF'], 'SPECIES_TREE': ['MOVE_LEAF'], 'SPECIES_LAKE': ['MOVE_SURF'],
+                    'SPECIES_FIRE': ['MOVE_EMBER'], 'SPECIES_FLASH': ['MOVE_EMBER']}
+        return matchup_regime(species, Matchup.MOVES, defaults, Matchup.CHART)
+
+    @staticmethod
+    def evolve(species, level):
+        return 'SPECIES_TREE' if species == 'SPECIES_SEED' and level >= 16 else species
+
+    @staticmethod
+    def foes(gd, *mons):
+        return [P.fighter(gd, sp, lv, gd.default_moves(sp, lv), None) for sp, lv in mons]
+
+    def args(self, gd, foes, species='SPECIES_SEED'):
+        return gd, species, foes, [], {}, self.evolve, self.TARGETS, self.IVS
+
+    def scores(self, gd, level, foes, species='SPECIES_SEED'):
+        me = S.solo_fighter(gd, species, level, [], {}, self.evolve, self.TARGETS, self.IVS)
+        return [P.score(me, foe, gd.chart) for foe in foes]
+
+    def test_solo_fighter_has_full_evs_spread_evenly(self):
+        gd = self.regime()
+        self.assertEqual((S.SOLO_EVS, S.GRIND_BUDGET), (85, 50))
+        me = S.solo_fighter(gd, 'SPECIES_SEED', 40, [], {}, self.evolve, self.TARGETS, self.IVS)
+        bare = P.fighter(gd, 'SPECIES_TREE', 40, ['MOVE_LEAF'], self.IVS)  # evolved for its level
+        self.assertEqual(me.attacks, bare.attacks)
+        for stat, value in bare.stats.items():
+            self.assertAlmostEqual(me.stats[stat], value + 85 // 4 * 40 / 100, msg=stat)
+
+    def test_wall_level_on_fixture(self):
+        gd = self.regime()
+        foes = self.foes(gd, ('SPECIES_LAKE', 30), ('SPECIES_FIRE', 25))
+        wall = S.wall_level(*self.args(gd, foes))
+        # The lowest level that wins each one-on-one (healing in between).
+        self.assertGreaterEqual(min(self.scores(gd, wall, foes)), 1)
+        self.assertLess(min(self.scores(gd, wall - 1, foes)), 1)
+        self.assertEqual(wall, 31)
+        # Nothing it has hurts a Flash Fire Pokemon: unwinnable up to 100.
+        self.assertIsNone(S.wall_level(*self.args(gd, self.foes(gd, ('SPECIES_FLASH', 5)), 'SPECIES_FIRE')))
+
+    def test_sweep_at_least_wall(self):
+        gd = self.regime()
+        foes = self.foes(gd, ('SPECIES_LAKE', 30), ('SPECIES_FIRE', 25), ('SPECIES_LAKE', 28))
+        wall, sweep = S.wall_level(*self.args(gd, foes)), S.sweep_level(*self.args(gd, foes))
+        self.assertGreater(sweep, wall)
+        # The lowest level whose turns against each, 1/score, add up to at most one fight.
+        self.assertLessEqual(sum(1 / s for s in self.scores(gd, sweep, foes)), 1)
+        self.assertGreater(sum(1 / s for s in self.scores(gd, sweep - 1, foes)), 1)
+        self.assertEqual(S.sweep_level(*self.args(gd, foes), start=wall), sweep)
+        self.assertIsNone(S.sweep_level(*self.args(gd, self.foes(gd, ('SPECIES_FLASH', 5)), 'SPECIES_FIRE')))
+
+    def test_grind_kos_no_penalty_matches_closed_form(self):
+        gd = fake_regime(B_SCALED_EXP='GEN_6')  # flat: yield * level / 7, whatever the getter's level
+        scaling = G.parse_scaling_factors(FIXTURE)
+        need = RB.exp_for_level('GROWTH_MEDIUM_SLOW', 30) - RB.exp_for_level('GROWTH_MEDIUM_SLOW', 20)
+        per_ko = 150 * 25 // 7 * 4915 // 4096  # max friendship's affection, 1.2x
+        self.assertEqual(S.grind_kos(gd, scaling, None, 20, 30, [(150, 25)]), -(-need // per_ko))
+        self.assertEqual(S.grind_kos(gd, scaling, None, 20, 30, [(150, 25)], mult=1.0), -(-need // (150 * 25 // 7)))
+        self.assertEqual(S.grind_kos(gd, scaling, None, 30, 30, [(150, 25)]), 0)
+        # A team is fought whole: the count is a multiple of its size.
+        self.assertEqual(S.grind_kos(gd, scaling, None, 20, 30, [(150, 25)] * 3) % 3, 0)
+        # The over-level penalty makes it longer.
+        self.assertGreater(S.grind_kos(gd, scaling, RB.Overlevel(10, True, 4, 10, 0), 20, 30, [(150, 25)]),
+                           S.grind_kos(gd, scaling, None, 20, 30, [(150, 25)]))
+
+    def test_best_wild_ignores_water_before_surf(self):
+        gd = types.SimpleNamespace(species={'SPECIES_LAND': G.Species((), {}, 100, '', ''),
+                                            'SPECIES_SWIM': G.Species((), {}, 150, '', ''),
+                                            'SPECIES_ROD': G.Species((), {}, 250, '', '')})
+
+        def slot(species, level):
+            return {'species': species, 'min_level': level - 2, 'max_level': level}
+        wilds = {0: [('land_mons', slot('SPECIES_LAND', 10), 20)],
+                 2: [('water_mons', slot('SPECIES_SWIM', 30), 60), ('fishing_mons', slot('SPECIES_ROD', 40), 60),
+                     ('land_mons', slot('SPECIES_LAND', 20), 20)]}
+        # Grass only before Surf, at each slot's highest level (DexNav can hunt it); never rods.
+        self.assertEqual(S.best_wild(gd, wilds, 1, 2), (100, 10, 'SPECIES_LAND'))
+        self.assertEqual(S.best_wild(gd, wilds, 2, 3), (100, 20, 'SPECIES_LAND'))
+        self.assertEqual(S.best_wild(gd, wilds, 2, 2), (150, 30, 'SPECIES_SWIM'))
+        self.assertEqual(S.best_wild(gd, wilds, 2, None), (100, 20, 'SPECIES_LAND'))
+
+    def test_solo_walls_on_the_fixture(self):
+        inp = curve_inputs(FIXTURE, FIXTURE_STAGES)
+        gd, stages, wilds = inp['gd'], inp['stages'], inp['wilds']['modern']
+        rows = RB.explore_run(inp)['bosses']
+        settings = {'starters': {'A': 'SPECIES_SABLEYE'}, 'ivs': 15, 'moves': 4, 'tm_exclude_maps': []}
+        scaling = RB.game_scaling(gd, inp['scaling'])
+        out = S.solo_walls(inp['trainers'], gd, stages, rows, wilds, {}, {}, lambda sp, lv: sp, scaling, None,
+                           settings)
+        self.assertEqual([(r['boss'], r['starter']) for r in out], [('TRAINER_RIVAL_A', 'A'), ('TRAINER_LEADER_X', 'A')])
+        names = [st['name'] for st in stages]
+        for r, row in zip(out, rows):
+            self.assertLessEqual({'boss', 'starter', 'lead', 'wall', 'sweep', 'kos', 'source'}, set(r))
+            self.assertEqual((r['lead'], r['ace']), (row['levels'][0], row['boss_ace']))
+            self.assertLessEqual(r['wall'], r['sweep'])
+            y, level, species = S.best_wild(gd, wilds, names.index(r['stage']), None)
+            self.assertEqual(r['source'], [species, level])
+            self.assertEqual(r['kos'], 0 if r['wall'] <= r['lead'] else
+                             S.grind_kos(gd, scaling, None, r['lead'], r['wall'], [(y, level)],
+                                         growth=gd.species['SPECIES_SABLEYE'].growth))
+            self.assertIsNone(r['battles'])  # no rematches before Norman
+        # Leader X's Sableye is 20 and the lead far lower: a grind.
+        self.assertGreater(out[1]['kos'], 0)
+
+    def test_report_has_solo_walls_section(self):
+        def row(boss, starter, ace, lead, wall, sweep, kos, battles=None, rematch=None):
+            return {'stage': 'S', 'boss': boss, 'starter': starter, 'ace': ace,
+                    'double': boss == 'TRAINER_TATE_AND_LIZA_1', 'lead': lead, 'wall': wall, 'sweep': sweep,
+                    'kos': kos, 'source': ['SPECIES_WAILMER', 35], 'battles': battles, 'rematch': rematch}
+        res = RB.analyze(FIXTURE, FIXTURE_STAGES, FIXTURE_FORCED)
+        # The fixture has none of the real starters: no rows.
+        self.assertEqual(res['solo_walls'], [])
+        res['solo_walls'] = [
+            row('TRAINER_ROXANNE_1', 'TREECKO', 15, 16, 12, 14, 0),
+            row('TRAINER_TATE_AND_LIZA_1', 'TREECKO', 42, 44, 60, 70, 80, 9, 'TRAINER_ROSE_5'),
+            row('TRAINER_WALLACE', 'TREECKO', 58, 60, 70, 80, 30, 4, 'TRAINER_ROSE_5'),
+            row('TRAINER_ROXANNE_1', 'MUDKIP', 15, 16, 10, 12, 0),
+            row('TRAINER_WALLACE', 'MUDKIP', 58, 60, None, None, None),
+            row('TRAINER_ROXANNE_1', 'TORCHIC', 15, 16, 20, 22, 40),
+            row('TRAINER_WALLACE', 'TORCHIC', 58, 60, None, None, None)]
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, 'report.md')
+            RB.write_report(path, res)
+            with open(path, encoding='utf-8') as f:
+                section = f.read().split('## Solo walls\n', 1)[1].split('\n## ', 1)[0]
+        self.assertIn('Tate and Liza is a double battle', section)
+        self.assertIn('### Treecko line', section)
+        self.assertIn('### Mudkip line', section)
+        self.assertIn('### Torchic line', section)
+        self.assertIn('| boss | ace | lead | wall | sweep | KOs | source |', section)
+        self.assertIn('| Roxanne 1 | 15 | 16 | 12 | 14 | 0 | Wailmer 35 |', section)
+        self.assertIn('| Tate And Liza 1 (double) | 42 | 44 | 60 | 70 | 80 | Wailmer 35; 9 battles vs Rose 5 |',
+                      section)
+        self.assertIn('| Wallace | 58 | 60 | unwinnable | - | - | Wailmer 35 |', section)
+        self.assertIn('Worst wall: Tate And Liza 1 (80 KOs to level 60).', section)
+        self.assertIn('Worst wall: Wallace (unwinnable).', section)  # Mudkip: no climb but that one
+        self.assertIn('Worst wall: Wallace (unwinnable); then Roxanne 1 (40 KOs to level 20).', section)
 
 
 if __name__ == '__main__':
