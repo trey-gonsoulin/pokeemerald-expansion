@@ -461,14 +461,19 @@ def evolution_line(info, species):
     return line
 
 
+def level_up_moves(gd, info, species, level):
+    """The level-up moves of ``species`` and its pre-evolutions at or below
+    ``level``, with their evolution moves (level 0)."""
+    return {mv for sp in evolution_line(info, species) for lvl, mv in gd.learnset(sp) if lvl <= level}
+
+
 def learnable_moves(gd, info, move_lists, species, level):
     """The moves a ``species`` at ``level`` can know (#145): the level-up moves
     of it and its pre-evolutions at or below ``level``, their evolution moves
     (level 0), their teachables (TMs, tutors, near-universal moves) and their
     egg moves (``move_lists``: gamedata.move_lists)."""
-    moves = set()
+    moves = level_up_moves(gd, info, species, level)
     for sp in evolution_line(info, species):
-        moves.update(mv for lvl, mv in gd.learnset(sp) if lvl <= level)
         if sp in gd.species:
             for name in (gd.species[sp].teachables, gd.species[sp].egg_moves):
                 moves |= move_lists.get(name, frozenset())
@@ -484,6 +489,92 @@ def unlearnable_set_moves(teams, gd, info, move_lists):
             learnable = learnable_moves(gd, info, move_lists, mon.species, mon.level)
             out.update(((t.id, mon.species, mv), None) for mv in mon.moves if mv not in learnable)
     return list(out)
+
+
+# Effects of the two-turn attacks (Fly, Dig, Solar Beam, Sky Attack, Sky Drop),
+# which a replacement set move never is (#139, #159), nor a recharge or self-KO move.
+TWO_TURN_EFFECTS = frozenset(('EFFECT_TWO_TURNS_ATTACK', 'EFFECT_SEMI_INVULNERABLE', 'EFFECT_SOLAR_BEAM',
+                              'EFFECT_SKY_DROP'))
+# At or below this level a replacement is the best same-type level-up move
+# when there is one, ahead of a stronger TM or egg move (#160).
+LEVEL_UP_REPLACEMENT_LEVEL = 30
+
+
+def replacement_move(gd, info, move_lists, species, level, replaced, kept):
+    """The set move to put in place of ``replaced``, which ``species`` at
+    ``level`` can't learn, beside the ``kept`` moves, by #131's and #160's
+    rule (docs/fork/balance.md): the strongest attack it can learn
+    (learnable_moves), scored by power.move_power times the base stat the move
+    attacks with. When ``kept`` has no attack of ``replaced``'s type and that
+    is one of the species' types, a move of that type; else, when ``kept`` has
+    no same-type attack, a same-type move. At LEVEL_UP_REPLACEMENT_LEVEL or
+    below, the best same-type level-up move ahead of a TM or egg move. Never a
+    recharge, self-KO (move_power scores it 0) or TWO_TURN_EFFECTS move, nor an
+    HM move (``move_lists``' G.HM_LIST: Surf on a level-9 Wailmer is the early
+    spike #350 removes, and #160 picked none), nor a move in ``kept``. None
+    when the species can learn no such attack."""
+    types = gd.species[species].types
+
+    def score(mv):
+        return P.move_power(gd, mv, types) * attack_stat(gd, species, mv.category)
+    pool = {}
+    hms = move_lists.get(G.HM_LIST, frozenset())
+    for m in learnable_moves(gd, info, move_lists, species, level) - hms:
+        mv = gd.move(m) if m in gd.moves else None
+        if mv and m not in kept and not mv.recharge and mv.effect not in TWO_TURN_EFFECTS and score(mv):
+            pool[m] = mv
+    replaced_type = gd.move(replaced).type
+    wanted = []
+    if replaced_type in types and not any(mv.type == replaced_type and not mv.fixed_damage
+                                          for mv in attacks(gd, kept)):
+        wanted.append({replaced_type})
+    if not has_stab(gd, species, kept):
+        wanted.append(set(types))
+    for want in wanted:
+        typed = {m: mv for m, mv in pool.items() if mv.type in want}
+        if typed:
+            pool = typed
+            break
+    if level <= LEVEL_UP_REPLACEMENT_LEVEL:
+        level_up = level_up_moves(gd, info, species, level)
+        same = {m: mv for m, mv in pool.items() if m in level_up and mv.type in types}
+        pool = same or pool
+    return max(pool, key=lambda m: (score(pool[m]), m), default=None)
+
+
+def party_move_name(move):
+    """How a .party file names ``move`` (MOVE_EARTH_POWER -> Earth Power), or
+    the constant where the name wouldn't map back to it (trainerproc takes both)."""
+    name = ' '.join(w.capitalize() for w in move[len('MOVE_'):].split('_'))
+    return name if G.constant('MOVE', name) == move else move
+
+
+def rewrite_unlearnable(text, gd, info, move_lists):
+    """.party ``text`` with each set move its Pokemon can't learn (the rule
+    of unlearnable_set_moves) replaced by replacement_move, beside the moves
+    the Pokemon keeps and the replacements before it. Every other byte is
+    kept. Returns (text, [(team, species, old move, new move)]); new is None,
+    and the line kept, where the species can learn no attack to replace it."""
+    lines = text.split('\n')
+    changes = []
+    for tid, paras in party_teams(lines)[1:]:  # not the text before the first team
+        for first, last in paras:
+            species = species_line(lines[first])[0]
+            level = mon_level(lines, first, last)[1]
+            learnable = learnable_moves(gd, info, move_lists, species, level)
+            names = {n: lines[n].strip()[2:].strip() for n in range(first + 1, last)
+                     if lines[n].lstrip().startswith('- ')}
+            moves = {n: G.constant('MOVE', name) for n, name in names.items()}
+            for n, move in list(moves.items()):
+                if move in learnable:
+                    continue
+                kept = [m for k, m in moves.items() if k != n and m in learnable]  # replacements are learnable
+                new = replacement_move(gd, info, move_lists, species, level, move, kept)
+                changes.append((tid, species, move, new))
+                if new:
+                    moves[n] = new
+                    lines[n] = lines[n].replace(names[n], party_move_name(new), 1)
+    return '\n'.join(lines), changes
 
 
 def better_stat(stats):

@@ -265,14 +265,28 @@ print(T.prepare_output(learnables, list(T.extract_repo_tms()), tutors, special, 
 '''
 
 
+# move_lists' key for the HM moves (include/constants/tms_hms.h's FOREACH_HM).
+HM_LIST = 'FOREACH_HM'
+
+
+def parse_hms(text):
+    """The moves of tms_hms.h's FOREACH_HM(F) list: F(SURF) -> MOVE_SURF."""
+    m = re.search(r'#define FOREACH_HM\(F\)(.*?)(?:\n\s*\n|#define)', text, re.S)
+    return frozenset('MOVE_' + name for name in re.findall(r'F\((\w+)\)', m[1])) if m else frozenset()
+
+
 def move_lists(repo):
-    """parse_move_lists of the teachable and egg move headers. The build generates the
-    gitignored teachable_learnsets.h with pure Python, so this runs the same helpers on
-    ``repo`` and reads their output, never a header left from an older build."""
+    """parse_move_lists of the teachable and egg move headers, and the HM moves
+    under HM_LIST. The build generates the gitignored teachable_learnsets.h with
+    pure Python, so this runs the same helpers on ``repo`` and reads their output,
+    never a header left from an older build."""
     teach = subprocess.run([sys.executable, '-B', '-c', _TEACHABLES_SCRIPT], cwd=repo, check=True,
                            capture_output=True, text=True).stdout
     with open(os.path.join(repo, 'src', 'data', 'pokemon', 'egg_moves.h'), encoding='utf-8') as f:
-        return {**parse_move_lists(teach), **parse_move_lists(f.read())}
+        eggs = f.read()
+    with open(os.path.join(repo, 'include', 'constants', 'tms_hms.h'), encoding='utf-8') as f:
+        hms = parse_hms(f.read())
+    return {**parse_move_lists(teach), **parse_move_lists(eggs), HM_LIST: hms}
 
 
 def learnset_file(repo, defines):
