@@ -1334,6 +1334,121 @@ class TwoPlayers(unittest.TestCase):
         RB.skip_stages(stages, RB.load_forced(self.FORCED))
         self.assertEqual(stages, self.stages())
 
+    # The fixture's story: stage One has the hiker (ace 20) and the rival
+    # (ace 5), stage Two Leader X (ace 20).
+    NONE_FORCED = RB.Forced(frozenset(), frozenset())
+    HIKER_FORCED = RB.Forced(frozenset({'TRAINER_HIKER_A'}), frozenset())
+    LEADER_OPTIONAL = RB.Forced(frozenset(), frozenset({'TRAINER_LEADER_X'}))
+    MARGINS = {'full_margin': 10, 'skip_margin': 15}
+
+    @classmethod
+    def setUpClass(cls):
+        cls.inputs = curve_inputs(FIXTURE, FIXTURE_STAGES)
+
+    def run_share(self, wilds=None, **kw):
+        inp = self.inputs
+        return RB.share_run(inp['stages'], inp['trainers'], inp['gd'], inp['scaling'],
+                            wilds or inp['wilds']['modern'], vanilla_wilds=inp['wilds']['vanilla'], **kw)
+
+    def test_without_skip_rows_match_today(self):
+        # share_run's rows before the skip player (#350), snapshotted.
+        def boss(stage, bid, cls, base, raise_, ace, bench, ref, levels, friendship):
+            return {'stage': stage, 'boss': bid, 'class': f'TRAINER_CLASS_{cls}', 'base_ace': base,
+                    'raise': raise_, 'boss_ace': base + raise_, 'ace': max(levels), 'bench': bench,
+                    'ref': ref, 'levels': levels, 'friendship': friendship}
+
+        def stage(name, start, n, gap, raise_, mean, land, offset):
+            return {'stage': name, 'start_ref': start, 'trainers': n, 'gap': gap, 'raise': raise_,
+                    'trainer_ace_mean': mean, 'wild_land_mean': land, 'wild_offset': offset, 'wild_applied': 0}
+        rows = self.run_share(skip=None, margin=5, relative_gaps=True, trainer_gap=10, wild_gap=20, wild_battles=6)
+        self.assertEqual(rows, (
+            [boss('One', 'TRAINER_RIVAL_A', 'PKMN_TRAINER_1', 5, 7, 12, 11, 11, [13, 11, 11, 11, 11, 11], 96),
+             boss('Two', 'TRAINER_LEADER_X', 'LEADER', 20, 0, 13, 11, 11, [13, 11, 11, 11, 11, 11], 112)],
+            [stage('One', 5, 1, -185.7, 0, 20.0, 4.0, 0), stage('Two', 11, 0, None, 0, None, None, 0)]))
+        rows = self.run_share(margin=1, trainer_gap=-20, wild_gap=0, ko_takers=3, boss_ref='ko_mean')
+        self.assertEqual(rows, (
+            [boss('One', 'TRAINER_RIVAL_A', 'PKMN_TRAINER_1', 5, 9, 14, 12, 12.7, [12, 14, 12, 12, 12, 12], 101),
+             boss('Two', 'TRAINER_LEADER_X', 'LEADER', 20, 0, 15, 12, 13.7, [13, 15, 13, 12, 12, 12], 117)],
+            [stage('One', 5.0, 1, -20.0, 6, 26.0, 5.0, 1),
+             stage('Two', 13.666666666666666, 0, None, 0, None, None, 0)]))
+
+    def test_boss_ace_is_the_lower_of_the_two_rules(self):
+        rows, st = self.run_share(skip=self.NONE_FORCED, lower=True, **self.MARGINS)
+        rival, leader = rows
+        # The skip player passes the hiker by, so it meets the rival (and then
+        # Leader X) lower: its reference / 0.85 is the lower rule at both.
+        # The rival: 11 / 1.10 = 10, 5 / 0.85 = 5.9 -> 6.
+        self.assertEqual((rival['ref'], rival['skip_ref']), (11, 5))
+        self.assertEqual(rival['skip_levels'], [6, 5, 5, 5, 5, 5])
+        self.assertEqual(rival['boss_ace'], min(int(11 / 1.10 + 0.5), int(5 / 0.85 + 0.5)))
+        self.assertEqual((rival['boss_ace'], rival['raise']), (6, 1))
+        # Leader X: 11 / 1.10 = 10, 6 / 0.85 = 7.1 -> 7.
+        self.assertEqual((leader['ref'], leader['skip_ref'], leader['boss_ace']), (11, 6, 7))
+        self.assertEqual(st[0]['skip_gap'], None)  # no forced trainer to fight
+        # The full player's rule wins once the skip player fights the hiker too
+        # (at the same shift, so the same gap: the two are level until then).
+        rows, st = self.run_share(skip=self.HIKER_FORCED, lower=True, **self.MARGINS)
+        self.assertEqual(rows[0]['skip_levels'], rows[0]['levels'])
+        self.assertEqual(rows[0]['boss_ace'], 10)  # 11 / 0.85 = 12.9 is the higher
+        self.assertEqual(st[0]['skip_gap'], st[0]['gap'])
+        # One raise per boss: both players fight the same team.
+        self.assertEqual(rows[1]['skip_levels'], rows[1]['levels'])
+
+    def test_skipped_boss_uses_the_full_rule(self):
+        rows, _ = self.run_share(skip=self.LEADER_OPTIONAL, lower=True, **self.MARGINS)
+        leader = rows[1]
+        self.assertIsNone(leader['skip_ref'])
+        self.assertIsNone(leader['skip_levels'])
+        self.assertEqual(leader['boss_ace'], int(leader['ref'] / 1.10 + 0.5))
+        self.assertIsNotNone(rows[0]['skip_ref'])
+        # Without skip at all, the full rule alone.
+        rows, _ = self.run_share(lower=True, **self.MARGINS)
+        self.assertEqual([r['boss_ace'] for r in rows], [int(r['ref'] / 1.10 + 0.5) for r in rows])
+        with self.assertRaises(ValueError):
+            self.run_share(full_margin=10)
+
+    def test_lower_lets_raises_go_negative(self):
+        # Leader X (ace 20) is above both targets.
+        lowered, _ = self.run_share(skip=self.NONE_FORCED, lower=True, **self.MARGINS)
+        kept, _ = self.run_share(skip=self.NONE_FORCED, **self.MARGINS)
+        self.assertEqual((lowered[1]['raise'], lowered[1]['boss_ace']), (7 - 20, 7))
+        self.assertEqual((kept[1]['raise'], kept[1]['boss_ace']), (0, 20))
+        # The stage shift too: the smallest (most negative) that meets the gap.
+        # The hiker (ace 20) is fought at reference 5: 15 lower puts it at 0.
+        _, st = self.run_share(trainer_gap=0, lower=True)
+        self.assertEqual((st[0]['raise'], st[0]['gap']), (-15, 0))
+        _, above = self.run_share(stage_raises={'One': -16})
+        self.assertGreater(above[0]['gap'], 0)
+        self.assertEqual(self.run_share(trainer_gap=0)[1][0]['raise'], 0)
+
+    def test_wild_offset_never_below_vanilla(self):
+        raised = {i: RB.shifted_slots(s, 6) for i, s in self.inputs['wilds']['modern'].items()}
+        _, st = self.run_share(raised, wild_gap=100, lower=True)
+        self.assertEqual((st[0]['wild_applied'], st[0]['wild_offset']), (6, 0))
+        _, st = self.run_share(raised, wild_gap=100)
+        self.assertEqual(st[0]['wild_offset'], 6)
+        _, st = self.run_share(wild_gap=100, lower=True)
+        self.assertEqual(st[0]['wild_offset'], 0)
+
+    def test_explore_run_takes_the_forced_data_from_the_snapshot(self):
+        for key, value in (('full_margin', None), ('skip_margin', None), ('lower', False)):
+            self.assertIs(RB.EXPLORER_KNOBS[key], value)
+        live = dict(self.inputs, forced=self.NONE_FORCED)
+        data = json.loads(json.dumps(RB.curve_snapshot(
+            *(live[k] for k in ('stages', 'trainers', 'gd', 'scaling', 'wilds')),
+            G.R.SpeciesInfo.from_evolutions({}, {}), live['postgame'], forced=live['forced'])))
+        snap = RB.load_snapshot(data)
+        self.assertEqual(snap['forced'], self.NONE_FORCED)
+        knobs = {**self.MARGINS, 'lower': True, 'evolve': False}
+        self.assertEqual(RB.explore_run(snap, knobs), RB.explore_run(live, knobs))
+        res = RB.explore_run(snap, knobs)
+        self.assertEqual([r['skip_ref'] for r in res['bosses']], [5, 6])
+        # Without the forced data, no skip player.
+        self.assertNotIn('forced', RB.curve_snapshot(
+            *(live[k] for k in ('stages', 'trainers', 'gd', 'scaling', 'wilds')),
+            G.R.SpeciesInfo.from_evolutions({}, {}), live['postgame']))
+        self.assertNotIn('skip_ref', RB.explore_run(self.inputs, knobs)['bosses'][0])
+
 
 if __name__ == '__main__':
     unittest.main()
