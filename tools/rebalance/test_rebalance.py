@@ -150,6 +150,71 @@ class MoveLegality(unittest.TestCase):
         self.assertEqual(RB.unlearnable_set_moves(teams, self.gd, self.info, self.lists),
                          [('TRAINER_A', 'SPECIES_RAICHU', 'MOVE_SLAM')])
 
+    def scored(self):
+        """The Pichu line with stats and moves to score: an Electric Raichu with
+        Attack 40 and Special Attack 90, Boomburst (Normal) from its teachables
+        and Hyper Beam, Explosion and Sky Attack beside them."""
+        for sp in self.gd.species.values():
+            sp.types = ('TYPE_ELECTRIC',)
+            sp.stats = {'baseAttack': 40, 'baseSpAttack': 90}
+        phys, spec, status = 'DAMAGE_CATEGORY_PHYSICAL', 'DAMAGE_CATEGORY_SPECIAL', 'DAMAGE_CATEGORY_STATUS'
+        self.gd.moves = {
+            'MOVE_CHARM': G.Move('TYPE_FAIRY', 0, 100, status), 'MOVE_NASTY_PLOT': G.Move('TYPE_DARK', 0, 0, status),
+            'MOVE_GROWL': G.Move('TYPE_NORMAL', 0, 100, status), 'MOVE_SLAM': G.Move('TYPE_NORMAL', 80, 75, phys),
+            'MOVE_MEGA_KICK': G.Move('TYPE_NORMAL', 120, 75, phys),
+            'MOVE_THUNDER_PUNCH': G.Move('TYPE_ELECTRIC', 75, 100, phys),
+            'MOVE_THUNDERBOLT': G.Move('TYPE_ELECTRIC', 90, 100, spec),
+            'MOVE_VOLT_TACKLE': G.Move('TYPE_ELECTRIC', 120, 100, phys),
+            'MOVE_SURF': G.Move('TYPE_WATER', 90, 100, spec), 'MOVE_BOOMBURST': G.Move('TYPE_NORMAL', 140, 100, spec),
+            'MOVE_HYPER_BEAM': G.Move('TYPE_NORMAL', 300, 100, spec, recharge=True),
+            'MOVE_EXPLOSION': G.Move('TYPE_NORMAL', 250, 100, phys, explosion=True),
+            'MOVE_SKY_ATTACK': G.Move('TYPE_FLYING', 500, 100, phys, 'EFFECT_TWO_TURNS_ATTACK')}
+        self.lists['sRaichuTeachables'] |= {'MOVE_BOOMBURST', 'MOVE_HYPER_BEAM', 'MOVE_EXPLOSION', 'MOVE_SKY_ATTACK'}
+
+    def replace(self, level, replaced, kept, species='SPECIES_RAICHU'):
+        return RB.replacement_move(self.gd, self.info, self.lists, species, level, replaced, kept)
+
+    def test_replacement_restores_stab(self):
+        self.scored()
+        # Boomburst (140 x 90) outscores Thunderbolt (90 x 1.5 x 90) while the set keeps its STAB...
+        self.assertEqual(self.replace(50, 'MOVE_MEGA_KICK', ['MOVE_GROWL', 'MOVE_THUNDERBOLT']), 'MOVE_BOOMBURST')
+        # ...but a set that would lose it takes the best Electric move.
+        self.assertEqual(self.replace(50, 'MOVE_MEGA_KICK', ['MOVE_GROWL', 'MOVE_SURF']), 'MOVE_THUNDERBOLT')
+
+    def test_replacement_is_never_a_recharge_self_ko_or_two_turn_move(self):
+        self.scored()
+        # Hyper Beam, Explosion and Sky Attack outscore Surf, the best of the rest.
+        kept = ['MOVE_THUNDERBOLT', 'MOVE_BOOMBURST']
+        self.assertEqual(self.replace(50, 'MOVE_MEGA_KICK', kept), 'MOVE_SURF')
+
+    def test_replacement_is_never_an_hm_fixture(self):
+        self.scored()
+        self.lists[G.HM_LIST] = G.parse_hms('#define FOREACH_HM(F) \\\n    F(CUT) \\\n    F(SURF)\n\n'
+                                            '#define FOREACH_TMHM(F) \\\n')
+        self.assertEqual(self.lists[G.HM_LIST], {'MOVE_CUT', 'MOVE_SURF'})
+        # Surf was the best of the rest; Volt Tackle is the best that isn't an HM.
+        self.assertEqual(self.replace(50, 'MOVE_MEGA_KICK', ['MOVE_THUNDERBOLT', 'MOVE_BOOMBURST']),
+                         'MOVE_VOLT_TACKLE')
+
+    def test_replacement_prefers_level_up_at_30_or_below_fixture(self):
+        self.scored()
+        # Thunder Punch (on evolving) over the stronger Thunderbolt from the teachables, up to level 30.
+        self.assertEqual(self.replace(30, 'MOVE_MEGA_KICK', ['MOVE_GROWL', 'MOVE_SURF']), 'MOVE_THUNDER_PUNCH')
+        self.assertEqual(self.replace(31, 'MOVE_MEGA_KICK', ['MOVE_GROWL', 'MOVE_SURF']), 'MOVE_THUNDERBOLT')
+
+    def test_rewrite_unlearnable_reports_each_change(self):
+        self.scored()
+        text = ('=== TRAINER_A ===\nName: A\n\nRaichu\nLevel: 25\n- Slam\n- Thunder Punch\n'
+                '\nSparky (Raichu) (M) @ Oran Berry\nLevel: 50\nIVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe\n'
+                '- Growl  \n- Mega Kick\n- Surf\n\n=== TRAINER_B ===\nName: B\n\nPikachu\nLevel: 30\n- Slam\n')
+        out, changes = RB.rewrite_unlearnable(text, self.gd, self.info, self.lists)
+        # Slam at 25 keeps the set's STAB, and no other Electric move comes by level up: Boomburst.
+        # The Mega Kick on a set without STAB: Thunderbolt. Pikachu's Slam at 30 is learnable.
+        self.assertEqual(out, text.replace('- Slam\n- Thunder', '- Boomburst\n- Thunder')
+                         .replace('- Mega Kick', '- Thunderbolt'))
+        self.assertEqual(changes, [('TRAINER_A', 'SPECIES_RAICHU', 'MOVE_SLAM', 'MOVE_BOOMBURST'),
+                                   ('TRAINER_A', 'SPECIES_RAICHU', 'MOVE_MEGA_KICK', 'MOVE_THUNDERBOLT')])
+
 
 class GameDataFixture(unittest.TestCase):
     @classmethod
@@ -1417,6 +1482,52 @@ class RealRepo(unittest.TestCase):
                 self.assertEqual(flag, 'FLAG_SYS_GAME_CLEAR')
                 self.assertIsNone(G.stage_of(folder, cfg['stages']), folder)
                 self.assertTrue(any(fnmatch.fnmatchcase(folder, g) for g in cfg['unstaged']), folder)
+
+
+class RealMoveReplacement(unittest.TestCase):
+    """replacement_move on #160's worked examples (docs/fork/balance.md), and
+    rewrite_unlearnable on the committed teams, in the real data."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.gd = G.GameData(G.REPO, G.regime_defines(G.REPO)['modern'])
+        cls.info = G.R.SpeciesInfo(G.REPO)
+        cls.lists = G.move_lists(G.REPO)
+
+    def replace(self, species, level, replaced, kept):
+        return RB.replacement_move(self.gd, self.info, self.lists, species, level, replaced, kept)
+
+    def test_replacement_keeps_the_replaced_type(self):
+        # Madeline 2's Camerupt (Fire/Ground) loses Magnitude and keeps no other Ground attack:
+        # the Earthquake TM outscores Earth Power (#160 hand-picked Earth Power here).
+        self.assertEqual(self.replace('SPECIES_CAMERUPT', 38, 'MOVE_MAGNITUDE',
+                                      ['MOVE_EMBER', 'MOVE_TACKLE', 'MOVE_SUNNY_DAY']), 'MOVE_EARTHQUAKE')
+        # Braxton's Shiftry (Grass/Dark) loses Feint Attack: a Dark move, not a stronger Grass one.
+        self.assertEqual(self.gd.moves[self.replace('SPECIES_SHIFTRY', 50, 'MOVE_FEINT_ATTACK',
+                                                    ['MOVE_GIGA_DRAIN', 'MOVE_DOUBLE_TEAM', 'MOVE_SWAGGER'])].type,
+                         'TYPE_DARK')
+
+    def test_replacement_prefers_level_up_at_30_or_below(self):
+        # Roxanne's Geodude 13: Bulldoze over the stronger Earthquake and Rock Slide TMs.
+        self.assertEqual(self.replace('SPECIES_GEODUDE', 13, 'MOVE_ROCK_THROW',
+                                      ['MOVE_TACKLE', 'MOVE_DEFENSE_CURL', 'MOVE_ROCK_TOMB']), 'MOVE_BULLDOZE')
+        # Wattson's Voltorb and Magneton: Thunder Shock beats the physical Spark on their Special Attack.
+        self.assertEqual(self.replace('SPECIES_VOLTORB', 22, 'MOVE_SELF_DESTRUCT',
+                                      ['MOVE_ROLLOUT', 'MOVE_CHARGE_BEAM', 'MOVE_SHOCK_WAVE']), 'MOVE_THUNDER_SHOCK')
+        self.assertEqual(self.replace('SPECIES_MAGNETON', 24, 'MOVE_SONIC_BOOM',
+                                      ['MOVE_SUPERSONIC', 'MOVE_SHOCK_WAVE', 'MOVE_THUNDER_WAVE']),
+                         'MOVE_THUNDER_SHOCK')
+
+    def test_replacement_is_never_an_hm(self):
+        # Lucas 2's Wailmer at 9 learns no Water move by level up: Water Pulse from the TMs, not Surf.
+        self.assertEqual(self.replace('SPECIES_WAILMER', 9, 'MOVE_WATER_GUN', ['MOVE_SPLASH']), 'MOVE_WATER_PULSE')
+
+    def test_rewrite_unlearnable_changes_nothing_today(self):
+        """move_allowlist.json is empty since #160, so every committed set move is learnable."""
+        for name in ('trainers.party', 'battle_partners.party'):
+            with open(os.path.join(G.REPO, 'src', 'data', name), encoding='utf-8') as f:
+                text = f.read()
+            self.assertEqual(RB.rewrite_unlearnable(text, self.gd, self.info, self.lists), (text, []), name)
 
 
 class TwoPlayers(unittest.TestCase):
