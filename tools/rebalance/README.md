@@ -59,8 +59,8 @@ It runs this tool's own Python in the browser through Pyodide (loaded from
 the jsDelivr CDN, so it needs internet), in a Web Worker. Nothing is parsed
 there: `curve_snapshot` writes the parsed inputs to
 `output/curve_data.json` (the story stages and trainers, the rematch ladders and theirs, exp yields, level
-evolutions, the scaling table, both regimes' land slots and the config
-defines), and `load_snapshot` rebuilds them for
+evolutions, each team Pokemon's devolve line, the scaling table, both regimes' land slots, the config
+defines and the forced trainers), and `load_snapshot` rebuilds them for
 `share_run`. A test checks that the committed snapshot gives the curve the
 repo's own data gives. `explore_run` maps the knobs to `share_run`;
 `curve` runs it from the command line on the settings JSON the page shows
@@ -100,7 +100,13 @@ The knobs:
   raised Pokemon evolve (`restock.SpeciesInfo.evolve`, `EVOLVE_GRACE`
   levels past a level evolution; `EVOLVE_EXEMPT`'s teams never do).
   `gap_unit` puts the margin and both gaps in percent of the reference
-  instead of levels.
+  instead of levels. #350's two players: `full_margin` and `skip_margin`
+  (percent of the ace, on and off together) replace the boss margin, each
+  staged boss's ace sitting `full_margin` under the fight-everyone
+  reference, or `skip_margin` over the skip-everything one if that is
+  lower (`forced_trainers.json`: the FORCED trainers, the first of each
+  choose-one group and the required bosses); `lower` lets the margins and
+  the gaps move levels down too, devolving the lowered Pokemon (`devolver`).
 - **The post-game (#139):** after Wallace the chart goes on through the
   rematch rounds and Steven (`rematch_ladders` reads `gRematchTable` through
   `G.parse_rematches`):
@@ -210,6 +216,11 @@ bootstrap). The repo's `.gitignore` ignores `*.js`, so add new ones with
   brings their ace to the same level. A sensitivity table varies the
   catches, the walking, the stage trainers' levels and the unevolved 1.2x
   (the whole party, an upper bound).
+- **Two players** (#350): per staged boss on today's levels
+  (`curve_settings.json`'s knobs with the level rules off), the ace and the
+  Exp. Share lead of a player who fights everyone and of one who skips
+  everything (`two_players`), each in percent of the ace, flagging an
+  outlier where the skip lead is more than `OUTLIER_SKIP` (25%) under.
 - **Default movesets**: `GiveBoxMonInitialMoveset` (the last four distinct
   level-up moves, level-0 evolution moves skipped) under both learnsets, for
   every trainer Pokemon without set moves. Fixed-damage moves (Seismic

@@ -312,10 +312,15 @@ class SpeciesInfo:
     @classmethod
     def from_evolutions(cls, alias, evos):
         """A SpeciesInfo with only aliases and evolutions, enough for canon,
-        level_evolution and evolve (the rebalance curve explorer's
-        snapshot)."""
+        level_evolution, evolve and devolve_line (the rebalance curve
+        explorer's snapshot)."""
         info = cls.__new__(cls)
         info.alias, info.evos = alias, evos
+        info.pre_evos = collections.defaultdict(list)
+        for sp, out in evos.items():
+            for method, param, target, _ in out:
+                info.pre_evos[info.canon(target)].append((sp, method, param))
+        info._min_level = {}
         return info
 
     def canon(self, species):
