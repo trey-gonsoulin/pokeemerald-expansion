@@ -1,0 +1,3171 @@
+{
+ "regular": {
+  "TRAINER_GRUNT_PETALBURG_WOODS": {
+   "stage": "Roxanne",
+   "map": "PetalburgWoods",
+   "class": "FORCED",
+   "reason": "every path Route104/conn:right -> Route104/conn:up crosses its sight/trigger tiles"
+  },
+  "TRAINER_LYLE": {
+   "stage": "Roxanne",
+   "map": "PetalburgWoods",
+   "timing": true,
+   "class": "AVOIDABLE",
+   "reason": "turning trainer: every path Route104/conn:right -> Route104/conn:up crosses one of its facings, so it is skipped only by timing its turns"
+  },
+  "TRAINER_JAMES_1": {
+   "stage": "Roxanne",
+   "map": "PetalburgWoods",
+   "timing": true,
+   "class": "AVOIDABLE",
+   "reason": "turning trainer: every path Route104/conn:right -> Route104/conn:up crosses one of its facings, so it is skipped only by timing its turns"
+  },
+  "TRAINER_CALVIN_1": {
+   "stage": "Roxanne",
+   "map": "Route102",
+   "class": "FORCED",
+   "reason": "every path Route102/conn:right -> Route102/conn:left crosses its sight/trigger tiles"
+  },
+  "TRAINER_RICK": {
+   "stage": "Roxanne",
+   "map": "Route102",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_TIANA": {
+   "stage": "Roxanne",
+   "map": "Route102",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_ALLEN": {
+   "stage": "Roxanne",
+   "map": "Route102",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_IVAN": {
+   "stage": "Roxanne",
+   "map": "Route104",
+   "class": "AVOIDABLE",
+   "reason": "no sight line (talk-to only) and not on the only route"
+  },
+  "TRAINER_BILLY": {
+   "stage": "Roxanne",
+   "map": "Route104",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_HALEY_1": {
+   "stage": "Roxanne",
+   "map": "Route104",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_WINSTON_1": {
+   "stage": "Roxanne",
+   "map": "Route104",
+   "timing": true,
+   "class": "AVOIDABLE",
+   "reason": "turning trainer: every path Route104/conn:up -> Route104/warp:0 crosses one of its facings, so it is skipped only by timing its turns"
+  },
+  "TRAINER_CINDY_1": {
+   "stage": "Roxanne",
+   "map": "Route104",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_GINA_AND_MIA_1": {
+   "stage": "Roxanne",
+   "map": "Route104",
+   "class": "FORCED",
+   "reason": "every path Route104/conn:right -> Route104/conn:up crosses its sight/trigger tiles"
+  },
+  "TRAINER_DARIAN": {
+   "stage": "Roxanne",
+   "map": "Route104",
+   "class": "AVOIDABLE",
+   "reason": "no sight line (talk-to only) and not on the only route"
+  },
+  "TRAINER_JOEY": {
+   "stage": "Roxanne",
+   "map": "Route116",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; Cut not assumed (the chase comes right after Roxanne)"
+  },
+  "TRAINER_JOSE": {
+   "stage": "Roxanne",
+   "map": "Route116",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; Cut not assumed (the chase comes right after Roxanne)"
+  },
+  "TRAINER_JERRY_1": {
+   "stage": "Roxanne",
+   "map": "Route116",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; Cut not assumed (the chase comes right after Roxanne)"
+  },
+  "TRAINER_CLARK": {
+   "stage": "Roxanne",
+   "map": "Route116",
+   "timing": true,
+   "class": "AVOIDABLE",
+   "reason": "turning trainer: every path Route116/conn:left -> Route116/warp:0 crosses one of its facings, so it is skipped only by timing its turns; Cut not assumed (the chase comes right after Roxanne)"
+  },
+  "TRAINER_JANICE": {
+   "stage": "Roxanne",
+   "map": "Route116",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; Cut not assumed (the chase comes right after Roxanne)"
+  },
+  "TRAINER_KAREN_1": {
+   "stage": "Roxanne",
+   "map": "Route116",
+   "timing": true,
+   "class": "AVOIDABLE",
+   "reason": "turning trainer: every path Route116/conn:left -> Route116/warp:0 crosses one of its facings, so it is skipped only by timing its turns; Cut not assumed (the chase comes right after Roxanne)"
+  },
+  "TRAINER_SARAH": {
+   "stage": "Roxanne",
+   "map": "Route116",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; Cut not assumed (the chase comes right after Roxanne)"
+  },
+  "TRAINER_DAWSON": {
+   "stage": "Roxanne",
+   "map": "Route116",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; Cut not assumed (the chase comes right after Roxanne)"
+  },
+  "TRAINER_DEVAN": {
+   "stage": "Roxanne",
+   "map": "Route116",
+   "class": "FORCED",
+   "reason": "every path Route116/conn:left -> Route116/warp:0 crosses its sight/trigger tiles; Cut not assumed (the chase comes right after Roxanne)"
+  },
+  "TRAINER_JOHNSON": {
+   "stage": "Roxanne",
+   "map": "Route116",
+   "timing": true,
+   "class": "AVOIDABLE",
+   "reason": "turning trainer: every path Route116/conn:left -> Route116/warp:0 crosses one of its facings, so it is skipped only by timing its turns; Cut not assumed (the chase comes right after Roxanne)"
+  },
+  "TRAINER_JOSH": {
+   "stage": "Roxanne",
+   "map": "RustboroCity_Gym",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_TOMMY": {
+   "stage": "Roxanne",
+   "map": "RustboroCity_Gym",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_MARC": {
+   "stage": "Roxanne",
+   "map": "RustboroCity_Gym",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_TAKAO": {
+   "stage": "Brawly",
+   "map": "DewfordTown_Gym",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; darkness ignored"
+  },
+  "TRAINER_JOCELYN": {
+   "stage": "Brawly",
+   "map": "DewfordTown_Gym",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; darkness ignored"
+  },
+  "TRAINER_LAURA": {
+   "stage": "Brawly",
+   "map": "DewfordTown_Gym",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; darkness ignored"
+  },
+  "TRAINER_BRENDEN": {
+   "stage": "Brawly",
+   "map": "DewfordTown_Gym",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; darkness ignored"
+  },
+  "TRAINER_CRISTIAN": {
+   "stage": "Brawly",
+   "map": "DewfordTown_Gym",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; darkness ignored"
+  },
+  "TRAINER_LILITH": {
+   "stage": "Brawly",
+   "map": "DewfordTown_Gym",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; darkness ignored"
+  },
+  "TRAINER_GRUNT_RUSTURF_TUNNEL": {
+   "stage": "Brawly",
+   "map": "RusturfTunnel",
+   "class": "FORCED",
+   "reason": "scripted: the Devon Goods thief, fought to recover the goods (needed for the Stone letter / Briney)"
+  },
+  "TRAINER_MIKE_2": {
+   "stage": "Brawly",
+   "map": "RusturfTunnel",
+   "class": "AVOIDABLE",
+   "reason": "Rusturf Tunnel east side, behind the rocks until Rock Smash; never on the story path"
+  },
+  "TRAINER_KIRK": {
+   "stage": "Wattson",
+   "map": "MauvilleCity_Gym",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; beam barriers modelled in both switch states; any switch flips them"
+  },
+  "TRAINER_SHAWN": {
+   "stage": "Wattson",
+   "map": "MauvilleCity_Gym",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; beam barriers modelled in both switch states; any switch flips them"
+  },
+  "TRAINER_BEN": {
+   "stage": "Wattson",
+   "map": "MauvilleCity_Gym",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; beam barriers modelled in both switch states; any switch flips them"
+  },
+  "TRAINER_VIVIAN": {
+   "stage": "Wattson",
+   "map": "MauvilleCity_Gym",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; beam barriers modelled in both switch states; any switch flips them"
+  },
+  "TRAINER_ANGELO": {
+   "stage": "Wattson",
+   "map": "MauvilleCity_Gym",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; beam barriers modelled in both switch states; any switch flips them"
+  },
+  "TRAINER_DAISY": {
+   "stage": "Wattson",
+   "map": "Route103",
+   "class": "AVOIDABLE",
+   "reason": "Route 103 east (land and water) is off the story path after the first rival fight"
+  },
+  "TRAINER_AMY_AND_LIV_1": {
+   "stage": "Wattson",
+   "map": "Route103",
+   "class": "AVOIDABLE",
+   "reason": "Route 103 east (land and water) is off the story path after the first rival fight"
+  },
+  "TRAINER_ANDREW": {
+   "stage": "Wattson",
+   "map": "Route103",
+   "class": "AVOIDABLE",
+   "reason": "Route 103 east (land and water) is off the story path after the first rival fight"
+  },
+  "TRAINER_MIGUEL_1": {
+   "stage": "Wattson",
+   "map": "Route103",
+   "class": "AVOIDABLE",
+   "reason": "Route 103 east (land and water) is off the story path after the first rival fight"
+  },
+  "TRAINER_MARCOS": {
+   "stage": "Wattson",
+   "map": "Route103",
+   "class": "AVOIDABLE",
+   "reason": "Route 103 east (land and water) is off the story path after the first rival fight"
+  },
+  "TRAINER_RHETT": {
+   "stage": "Wattson",
+   "map": "Route103",
+   "class": "AVOIDABLE",
+   "reason": "Route 103 east (land and water) is off the story path after the first rival fight"
+  },
+  "TRAINER_HUEY": {
+   "stage": "Wattson",
+   "map": "Route109",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; Briney's boat lands at the Route 109 dock below Slateport"
+  },
+  "TRAINER_EDMOND": {
+   "stage": "Wattson",
+   "map": "Route109",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; Briney's boat lands at the Route 109 dock below Slateport"
+  },
+  "TRAINER_RICKY_1": {
+   "stage": "Wattson",
+   "map": "Route109",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; Briney's boat lands at the Route 109 dock below Slateport"
+  },
+  "TRAINER_LOLA_1": {
+   "stage": "Wattson",
+   "map": "Route109",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; Briney's boat lands at the Route 109 dock below Slateport"
+  },
+  "TRAINER_CHANDLER": {
+   "stage": "Wattson",
+   "map": "Route109",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; Briney's boat lands at the Route 109 dock below Slateport"
+  },
+  "TRAINER_HAILEY": {
+   "stage": "Wattson",
+   "map": "Route109",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; Briney's boat lands at the Route 109 dock below Slateport"
+  },
+  "TRAINER_DWAYNE": {
+   "stage": "Wattson",
+   "map": "Route109_SeashoreHouse",
+   "class": "AVOIDABLE",
+   "reason": "optional side house (Seashore House challenge)"
+  },
+  "TRAINER_JOHANNA": {
+   "stage": "Wattson",
+   "map": "Route109_SeashoreHouse",
+   "class": "AVOIDABLE",
+   "reason": "optional side house (Seashore House challenge)"
+  },
+  "TRAINER_SIMON": {
+   "stage": "Wattson",
+   "map": "Route109_SeashoreHouse",
+   "class": "AVOIDABLE",
+   "reason": "optional side house (Seashore House challenge)"
+  },
+  "TRAINER_EDWARD": {
+   "stage": "Wattson",
+   "map": "Route110",
+   "class": "FORCED",
+   "reason": "every path Route110/conn:down -> Route110/conn:up crosses its sight/trigger tiles; no bike yet (Cycling Road closed)"
+  },
+  "TRAINER_JACLYN": {
+   "stage": "Wattson",
+   "map": "Route110",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; no bike yet (Cycling Road closed)"
+  },
+  "TRAINER_EDWIN_1": {
+   "stage": "Wattson",
+   "map": "Route110",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; no bike yet (Cycling Road closed)"
+  },
+  "TRAINER_DALE": {
+   "stage": "Wattson",
+   "map": "Route110",
+   "class": "AVOIDABLE",
+   "reason": "no sight line (talk-to only) and not on the only route; no bike yet (Cycling Road closed)"
+  },
+  "TRAINER_JACOB": {
+   "stage": "Wattson",
+   "map": "Route110",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; no bike yet (Cycling Road closed)"
+  },
+  "TRAINER_ANTHONY": {
+   "stage": "Wattson",
+   "map": "Route110",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; no bike yet (Cycling Road closed)"
+  },
+  "TRAINER_BENJAMIN_1": {
+   "stage": "Wattson",
+   "map": "Route110",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; no bike yet (Cycling Road closed)"
+  },
+  "TRAINER_JASMINE": {
+   "stage": "Wattson",
+   "map": "Route110",
+   "class": "UNCERTAIN",
+   "reason": "moving trainer whose patrol/sight covers every path Route110/conn:down -> Route110/conn:up; may be skippable by timing; no bike yet (Cycling Road closed)"
+  },
+  "TRAINER_ABIGAIL_1": {
+   "stage": "Wattson",
+   "map": "Route110",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; no bike yet (Cycling Road closed)"
+  },
+  "TRAINER_ISABEL_1": {
+   "stage": "Wattson",
+   "map": "Route110",
+   "class": "FORCED",
+   "reason": "every path Route110/conn:down -> Route110/conn:up crosses its sight/trigger tiles; no bike yet (Cycling Road closed)"
+  },
+  "TRAINER_TIMMY": {
+   "stage": "Wattson",
+   "map": "Route110",
+   "timing": true,
+   "class": "AVOIDABLE",
+   "reason": "turning trainer: every path Route110/conn:down -> Route110/conn:up crosses one of its facings, so it is skipped only by timing its turns; no bike yet (Cycling Road closed)"
+  },
+  "TRAINER_KALEB": {
+   "stage": "Wattson",
+   "map": "Route110",
+   "class": "FORCED",
+   "reason": "every path Route110/conn:down -> Route110/conn:up crosses its sight/trigger tiles; no bike yet (Cycling Road closed)"
+  },
+  "TRAINER_JOSEPH": {
+   "stage": "Wattson",
+   "map": "Route110",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; no bike yet (Cycling Road closed)"
+  },
+  "TRAINER_ALYSSA": {
+   "stage": "Wattson",
+   "map": "Route110",
+   "class": "FORCED",
+   "reason": "every path Route110/conn:down -> Route110/conn:up crosses its sight/trigger tiles; no bike yet (Cycling Road closed)"
+  },
+  "TRAINER_SALLY": {
+   "stage": "Wattson",
+   "map": "Route110_TrickHousePuzzle1",
+   "class": "AVOIDABLE",
+   "reason": "Trick House is optional"
+  },
+  "TRAINER_EDDIE": {
+   "stage": "Wattson",
+   "map": "Route110_TrickHousePuzzle1",
+   "class": "AVOIDABLE",
+   "reason": "Trick House is optional"
+  },
+  "TRAINER_ROBIN": {
+   "stage": "Wattson",
+   "map": "Route110_TrickHousePuzzle1",
+   "class": "AVOIDABLE",
+   "reason": "Trick House is optional"
+  },
+  "TRAINER_GRUNT_MUSEUM_1": {
+   "stage": "Wattson",
+   "map": "SlateportCity_OceanicMuseum_2F",
+   "class": "FORCED",
+   "reason": "scripted: Oceanic Museum 2F, fought in sequence when delivering the Devon Goods to Stern"
+  },
+  "TRAINER_GRUNT_MUSEUM_2": {
+   "stage": "Wattson",
+   "map": "SlateportCity_OceanicMuseum_2F",
+   "class": "FORCED",
+   "reason": "scripted: Oceanic Museum 2F, second grunt of the same delivery scene"
+  },
+  "TRAINER_GRUNT_JAGGED_PASS": {
+   "stage": "Flannery",
+   "map": "JaggedPass",
+   "class": "AVOIDABLE",
+   "reason": "guards the closed Magma Hideout door until Mt. Pyre, then hidden (FLAG_HIDE_JAGGED_PASS_MAGMA_GUARD) before the hideout is needed"
+  },
+  "TRAINER_ERIC": {
+   "stage": "Flannery",
+   "map": "JaggedPass",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_DIANA_1": {
+   "stage": "Flannery",
+   "map": "JaggedPass",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_ETHAN_1": {
+   "stage": "Flannery",
+   "map": "JaggedPass",
+   "timing": true,
+   "class": "AVOIDABLE",
+   "reason": "turning trainer: every path JaggedPass/warp:2,3 -> JaggedPass/warp:0,1 crosses one of its facings, so it is skipped only by timing its turns"
+  },
+  "TRAINER_JULIO": {
+   "stage": "Flannery",
+   "map": "JaggedPass",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_AUTUMN": {
+   "stage": "Flannery",
+   "map": "JaggedPass",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_COLE": {
+   "stage": "Flannery",
+   "map": "LavaridgeTown_Gym_1F",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; buried trainers sit on the hole warps; holes/geysers modelled as plain warps"
+  },
+  "TRAINER_AXLE": {
+   "stage": "Flannery",
+   "map": "LavaridgeTown_Gym_1F",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; buried trainers sit on the hole warps; holes/geysers modelled as plain warps"
+  },
+  "TRAINER_KEEGAN": {
+   "stage": "Flannery",
+   "map": "LavaridgeTown_Gym_B1F",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; buried trainers sit on the hole warps; holes/geysers modelled as plain warps"
+  },
+  "TRAINER_DANIELLE": {
+   "stage": "Flannery",
+   "map": "LavaridgeTown_Gym_1F",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; buried trainers sit on the hole warps; holes/geysers modelled as plain warps"
+  },
+  "TRAINER_GERALD": {
+   "stage": "Flannery",
+   "map": "LavaridgeTown_Gym_1F",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; buried trainers sit on the hole warps; holes/geysers modelled as plain warps"
+  },
+  "TRAINER_JACE": {
+   "stage": "Flannery",
+   "map": "LavaridgeTown_Gym_B1F",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; buried trainers sit on the hole warps; holes/geysers modelled as plain warps"
+  },
+  "TRAINER_JEFF": {
+   "stage": "Flannery",
+   "map": "LavaridgeTown_Gym_B1F",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; buried trainers sit on the hole warps; holes/geysers modelled as plain warps"
+  },
+  "TRAINER_ELI": {
+   "stage": "Flannery",
+   "map": "LavaridgeTown_Gym_B1F",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; buried trainers sit on the hole warps; holes/geysers modelled as plain warps"
+  },
+  "TRAINER_GRUNT_MT_CHIMNEY_2": {
+   "stage": "Flannery",
+   "map": "MtChimney",
+   "class": "FORCED",
+   "reason": "every path MtChimney/warp:0,1 -> MtChimney/near:TRAINER_MAXIE_MT_CHIMNEY crosses its sight/trigger tiles"
+  },
+  "TRAINER_SHELBY_1": {
+   "stage": "Flannery",
+   "map": "MtChimney",
+   "class": "AVOIDABLE",
+   "reason": "Mt. Chimney rim trainer: hidden (FLAG_HIDE_MT_CHIMNEY_TRAINERS) until you reach Lavaridge, so absent during the story climb; optional afterwards"
+  },
+  "TRAINER_MELISSA": {
+   "stage": "Flannery",
+   "map": "MtChimney",
+   "class": "AVOIDABLE",
+   "reason": "Mt. Chimney rim trainer: hidden (FLAG_HIDE_MT_CHIMNEY_TRAINERS) until you reach Lavaridge, so absent during the story climb; optional afterwards"
+  },
+  "TRAINER_SHEILA": {
+   "stage": "Flannery",
+   "map": "MtChimney",
+   "class": "AVOIDABLE",
+   "reason": "Mt. Chimney rim trainer: hidden (FLAG_HIDE_MT_CHIMNEY_TRAINERS) until you reach Lavaridge, so absent during the story climb; optional afterwards"
+  },
+  "TRAINER_SHIRLEY": {
+   "stage": "Flannery",
+   "map": "MtChimney",
+   "class": "AVOIDABLE",
+   "reason": "Mt. Chimney rim trainer: hidden (FLAG_HIDE_MT_CHIMNEY_TRAINERS) until you reach Lavaridge, so absent during the story climb; optional afterwards"
+  },
+  "TRAINER_GRUNT_MT_CHIMNEY_1": {
+   "stage": "Flannery",
+   "map": "MtChimney",
+   "class": "FORCED",
+   "reason": "every path MtChimney/warp:0,1 -> MtChimney/near:TRAINER_MAXIE_MT_CHIMNEY crosses its sight/trigger tiles"
+  },
+  "TRAINER_SAWYER_1": {
+   "stage": "Flannery",
+   "map": "MtChimney",
+   "class": "AVOIDABLE",
+   "reason": "Mt. Chimney rim trainer: hidden (FLAG_HIDE_MT_CHIMNEY_TRAINERS) until you reach Lavaridge, so absent during the story climb; optional afterwards"
+  },
+  "TRAINER_TED": {
+   "stage": "Flannery",
+   "map": "Route110_TrickHousePuzzle2",
+   "class": "AVOIDABLE",
+   "reason": "Trick House is optional"
+  },
+  "TRAINER_PAUL": {
+   "stage": "Flannery",
+   "map": "Route110_TrickHousePuzzle2",
+   "class": "AVOIDABLE",
+   "reason": "Trick House is optional"
+  },
+  "TRAINER_GEORGIA": {
+   "stage": "Flannery",
+   "map": "Route110_TrickHousePuzzle2",
+   "class": "AVOIDABLE",
+   "reason": "Trick House is optional"
+  },
+  "TRAINER_VICTOR": {
+   "stage": "Flannery",
+   "map": "Route111",
+   "class": "AVOIDABLE",
+   "reason": "Winstrate family: Victor asks YES/NO outside their Route 111 house; the four battles only on YES"
+  },
+  "TRAINER_VICTORIA": {
+   "stage": "Flannery",
+   "map": "Route111",
+   "class": "AVOIDABLE",
+   "reason": "Winstrate family: Victor asks YES/NO outside their Route 111 house; the four battles only on YES"
+  },
+  "TRAINER_VIVI": {
+   "stage": "Flannery",
+   "map": "Route111",
+   "class": "AVOIDABLE",
+   "reason": "Winstrate family: Victor asks YES/NO outside their Route 111 house; the four battles only on YES"
+  },
+  "TRAINER_VICKY": {
+   "stage": "Flannery",
+   "map": "Route111",
+   "class": "AVOIDABLE",
+   "reason": "Winstrate family: Victor asks YES/NO outside their Route 111 house; the four battles only on YES"
+  },
+  "TRAINER_DREW": {
+   "stage": "Flannery",
+   "map": "Route111",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; desert sandstorm triggers treated as walls (no Go-Goggles)"
+  },
+  "TRAINER_HEIDI": {
+   "stage": "Flannery",
+   "map": "Route111",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; desert sandstorm triggers treated as walls (no Go-Goggles)"
+  },
+  "TRAINER_BEAU": {
+   "stage": "Flannery",
+   "map": "Route111",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; desert sandstorm triggers treated as walls (no Go-Goggles)"
+  },
+  "TRAINER_BECKY": {
+   "stage": "Flannery",
+   "map": "Route111",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; desert sandstorm triggers treated as walls (no Go-Goggles)"
+  },
+  "TRAINER_DUSTY_1": {
+   "stage": "Flannery",
+   "map": "Route111",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; desert sandstorm triggers treated as walls (no Go-Goggles)"
+  },
+  "TRAINER_TRAVIS": {
+   "stage": "Flannery",
+   "map": "Route111",
+   "timing": true,
+   "class": "AVOIDABLE",
+   "reason": "turning trainer: every path Route111/conn:down -> Route111/conn:left:ROUTE112 crosses one of its facings, so it is skipped only by timing its turns; desert sandstorm triggers treated as walls (no Go-Goggles)"
+  },
+  "TRAINER_IRENE": {
+   "stage": "Flannery",
+   "map": "Route111",
+   "timing": true,
+   "class": "AVOIDABLE",
+   "reason": "turning trainer: every path Route111/conn:down -> Route111/conn:left:ROUTE112 crosses one of its facings, so it is skipped only by timing its turns; desert sandstorm triggers treated as walls (no Go-Goggles)"
+  },
+  "TRAINER_DAISUKE": {
+   "stage": "Flannery",
+   "map": "Route111",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; desert sandstorm triggers treated as walls (no Go-Goggles)"
+  },
+  "TRAINER_WILTON_1": {
+   "stage": "Flannery",
+   "map": "Route111",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; desert sandstorm triggers treated as walls (no Go-Goggles)"
+  },
+  "TRAINER_BROOKE_1": {
+   "stage": "Flannery",
+   "map": "Route111",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; desert sandstorm triggers treated as walls (no Go-Goggles)"
+  },
+  "TRAINER_HAYDEN": {
+   "stage": "Flannery",
+   "map": "Route111",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; desert sandstorm triggers treated as walls (no Go-Goggles)"
+  },
+  "TRAINER_BIANCA": {
+   "stage": "Flannery",
+   "map": "Route111",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; desert sandstorm triggers treated as walls (no Go-Goggles)"
+  },
+  "TRAINER_TYRON": {
+   "stage": "Flannery",
+   "map": "Route111",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; desert sandstorm triggers treated as walls (no Go-Goggles)"
+  },
+  "TRAINER_CELINA": {
+   "stage": "Flannery",
+   "map": "Route111",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; desert sandstorm triggers treated as walls (no Go-Goggles)"
+  },
+  "TRAINER_CELIA": {
+   "stage": "Flannery",
+   "map": "Route111",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; desert sandstorm triggers treated as walls (no Go-Goggles)"
+  },
+  "TRAINER_BRYAN": {
+   "stage": "Flannery",
+   "map": "Route111",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; desert sandstorm triggers treated as walls (no Go-Goggles)"
+  },
+  "TRAINER_BRANDEN": {
+   "stage": "Flannery",
+   "map": "Route111",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; desert sandstorm triggers treated as walls (no Go-Goggles)"
+  },
+  "TRAINER_BRICE": {
+   "stage": "Flannery",
+   "map": "Route112",
+   "timing": true,
+   "class": "AVOIDABLE",
+   "reason": "turning trainer: every path Route112/conn:right -> Route112/warp:0,1 crosses one of its facings, so it is skipped only by timing its turns"
+  },
+  "TRAINER_TRENT_1": {
+   "stage": "Flannery",
+   "map": "Route112",
+   "timing": true,
+   "class": "AVOIDABLE",
+   "reason": "turning trainer: every path Route112/conn:right -> Route112/warp:4 crosses one of its facings, so it is skipped only by timing its turns"
+  },
+  "TRAINER_LARRY": {
+   "stage": "Flannery",
+   "map": "Route112",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_CAROL": {
+   "stage": "Flannery",
+   "map": "Route112",
+   "timing": true,
+   "class": "AVOIDABLE",
+   "reason": "turning trainer: paths Route112/conn:right -> Route112/warp:0,1 pass its line, skipped by timing its turns (with [LARRY | CAROL])"
+  },
+  "TRAINER_BRYANT": {
+   "stage": "Flannery",
+   "map": "Route112",
+   "timing": true,
+   "class": "AVOIDABLE",
+   "reason": "turning trainer: every path Route112/warp:5 -> Route112/conn:right crosses one of its facings, so it is skipped only by timing its turns"
+  },
+  "TRAINER_SHAYLA": {
+   "stage": "Flannery",
+   "map": "Route112",
+   "timing": true,
+   "class": "AVOIDABLE",
+   "reason": "turning trainer: every path Route112/warp:5 -> Route112/conn:right crosses one of its facings, so it is skipped only by timing its turns"
+  },
+  "TRAINER_JAYLEN": {
+   "stage": "Flannery",
+   "map": "Route113",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_DILLON": {
+   "stage": "Flannery",
+   "map": "Route113",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_MADELINE_1": {
+   "stage": "Flannery",
+   "map": "Route113",
+   "timing": true,
+   "class": "AVOIDABLE",
+   "reason": "turning trainer: every path Route113/conn:right -> Route113/conn:left crosses one of its facings, so it is skipped only by timing its turns"
+  },
+  "TRAINER_LAO_1": {
+   "stage": "Flannery",
+   "map": "Route113",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_LUNG": {
+   "stage": "Flannery",
+   "map": "Route113",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_TORI_AND_TIA": {
+   "stage": "Flannery",
+   "map": "Route113",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_SOPHIE": {
+   "stage": "Flannery",
+   "map": "Route113",
+   "class": "UNCERTAIN",
+   "reason": "moving trainer whose patrol/sight covers every path Route113/conn:right -> Route113/conn:left; may be skippable by timing"
+  },
+  "TRAINER_COBY": {
+   "stage": "Flannery",
+   "map": "Route113",
+   "class": "UNCERTAIN",
+   "reason": "moving trainer whose patrol/sight covers every path Route113/conn:right -> Route113/conn:left; may be skippable by timing"
+  },
+  "TRAINER_LAWRENCE": {
+   "stage": "Flannery",
+   "map": "Route113",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_WYATT": {
+   "stage": "Flannery",
+   "map": "Route113",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_LENNY": {
+   "stage": "Flannery",
+   "map": "Route114",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_LUCAS_1": {
+   "stage": "Flannery",
+   "map": "Route114",
+   "class": "FORCED",
+   "reason": "every path Route114/conn:right -> Route114/warp:0 crosses its sight/trigger tiles"
+  },
+  "TRAINER_SHANE": {
+   "stage": "Flannery",
+   "map": "Route114",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_NANCY": {
+   "stage": "Flannery",
+   "map": "Route114",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_STEVE_1": {
+   "stage": "Flannery",
+   "map": "Route114",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_BERNIE_1": {
+   "stage": "Flannery",
+   "map": "Route114",
+   "timing": true,
+   "class": "AVOIDABLE",
+   "reason": "turning trainer: every path Route114/conn:right -> Route114/warp:0 crosses one of its facings, so it is skipped only by timing its turns"
+  },
+  "TRAINER_CLAUDE": {
+   "stage": "Flannery",
+   "map": "Route114",
+   "class": "AVOIDABLE",
+   "reason": "no sight line (talk-to only) and not on the only route"
+  },
+  "TRAINER_NOLAN": {
+   "stage": "Flannery",
+   "map": "Route114",
+   "class": "AVOIDABLE",
+   "reason": "no sight line (talk-to only) and not on the only route"
+  },
+  "TRAINER_TYRA_AND_IVY": {
+   "stage": "Flannery",
+   "map": "Route114",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_ANGELINA": {
+   "stage": "Flannery",
+   "map": "Route114",
+   "timing": true,
+   "class": "AVOIDABLE",
+   "reason": "turning trainer: every path Route114/conn:right -> Route114/warp:0 crosses one of its facings, so it is skipped only by timing its turns"
+  },
+  "TRAINER_CHARLOTTE": {
+   "stage": "Flannery",
+   "map": "Route114",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_KAI": {
+   "stage": "Flannery",
+   "map": "Route114",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_TIMOTHY_1": {
+   "stage": "Flannery",
+   "map": "Route115",
+   "class": "AVOIDABLE",
+   "reason": "Route 115 (Rustboro north) is not on the story path"
+  },
+  "TRAINER_KOICHI": {
+   "stage": "Flannery",
+   "map": "Route115",
+   "class": "AVOIDABLE",
+   "reason": "Route 115 (Rustboro north) is not on the story path"
+  },
+  "TRAINER_NOB_1": {
+   "stage": "Flannery",
+   "map": "Route115",
+   "class": "AVOIDABLE",
+   "reason": "Route 115 (Rustboro north) is not on the story path"
+  },
+  "TRAINER_CYNDY_1": {
+   "stage": "Flannery",
+   "map": "Route115",
+   "class": "AVOIDABLE",
+   "reason": "Route 115 (Rustboro north) is not on the story path"
+  },
+  "TRAINER_HECTOR": {
+   "stage": "Flannery",
+   "map": "Route115",
+   "class": "AVOIDABLE",
+   "reason": "Route 115 (Rustboro north) is not on the story path"
+  },
+  "TRAINER_KYRA": {
+   "stage": "Flannery",
+   "map": "Route115",
+   "class": "AVOIDABLE",
+   "reason": "Route 115 (Rustboro north) is not on the story path"
+  },
+  "TRAINER_JAIDEN": {
+   "stage": "Flannery",
+   "map": "Route115",
+   "class": "AVOIDABLE",
+   "reason": "Route 115 (Rustboro north) is not on the story path"
+  },
+  "TRAINER_ALIX": {
+   "stage": "Flannery",
+   "map": "Route115",
+   "class": "AVOIDABLE",
+   "reason": "Route 115 (Rustboro north) is not on the story path"
+  },
+  "TRAINER_HELENE": {
+   "stage": "Flannery",
+   "map": "Route115",
+   "class": "AVOIDABLE",
+   "reason": "Route 115 (Rustboro north) is not on the story path"
+  },
+  "TRAINER_MARLENE": {
+   "stage": "Flannery",
+   "map": "Route115",
+   "class": "AVOIDABLE",
+   "reason": "Route 115 (Rustboro north) is not on the story path"
+  },
+  "TRAINER_ISAAC_1": {
+   "stage": "Flannery",
+   "map": "Route117",
+   "class": "AVOIDABLE",
+   "reason": "Route 117 / Verdanturf are not on the story path (Mauville -> Route 111 north)"
+  },
+  "TRAINER_LYDIA_1": {
+   "stage": "Flannery",
+   "map": "Route117",
+   "class": "AVOIDABLE",
+   "reason": "Route 117 / Verdanturf are not on the story path (Mauville -> Route 111 north)"
+  },
+  "TRAINER_DYLAN_1": {
+   "stage": "Flannery",
+   "map": "Route117",
+   "class": "AVOIDABLE",
+   "reason": "Route 117 / Verdanturf are not on the story path (Mauville -> Route 111 north)"
+  },
+  "TRAINER_MARIA_1": {
+   "stage": "Flannery",
+   "map": "Route117",
+   "class": "AVOIDABLE",
+   "reason": "Route 117 / Verdanturf are not on the story path (Mauville -> Route 111 north)"
+  },
+  "TRAINER_DEREK": {
+   "stage": "Flannery",
+   "map": "Route117",
+   "class": "AVOIDABLE",
+   "reason": "Route 117 / Verdanturf are not on the story path (Mauville -> Route 111 north)"
+  },
+  "TRAINER_ANNA_AND_MEG_1": {
+   "stage": "Flannery",
+   "map": "Route117",
+   "class": "AVOIDABLE",
+   "reason": "Route 117 / Verdanturf are not on the story path (Mauville -> Route 111 north)"
+  },
+  "TRAINER_MELINA": {
+   "stage": "Flannery",
+   "map": "Route117",
+   "class": "AVOIDABLE",
+   "reason": "Route 117 / Verdanturf are not on the story path (Mauville -> Route 111 north)"
+  },
+  "TRAINER_BRANDI": {
+   "stage": "Flannery",
+   "map": "Route117",
+   "class": "AVOIDABLE",
+   "reason": "Route 117 / Verdanturf are not on the story path (Mauville -> Route 111 north)"
+  },
+  "TRAINER_AISHA": {
+   "stage": "Flannery",
+   "map": "Route117",
+   "class": "AVOIDABLE",
+   "reason": "Route 117 / Verdanturf are not on the story path (Mauville -> Route 111 north)"
+  },
+  "TRAINER_RANDALL": {
+   "stage": "Norman",
+   "map": "PetalburgCity_Gym",
+   "class": "UNCERTAIN",
+   "reason": "Petalburg Gym: each room's doors open only after its trainer; every route is lobby -> {RANDALL|MARY} -> {PARKER|ALEXIA|GEORGE} -> {JODY|BERKE} -> Norman, so exactly one trainer per tier (3 battles) is forced, the player picks which",
+   "one_of": [
+    "TRAINER_RANDALL",
+    "TRAINER_MARY"
+   ]
+  },
+  "TRAINER_PARKER": {
+   "stage": "Norman",
+   "map": "PetalburgCity_Gym",
+   "class": "UNCERTAIN",
+   "reason": "Petalburg Gym: each room's doors open only after its trainer; every route is lobby -> {RANDALL|MARY} -> {PARKER|ALEXIA|GEORGE} -> {JODY|BERKE} -> Norman, so exactly one trainer per tier (3 battles) is forced, the player picks which",
+   "one_of": [
+    "TRAINER_PARKER",
+    "TRAINER_ALEXIA",
+    "TRAINER_GEORGE"
+   ]
+  },
+  "TRAINER_GEORGE": {
+   "stage": "Norman",
+   "map": "PetalburgCity_Gym",
+   "class": "UNCERTAIN",
+   "reason": "Petalburg Gym: each room's doors open only after its trainer; every route is lobby -> {RANDALL|MARY} -> {PARKER|ALEXIA|GEORGE} -> {JODY|BERKE} -> Norman, so exactly one trainer per tier (3 battles) is forced, the player picks which",
+   "one_of": [
+    "TRAINER_PARKER",
+    "TRAINER_ALEXIA",
+    "TRAINER_GEORGE"
+   ]
+  },
+  "TRAINER_BERKE": {
+   "stage": "Norman",
+   "map": "PetalburgCity_Gym",
+   "class": "UNCERTAIN",
+   "reason": "Petalburg Gym: each room's doors open only after its trainer; every route is lobby -> {RANDALL|MARY} -> {PARKER|ALEXIA|GEORGE} -> {JODY|BERKE} -> Norman, so exactly one trainer per tier (3 battles) is forced, the player picks which",
+   "one_of": [
+    "TRAINER_JODY",
+    "TRAINER_BERKE"
+   ]
+  },
+  "TRAINER_MARY": {
+   "stage": "Norman",
+   "map": "PetalburgCity_Gym",
+   "class": "UNCERTAIN",
+   "reason": "Petalburg Gym: each room's doors open only after its trainer; every route is lobby -> {RANDALL|MARY} -> {PARKER|ALEXIA|GEORGE} -> {JODY|BERKE} -> Norman, so exactly one trainer per tier (3 battles) is forced, the player picks which",
+   "one_of": [
+    "TRAINER_RANDALL",
+    "TRAINER_MARY"
+   ]
+  },
+  "TRAINER_ALEXIA": {
+   "stage": "Norman",
+   "map": "PetalburgCity_Gym",
+   "class": "UNCERTAIN",
+   "reason": "Petalburg Gym: each room's doors open only after its trainer; every route is lobby -> {RANDALL|MARY} -> {PARKER|ALEXIA|GEORGE} -> {JODY|BERKE} -> Norman, so exactly one trainer per tier (3 battles) is forced, the player picks which",
+   "one_of": [
+    "TRAINER_PARKER",
+    "TRAINER_ALEXIA",
+    "TRAINER_GEORGE"
+   ]
+  },
+  "TRAINER_JODY": {
+   "stage": "Norman",
+   "map": "PetalburgCity_Gym",
+   "class": "UNCERTAIN",
+   "reason": "Petalburg Gym: each room's doors open only after its trainer; every route is lobby -> {RANDALL|MARY} -> {PARKER|ALEXIA|GEORGE} -> {JODY|BERKE} -> Norman, so exactly one trainer per tier (3 battles) is forced, the player picks which",
+   "one_of": [
+    "TRAINER_JODY",
+    "TRAINER_BERKE"
+   ]
+  },
+  "TRAINER_JUSTIN": {
+   "stage": "Norman",
+   "map": "Route110_TrickHousePuzzle3",
+   "class": "AVOIDABLE",
+   "reason": "Trick House is optional"
+  },
+  "TRAINER_MARTHA": {
+   "stage": "Norman",
+   "map": "Route110_TrickHousePuzzle3",
+   "class": "AVOIDABLE",
+   "reason": "Trick House is optional"
+  },
+  "TRAINER_ALAN": {
+   "stage": "Norman",
+   "map": "Route110_TrickHousePuzzle3",
+   "class": "AVOIDABLE",
+   "reason": "Trick House is optional"
+  },
+  "TRAINER_CHARLIE": {
+   "stage": "Winona",
+   "map": "AbandonedShip_Corridors_1F",
+   "class": "AVOIDABLE",
+   "reason": "Abandoned Ship is optional"
+  },
+  "TRAINER_DUNCAN": {
+   "stage": "Winona",
+   "map": "AbandonedShip_Corridors_B1F",
+   "class": "AVOIDABLE",
+   "reason": "Abandoned Ship is optional"
+  },
+  "TRAINER_KIRA_AND_DAN_1": {
+   "stage": "Winona",
+   "map": "AbandonedShip_Rooms2_1F",
+   "class": "AVOIDABLE",
+   "reason": "Abandoned Ship is optional"
+  },
+  "TRAINER_JANI": {
+   "stage": "Winona",
+   "map": "AbandonedShip_Rooms2_1F",
+   "class": "AVOIDABLE",
+   "reason": "Abandoned Ship is optional"
+  },
+  "TRAINER_GARRISON": {
+   "stage": "Winona",
+   "map": "AbandonedShip_Rooms2_1F",
+   "class": "AVOIDABLE",
+   "reason": "Abandoned Ship is optional"
+  },
+  "TRAINER_DEMETRIUS": {
+   "stage": "Winona",
+   "map": "AbandonedShip_Rooms_1F",
+   "class": "AVOIDABLE",
+   "reason": "Abandoned Ship is optional"
+  },
+  "TRAINER_THALIA_1": {
+   "stage": "Winona",
+   "map": "AbandonedShip_Rooms_1F",
+   "class": "AVOIDABLE",
+   "reason": "Abandoned Ship is optional"
+  },
+  "TRAINER_JARED": {
+   "stage": "Winona",
+   "map": "FortreeCity_Gym",
+   "class": "UNCERTAIN",
+   "reason": "grid search finds a route around its sight line; rotating gates (src/rotating_gate.c) not modelled, so a skip here is unproven"
+  },
+  "TRAINER_EDWARDO": {
+   "stage": "Winona",
+   "map": "FortreeCity_Gym",
+   "class": "FORCED",
+   "reason": "every path FortreeCity_Gym/warp:0,1 -> FortreeCity_Gym/near:TRAINER_WINONA_1 crosses its sight/trigger tiles; rotating gates (src/rotating_gate.c) not modelled, so a skip here is unproven"
+  },
+  "TRAINER_FLINT": {
+   "stage": "Winona",
+   "map": "FortreeCity_Gym",
+   "class": "FORCED",
+   "reason": "every path FortreeCity_Gym/warp:0,1 -> FortreeCity_Gym/near:TRAINER_WINONA_1 crosses its sight/trigger tiles; rotating gates (src/rotating_gate.c) not modelled, so a skip here is unproven"
+  },
+  "TRAINER_ASHLEY": {
+   "stage": "Winona",
+   "map": "FortreeCity_Gym",
+   "class": "UNCERTAIN",
+   "reason": "grid search finds a route around its sight line; rotating gates (src/rotating_gate.c) not modelled, so a skip here is unproven"
+  },
+  "TRAINER_HUMBERTO": {
+   "stage": "Winona",
+   "map": "FortreeCity_Gym",
+   "class": "UNCERTAIN",
+   "reason": "grid search finds a route around its sight line; rotating gates (src/rotating_gate.c) not modelled, so a skip here is unproven"
+  },
+  "TRAINER_DARIUS": {
+   "stage": "Winona",
+   "map": "FortreeCity_Gym",
+   "class": "UNCERTAIN",
+   "reason": "grid search finds a route around its sight line; rotating gates (src/rotating_gate.c) not modelled, so a skip here is unproven"
+  },
+  "TRAINER_PETE": {
+   "stage": "Winona",
+   "map": "Route103",
+   "class": "AVOIDABLE",
+   "reason": "Route 103 east (land and water) is off the story path after the first rival fight"
+  },
+  "TRAINER_ISABELLE": {
+   "stage": "Winona",
+   "map": "Route103",
+   "class": "AVOIDABLE",
+   "reason": "Route 103 east (land and water) is off the story path after the first rival fight"
+  },
+  "TRAINER_FOSTER": {
+   "stage": "Winona",
+   "map": "Route105",
+   "class": "AVOIDABLE",
+   "reason": "Routes 105-108 (sea between Petalburg, Dewford and Slateport) are optional once Surf is out"
+  },
+  "TRAINER_LUIS": {
+   "stage": "Winona",
+   "map": "Route105",
+   "class": "AVOIDABLE",
+   "reason": "Routes 105-108 (sea between Petalburg, Dewford and Slateport) are optional once Surf is out"
+  },
+  "TRAINER_DOMINIK": {
+   "stage": "Winona",
+   "map": "Route105",
+   "class": "AVOIDABLE",
+   "reason": "Routes 105-108 (sea between Petalburg, Dewford and Slateport) are optional once Surf is out"
+  },
+  "TRAINER_BEVERLY": {
+   "stage": "Winona",
+   "map": "Route105",
+   "class": "AVOIDABLE",
+   "reason": "Routes 105-108 (sea between Petalburg, Dewford and Slateport) are optional once Surf is out"
+  },
+  "TRAINER_IMANI": {
+   "stage": "Winona",
+   "map": "Route105",
+   "class": "AVOIDABLE",
+   "reason": "Routes 105-108 (sea between Petalburg, Dewford and Slateport) are optional once Surf is out"
+  },
+  "TRAINER_JOSUE": {
+   "stage": "Winona",
+   "map": "Route105",
+   "class": "AVOIDABLE",
+   "reason": "Routes 105-108 (sea between Petalburg, Dewford and Slateport) are optional once Surf is out"
+  },
+  "TRAINER_ANDRES_1": {
+   "stage": "Winona",
+   "map": "Route105",
+   "class": "AVOIDABLE",
+   "reason": "Routes 105-108 (sea between Petalburg, Dewford and Slateport) are optional once Surf is out"
+  },
+  "TRAINER_DOUGLAS": {
+   "stage": "Winona",
+   "map": "Route106",
+   "class": "AVOIDABLE",
+   "reason": "Routes 105-108 are optional (Briney ferries the story legs)"
+  },
+  "TRAINER_KYLA": {
+   "stage": "Winona",
+   "map": "Route106",
+   "class": "AVOIDABLE",
+   "reason": "Routes 105-108 are optional (Briney ferries the story legs)"
+  },
+  "TRAINER_ELLIOT_1": {
+   "stage": "Winona",
+   "map": "Route106",
+   "class": "AVOIDABLE",
+   "reason": "Routes 105-108 are optional (Briney ferries the story legs)"
+  },
+  "TRAINER_NED": {
+   "stage": "Winona",
+   "map": "Route106",
+   "class": "AVOIDABLE",
+   "reason": "Routes 105-108 are optional (Briney ferries the story legs)"
+  },
+  "TRAINER_DARRIN": {
+   "stage": "Winona",
+   "map": "Route107",
+   "class": "AVOIDABLE",
+   "reason": "Routes 105-108 are optional (Briney ferries the story legs)"
+  },
+  "TRAINER_TONY_1": {
+   "stage": "Winona",
+   "map": "Route107",
+   "class": "AVOIDABLE",
+   "reason": "Routes 105-108 are optional (Briney ferries the story legs)"
+  },
+  "TRAINER_DENISE": {
+   "stage": "Winona",
+   "map": "Route107",
+   "class": "AVOIDABLE",
+   "reason": "Routes 105-108 are optional (Briney ferries the story legs)"
+  },
+  "TRAINER_BETH": {
+   "stage": "Winona",
+   "map": "Route107",
+   "class": "AVOIDABLE",
+   "reason": "Routes 105-108 are optional (Briney ferries the story legs)"
+  },
+  "TRAINER_LISA_AND_RAY": {
+   "stage": "Winona",
+   "map": "Route107",
+   "class": "AVOIDABLE",
+   "reason": "Routes 105-108 are optional (Briney ferries the story legs)"
+  },
+  "TRAINER_CAMRON": {
+   "stage": "Winona",
+   "map": "Route107",
+   "class": "AVOIDABLE",
+   "reason": "Routes 105-108 are optional (Briney ferries the story legs)"
+  },
+  "TRAINER_JEROME": {
+   "stage": "Winona",
+   "map": "Route108",
+   "class": "AVOIDABLE",
+   "reason": "Routes 105-108 are optional; the Abandoned Ship is a side area"
+  },
+  "TRAINER_MATTHEW": {
+   "stage": "Winona",
+   "map": "Route108",
+   "class": "AVOIDABLE",
+   "reason": "Routes 105-108 are optional; the Abandoned Ship is a side area"
+  },
+  "TRAINER_TARA": {
+   "stage": "Winona",
+   "map": "Route108",
+   "class": "AVOIDABLE",
+   "reason": "Routes 105-108 are optional; the Abandoned Ship is a side area"
+  },
+  "TRAINER_MISSY": {
+   "stage": "Winona",
+   "map": "Route108",
+   "class": "AVOIDABLE",
+   "reason": "Routes 105-108 are optional; the Abandoned Ship is a side area"
+  },
+  "TRAINER_CAROLINA": {
+   "stage": "Winona",
+   "map": "Route108",
+   "class": "AVOIDABLE",
+   "reason": "Routes 105-108 are optional; the Abandoned Ship is a side area"
+  },
+  "TRAINER_CORY_1": {
+   "stage": "Winona",
+   "map": "Route108",
+   "class": "AVOIDABLE",
+   "reason": "Routes 105-108 are optional; the Abandoned Ship is a side area"
+  },
+  "TRAINER_DAVID": {
+   "stage": "Winona",
+   "map": "Route109",
+   "class": "AVOIDABLE",
+   "reason": "no sight line (talk-to only) and not on the only route; Briney's boat lands at the Route 109 dock below Slateport"
+  },
+  "TRAINER_ALICE": {
+   "stage": "Winona",
+   "map": "Route109",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; Briney's boat lands at the Route 109 dock below Slateport"
+  },
+  "TRAINER_AUSTINA": {
+   "stage": "Winona",
+   "map": "Route109",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; Briney's boat lands at the Route 109 dock below Slateport"
+  },
+  "TRAINER_GWEN": {
+   "stage": "Winona",
+   "map": "Route109",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; Briney's boat lands at the Route 109 dock below Slateport"
+  },
+  "TRAINER_CARTER": {
+   "stage": "Winona",
+   "map": "Route109",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; Briney's boat lands at the Route 109 dock below Slateport"
+  },
+  "TRAINER_MEL_AND_PAUL": {
+   "stage": "Winona",
+   "map": "Route109",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; Briney's boat lands at the Route 109 dock below Slateport"
+  },
+  "TRAINER_ELIJAH": {
+   "stage": "Winona",
+   "map": "Route109",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; Briney's boat lands at the Route 109 dock below Slateport"
+  },
+  "TRAINER_CORA": {
+   "stage": "Winona",
+   "map": "Route110_TrickHousePuzzle4",
+   "class": "AVOIDABLE",
+   "reason": "Trick House is optional"
+  },
+  "TRAINER_YUJI": {
+   "stage": "Winona",
+   "map": "Route110_TrickHousePuzzle4",
+   "class": "AVOIDABLE",
+   "reason": "Trick House is optional"
+  },
+  "TRAINER_PAULA": {
+   "stage": "Winona",
+   "map": "Route110_TrickHousePuzzle4",
+   "class": "AVOIDABLE",
+   "reason": "Trick House is optional"
+  },
+  "TRAINER_ROSE_1": {
+   "stage": "Winona",
+   "map": "Route118",
+   "class": "FORCED",
+   "reason": "every path Route118/conn:left -> Route118/conn:up crosses its sight/trigger tiles"
+  },
+  "TRAINER_BARNY": {
+   "stage": "Winona",
+   "map": "Route118",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_WADE": {
+   "stage": "Winona",
+   "map": "Route118",
+   "class": "AVOIDABLE",
+   "reason": "no sight line (talk-to only) and not on the only route"
+  },
+  "TRAINER_DALTON_1": {
+   "stage": "Winona",
+   "map": "Route118",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_PERRY": {
+   "stage": "Winona",
+   "map": "Route118",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_CHESTER": {
+   "stage": "Winona",
+   "map": "Route118",
+   "timing": true,
+   "class": "AVOIDABLE",
+   "reason": "turning trainer: every path Route118/conn:left -> Route118/conn:up crosses one of its facings, so it is skipped only by timing its turns"
+  },
+  "TRAINER_DEANDRE": {
+   "stage": "Winona",
+   "map": "Route118",
+   "class": "FORCED",
+   "reason": "every path Route118/conn:left -> Route118/conn:up crosses its sight/trigger tiles"
+  },
+  "TRAINER_BRENT": {
+   "stage": "Winona",
+   "map": "Route119",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_DONALD": {
+   "stage": "Winona",
+   "map": "Route119",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_TAYLOR": {
+   "stage": "Winona",
+   "map": "Route119",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_DOUG": {
+   "stage": "Winona",
+   "map": "Route119",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_GREG": {
+   "stage": "Winona",
+   "map": "Route119",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_KENT": {
+   "stage": "Winona",
+   "map": "Route119",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_JACKSON_1": {
+   "stage": "Winona",
+   "map": "Route119",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_CATHERINE_1": {
+   "stage": "Winona",
+   "map": "Route119",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_HUGH": {
+   "stage": "Winona",
+   "map": "Route119",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_PHIL": {
+   "stage": "Winona",
+   "map": "Route119",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_YASU": {
+   "stage": "Winona",
+   "map": "Route119",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_TAKASHI": {
+   "stage": "Winona",
+   "map": "Route119",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_HIDEO": {
+   "stage": "Winona",
+   "map": "Route119",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_CHRIS": {
+   "stage": "Winona",
+   "map": "Route119",
+   "class": "AVOIDABLE",
+   "reason": "no sight line (talk-to only) and not on the only route"
+  },
+  "TRAINER_FABIAN": {
+   "stage": "Winona",
+   "map": "Route119",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_DAYTON": {
+   "stage": "Winona",
+   "map": "Route119",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_RACHEL": {
+   "stage": "Winona",
+   "map": "Route119",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_GRUNT_WEATHER_INST_1": {
+   "stage": "Winona",
+   "map": "Route119_WeatherInstitute_1F",
+   "class": "UNCERTAIN",
+   "reason": "Route119/conn:down -> Route119_WeatherInstitute_2F/near:TRAINER_SHELLY_WEATHER_INSTITUTE: must fight one of [GRUNT_WEATHER_INST_1 | GRUNT_WEATHER_INST_4] (none forced alone)",
+   "one_of": [
+    "TRAINER_GRUNT_WEATHER_INST_1",
+    "TRAINER_GRUNT_WEATHER_INST_4"
+   ]
+  },
+  "TRAINER_GRUNT_WEATHER_INST_4": {
+   "stage": "Winona",
+   "map": "Route119_WeatherInstitute_1F",
+   "class": "UNCERTAIN",
+   "reason": "Route119/conn:down -> Route119_WeatherInstitute_2F/near:TRAINER_SHELLY_WEATHER_INSTITUTE: must fight one of [GRUNT_WEATHER_INST_1 | GRUNT_WEATHER_INST_4] (none forced alone)",
+   "one_of": [
+    "TRAINER_GRUNT_WEATHER_INST_1",
+    "TRAINER_GRUNT_WEATHER_INST_4"
+   ]
+  },
+  "TRAINER_GRUNT_WEATHER_INST_5": {
+   "stage": "Winona",
+   "map": "Route119_WeatherInstitute_2F",
+   "class": "FORCED",
+   "reason": "every path Route119/conn:down -> Route119_WeatherInstitute_2F/near:TRAINER_SHELLY_WEATHER_INSTITUTE crosses its sight/trigger tiles"
+  },
+  "TRAINER_GRUNT_WEATHER_INST_2": {
+   "stage": "Winona",
+   "map": "Route119_WeatherInstitute_2F",
+   "class": "FORCED",
+   "reason": "every path Route119/conn:down -> Route119_WeatherInstitute_2F/near:TRAINER_SHELLY_WEATHER_INSTITUTE crosses its sight/trigger tiles"
+  },
+  "TRAINER_GRUNT_WEATHER_INST_3": {
+   "stage": "Winona",
+   "map": "Route119_WeatherInstitute_2F",
+   "timing": true,
+   "class": "AVOIDABLE",
+   "reason": "turning trainer: every path Route119/conn:down -> Route119_WeatherInstitute_2F/near:TRAINER_SHELLY_WEATHER_INSTITUTE crosses one of its facings, so it is skipped only by timing its turns"
+  },
+  "TRAINER_COLIN": {
+   "stage": "Winona",
+   "map": "Route120",
+   "timing": true,
+   "class": "AVOIDABLE",
+   "reason": "turning trainer: every path Route120/conn:left -> Route120/conn:right crosses one of its facings, so it is skipped only by timing its turns"
+  },
+  "TRAINER_ROBERT_1": {
+   "stage": "Winona",
+   "map": "Route120",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_LORENZO": {
+   "stage": "Winona",
+   "map": "Route120",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_JENNA": {
+   "stage": "Winona",
+   "map": "Route120",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_JEFFREY_1": {
+   "stage": "Winona",
+   "map": "Route120",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_JENNIFER": {
+   "stage": "Winona",
+   "map": "Route120",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_CHIP": {
+   "stage": "Winona",
+   "map": "Route120",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_CLARISSA": {
+   "stage": "Winona",
+   "map": "Route120",
+   "timing": true,
+   "class": "AVOIDABLE",
+   "reason": "turning trainer: every path Route120/conn:left -> Route120/conn:right crosses one of its facings, so it is skipped only by timing its turns"
+  },
+  "TRAINER_ANGELICA": {
+   "stage": "Winona",
+   "map": "Route120",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_KEIGO": {
+   "stage": "Winona",
+   "map": "Route120",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_RILEY": {
+   "stage": "Winona",
+   "map": "Route120",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_LEONEL": {
+   "stage": "Winona",
+   "map": "Route120",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_CALLIE": {
+   "stage": "Winona",
+   "map": "Route120",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_GRUNT_AQUA_HIDEOUT_1": {
+   "stage": "Tate and Liza",
+   "map": "AquaHideout_1F",
+   "class": "UNCERTAIN",
+   "reason": "moving trainer whose patrol/sight covers every path AquaHideout_1F/warp:0,1 -> AquaHideout_B2F/near:TRAINER_MATT; may be skippable by timing"
+  },
+  "TRAINER_GRUNT_AQUA_HIDEOUT_2": {
+   "stage": "Tate and Liza",
+   "map": "AquaHideout_B1F",
+   "class": "FORCED",
+   "reason": "every path AquaHideout_1F/warp:0,1 -> AquaHideout_B2F/near:TRAINER_MATT crosses its sight/trigger tiles"
+  },
+  "TRAINER_GRUNT_AQUA_HIDEOUT_3": {
+   "stage": "Tate and Liza",
+   "map": "AquaHideout_B1F",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_GRUNT_AQUA_HIDEOUT_5": {
+   "stage": "Tate and Liza",
+   "map": "AquaHideout_B1F",
+   "timing": true,
+   "class": "AVOIDABLE",
+   "reason": "turning trainer: every path AquaHideout_1F/warp:0,1 -> AquaHideout_B2F/near:TRAINER_MATT crosses one of its facings, so it is skipped only by timing its turns"
+  },
+  "TRAINER_GRUNT_AQUA_HIDEOUT_7": {
+   "stage": "Tate and Liza",
+   "map": "AquaHideout_B1F",
+   "class": "FORCED",
+   "reason": "every path AquaHideout_1F/warp:0,1 -> AquaHideout_B2F/near:TRAINER_MATT crosses its sight/trigger tiles"
+  },
+  "TRAINER_GRUNT_AQUA_HIDEOUT_4": {
+   "stage": "Tate and Liza",
+   "map": "AquaHideout_B2F",
+   "class": "UNCERTAIN",
+   "reason": "moving trainer whose patrol/sight covers every path AquaHideout_1F/warp:0,1 -> AquaHideout_B2F/near:TRAINER_MATT; may be skippable by timing"
+  },
+  "TRAINER_GRUNT_AQUA_HIDEOUT_6": {
+   "stage": "Tate and Liza",
+   "map": "AquaHideout_B2F",
+   "class": "FORCED",
+   "reason": "every path AquaHideout_1F/warp:0,1 -> AquaHideout_B2F/near:TRAINER_MATT crosses its sight/trigger tiles"
+  },
+  "TRAINER_GRUNT_AQUA_HIDEOUT_8": {
+   "stage": "Tate and Liza",
+   "map": "AquaHideout_B2F",
+   "class": "FORCED",
+   "reason": "every path AquaHideout_1F/warp:0,1 -> AquaHideout_B2F/near:TRAINER_MATT crosses its sight/trigger tiles"
+  },
+  "TRAINER_GRUNT_MAGMA_HIDEOUT_1": {
+   "stage": "Tate and Liza",
+   "map": "MagmaHideout_1F",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_GRUNT_MAGMA_HIDEOUT_2": {
+   "stage": "Tate and Liza",
+   "map": "MagmaHideout_1F",
+   "class": "FORCED",
+   "reason": "every path MagmaHideout_1F/warp:0 -> MagmaHideout_4F/near:TRAINER_MAXIE_MAGMA_HIDEOUT crosses its sight/trigger tiles"
+  },
+  "TRAINER_GRUNT_MAGMA_HIDEOUT_14": {
+   "stage": "Tate and Liza",
+   "map": "MagmaHideout_2F_1R",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_GRUNT_MAGMA_HIDEOUT_3": {
+   "stage": "Tate and Liza",
+   "map": "MagmaHideout_2F_1R",
+   "class": "FORCED",
+   "reason": "every path MagmaHideout_1F/warp:0 -> MagmaHideout_4F/near:TRAINER_MAXIE_MAGMA_HIDEOUT crosses its sight/trigger tiles"
+  },
+  "TRAINER_GRUNT_MAGMA_HIDEOUT_4": {
+   "stage": "Tate and Liza",
+   "map": "MagmaHideout_2F_1R",
+   "class": "UNCERTAIN",
+   "reason": "moving trainer whose patrol/sight covers every path MagmaHideout_1F/warp:0 -> MagmaHideout_4F/near:TRAINER_MAXIE_MAGMA_HIDEOUT; may be skippable by timing"
+  },
+  "TRAINER_GRUNT_MAGMA_HIDEOUT_5": {
+   "stage": "Tate and Liza",
+   "map": "MagmaHideout_2F_1R",
+   "class": "UNCERTAIN",
+   "reason": "moving trainer whose patrol/sight covers every path MagmaHideout_1F/warp:0 -> MagmaHideout_4F/near:TRAINER_MAXIE_MAGMA_HIDEOUT; may be skippable by timing"
+  },
+  "TRAINER_GRUNT_MAGMA_HIDEOUT_15": {
+   "stage": "Tate and Liza",
+   "map": "MagmaHideout_2F_2R",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_GRUNT_MAGMA_HIDEOUT_6": {
+   "stage": "Tate and Liza",
+   "map": "MagmaHideout_2F_2R",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_GRUNT_MAGMA_HIDEOUT_7": {
+   "stage": "Tate and Liza",
+   "map": "MagmaHideout_2F_2R",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_GRUNT_MAGMA_HIDEOUT_8": {
+   "stage": "Tate and Liza",
+   "map": "MagmaHideout_2F_2R",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_GRUNT_MAGMA_HIDEOUT_9": {
+   "stage": "Tate and Liza",
+   "map": "MagmaHideout_3F_1R",
+   "class": "FORCED",
+   "reason": "every path MagmaHideout_1F/warp:0 -> MagmaHideout_4F/near:TRAINER_MAXIE_MAGMA_HIDEOUT crosses its sight/trigger tiles"
+  },
+  "TRAINER_GRUNT_MAGMA_HIDEOUT_16": {
+   "stage": "Tate and Liza",
+   "map": "MagmaHideout_3F_1R",
+   "class": "FORCED",
+   "reason": "every path MagmaHideout_1F/warp:0 -> MagmaHideout_4F/near:TRAINER_MAXIE_MAGMA_HIDEOUT crosses its sight/trigger tiles"
+  },
+  "TRAINER_GRUNT_MAGMA_HIDEOUT_10": {
+   "stage": "Tate and Liza",
+   "map": "MagmaHideout_3F_2R",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_GRUNT_MAGMA_HIDEOUT_11": {
+   "stage": "Tate and Liza",
+   "map": "MagmaHideout_4F",
+   "class": "FORCED",
+   "reason": "every path MagmaHideout_1F/warp:0 -> MagmaHideout_4F/near:TRAINER_MAXIE_MAGMA_HIDEOUT crosses its sight/trigger tiles"
+  },
+  "TRAINER_GRUNT_MAGMA_HIDEOUT_12": {
+   "stage": "Tate and Liza",
+   "map": "MagmaHideout_4F",
+   "class": "FORCED",
+   "reason": "every path MagmaHideout_1F/warp:0 -> MagmaHideout_4F/near:TRAINER_MAXIE_MAGMA_HIDEOUT crosses its sight/trigger tiles"
+  },
+  "TRAINER_GRUNT_MAGMA_HIDEOUT_13": {
+   "stage": "Tate and Liza",
+   "map": "MagmaHideout_4F",
+   "class": "FORCED",
+   "reason": "every path MagmaHideout_1F/warp:0 -> MagmaHideout_4F/near:TRAINER_MAXIE_MAGMA_HIDEOUT crosses its sight/trigger tiles"
+  },
+  "TRAINER_PRESTON": {
+   "stage": "Tate and Liza",
+   "map": "MossdeepCity_Gym",
+   "class": "FORCED",
+   "reason": "every path MossdeepCity_Gym/warp:0,1 -> MossdeepCity_Gym/near:TRAINER_TATE_AND_LIZA_1 crosses its sight/trigger tiles; spin tiles and their switches not modelled (treated as plain floor), so a skip here is unproven"
+  },
+  "TRAINER_VIRGIL": {
+   "stage": "Tate and Liza",
+   "map": "MossdeepCity_Gym",
+   "class": "UNCERTAIN",
+   "reason": "no sight line (talk-to only) and not on the only route; spin tiles and their switches not modelled (treated as plain floor), so a skip here is unproven"
+  },
+  "TRAINER_BLAKE": {
+   "stage": "Tate and Liza",
+   "map": "MossdeepCity_Gym",
+   "class": "UNCERTAIN",
+   "reason": "no sight line (talk-to only) and not on the only route; spin tiles and their switches not modelled (treated as plain floor), so a skip here is unproven"
+  },
+  "TRAINER_HANNAH": {
+   "stage": "Tate and Liza",
+   "map": "MossdeepCity_Gym",
+   "class": "UNCERTAIN",
+   "reason": "grid search finds a route around its sight line; spin tiles and their switches not modelled (treated as plain floor), so a skip here is unproven"
+  },
+  "TRAINER_SAMANTHA": {
+   "stage": "Tate and Liza",
+   "map": "MossdeepCity_Gym",
+   "class": "UNCERTAIN",
+   "reason": "grid search finds a route around its sight line; spin tiles and their switches not modelled (treated as plain floor), so a skip here is unproven"
+  },
+  "TRAINER_MAURA": {
+   "stage": "Tate and Liza",
+   "map": "MossdeepCity_Gym",
+   "class": "UNCERTAIN",
+   "reason": "no sight line (talk-to only) and not on the only route; spin tiles and their switches not modelled (treated as plain floor), so a skip here is unproven"
+  },
+  "TRAINER_SYLVIA": {
+   "stage": "Tate and Liza",
+   "map": "MossdeepCity_Gym",
+   "class": "UNCERTAIN",
+   "reason": "grid search finds a route around its sight line; spin tiles and their switches not modelled (treated as plain floor), so a skip here is unproven"
+  },
+  "TRAINER_NATE": {
+   "stage": "Tate and Liza",
+   "map": "MossdeepCity_Gym",
+   "class": "UNCERTAIN",
+   "reason": "no sight line (talk-to only) and not on the only route; spin tiles and their switches not modelled (treated as plain floor), so a skip here is unproven"
+  },
+  "TRAINER_MACEY": {
+   "stage": "Tate and Liza",
+   "map": "MossdeepCity_Gym",
+   "class": "UNCERTAIN",
+   "reason": "grid search finds a route around its sight line; spin tiles and their switches not modelled (treated as plain floor), so a skip here is unproven"
+  },
+  "TRAINER_CLIFFORD": {
+   "stage": "Tate and Liza",
+   "map": "MossdeepCity_Gym",
+   "class": "UNCERTAIN",
+   "reason": "grid search finds a route around its sight line; spin tiles and their switches not modelled (treated as plain floor), so a skip here is unproven"
+  },
+  "TRAINER_NICHOLAS": {
+   "stage": "Tate and Liza",
+   "map": "MossdeepCity_Gym",
+   "class": "UNCERTAIN",
+   "reason": "no sight line (talk-to only) and not on the only route; spin tiles and their switches not modelled (treated as plain floor), so a skip here is unproven"
+  },
+  "TRAINER_KATHLEEN": {
+   "stage": "Tate and Liza",
+   "map": "MossdeepCity_Gym",
+   "class": "UNCERTAIN",
+   "reason": "grid search finds a route around its sight line; spin tiles and their switches not modelled (treated as plain floor), so a skip here is unproven"
+  },
+  "TRAINER_MARK": {
+   "stage": "Tate and Liza",
+   "map": "MtPyre_2F",
+   "class": "AVOIDABLE",
+   "reason": "Mt. Pyre interior floors are optional; the story climbs the exterior to the summit"
+  },
+  "TRAINER_DEZ_AND_LUKE": {
+   "stage": "Tate and Liza",
+   "map": "MtPyre_2F",
+   "class": "AVOIDABLE",
+   "reason": "Mt. Pyre interior floors are optional; the story climbs the exterior to the summit"
+  },
+  "TRAINER_LEAH": {
+   "stage": "Tate and Liza",
+   "map": "MtPyre_2F",
+   "class": "AVOIDABLE",
+   "reason": "Mt. Pyre interior floors are optional; the story climbs the exterior to the summit"
+  },
+  "TRAINER_ZANDER": {
+   "stage": "Tate and Liza",
+   "map": "MtPyre_2F",
+   "class": "AVOIDABLE",
+   "reason": "Mt. Pyre interior floors are optional; the story climbs the exterior to the summit"
+  },
+  "TRAINER_WILLIAM": {
+   "stage": "Tate and Liza",
+   "map": "MtPyre_3F",
+   "class": "AVOIDABLE",
+   "reason": "Mt. Pyre interior floors are optional"
+  },
+  "TRAINER_KAYLA": {
+   "stage": "Tate and Liza",
+   "map": "MtPyre_3F",
+   "class": "AVOIDABLE",
+   "reason": "Mt. Pyre interior floors are optional"
+  },
+  "TRAINER_GABRIELLE_1": {
+   "stage": "Tate and Liza",
+   "map": "MtPyre_3F",
+   "class": "AVOIDABLE",
+   "reason": "Mt. Pyre interior floors are optional"
+  },
+  "TRAINER_ATSUSHI": {
+   "stage": "Tate and Liza",
+   "map": "MtPyre_4F",
+   "class": "AVOIDABLE",
+   "reason": "Mt. Pyre interior floors are optional"
+  },
+  "TRAINER_TASHA": {
+   "stage": "Tate and Liza",
+   "map": "MtPyre_5F",
+   "class": "AVOIDABLE",
+   "reason": "Mt. Pyre interior floors are optional"
+  },
+  "TRAINER_VALERIE_1": {
+   "stage": "Tate and Liza",
+   "map": "MtPyre_6F",
+   "class": "AVOIDABLE",
+   "reason": "Mt. Pyre interior floors are optional"
+  },
+  "TRAINER_CEDRIC": {
+   "stage": "Tate and Liza",
+   "map": "MtPyre_6F",
+   "class": "AVOIDABLE",
+   "reason": "Mt. Pyre interior floors are optional"
+  },
+  "TRAINER_GRUNT_MT_PYRE_1": {
+   "stage": "Tate and Liza",
+   "map": "MtPyre_Summit",
+   "class": "FORCED",
+   "reason": "every path MtPyre_1F/warp:0,2 -> MtPyre_Summit/xy:22,9;23,9;24,9 crosses its sight/trigger tiles"
+  },
+  "TRAINER_GRUNT_MT_PYRE_2": {
+   "stage": "Tate and Liza",
+   "map": "MtPyre_Summit",
+   "class": "FORCED",
+   "reason": "every path MtPyre_1F/warp:0,2 -> MtPyre_Summit/xy:22,9;23,9;24,9 crosses its sight/trigger tiles"
+  },
+  "TRAINER_GRUNT_MT_PYRE_3": {
+   "stage": "Tate and Liza",
+   "map": "MtPyre_Summit",
+   "class": "FORCED",
+   "reason": "every path MtPyre_1F/warp:0,2 -> MtPyre_Summit/xy:22,9;23,9;24,9 crosses its sight/trigger tiles"
+  },
+  "TRAINER_GRUNT_MT_PYRE_4": {
+   "stage": "Tate and Liza",
+   "map": "MtPyre_Summit",
+   "class": "FORCED",
+   "reason": "every path MtPyre_1F/warp:0,2 -> MtPyre_Summit/xy:22,9;23,9;24,9 crosses its sight/trigger tiles"
+  },
+  "TRAINER_VANESSA": {
+   "stage": "Tate and Liza",
+   "map": "Route121",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_WALTER_1": {
+   "stage": "Tate and Liza",
+   "map": "Route121",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_TAMMY": {
+   "stage": "Tate and Liza",
+   "map": "Route121",
+   "class": "FORCED",
+   "reason": "every path Route121/conn:left -> Route121/conn:right crosses its sight/trigger tiles"
+  },
+  "TRAINER_KATE_AND_JOY": {
+   "stage": "Tate and Liza",
+   "map": "Route121",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_JESSICA_1": {
+   "stage": "Tate and Liza",
+   "map": "Route121",
+   "timing": true,
+   "class": "AVOIDABLE",
+   "reason": "turning trainer: every path Route121/conn:left -> Route121/conn:right crosses one of its facings, so it is skipped only by timing its turns"
+  },
+  "TRAINER_CALE": {
+   "stage": "Tate and Liza",
+   "map": "Route121",
+   "class": "UNCERTAIN",
+   "reason": "moving trainer whose patrol/sight covers every path Route121/conn:left -> Route121/conn:right; may be skippable by timing"
+  },
+  "TRAINER_MYLES": {
+   "stage": "Tate and Liza",
+   "map": "Route121",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_PAT": {
+   "stage": "Tate and Liza",
+   "map": "Route121",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_MARCEL": {
+   "stage": "Tate and Liza",
+   "map": "Route121",
+   "timing": true,
+   "class": "AVOIDABLE",
+   "reason": "turning trainer: paths Route121/conn:left|Route121/conn:right -> Route121/conn:down pass its line, skipped by timing its turns (with [MARCEL+CRISTIN_1])"
+  },
+  "TRAINER_CRISTIN_1": {
+   "stage": "Tate and Liza",
+   "map": "Route121",
+   "timing": true,
+   "class": "AVOIDABLE",
+   "reason": "turning trainer: paths Route121/conn:left|Route121/conn:right -> Route121/conn:down pass its line, skipped by timing its turns (with [MARCEL+CRISTIN_1])"
+  },
+  "TRAINER_WENDY": {
+   "stage": "Tate and Liza",
+   "map": "Route123",
+   "class": "AVOIDABLE",
+   "reason": "Route 123 (Route 118 east to Mt. Pyre) is an alternative way round; Route 121 -> 122 is the story path"
+  },
+  "TRAINER_BRAXTON": {
+   "stage": "Tate and Liza",
+   "map": "Route123",
+   "class": "AVOIDABLE",
+   "reason": "Route 123 (Route 118 east to Mt. Pyre) is an alternative way round; Route 121 -> 122 is the story path"
+  },
+  "TRAINER_VIOLET": {
+   "stage": "Tate and Liza",
+   "map": "Route123",
+   "class": "AVOIDABLE",
+   "reason": "Route 123 (Route 118 east to Mt. Pyre) is an alternative way round; Route 121 -> 122 is the story path"
+  },
+  "TRAINER_CAMERON_1": {
+   "stage": "Tate and Liza",
+   "map": "Route123",
+   "class": "AVOIDABLE",
+   "reason": "Route 123 (Route 118 east to Mt. Pyre) is an alternative way round; Route 121 -> 122 is the story path"
+  },
+  "TRAINER_JACKI_1": {
+   "stage": "Tate and Liza",
+   "map": "Route123",
+   "class": "AVOIDABLE",
+   "reason": "Route 123 (Route 118 east to Mt. Pyre) is an alternative way round; Route 121 -> 122 is the story path"
+  },
+  "TRAINER_MIU_AND_YUKI": {
+   "stage": "Tate and Liza",
+   "map": "Route123",
+   "class": "AVOIDABLE",
+   "reason": "Route 123 (Route 118 east to Mt. Pyre) is an alternative way round; Route 121 -> 122 is the story path"
+  },
+  "TRAINER_KINDRA": {
+   "stage": "Tate and Liza",
+   "map": "Route123",
+   "class": "AVOIDABLE",
+   "reason": "Route 123 (Route 118 east to Mt. Pyre) is an alternative way round; Route 121 -> 122 is the story path"
+  },
+  "TRAINER_FREDRICK": {
+   "stage": "Tate and Liza",
+   "map": "Route123",
+   "class": "AVOIDABLE",
+   "reason": "Route 123 (Route 118 east to Mt. Pyre) is an alternative way round; Route 121 -> 122 is the story path"
+  },
+  "TRAINER_ALBERTO": {
+   "stage": "Tate and Liza",
+   "map": "Route123",
+   "class": "AVOIDABLE",
+   "reason": "Route 123 (Route 118 east to Mt. Pyre) is an alternative way round; Route 121 -> 122 is the story path"
+  },
+  "TRAINER_ED": {
+   "stage": "Tate and Liza",
+   "map": "Route123",
+   "class": "AVOIDABLE",
+   "reason": "Route 123 (Route 118 east to Mt. Pyre) is an alternative way round; Route 121 -> 122 is the story path"
+  },
+  "TRAINER_KAYLEY": {
+   "stage": "Tate and Liza",
+   "map": "Route123",
+   "class": "AVOIDABLE",
+   "reason": "Route 123 (Route 118 east to Mt. Pyre) is an alternative way round; Route 121 -> 122 is the story path"
+  },
+  "TRAINER_JONAS": {
+   "stage": "Tate and Liza",
+   "map": "Route123",
+   "class": "AVOIDABLE",
+   "reason": "Route 123 (Route 118 east to Mt. Pyre) is an alternative way round; Route 121 -> 122 is the story path"
+  },
+  "TRAINER_JAZMYN": {
+   "stage": "Tate and Liza",
+   "map": "Route123",
+   "class": "AVOIDABLE",
+   "reason": "Route 123 (Route 118 east to Mt. Pyre) is an alternative way round; Route 121 -> 122 is the story path"
+  },
+  "TRAINER_DAVIS": {
+   "stage": "Tate and Liza",
+   "map": "Route123",
+   "class": "AVOIDABLE",
+   "reason": "Route 123 (Route 118 east to Mt. Pyre) is an alternative way round; Route 121 -> 122 is the story path"
+  },
+  "TRAINER_FERNANDO_1": {
+   "stage": "Tate and Liza",
+   "map": "Route123",
+   "class": "AVOIDABLE",
+   "reason": "Route 123 (Route 118 east to Mt. Pyre) is an alternative way round; Route 121 -> 122 is the story path"
+  },
+  "TRAINER_SPENCER": {
+   "stage": "Tate and Liza",
+   "map": "Route124",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; surface only (diving under it not needed)"
+  },
+  "TRAINER_ROLAND": {
+   "stage": "Tate and Liza",
+   "map": "Route124",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; surface only (diving under it not needed)"
+  },
+  "TRAINER_JENNY_1": {
+   "stage": "Tate and Liza",
+   "map": "Route124",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; surface only (diving under it not needed)"
+  },
+  "TRAINER_GRACE": {
+   "stage": "Tate and Liza",
+   "map": "Route124",
+   "timing": true,
+   "class": "AVOIDABLE",
+   "reason": "turning trainer: every path Route124/conn:left -> Route124/conn:right:MOSSDEEP_CITY crosses one of its facings, so it is skipped only by timing its turns; surface only (diving under it not needed)"
+  },
+  "TRAINER_CHAD": {
+   "stage": "Tate and Liza",
+   "map": "Route124",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; surface only (diving under it not needed)"
+  },
+  "TRAINER_LILA_AND_ROY_1": {
+   "stage": "Tate and Liza",
+   "map": "Route124",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; surface only (diving under it not needed)"
+  },
+  "TRAINER_DECLAN": {
+   "stage": "Tate and Liza",
+   "map": "Route124",
+   "class": "FORCED",
+   "reason": "every path Route124/conn:left -> Route124/conn:right:MOSSDEEP_CITY crosses its sight/trigger tiles; surface only (diving under it not needed)"
+  },
+  "TRAINER_ISABELLA": {
+   "stage": "Tate and Liza",
+   "map": "Route124",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; surface only (diving under it not needed)"
+  },
+  "TRAINER_NOLEN": {
+   "stage": "Tate and Liza",
+   "map": "Route125",
+   "class": "AVOIDABLE",
+   "reason": "Route 125 (north of Mossdeep, Shoal Cave) is optional"
+  },
+  "TRAINER_STAN": {
+   "stage": "Tate and Liza",
+   "map": "Route125",
+   "class": "AVOIDABLE",
+   "reason": "Route 125 (north of Mossdeep, Shoal Cave) is optional"
+  },
+  "TRAINER_TANYA": {
+   "stage": "Tate and Liza",
+   "map": "Route125",
+   "class": "AVOIDABLE",
+   "reason": "Route 125 (north of Mossdeep, Shoal Cave) is optional"
+  },
+  "TRAINER_SHARON": {
+   "stage": "Tate and Liza",
+   "map": "Route125",
+   "class": "AVOIDABLE",
+   "reason": "Route 125 (north of Mossdeep, Shoal Cave) is optional"
+  },
+  "TRAINER_ERNEST_1": {
+   "stage": "Tate and Liza",
+   "map": "Route125",
+   "class": "AVOIDABLE",
+   "reason": "Route 125 (north of Mossdeep, Shoal Cave) is optional"
+  },
+  "TRAINER_KIM_AND_IRIS": {
+   "stage": "Tate and Liza",
+   "map": "Route125",
+   "class": "AVOIDABLE",
+   "reason": "Route 125 (north of Mossdeep, Shoal Cave) is optional"
+  },
+  "TRAINER_PRESLEY": {
+   "stage": "Tate and Liza",
+   "map": "Route125",
+   "class": "AVOIDABLE",
+   "reason": "Route 125 (north of Mossdeep, Shoal Cave) is optional"
+  },
+  "TRAINER_AURON": {
+   "stage": "Tate and Liza",
+   "map": "Route125",
+   "class": "AVOIDABLE",
+   "reason": "Route 125 (north of Mossdeep, Shoal Cave) is optional"
+  },
+  "TRAINER_BARRY": {
+   "stage": "Tate and Liza",
+   "map": "Route126",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_DEAN": {
+   "stage": "Tate and Liza",
+   "map": "Route126",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_NIKKI": {
+   "stage": "Tate and Liza",
+   "map": "Route126",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_BRENDA": {
+   "stage": "Tate and Liza",
+   "map": "Route126",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_LEONARDO": {
+   "stage": "Tate and Liza",
+   "map": "Route126",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_ISOBEL": {
+   "stage": "Tate and Liza",
+   "map": "Route126",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_SIENNA": {
+   "stage": "Tate and Liza",
+   "map": "Route126",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_PABLO_1": {
+   "stage": "Tate and Liza",
+   "map": "Route126",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_CAMDEN": {
+   "stage": "Tate and Liza",
+   "map": "Route127",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_DONNY": {
+   "stage": "Tate and Liza",
+   "map": "Route127",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_JONAH": {
+   "stage": "Tate and Liza",
+   "map": "Route127",
+   "class": "AVOIDABLE",
+   "reason": "no sight line (talk-to only) and not on the only route"
+  },
+  "TRAINER_HENRY": {
+   "stage": "Tate and Liza",
+   "map": "Route127",
+   "class": "AVOIDABLE",
+   "reason": "no sight line (talk-to only) and not on the only route"
+  },
+  "TRAINER_ROGER": {
+   "stage": "Tate and Liza",
+   "map": "Route127",
+   "class": "AVOIDABLE",
+   "reason": "no sight line (talk-to only) and not on the only route"
+  },
+  "TRAINER_AIDAN": {
+   "stage": "Tate and Liza",
+   "map": "Route127",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_ATHENA": {
+   "stage": "Tate and Liza",
+   "map": "Route127",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_KOJI_1": {
+   "stage": "Tate and Liza",
+   "map": "Route127",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_GRUNT_SPACE_CENTER_3": {
+   "stage": "Juan",
+   "map": "MossdeepCity_SpaceCenter_1F",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_GRUNT_SPACE_CENTER_1": {
+   "stage": "Juan",
+   "map": "MossdeepCity_SpaceCenter_1F",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_GRUNT_SPACE_CENTER_4": {
+   "stage": "Juan",
+   "map": "MossdeepCity_SpaceCenter_1F",
+   "class": "FORCED",
+   "reason": "every path MossdeepCity_SpaceCenter_1F/warp:0,1 -> MossdeepCity_SpaceCenter_1F/warp:2 crosses its sight/trigger tiles"
+  },
+  "TRAINER_GRUNT_SPACE_CENTER_2": {
+   "stage": "Juan",
+   "map": "MossdeepCity_SpaceCenter_1F",
+   "class": "FORCED",
+   "reason": "scripted stair guard on Space Center 1F (talk battle; moves off the stairs only once beaten)"
+  },
+  "TRAINER_GRUNT_SPACE_CENTER_5": {
+   "stage": "Juan",
+   "map": "MossdeepCity_SpaceCenter_2F",
+   "class": "FORCED",
+   "reason": "scripted: Space Center 2F three-grunt gauntlet; declining sends you back downstairs"
+  },
+  "TRAINER_GRUNT_SPACE_CENTER_6": {
+   "stage": "Juan",
+   "map": "MossdeepCity_SpaceCenter_2F",
+   "class": "FORCED",
+   "reason": "scripted: Space Center 2F three-grunt gauntlet"
+  },
+  "TRAINER_GRUNT_SPACE_CENTER_7": {
+   "stage": "Juan",
+   "map": "MossdeepCity_SpaceCenter_2F",
+   "class": "FORCED",
+   "reason": "scripted: Space Center 2F three-grunt gauntlet"
+  },
+  "TRAINER_SOPHIA": {
+   "stage": "Juan",
+   "map": "Route110_TrickHousePuzzle6",
+   "class": "AVOIDABLE",
+   "reason": "Trick House is optional"
+  },
+  "TRAINER_BENNY": {
+   "stage": "Juan",
+   "map": "Route110_TrickHousePuzzle6",
+   "class": "AVOIDABLE",
+   "reason": "Trick House is optional"
+  },
+  "TRAINER_SEBASTIAN": {
+   "stage": "Juan",
+   "map": "Route110_TrickHousePuzzle6",
+   "class": "AVOIDABLE",
+   "reason": "Trick House is optional"
+  },
+  "TRAINER_ISAIAH_1": {
+   "stage": "Juan",
+   "map": "Route128",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_KATELYN_1": {
+   "stage": "Juan",
+   "map": "Route128",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_ALEXA": {
+   "stage": "Juan",
+   "map": "Route128",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_RUBEN": {
+   "stage": "Juan",
+   "map": "Route128",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_WAYNE": {
+   "stage": "Juan",
+   "map": "Route128",
+   "class": "AVOIDABLE",
+   "reason": "no sight line (talk-to only) and not on the only route"
+  },
+  "TRAINER_HARRISON": {
+   "stage": "Juan",
+   "map": "Route128",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_CARLEE": {
+   "stage": "Juan",
+   "map": "Route128",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_CHASE": {
+   "stage": "Juan",
+   "map": "Route129",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_ALLISON": {
+   "stage": "Juan",
+   "map": "Route129",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_REED": {
+   "stage": "Juan",
+   "map": "Route129",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_TISHA": {
+   "stage": "Juan",
+   "map": "Route129",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_CLARENCE": {
+   "stage": "Juan",
+   "map": "Route129",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_RODNEY": {
+   "stage": "Juan",
+   "map": "Route130",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_KATIE": {
+   "stage": "Juan",
+   "map": "Route130",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_SANTIAGO": {
+   "stage": "Juan",
+   "map": "Route130",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_RICHARD": {
+   "stage": "Juan",
+   "map": "Route131",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_HERMAN": {
+   "stage": "Juan",
+   "map": "Route131",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_SUSIE": {
+   "stage": "Juan",
+   "map": "Route131",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_KARA": {
+   "stage": "Juan",
+   "map": "Route131",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_RELI_AND_IAN": {
+   "stage": "Juan",
+   "map": "Route131",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_TALIA": {
+   "stage": "Juan",
+   "map": "Route131",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_KEVIN": {
+   "stage": "Juan",
+   "map": "Route131",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line"
+  },
+  "TRAINER_GILBERT": {
+   "stage": "Juan",
+   "map": "Route132",
+   "class": "AVOIDABLE",
+   "reason": "Routes 132-134 (Pacifidlog to Slateport) are optional"
+  },
+  "TRAINER_DANA": {
+   "stage": "Juan",
+   "map": "Route132",
+   "class": "AVOIDABLE",
+   "reason": "Routes 132-134 (Pacifidlog to Slateport) are optional"
+  },
+  "TRAINER_RONALD": {
+   "stage": "Juan",
+   "map": "Route132",
+   "class": "AVOIDABLE",
+   "reason": "Routes 132-134 (Pacifidlog to Slateport) are optional"
+  },
+  "TRAINER_KIYO": {
+   "stage": "Juan",
+   "map": "Route132",
+   "class": "AVOIDABLE",
+   "reason": "Routes 132-134 (Pacifidlog to Slateport) are optional"
+  },
+  "TRAINER_PAXTON": {
+   "stage": "Juan",
+   "map": "Route132",
+   "class": "AVOIDABLE",
+   "reason": "Routes 132-134 (Pacifidlog to Slateport) are optional"
+  },
+  "TRAINER_DARCY": {
+   "stage": "Juan",
+   "map": "Route132",
+   "class": "AVOIDABLE",
+   "reason": "Routes 132-134 (Pacifidlog to Slateport) are optional"
+  },
+  "TRAINER_JONATHAN": {
+   "stage": "Juan",
+   "map": "Route132",
+   "class": "AVOIDABLE",
+   "reason": "Routes 132-134 (Pacifidlog to Slateport) are optional"
+  },
+  "TRAINER_MAKAYLA": {
+   "stage": "Juan",
+   "map": "Route132",
+   "class": "AVOIDABLE",
+   "reason": "Routes 132-134 (Pacifidlog to Slateport) are optional"
+  },
+  "TRAINER_FRANKLIN": {
+   "stage": "Juan",
+   "map": "Route133",
+   "class": "AVOIDABLE",
+   "reason": "Routes 132-134 are optional"
+  },
+  "TRAINER_DEBRA": {
+   "stage": "Juan",
+   "map": "Route133",
+   "class": "AVOIDABLE",
+   "reason": "Routes 132-134 are optional"
+  },
+  "TRAINER_LINDA": {
+   "stage": "Juan",
+   "map": "Route133",
+   "class": "AVOIDABLE",
+   "reason": "Routes 132-134 are optional"
+  },
+  "TRAINER_WARREN": {
+   "stage": "Juan",
+   "map": "Route133",
+   "class": "AVOIDABLE",
+   "reason": "Routes 132-134 are optional"
+  },
+  "TRAINER_BECK": {
+   "stage": "Juan",
+   "map": "Route133",
+   "class": "AVOIDABLE",
+   "reason": "Routes 132-134 are optional"
+  },
+  "TRAINER_MOLLIE": {
+   "stage": "Juan",
+   "map": "Route133",
+   "class": "AVOIDABLE",
+   "reason": "Routes 132-134 are optional"
+  },
+  "TRAINER_CONOR": {
+   "stage": "Juan",
+   "map": "Route133",
+   "class": "AVOIDABLE",
+   "reason": "Routes 132-134 are optional"
+  },
+  "TRAINER_JACK": {
+   "stage": "Juan",
+   "map": "Route134",
+   "class": "AVOIDABLE",
+   "reason": "Routes 132-134 are optional"
+  },
+  "TRAINER_LAUREL": {
+   "stage": "Juan",
+   "map": "Route134",
+   "class": "AVOIDABLE",
+   "reason": "Routes 132-134 are optional"
+  },
+  "TRAINER_ALEX": {
+   "stage": "Juan",
+   "map": "Route134",
+   "class": "AVOIDABLE",
+   "reason": "Routes 132-134 are optional"
+  },
+  "TRAINER_AARON": {
+   "stage": "Juan",
+   "map": "Route134",
+   "class": "AVOIDABLE",
+   "reason": "Routes 132-134 are optional"
+  },
+  "TRAINER_HITOSHI": {
+   "stage": "Juan",
+   "map": "Route134",
+   "class": "AVOIDABLE",
+   "reason": "Routes 132-134 are optional"
+  },
+  "TRAINER_HUDSON": {
+   "stage": "Juan",
+   "map": "Route134",
+   "class": "AVOIDABLE",
+   "reason": "Routes 132-134 are optional"
+  },
+  "TRAINER_REYNA": {
+   "stage": "Juan",
+   "map": "Route134",
+   "class": "AVOIDABLE",
+   "reason": "Routes 132-134 are optional"
+  },
+  "TRAINER_MARLEY": {
+   "stage": "Juan",
+   "map": "Route134",
+   "class": "AVOIDABLE",
+   "reason": "Routes 132-134 are optional"
+  },
+  "TRAINER_KELVIN": {
+   "stage": "Juan",
+   "map": "Route134",
+   "class": "AVOIDABLE",
+   "reason": "Routes 132-134 are optional"
+  },
+  "TRAINER_GRUNT_SEAFLOOR_CAVERN_1": {
+   "stage": "Juan",
+   "map": "SeafloorCavern_Room1",
+   "timing": true,
+   "class": "AVOIDABLE",
+   "reason": "turning trainer: every path SeafloorCavern_Entrance/warp:0 -> SeafloorCavern_Room9/xy:17,42 crosses one of its facings, so it is skipped only by timing its turns; assumes Strength boulders pushed out of the way (with them as walls there is no path at all)"
+  },
+  "TRAINER_GRUNT_SEAFLOOR_CAVERN_2": {
+   "stage": "Juan",
+   "map": "SeafloorCavern_Room1",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; assumes Strength boulders pushed out of the way (with them as walls there is no path at all)"
+  },
+  "TRAINER_GRUNT_SEAFLOOR_CAVERN_5": {
+   "stage": "Juan",
+   "map": "SeafloorCavern_Room3",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; assumes Strength boulders pushed out of the way (with them as walls there is no path at all)"
+  },
+  "TRAINER_GRUNT_SEAFLOOR_CAVERN_3": {
+   "stage": "Juan",
+   "map": "SeafloorCavern_Room4",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; assumes Strength boulders pushed out of the way (with them as walls there is no path at all)"
+  },
+  "TRAINER_GRUNT_SEAFLOOR_CAVERN_4": {
+   "stage": "Juan",
+   "map": "SeafloorCavern_Room4",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; assumes Strength boulders pushed out of the way (with them as walls there is no path at all)"
+  },
+  "TRAINER_ANDREA": {
+   "stage": "Juan",
+   "map": "SootopolisCity_Gym_B1F",
+   "class": "AVOIDABLE",
+   "reason": "Sootopolis Gym B1F is a dead-end trainer room off the 1F stairs; Juan's ice path skips it"
+  },
+  "TRAINER_CRISSY": {
+   "stage": "Juan",
+   "map": "SootopolisCity_Gym_B1F",
+   "class": "AVOIDABLE",
+   "reason": "Sootopolis Gym B1F is a dead-end trainer room off the 1F stairs; Juan's ice path skips it"
+  },
+  "TRAINER_BRIANNA": {
+   "stage": "Juan",
+   "map": "SootopolisCity_Gym_B1F",
+   "class": "AVOIDABLE",
+   "reason": "Sootopolis Gym B1F is a dead-end trainer room off the 1F stairs; Juan's ice path skips it"
+  },
+  "TRAINER_CONNIE": {
+   "stage": "Juan",
+   "map": "SootopolisCity_Gym_B1F",
+   "class": "AVOIDABLE",
+   "reason": "Sootopolis Gym B1F is a dead-end trainer room off the 1F stairs; Juan's ice path skips it"
+  },
+  "TRAINER_BRIDGET": {
+   "stage": "Juan",
+   "map": "SootopolisCity_Gym_B1F",
+   "class": "AVOIDABLE",
+   "reason": "Sootopolis Gym B1F is a dead-end trainer room off the 1F stairs; Juan's ice path skips it"
+  },
+  "TRAINER_OLIVIA": {
+   "stage": "Juan",
+   "map": "SootopolisCity_Gym_B1F",
+   "class": "AVOIDABLE",
+   "reason": "Sootopolis Gym B1F is a dead-end trainer room off the 1F stairs; Juan's ice path skips it"
+  },
+  "TRAINER_TIFFANY": {
+   "stage": "Juan",
+   "map": "SootopolisCity_Gym_B1F",
+   "class": "AVOIDABLE",
+   "reason": "Sootopolis Gym B1F is a dead-end trainer room off the 1F stairs; Juan's ice path skips it"
+  },
+  "TRAINER_BETHANY": {
+   "stage": "Juan",
+   "map": "SootopolisCity_Gym_B1F",
+   "class": "AVOIDABLE",
+   "reason": "Sootopolis Gym B1F is a dead-end trainer room off the 1F stairs; Juan's ice path skips it"
+  },
+  "TRAINER_ANNIKA": {
+   "stage": "Juan",
+   "map": "SootopolisCity_Gym_B1F",
+   "class": "AVOIDABLE",
+   "reason": "Sootopolis Gym B1F is a dead-end trainer room off the 1F stairs; Juan's ice path skips it"
+  },
+  "TRAINER_DAPHNE": {
+   "stage": "Juan",
+   "map": "SootopolisCity_Gym_B1F",
+   "class": "AVOIDABLE",
+   "reason": "Sootopolis Gym B1F is a dead-end trainer room off the 1F stairs; Juan's ice path skips it"
+  },
+  "TRAINER_NICOLAS_1": {
+   "stage": "Elite Four",
+   "map": "MeteorFalls_1F_2R",
+   "class": "AVOIDABLE",
+   "reason": "Meteor Falls inner room (Waterfall) is optional"
+  },
+  "TRAINER_JOHN_AND_JAY_1": {
+   "stage": "Elite Four",
+   "map": "MeteorFalls_1F_2R",
+   "class": "AVOIDABLE",
+   "reason": "Meteor Falls inner room (Waterfall) is optional"
+  },
+  "TRAINER_JOSHUA": {
+   "stage": "Elite Four",
+   "map": "Route110_TrickHousePuzzle7",
+   "class": "AVOIDABLE",
+   "reason": "Trick House is optional"
+  },
+  "TRAINER_PATRICIA": {
+   "stage": "Elite Four",
+   "map": "Route110_TrickHousePuzzle7",
+   "class": "AVOIDABLE",
+   "reason": "Trick House is optional"
+  },
+  "TRAINER_ALEXIS": {
+   "stage": "Elite Four",
+   "map": "Route110_TrickHousePuzzle7",
+   "class": "AVOIDABLE",
+   "reason": "Trick House is optional"
+  },
+  "TRAINER_MARIELA": {
+   "stage": "Elite Four",
+   "map": "Route110_TrickHousePuzzle7",
+   "class": "AVOIDABLE",
+   "reason": "Trick House is optional"
+  },
+  "TRAINER_ALVARO": {
+   "stage": "Elite Four",
+   "map": "Route110_TrickHousePuzzle7",
+   "class": "AVOIDABLE",
+   "reason": "Trick House is optional"
+  },
+  "TRAINER_EVERETT": {
+   "stage": "Elite Four",
+   "map": "Route110_TrickHousePuzzle7",
+   "class": "AVOIDABLE",
+   "reason": "Trick House is optional"
+  },
+  "TRAINER_EDGAR": {
+   "stage": "Elite Four",
+   "map": "VictoryRoad_1F",
+   "class": "FORCED",
+   "reason": "every path VictoryRoad_1F/warp:0 -> VictoryRoad_1F/warp:1 crosses its sight/trigger tiles; assumes Strength boulders pushed out of the way (with them as walls there is no path at all)"
+  },
+  "TRAINER_ALBERT": {
+   "stage": "Elite Four",
+   "map": "VictoryRoad_1F",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; assumes Strength boulders pushed out of the way (with them as walls there is no path at all)"
+  },
+  "TRAINER_HOPE": {
+   "stage": "Elite Four",
+   "map": "VictoryRoad_1F",
+   "class": "FORCED",
+   "reason": "every path VictoryRoad_1F/warp:0 -> VictoryRoad_1F/warp:1 crosses its sight/trigger tiles; assumes Strength boulders pushed out of the way (with them as walls there is no path at all)"
+  },
+  "TRAINER_QUINCY": {
+   "stage": "Elite Four",
+   "map": "VictoryRoad_1F",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; assumes Strength boulders pushed out of the way (with them as walls there is no path at all)"
+  },
+  "TRAINER_KATELYNN": {
+   "stage": "Elite Four",
+   "map": "VictoryRoad_1F",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; assumes Strength boulders pushed out of the way (with them as walls there is no path at all)"
+  },
+  "TRAINER_SAMUEL": {
+   "stage": "Elite Four",
+   "map": "VictoryRoad_B1F",
+   "class": "UNCERTAIN",
+   "reason": "VictoryRoad_1F/warp:0 -> VictoryRoad_1F/warp:1: must fight one of [SAMUEL | SHANNON] (none forced alone); assumes Strength boulders pushed out of the way (with them as walls there is no path at all)",
+   "one_of": [
+    "TRAINER_SAMUEL",
+    "TRAINER_SHANNON"
+   ]
+  },
+  "TRAINER_SHANNON": {
+   "stage": "Elite Four",
+   "map": "VictoryRoad_B1F",
+   "class": "UNCERTAIN",
+   "reason": "VictoryRoad_1F/warp:0 -> VictoryRoad_1F/warp:1: must fight one of [SAMUEL | SHANNON] (none forced alone); assumes Strength boulders pushed out of the way (with them as walls there is no path at all)",
+   "one_of": [
+    "TRAINER_SAMUEL",
+    "TRAINER_SHANNON"
+   ]
+  },
+  "TRAINER_MICHELLE": {
+   "stage": "Elite Four",
+   "map": "VictoryRoad_B1F",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; assumes Strength boulders pushed out of the way (with them as walls there is no path at all)"
+  },
+  "TRAINER_MITCHELL": {
+   "stage": "Elite Four",
+   "map": "VictoryRoad_B1F",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; assumes Strength boulders pushed out of the way (with them as walls there is no path at all)"
+  },
+  "TRAINER_HALLE": {
+   "stage": "Elite Four",
+   "map": "VictoryRoad_B1F",
+   "timing": true,
+   "class": "AVOIDABLE",
+   "reason": "turning trainer: every path VictoryRoad_1F/warp:0 -> VictoryRoad_1F/warp:1 crosses one of its facings, so it is skipped only by timing its turns; assumes Strength boulders pushed out of the way (with them as walls there is no path at all)"
+  },
+  "TRAINER_VITO": {
+   "stage": "Elite Four",
+   "map": "VictoryRoad_B2F",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; assumes Strength boulders pushed out of the way (with them as walls there is no path at all)"
+  },
+  "TRAINER_OWEN": {
+   "stage": "Elite Four",
+   "map": "VictoryRoad_B2F",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; assumes Strength boulders pushed out of the way (with them as walls there is no path at all)"
+  },
+  "TRAINER_CAROLINE": {
+   "stage": "Elite Four",
+   "map": "VictoryRoad_B2F",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; assumes Strength boulders pushed out of the way (with them as walls there is no path at all)"
+  },
+  "TRAINER_JULIE": {
+   "stage": "Elite Four",
+   "map": "VictoryRoad_B2F",
+   "class": "FORCED",
+   "reason": "every path VictoryRoad_1F/warp:0 -> VictoryRoad_1F/warp:1 crosses its sight/trigger tiles; assumes Strength boulders pushed out of the way (with them as walls there is no path at all)"
+  },
+  "TRAINER_FELIX": {
+   "stage": "Elite Four",
+   "map": "VictoryRoad_B2F",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; assumes Strength boulders pushed out of the way (with them as walls there is no path at all)"
+  },
+  "TRAINER_DIANNE": {
+   "stage": "Elite Four",
+   "map": "VictoryRoad_B2F",
+   "class": "AVOIDABLE",
+   "reason": "grid search finds a route around its sight line; assumes Strength boulders pushed out of the way (with them as walls there is no path at all)"
+  }
+ },
+ "bosses": {
+  "TRAINER_MAY_ROUTE_103_MUDKIP": {
+   "stage": "Rival (Route 103)",
+   "required": true,
+   "reason": "scripted first rival battle (Birch errand)"
+  },
+  "TRAINER_BRENDAN_ROUTE_103_MUDKIP": {
+   "stage": "Rival (Route 103)",
+   "required": true,
+   "reason": "scripted first rival battle (Birch errand)"
+  },
+  "TRAINER_BRENDAN_ROUTE_103_TORCHIC": {
+   "stage": "Rival (Route 103)",
+   "required": true,
+   "reason": "scripted first rival battle (Birch errand)"
+  },
+  "TRAINER_BRENDAN_ROUTE_103_TREECKO": {
+   "stage": "Rival (Route 103)",
+   "required": true,
+   "reason": "scripted first rival battle (Birch errand)"
+  },
+  "TRAINER_MAY_ROUTE_103_TORCHIC": {
+   "stage": "Rival (Route 103)",
+   "required": true,
+   "reason": "scripted first rival battle (Birch errand)"
+  },
+  "TRAINER_MAY_ROUTE_103_TREECKO": {
+   "stage": "Rival (Route 103)",
+   "required": true,
+   "reason": "scripted first rival battle (Birch errand)"
+  },
+  "TRAINER_ROXANNE_1": {
+   "stage": "Roxanne",
+   "required": true,
+   "reason": "story boss"
+  },
+  "TRAINER_MAY_RUSTBORO_MUDKIP": {
+   "stage": "Brawly",
+   "required": false,
+   "reason": "optional: May asks YES/NO in Rustboro / outside Briney's cottage (FLAG_DEFEATED_RIVAL_RUSTBORO only on YES)"
+  },
+  "TRAINER_BRENDAN_RUSTBORO_MUDKIP": {
+   "stage": "Brawly",
+   "required": false,
+   "reason": "optional: May asks YES/NO in Rustboro / outside Briney's cottage (FLAG_DEFEATED_RIVAL_RUSTBORO only on YES)"
+  },
+  "TRAINER_BRENDAN_RUSTBORO_TORCHIC": {
+   "stage": "Brawly",
+   "required": false,
+   "reason": "optional: May asks YES/NO in Rustboro / outside Briney's cottage (FLAG_DEFEATED_RIVAL_RUSTBORO only on YES)"
+  },
+  "TRAINER_BRENDAN_RUSTBORO_TREECKO": {
+   "stage": "Brawly",
+   "required": false,
+   "reason": "optional: May asks YES/NO in Rustboro / outside Briney's cottage (FLAG_DEFEATED_RIVAL_RUSTBORO only on YES)"
+  },
+  "TRAINER_MAY_RUSTBORO_TORCHIC": {
+   "stage": "Brawly",
+   "required": false,
+   "reason": "optional: May asks YES/NO in Rustboro / outside Briney's cottage (FLAG_DEFEATED_RIVAL_RUSTBORO only on YES)"
+  },
+  "TRAINER_MAY_RUSTBORO_TREECKO": {
+   "stage": "Brawly",
+   "required": false,
+   "reason": "optional: May asks YES/NO in Rustboro / outside Briney's cottage (FLAG_DEFEATED_RIVAL_RUSTBORO only on YES)"
+  },
+  "TRAINER_BRAWLY_1": {
+   "stage": "Brawly",
+   "required": true,
+   "reason": "story boss"
+  },
+  "TRAINER_MAY_ROUTE_110_MUDKIP": {
+   "stage": "Wattson",
+   "required": true,
+   "reason": "coord trigger across Route 110 (y=56)"
+  },
+  "TRAINER_BRENDAN_ROUTE_110_MUDKIP": {
+   "stage": "Wattson",
+   "required": true,
+   "reason": "coord trigger across Route 110 (y=56)"
+  },
+  "TRAINER_BRENDAN_ROUTE_110_TORCHIC": {
+   "stage": "Wattson",
+   "required": true,
+   "reason": "coord trigger across Route 110 (y=56)"
+  },
+  "TRAINER_BRENDAN_ROUTE_110_TREECKO": {
+   "stage": "Wattson",
+   "required": true,
+   "reason": "coord trigger across Route 110 (y=56)"
+  },
+  "TRAINER_MAY_ROUTE_110_TORCHIC": {
+   "stage": "Wattson",
+   "required": true,
+   "reason": "coord trigger across Route 110 (y=56)"
+  },
+  "TRAINER_MAY_ROUTE_110_TREECKO": {
+   "stage": "Wattson",
+   "required": true,
+   "reason": "coord trigger across Route 110 (y=56)"
+  },
+  "TRAINER_WALLY_MAUVILLE": {
+   "stage": "Wattson",
+   "required": true,
+   "reason": "scripted outside Mauville Gym"
+  },
+  "TRAINER_WATTSON_1": {
+   "stage": "Wattson",
+   "required": true,
+   "reason": "story boss"
+  },
+  "TRAINER_TABITHA_MT_CHIMNEY": {
+   "stage": "Flannery",
+   "required": true,
+   "reason": "story boss"
+  },
+  "TRAINER_MAXIE_MT_CHIMNEY": {
+   "stage": "Flannery",
+   "required": true,
+   "reason": "story boss"
+  },
+  "TRAINER_FLANNERY_1": {
+   "stage": "Flannery",
+   "required": true,
+   "reason": "story boss"
+  },
+  "TRAINER_NORMAN_1": {
+   "stage": "Norman",
+   "required": true,
+   "reason": "story boss"
+  },
+  "TRAINER_MAY_ROUTE_119_MUDKIP": {
+   "stage": "Winona",
+   "required": true,
+   "reason": "coord trigger on Route 119 (25-26, 31)"
+  },
+  "TRAINER_BRENDAN_ROUTE_119_MUDKIP": {
+   "stage": "Winona",
+   "required": true,
+   "reason": "coord trigger on Route 119 (25-26, 31)"
+  },
+  "TRAINER_BRENDAN_ROUTE_119_TORCHIC": {
+   "stage": "Winona",
+   "required": true,
+   "reason": "coord trigger on Route 119 (25-26, 31)"
+  },
+  "TRAINER_BRENDAN_ROUTE_119_TREECKO": {
+   "stage": "Winona",
+   "required": true,
+   "reason": "coord trigger on Route 119 (25-26, 31)"
+  },
+  "TRAINER_MAY_ROUTE_119_TORCHIC": {
+   "stage": "Winona",
+   "required": true,
+   "reason": "coord trigger on Route 119 (25-26, 31)"
+  },
+  "TRAINER_MAY_ROUTE_119_TREECKO": {
+   "stage": "Winona",
+   "required": true,
+   "reason": "coord trigger on Route 119 (25-26, 31)"
+  },
+  "TRAINER_SHELLY_WEATHER_INSTITUTE": {
+   "stage": "Winona",
+   "required": true,
+   "reason": "story boss"
+  },
+  "TRAINER_WINONA_1": {
+   "stage": "Winona",
+   "required": true,
+   "reason": "story boss"
+  },
+  "TRAINER_MAY_LILYCOVE_MUDKIP": {
+   "stage": "Tate and Liza",
+   "required": false,
+   "reason": "optional: talk-to rival in Lilycove asks YES/NO"
+  },
+  "TRAINER_BRENDAN_LILYCOVE_MUDKIP": {
+   "stage": "Tate and Liza",
+   "required": false,
+   "reason": "optional: talk-to rival in Lilycove asks YES/NO"
+  },
+  "TRAINER_BRENDAN_LILYCOVE_TORCHIC": {
+   "stage": "Tate and Liza",
+   "required": false,
+   "reason": "optional: talk-to rival in Lilycove asks YES/NO"
+  },
+  "TRAINER_BRENDAN_LILYCOVE_TREECKO": {
+   "stage": "Tate and Liza",
+   "required": false,
+   "reason": "optional: talk-to rival in Lilycove asks YES/NO"
+  },
+  "TRAINER_MAY_LILYCOVE_TORCHIC": {
+   "stage": "Tate and Liza",
+   "required": false,
+   "reason": "optional: talk-to rival in Lilycove asks YES/NO"
+  },
+  "TRAINER_MAY_LILYCOVE_TREECKO": {
+   "stage": "Tate and Liza",
+   "required": false,
+   "reason": "optional: talk-to rival in Lilycove asks YES/NO"
+  },
+  "TRAINER_TABITHA_MAGMA_HIDEOUT": {
+   "stage": "Tate and Liza",
+   "required": true,
+   "reason": "story boss"
+  },
+  "TRAINER_MAXIE_MAGMA_HIDEOUT": {
+   "stage": "Tate and Liza",
+   "required": true,
+   "reason": "story boss"
+  },
+  "TRAINER_MATT": {
+   "stage": "Tate and Liza",
+   "required": true,
+   "reason": "story boss"
+  },
+  "TRAINER_TATE_AND_LIZA_1": {
+   "stage": "Tate and Liza",
+   "required": true,
+   "reason": "story boss"
+  },
+  "TRAINER_TABITHA_MOSSDEEP": {
+   "stage": "Juan",
+   "required": true,
+   "reason": "story boss"
+  },
+  "TRAINER_MAXIE_MOSSDEEP": {
+   "stage": "Juan",
+   "required": true,
+   "reason": "story boss"
+  },
+  "TRAINER_SHELLY_SEAFLOOR_CAVERN": {
+   "stage": "Juan",
+   "required": true,
+   "reason": "story boss"
+  },
+  "TRAINER_ARCHIE": {
+   "stage": "Juan",
+   "required": true,
+   "reason": "story boss"
+  },
+  "TRAINER_JUAN_1": {
+   "stage": "Juan",
+   "required": true,
+   "reason": "story boss"
+  },
+  "TRAINER_WALLY_VR_1": {
+   "stage": "Elite Four",
+   "required": true,
+   "reason": "coord trigger in Victory Road 1F (2-3, 23)"
+  },
+  "TRAINER_SIDNEY": {
+   "stage": "Elite Four",
+   "required": true,
+   "reason": "story boss"
+  },
+  "TRAINER_PHOEBE": {
+   "stage": "Elite Four",
+   "required": true,
+   "reason": "story boss"
+  },
+  "TRAINER_GLACIA": {
+   "stage": "Elite Four",
+   "required": true,
+   "reason": "story boss"
+  },
+  "TRAINER_DRAKE": {
+   "stage": "Elite Four",
+   "required": true,
+   "reason": "story boss"
+  },
+  "TRAINER_WALLACE": {
+   "stage": "Elite Four",
+   "required": true,
+   "reason": "story boss"
+  }
+ }
+}
