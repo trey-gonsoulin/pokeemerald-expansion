@@ -408,12 +408,12 @@ Flags (all default Pokemon / story trainers only):
 |---|---|
 | trainer Pokemon with set moves | 669 |
 | attacking set moves whose data changed | 629 |
-|   category flips (physical <-> special) | 265 |
-|   of them now on a weaker / similar / stronger stat | 32 / 101 / 132 |
-|   Pokemon with at least one flip | 230 |
-|   Pokemon with a flip onto a weaker stat | 30 |
+|   category flips (physical <-> special) | 267 |
+|   of them now on a weaker / similar / stronger stat | 34 / 101 / 132 |
+|   Pokemon with at least one flip | 232 |
+|   Pokemon with a flip onto a weaker stat | 32 |
 |   type changes | 0 |
-|   power changes | 389 |
+|   power changes | 387 |
 |   accuracy changes | 79 |
 
 Changed attacking moves (set-move slots; weaker/similar/stronger: the category flipped onto that stat; data: only power, accuracy or type changed):
@@ -440,9 +440,9 @@ Changed attacking moves (set-move slots; weaker/similar/stronger: the category f
 | Rock Tomb | data 12 |
 | Earth Power | similar 10 |
 | Clear Smog | stronger 9, similar 1 |
-| Fury Cutter | data 10 |
 | Zen Headbutt | similar 7, stronger 2 |
 | Hydro Pump | data 9 |
+| Fury Cutter | data 8 |
 | Fire Punch | similar 6, stronger 2 |
 | Air Slash | stronger 7 |
 | High Jump Kick | data 7 |
@@ -454,6 +454,7 @@ Changed attacking moves (set-move slots; weaker/similar/stronger: the category f
 | Blizzard | data 6 |
 | Lick | data 5 |
 | Night Slash | stronger 5 |
+| Mud Slap | similar 3, weaker 2 |
 | Dragon Claw | stronger 5 |
 | Future Sight | data 5 |
 | Fire Blast | data 5 |
@@ -469,7 +470,6 @@ Changed attacking moves (set-move slots; weaker/similar/stronger: the category f
 | Dual Chop | stronger 3 |
 | Echoed Voice | similar 3 |
 | Crabhammer | stronger 3 |
-| Mud Slap | similar 3 |
 | Sucker Punch | similar 1, stronger 2 |
 | Rock Smash | data 3 |
 | Gust | stronger 2, similar 1 |
@@ -777,7 +777,7 @@ Per boss Pokemon: retyping, defensive multipliers that changed (attacking type: 
 
 `power.py` scores each Pokemon one-on-one against a reference Pokemon of its own level (base 80 in every stat, IV 15, no type) on turns to KO, with its best expected damage per turn (STAB, accuracy, strikes, half for recharge and two-turn moves) and up to 0.5 turn for the faster side. Its effective level is the level at which the reference itself would score the same: what level of typical Pokemon it fights like. Types, abilities, items, status and stat moves are left out (README, "Matchup-relative strength").
 
-The reference's expected power is fitted to every trainer Pokemon's best move: 3.96 + 27.93 ln(level), 49 at 5, 94 at 25, 113 at 50, 125 at 75, 133 at 100.
+The reference's expected power is fitted to every trainer Pokemon's best move: 3.54 + 28.03 ln(level), 49 at 5, 94 at 25, 113 at 50, 125 at 75, 133 at 100.
 
 Bench: the Exp. Share bench before the fight (1.5x off, full / friendship, the Exp. Share curve's). Strongest: the highest effective level on the team.
 
@@ -787,7 +787,7 @@ Bench: the Exp. Share bench before the fight (1.5x off, full / friendship, the E
 | Roxanne | Roxanne 1 | 16 | Nosepass 16 -> 14.2 | 14.0 | 12.1 | 15 | -0.8 |
 | Brawly | May Rustboro Mudkip | 18 | Grovyle 18 -> 14.7 | 17.0 | 12.4 | 17 | -2.3 |
 | Brawly | Brawly 1 | 19 | Makuhita 19 -> 15.2 | 17.0 | 14.5 | 17 | -1.8 |
-| Wattson | May Route 110 Mudkip | 26 | Grovyle 26 -> 21.2 | 24.7 | 17.8 | 23 | -1.8 |
+| Wattson | May Route 110 Mudkip | 26 | Grovyle 26 -> 21.2 | 24.7 | 17.9 | 23 | -1.8 |
 | Wattson | Wally Mauville | 26 | Ralts 26 -> 15.3 | 26.0 | 15.3 | 24 | -8.7 |
 | Wattson | Wattson 1 | 26 | Manectric 26 -> 27.4 | 23.5 | 22.3 | 24 | +3.4 |
 | Flannery | Tabitha Mt Chimney | 38 | Crobat 38 -> 36.5 | 36.5 | 32.1 | 36 | +0.5 |
@@ -797,12 +797,12 @@ Bench: the Exp. Share bench before the fight (1.5x off, full / friendship, the E
 | Winona | May Route 119 Mudkip | 56 | Sceptile 56 -> 62.0 | 54.7 | 56.2 | 53 | +9.0 |
 | Winona | Shelly Weather Institute | 56 | Sharpedo 56 -> 53.8 | 56.0 | 52.0 | 53 | +0.8 |
 | Winona | Winona 1 | 57 | Altaria 57 -> 61.8 | 54.4 | 53.6 | 54 | +7.8 |
-| Tate and Liza | May Lilycove Mudkip | 66 | Sceptile 66 -> 73.8 | 64.2 | 66.4 | 63 | +10.8 |
+| Tate and Liza | May Lilycove Mudkip | 66 | Sceptile 66 -> 73.7 | 64.2 | 66.4 | 63 | +10.7 |
 | Tate and Liza | Tabitha Magma Hideout | 66 | Camerupt 66 -> 65.1 | 62.2 | 60.0 | 63 | +2.1 |
 | Tate and Liza | Maxie Magma Hideout | 67 | Camerupt 67 -> 67.9 | 66.0 | 65.4 | 64 | +3.9 |
 | Tate and Liza | Matt | 67 | Crobat 67 -> 64.4 | 67.0 | 62.7 | 64 | +0.4 |
 | Tate and Liza | Tate And Liza 1 | 67 | Lunatone 67 -> 73.2 | 66.5 | 71.2 | 64 | +9.2 |
-| Juan | Tabitha Mossdeep | 75 | Crobat 75 -> 73.1 | 73.0 | 69.9 | 71 | +2.1 |
+| Juan | Tabitha Mossdeep | 75 | Crobat 75 -> 73.0 | 73.0 | 69.9 | 71 | +2.0 |
 | Juan | Maxie Mossdeep | 75 | Camerupt 75 -> 75.6 | 74.0 | 72.3 | 71 | +4.6 |
 | Juan | Shelly Seafloor Cavern | 75 | Sharpedo 75 -> 73.0 | 75.0 | 70.5 | 71 | +2.0 |
 | Juan | Archie | 75 | Sharpedo 75 -> 74.8 | 73.7 | 71.7 | 71 | +3.8 |
@@ -828,7 +828,7 @@ Boss Pokemon at least 10% from their level, strongest first (best move; "default
 | Flannery 1 | Torkoal | 39 | 44.4 | +14% | Overheat |
 | Drake | Kingdra | 81 | 92.2 | +14% | Surf |
 | Flannery 1 | Camerupt | 36 | 40.5 | +12% | Overheat |
-| May Lilycove Mudkip | Sceptile | 66 | 73.8 | +12% | Energy Ball |
+| May Lilycove Mudkip | Sceptile | 66 | 73.7 | +12% | Energy Ball |
 | Wally Vr 1 | Magnezone | 75 | 83.1 | +11% | Thunderbolt |
 | May Route 119 Mudkip | Sceptile | 56 | 62.0 | +11% | Energy Ball |
 | Wallace | Tentacruel | 83 | 91.8 | +11% | Sludge Bomb |
@@ -851,7 +851,7 @@ Boss Pokemon at least 10% from their level, strongest first (best move; "default
 | Tabitha Mt Chimney | Numel | 34 | 25.1 | -26% | Incinerate |
 | May Route 103 Mudkip | Treecko | 6 | 4.3 | -28% | Leafage (default) |
 | May Route 110 Mudkip | Wingull | 24 | 16.7 | -30% | Water Pulse (default) |
-| May Route 110 Mudkip | Slugma | 24 | 15.6 | -35% | Ember |
+| May Route 110 Mudkip | Slugma | 24 | 15.7 | -35% | Ember |
 | May Rustboro Mudkip | Wingull | 16 | 10.1 | -37% | Water Gun (default) |
 | Wally Mauville | Ralts | 26 | 15.3 | -41% | Psybeam (default) |
 
