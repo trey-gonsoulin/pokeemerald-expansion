@@ -1,23 +1,31 @@
 """Classify each story stage's regular trainers as FORCED / AVOIDABLE / UNCERTAIN.
 
-Run: python3 classify.py [--verbose]  -> writes trainers.json next to this file.
+A trainer is FORCED when every story route through its area crosses its sight lines (or its
+scripted trigger tiles), AVOIDABLE when some route skips it, and UNCERTAIN when the grid can't
+settle it (choose-one groups, patrolling trainers). Story bosses get a required flag instead.
+Run from the repo root:
+
+    python3 tools/forced_trainers/classify.py            # writes tools/rebalance/forced_trainers.json
+    python3 tools/forced_trainers/classify.py --check    # exit 1 if the committed file differs
+    python3 tools/forced_trainers/classify.py --verbose  # also list every avoidable trainer
 """
+import collections
 import itertools
-import re
 import json
 import os
+import re
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-import collections
-from engine import REPO, Map, abilities, world_search, FOLDER_OF  # noqa: E402
-sys.path.insert(0, os.path.join(REPO, 'tools/rebalance'))
+sys.path.insert(0, os.path.join(HERE, '..', 'rebalance'))
+import engine  # noqa: E402
 import gamedata as G  # noqa: E402
 import rebalance as R  # noqa: E402
+from engine import Map, abilities, world_search, FOLDER_OF  # noqa: E402
 from specs import AREAS, MANUAL, OPTIONAL_MAPS, BOSS_NOTES  # noqa: E402
 
-VERBOSE = '--verbose' in sys.argv
+OUTPUT = os.path.join(G.HERE, 'forced_trainers.json')
 
 
 def tiles_for(maps, spec):
@@ -92,7 +100,6 @@ def path_ok(maps, pair, ab, forbidden, objs):
 def analyse(name, spec):
     maps = {f: Map(f) for f in spec['maps']}
     for f, switches in spec.get('toggle', {}).items():
-        import engine
         alt = Map(f)
         alt.folder = f + '#B'
         engine.mauville_gym_toggle(alt)
@@ -182,17 +189,18 @@ def analyse(name, spec):
     return {'res': res, 'notes': notes, 'sight': set(sight_trainers), 'where': where}
 
 
-def main():
-    trainers = G.parse_trainers(os.path.join(REPO, 'src/data/trainers.party'))
-    stages = R.load_stages(os.path.join(REPO, 'tools/rebalance/story_stages.json'), trainers, REPO)
-    mt = G.map_trainers(REPO)
+def classify(repo):
+    """{'regular': {trainer id: entry}, 'bosses': {boss id: entry}} for the repo's staged story."""
+    if os.path.abspath(repo) != os.path.abspath(engine.REPO):
+        raise ValueError(f'the grid engine reads {engine.REPO}, not {repo}')
+    trainers = G.parse_trainers(os.path.join(repo, 'src/data/trainers.party'))
+    stages = R.load_stages(os.path.join(G.HERE, 'story_stages.json'), trainers, repo)
+    mt = G.map_trainers(repo)
     results = {name: analyse(name, spec) for name, spec in AREAS.items()}
     area_of = {}
     for name, r in results.items():
         for t in r['where']:
             area_of.setdefault(t, name)
-        for n in r['notes']:
-            print('NOTE', name, n)
     out = {}
     for st in stages:
         for tid in st['regular']:
@@ -200,9 +208,9 @@ def main():
             entry = {'stage': st['name'], 'map': folder}
             if tid in MANUAL:
                 cls, why = MANUAL[tid]
-                entry.update({'class': cls, 'reason': why, 'method': 'manual'})
+                entry.update({'class': cls, 'reason': why})
             elif folder in OPTIONAL_MAPS:
-                entry.update({'class': 'AVOIDABLE', 'reason': OPTIONAL_MAPS[folder], 'method': 'optional map'})
+                entry.update({'class': 'AVOIDABLE', 'reason': OPTIONAL_MAPS[folder]})
             elif tid in area_of:
                 name = area_of[tid]
                 r = results[name]
@@ -221,9 +229,9 @@ def main():
                     why += '; ' + AREAS[name]['optimistic']
                     if cls == 'AVOIDABLE':
                         cls = 'UNCERTAIN'
-                entry.update({'class': cls, 'reason': why, 'method': 'grid:' + name})
+                entry.update({'class': cls, 'reason': why})
             else:
-                entry.update({'class': 'UNCERTAIN', 'reason': 'not analysed', 'method': 'none'})
+                entry.update({'class': 'UNCERTAIN', 'reason': 'not analysed'})
             m1 = re.search(r'must fight one of \[([^\]]*)\]', entry['reason'])
             if m1:
                 entry['one_of'] = ['TRAINER_' + x.strip() for x in m1[1].split('|')]
@@ -233,27 +241,51 @@ def main():
     bosses = {}
     for st in stages:
         for b in st['bosses']:
-            bosses[b] = {'stage': st['name'], **BOSS_NOTES.get(b, {'required': True, 'reason': 'story boss'})}
-            for name, r in results.items():
-                if b in r['res']:
-                    bosses[b]['grid'] = f"{r['res'][b][0]} ({name}): {r['res'][b][1]}"
-                elif b in r['sight']:
-                    bosses[b]['grid'] = f'AVOIDABLE by sight ({name}); story script may still force it'
-    with open(os.path.join(HERE, 'trainers.json'), 'w') as f:
-        json.dump({'regular': out, 'bosses': bosses}, f, indent=1)
-    # Summary
+            note = BOSS_NOTES.get(b, {'required': True, 'reason': 'story boss'})
+            bosses[b] = {'stage': st['name'], **note}
+            # The fight's other rival and starter teams share its script, so its flag.
+            for v in st['variants'].get(b, ()):
+                bosses[v] = {'stage': st['name'], **note}
+    return {'regular': out, 'bosses': bosses}
+
+
+def render_json(data):
+    return json.dumps(data, indent=1) + '\n'
+
+
+def summarize(data, stages, verbose=False):
+    """Print each stage's counts and its forced, uncertain and timing-only trainers."""
+    out, bosses = data['regular'], data['bosses']
     for st in stages:
         rows = [(t, out[t]) for t in st['regular']]
         c = {k: sum(1 for _, e in rows if e['class'] == k) for k in ('FORCED', 'AVOIDABLE', 'UNCERTAIN')}
         req = [b for b in st['bosses'] if bosses[b]['required']]
-        for b in st['bosses']:
-            print(f"   boss {b[8:]:28} required={bosses[b]['required']} {bosses[b]['reason']} {bosses[b].get('grid', '')}")
         tm = sum(1 for _, e in rows if e.get('timing'))
-        print(f"== {st['name']}: regular {len(rows)}: forced {c['FORCED']} avoidable {c['AVOIDABLE']} (of which {tm} only by timing turns) uncertain {c['UNCERTAIN']}; bosses required {len(req)}/{len(st['bosses'])}")
+        print(f"== {st['name']}: regular {len(rows)}: forced {c['FORCED']} avoidable {c['AVOIDABLE']} "
+              f"(of which {tm} only by timing turns) uncertain {c['UNCERTAIN']}; bosses required {len(req)}/{len(st['bosses'])}")
         for t, e in rows:
-            if e['class'] != 'AVOIDABLE' or VERBOSE or e.get('timing'):
+            if e['class'] != 'AVOIDABLE' or verbose or e.get('timing'):
                 print(f"   {e['class']:9} {t[8:]:24} {e['map']:32} {e['reason']}")
 
 
+def main(argv=None):
+    argv = sys.argv[1:] if argv is None else argv
+    data = classify(G.REPO)
+    text = render_json(data)
+    if '--check' in argv:
+        with open(OUTPUT, encoding='utf-8') as f:
+            if f.read() != text:
+                print(f'{OUTPUT} is stale: rerun python3 tools/forced_trainers/classify.py')
+                return 1
+        return 0
+    with open(OUTPUT, 'w', encoding='utf-8') as f:
+        f.write(text)
+    trainers = G.parse_trainers(os.path.join(G.REPO, 'src/data/trainers.party'))
+    summarize(data, R.load_stages(os.path.join(G.HERE, 'story_stages.json'), trainers, G.REPO), '--verbose' in argv)
+    counts = collections.Counter(e['class'] for e in data['regular'].values())
+    print('forced %(FORCED)d, avoidable %(AVOIDABLE)d, uncertain %(UNCERTAIN)d' % counts)
+    return 0
+
+
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

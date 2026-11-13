@@ -1,84 +1,104 @@
 """Map grid, trainer sight lines and avoidance search for Emerald story maps."""
 import collections
+import functools
 import glob
 import json
 import os
 import re
 import struct
+import sys
 
-REPO = '/Users/trey/code/emerald-plus/.claude/worktrees/soften-james-nincada'
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'rebalance'))
+import gamedata as G  # noqa: E402
+
+REPO = G.REPO
 DIRS = {'down': (0, 1), 'up': (0, -1), 'left': (-1, 0), 'right': (1, 0)}
 
+Tables = collections.namedtuple('Tables', 'mb tilesets layouts folder_of')
 
-def _mb_names():
+
+def _mb_names(repo):
+    """The MB_* behaviour names, in enum order (a metatile attribute's low byte indexes them)."""
     names = []
     inside = False
-    for line in open(os.path.join(REPO, 'include/constants/metatile_behaviors.h')):
-        if line.startswith('enum'):
-            inside = True
-            continue
-        if inside:
-            m = re.match(r'\s*(MB_\w+)', line)
-            if m:
-                names.append(m[1])
-            if line.startswith('}'):
-                break
+    with open(os.path.join(repo, 'include/constants/metatile_behaviors.h'), encoding='utf-8') as f:
+        for line in f:
+            if line.startswith('enum'):
+                inside = True
+                continue
+            if inside:
+                m = re.match(r'\s*(MB_\w+)', line)
+                if m:
+                    names.append(m[1])
+                if line.startswith('}'):
+                    break
     return names
 
 
-MB = _mb_names()
-
-
-def _tileset_paths():
+def _tileset_paths(repo):
+    """Tileset symbol -> path of its metatile attribute file."""
     attr_path = {}
-    for line in open(os.path.join(REPO, 'src/data/tilesets/metatiles.h')):
-        m = re.search(r'gMetatileAttributes_(\w+)\[\]\s*=\s*INCBIN_U16\("([^"]+)"', line)
-        if m:
-            attr_path[m[1]] = m[2]
+    with open(os.path.join(repo, 'src/data/tilesets/metatiles.h'), encoding='utf-8') as f:
+        for line in f:
+            m = re.search(r'gMetatileAttributes_(\w+)\[\]\s*=\s*INCBIN_U16\("([^"]+)"', line)
+            if m:
+                attr_path[m[1]] = m[2]
     out = {}
     cur = None
-    for line in open(os.path.join(REPO, 'src/data/tilesets/headers.h')):
-        m = re.match(r'const struct Tileset (gTileset_\w+)', line)
-        if m:
-            cur = m[1]
-        m = re.search(r'\.metatileAttributes = gMetatileAttributes_(\w+)', line)
-        if m and cur:
-            out[cur] = attr_path[m[1]]
+    with open(os.path.join(repo, 'src/data/tilesets/headers.h'), encoding='utf-8') as f:
+        for line in f:
+            m = re.match(r'const struct Tileset (gTileset_\w+)', line)
+            if m:
+                cur = m[1]
+            m = re.search(r'\.metatileAttributes = gMetatileAttributes_(\w+)', line)
+            if m and cur:
+                out[cur] = attr_path[m[1]]
     return out
 
 
-TILESETS = _tileset_paths()
-LAYOUTS = {l['id']: l for l in json.load(open(os.path.join(REPO, 'data/layouts/layouts.json')))['layouts'] if 'id' in l}
-FOLDER_OF = {}
-for _p in glob.glob(os.path.join(REPO, 'data/maps/*/map.json')):
-    FOLDER_OF[json.load(open(_p))['id']] = os.path.basename(os.path.dirname(_p))
+@functools.lru_cache(maxsize=None)
+def tables(repo):
+    """The repo's behaviour names, tileset attribute paths, layouts by id and map folder by map id."""
+    with open(os.path.join(repo, 'data/layouts/layouts.json'), encoding='utf-8') as f:
+        layouts = {l['id']: l for l in json.load(f)['layouts'] if 'id' in l}
+    folder_of = {}
+    for path in glob.glob(os.path.join(repo, 'data/maps/*/map.json')):
+        with open(path, encoding='utf-8') as f:
+            folder_of[json.load(f)['id']] = os.path.basename(os.path.dirname(path))
+    return Tables(_mb_names(repo), _tileset_paths(repo), layouts, folder_of)
 
 
-def _attrs(tileset):
-    data = open(os.path.join(REPO, TILESETS[tileset]), 'rb').read()
+FOLDER_OF = tables(REPO).folder_of
+
+
+def _attrs(repo, tileset):
+    with open(os.path.join(repo, tables(repo).tilesets[tileset]), 'rb') as f:
+        data = f.read()
     return [v & 0xFF for v in struct.unpack('<%dH' % (len(data) // 2), data)]
 
 
-def script_trainers():
-    """Script label -> trainer id of its first trainerbattle (all maps + data/scripts)."""
+@functools.lru_cache(maxsize=None)
+def script_trainers(repo):
+    """Script label -> trainer ids of its first trainerbattle (all maps + data/scripts)."""
     out = {}
-    files = glob.glob(os.path.join(REPO, 'data/maps/*/scripts.inc')) + glob.glob(os.path.join(REPO, 'data/scripts/*.inc'))
+    files = glob.glob(os.path.join(repo, 'data/maps/*/scripts.inc')) + glob.glob(os.path.join(repo, 'data/scripts/*.inc'))
     for path in files:
         label = None
-        for line in open(path, encoding='utf-8'):
-            m = re.match(r'(\w+)::', line)
-            if m:
-                label = m[1]
-                continue
-            m = re.match(r'\s*trainerbattle(\w*)\s', line)
-            if m and label and label not in out and 'rematch' not in m[1]:
-                t = re.findall(r'\bTRAINER_(?!NONE\b)\w+', line)
-                if t:
-                    out[label] = t
+        with open(path, encoding='utf-8') as f:
+            for line in f:
+                m = re.match(r'(\w+)::', line)
+                if m:
+                    label = m[1]
+                    continue
+                m = re.match(r'\s*trainerbattle(\w*)\s', line)
+                if m and label and label not in out and 'rematch' not in m[1]:
+                    t = re.findall(r'\bTRAINER_(?!NONE\b)\w+', line)
+                    if t:
+                        out[label] = t
     return out
 
 
-SCRIPT_TRAINERS = script_trainers()
+SCRIPT_TRAINERS = script_trainers(REPO)
 
 WATER = {'MB_POND_WATER', 'MB_INTERIOR_DEEP_WATER', 'MB_DEEP_WATER', 'MB_SOOTOPOLIS_DEEP_WATER', 'MB_OCEAN_WATER',
          'MB_NO_SURFACING', 'MB_FAST_WATER', 'MB_EASTWARD_CURRENT', 'MB_WESTWARD_CURRENT', 'MB_NORTHWARD_CURRENT',
@@ -119,26 +139,97 @@ def facing_dirs(mt):
     return out or list(DIRS)
 
 
-class Map:
-    def __init__(self, folder):
-        self.folder = folder
-        self.j = json.load(open(os.path.join(REPO, 'data/maps', folder, 'map.json')))
-        lay = LAYOUTS[self.j['layout']]
-        self.w, self.h = lay['width'], lay['height']
-        data = open(os.path.join(REPO, lay['blockdata_filepath']), 'rb').read()
-        blocks = struct.unpack('<%dH' % (self.w * self.h), data)
-        prim = _attrs(lay['primary_tileset'])
-        sec = _attrs(lay['secondary_tileset']) if lay['secondary_tileset'] in TILESETS else []
+class Grid:
+    """A layout's tiles: collision, elevation, metatile behaviour name and metatile id by (x, y)."""
+
+    def __init__(self, repo, layout_id):
+        t = tables(repo)
+        lay = t.layouts[layout_id]
+        self.w, self.h = w, h = lay['width'], lay['height']
+        with open(os.path.join(repo, lay['blockdata_filepath']), 'rb') as f:
+            blocks = struct.unpack('<%dH' % (w * h), f.read())
+        primary, secondary = lay['primary_tileset'], lay['secondary_tileset']
+        prim = _attrs(repo, primary)
+        sec = _attrs(repo, secondary) if secondary in t.tilesets else []
         self.coll, self.elev, self.mb, self.mid = {}, {}, {}, {}
         self.switch_to = {}
+        self.warps = []
         for i, b in enumerate(blocks):
-            x, y = i % self.w, i // self.w
+            x, y = i % w, i // w
             mid = b & 0x3FF
             beh = prim[mid] if mid < 512 else (sec[mid - 512] if mid - 512 < len(sec) else 0)
             self.coll[x, y] = (b >> 10) & 3
             self.mid[x, y] = mid
             self.elev[x, y] = b >> 12
-            self.mb[x, y] = MB[beh] if beh < len(MB) else 'MB_?'
+            self.mb[x, y] = t.mb[beh] if beh < len(t.mb) else 'MB_?'
+
+    @classmethod
+    def from_layout(cls, repo, layout_id):
+        """The grid of a layouts.json entry (its map.bin and tilesets)."""
+        return cls(repo, layout_id)
+
+    def inb(self, p):
+        return 0 <= p[0] < self.w and 0 <= p[1] < self.h
+
+
+def moves(o):
+    """True for an object that walks around (so the player can meet it away from its start tile)."""
+    mt = o['movement_type']
+    return 'WANDER' in mt or ('WALK' in mt and 'IN_PLACE' not in mt)
+
+
+def sight_tiles(grid, o, blocked=(), timed=False):
+    """Tiles from which trainer object o would see the player. Default: conservative union over every
+    facing and position. timed=True: for a static trainer that turns, only the tiles it sees in
+    every facing (what a player timing its turns can't slip past). Sight stops at walls, at tiles
+    in blocked (objects) and at a change of elevation."""
+    rng = int(o.get('trainer_sight_or_berry_tree_id') or 0)
+    te = o.get('elevation', 0)
+    buried = o.get('trainer_type') == 'TRAINER_TYPE_BURIED'
+    dirs = list(DIRS) if buried else facing_dirs(o['movement_type'])
+    rx, ry = o.get('movement_range_x', 0), o.get('movement_range_y', 0)
+    walks = moves(o)
+    starts = [(o['x'] + dx, o['y'] + dy) for dx in range(-rx, rx + 1) for dy in range(-ry, ry + 1)] if walks else [(o['x'], o['y'])]
+    tiles = set()
+    per_dir = []
+    for s in starts:
+        if not grid.inb(s):
+            continue
+        for d in dirs:
+            line = set()
+            dx, dy = DIRS[d]
+            for i in range(1, rng + 1):
+                p = (s[0] + dx * i, s[1] + dy * i)
+                if not grid.inb(p) or grid.coll[p] or (p in blocked and p != (o['x'], o['y'])):
+                    break
+                e = grid.elev[p]
+                if te not in (0, 15) and e not in (0, 15) and e != te:
+                    break
+                line.add(p)
+            per_dir.append(line)
+        if walks:
+            tiles.add(s)
+    if timed and not walks and not buried and len(dirs) > 1:
+        return tiles | (set.intersection(*per_dir) if per_dir else set())
+    return tiles | set().union(*per_dir)
+
+
+def path_exists(grid, start, goals, blocked):
+    """True if the player can walk from start to any of goals on this one grid, never stepping on a
+    tile in blocked. All HMs count as usable; ledges are one-way."""
+    ab = {k: True for k in abilities(9)}
+    return world_search({'': grid}, {('', start)}, {('', g) for g in goals}, set(), ab,
+                        {('', b) for b in blocked}, {'': set()})
+
+
+class Map(Grid):
+    """A map folder: its grid plus connections, warps, objects and the trainers on them."""
+
+    def __init__(self, folder):
+        self.folder = folder
+        with open(os.path.join(REPO, 'data/maps', folder, 'map.json'), encoding='utf-8') as f:
+            self.j = json.load(f)
+        super().__init__(REPO, self.j['layout'])
         self.conns = {c['direction']: c['map'] for c in self.j.get('connections') or []}
         self.conn_list = [(c['direction'], c['map'], int(c['offset'])) for c in self.j.get('connections') or []]
         self.warps = self.j.get('warp_events') or []
@@ -154,9 +245,6 @@ class Map:
             elif ts:
                 for t in ts:
                     self.trainers[t].append(dict(o, talk_only=True))
-
-    def inb(self, p):
-        return 0 <= p[0] < self.w and 0 <= p[1] < self.h
 
     def obj_tiles(self, ab):
         """Tiles blocked by objects: every trainer (they never leave), static NPCs without a flag,
@@ -187,49 +275,12 @@ class Map:
         return out
 
     def sight(self, tid, objs_blocked, timed=False):
-        """Tiles from which the trainer would see the player. Default: conservative union over every
-        facing and position. timed=True: for a static trainer that turns, only the tiles it sees in
-        every facing (what a player timing its turns can't slip past)."""
+        """Tiles from which trainer tid would see the player (see sight_tiles), over all its objects."""
         tiles = set()
         for o in self.trainers[tid]:
-            if o.get('talk_only'):
-                continue
-            rng = int(o.get('trainer_sight_or_berry_tree_id') or 0)
-            te = o.get('elevation', 0)
-            buried = o.get('trainer_type') == 'TRAINER_TYPE_BURIED'
-            dirs = list(DIRS) if buried else facing_dirs(o['movement_type'])
-            rx, ry = o.get('movement_range_x', 0), o.get('movement_range_y', 0)
-            mt = o['movement_type']
-            moves = self.moves(o)
-            starts = [(o['x'] + dx, o['y'] + dy) for dx in range(-rx, rx + 1) for dy in range(-ry, ry + 1)] if moves else [(o['x'], o['y'])]
-            per_dir = []
-            for s in starts:
-                if not self.inb(s):
-                    continue
-                for d in dirs:
-                    line = set()
-                    dx, dy = DIRS[d]
-                    for i in range(1, rng + 1):
-                        p = (s[0] + dx * i, s[1] + dy * i)
-                        if not self.inb(p) or self.coll[p] or (p in objs_blocked and p != (o['x'], o['y'])):
-                            break
-                        e = self.elev[p]
-                        if te not in (0, 15) and e not in (0, 15) and e != te:
-                            break
-                        line.add(p)
-                    per_dir.append(line)
-                if moves:
-                    tiles.add(s)
-            if timed and not moves and not buried and len(dirs) > 1:
-                tiles |= set.intersection(*per_dir) if per_dir else set()
-            else:
-                tiles |= set().union(*per_dir)
+            if not o.get('talk_only'):
+                tiles |= sight_tiles(self, o, objs_blocked, timed)
         return tiles
-
-    @staticmethod
-    def moves(o):
-        mt = o['movement_type']
-        return 'WANDER' in mt or ('WALK' in mt and 'IN_PLACE' not in mt)
 
     def kind(self, tid):
         """'fixed' (one facing, or buried), 'turning' (static, several facings) or 'moving'."""
@@ -237,7 +288,7 @@ class Map:
         for o in self.trainers[tid]:
             if o.get('talk_only'):
                 continue
-            if self.moves(o):
+            if moves(o):
                 return 'moving'
             if o.get('trainer_type') != 'TRAINER_TYPE_BURIED' and len(facing_dirs(o['movement_type'])) > 1:
                 k = 'turning'

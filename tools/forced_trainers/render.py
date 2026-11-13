@@ -1,5 +1,14 @@
+"""Draw a story map as text, to check the classifier's grid by eye. Run from the repo root:
+
+    python3 tools/forced_trainers/render.py Route110 [stage 0-9] [x0,y0,x1,y1]
+
+T trainer, 0-9/a-z warp index, o blocking object, # wall, ~ water, b bike-only tile, % ice, spin or
+current tile, s tile a trainer sees, ^ v < > ledge, and the elevation or . elsewhere.
+"""
+import os
 import sys
-sys.path.insert(0, '/Users/trey/.claude-personal/jobs/183d03aa/tmp/unavoidable')
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from engine import Map, abilities, WATER, JUMP, BIKE, SPECIAL
 
 folder = sys.argv[1]
