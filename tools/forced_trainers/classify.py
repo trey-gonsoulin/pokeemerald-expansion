@@ -13,7 +13,6 @@ import collections
 import itertools
 import json
 import os
-import re
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -23,7 +22,7 @@ import engine  # noqa: E402
 import gamedata as G  # noqa: E402
 import rebalance as R  # noqa: E402
 from engine import Map, abilities, world_search, FOLDER_OF  # noqa: E402
-from specs import AREAS, MANUAL, OPTIONAL_MAPS, BOSS_NOTES  # noqa: E402
+from specs import AREAS, MANUAL, OPTIONAL_MAPS, BOSS_NOTES, CHOOSE_ONE  # noqa: E402
 
 OUTPUT = os.path.join(G.HERE, 'forced_trainers.json')
 
@@ -136,6 +135,7 @@ def analyse(name, spec):
     sight_trainers = [t for t in sights if sights[t]]
     res = {}
     notes = []
+    choices = []  # trainer groups the grid says must be fought one of
     for pair in spec['pairs']:
         if not path_ok(maps, pair, ab, set(), objs):
             notes.append(f'no path at all for {pair}')
@@ -180,13 +180,29 @@ def analyse(name, spec):
                     if kinds.get(t) == 'turning' and res.get(t, ('',))[0] not in ('FORCED', 'UNCERTAIN'):
                         res[t] = ('AVOIDABLE', f'turning trainer: paths {pair[0]} -> {pair[1]} pass its line, skipped by timing its turns (with [{alts}])', 'timing')
                 continue
+            choices.append(tuple(sorted(set(itertools.chain(*found)))))
             for t in sorted(set(itertools.chain(*found))):
                 if res.get(t, ('',))[0] != 'FORCED':
                     res[t] = ('UNCERTAIN', f'{pair[0]} -> {pair[1]}: must fight one of [{alts}] (none forced alone)')
             notes.append(f'{pair}: alternatives {alts}')
         else:
             notes.append(f'{pair}: needs 4+ of the rest')
-    return {'res': res, 'notes': notes, 'sight': set(sight_trainers), 'where': where}
+    return {'res': res, 'notes': notes, 'choices': choices, 'sight': set(sight_trainers), 'where': where}
+
+
+def attach_choose_one(out, results):
+    """Set one_of on every member of the specs.CHOOSE_ONE groups. Fails if the grid finds a
+    choose-one group the specs don't declare, or a declared member isn't an UNCERTAIN regular trainer."""
+    declared = {tuple(sorted(g)) for g in CHOOSE_ONE}
+    for name, r in results.items():
+        for group in r['choices']:
+            if group not in declared:
+                raise SystemExit(f'{name}: the grid finds a choose-one group {list(group)} that is not in specs.CHOOSE_ONE')
+    for group in CHOOSE_ONE:
+        for tid in group:
+            if tid not in out or out[tid]['class'] != 'UNCERTAIN':
+                raise SystemExit(f'specs.CHOOSE_ONE: {tid} of {list(group)} is not an UNCERTAIN regular trainer')
+            out[tid]['one_of'] = list(group)
 
 
 def classify(repo):
@@ -232,12 +248,8 @@ def classify(repo):
                 entry.update({'class': cls, 'reason': why})
             else:
                 entry.update({'class': 'UNCERTAIN', 'reason': 'not analysed'})
-            m1 = re.search(r'must fight one of \[([^\]]*)\]', entry['reason'])
-            if m1:
-                entry['one_of'] = ['TRAINER_' + x.strip() for x in m1[1].split('|')]
-            if 'Petalburg Gym:' in entry['reason']:
-                entry['one_of'] = next(['TRAINER_' + x for x in g] for g in (('RANDALL', 'MARY'), ('PARKER', 'ALEXIA', 'GEORGE'), ('JODY', 'BERKE')) if tid[8:] in g)
             out[tid] = entry
+    attach_choose_one(out, results)
     bosses = {}
     for st in stages:
         for b in st['bosses']:
