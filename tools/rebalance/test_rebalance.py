@@ -14,6 +14,7 @@ import sys
 import tempfile
 import types
 import unittest
+import unittest.mock
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -1105,6 +1106,80 @@ Aron
         self.assertEqual(evolved, [('TRAINER_C', 'SPECIES_DUSCLOPS', 'SPECIES_DUSKNOIR', 80)])
         self.assertEqual(RB.nonlevel_evolve_party(text, teams, evolver), (text, []))  # idempotent
 
+    # Lowering (#350): a real SpeciesInfo, and a regime's species list.
+    GD = types.SimpleNamespace(species={'SPECIES_TREECKO', 'SPECIES_GROVYLE', 'SPECIES_SCEPTILE', 'SPECIES_ARON'})
+
+    @classmethod
+    def setUpClass(cls):
+        cls.info = G.R.SpeciesInfo(G.REPO)
+        cls.devolve = staticmethod(RB.devolver(cls.info, cls.GD))
+
+    def test_lowered_grovyle_devolves_below_grace(self):
+        # Grovyle 18 lowered by 2 is 16, under 16 + EVOLVE_GRACE: Treecko.
+        self.assertEqual(RB.evolve_team([('SPECIES_GROVYLE', 18, None)], -2, None, devolve=self.devolve),
+                         ['SPECIES_TREECKO'])
+        slots = [('land_mons', {'species': 'SPECIES_GROVYLE', 'min_level': 18, 'max_level': 20}, 60)]
+        self.assertEqual(RB.shifted_slots(slots, -2, devolve=self.devolve)[0][1],
+                         {'species': 'SPECIES_TREECKO', 'min_level': 16, 'max_level': 18})
+        # Without devolve, a lowered team keeps its species.
+        self.assertEqual(RB.evolve_team([('SPECIES_GROVYLE', 18, None)], -2, None), ['SPECIES_GROVYLE'])
+
+    def test_lowered_grovyle_kept_at_grace(self):
+        self.assertEqual(RB.evolve_team([('SPECIES_GROVYLE', 22, None)], -2, None, devolve=self.devolve),
+                         ['SPECIES_GROVYLE'])
+        self.assertEqual(self.devolve('SPECIES_GROVYLE', 19), 'SPECIES_GROVYLE')
+        self.assertEqual(self.devolve('SPECIES_GROVYLE', 18), 'SPECIES_TREECKO')
+
+    def test_devolve_without_pre_evolution_keeps_species(self):
+        # Review Focus 1: no pre-evolution (Aron), or one the regime doesn't have: only the level drops.
+        self.assertEqual(self.devolve('SPECIES_ARON', 1), 'SPECIES_ARON')
+        no_treecko = RB.devolver(self.info, types.SimpleNamespace(species={'SPECIES_GROVYLE'}))
+        self.assertEqual(no_treecko('SPECIES_GROVYLE', 5), 'SPECIES_GROVYLE')
+        party = '=== TRAINER_C ===\nName: C\n\nAron\nLevel: 20\n\nGrovyle\nLevel: 20\n'
+        text, devolved = RB.raise_party(party, {'TRAINER_C': -10}, devolve=no_treecko)
+        self.assertEqual(text, party.replace('Level: 20', 'Level: 10'))
+        self.assertEqual(devolved, [])
+
+    def test_level_floor_is_1(self):
+        party = '=== TRAINER_C ===\nName: C\n\nAron\nLevel: 5\n'
+        self.assertEqual(RB.raise_party(party, {'TRAINER_C': -10}, devolve=self.devolve),
+                         (party.replace('Level: 5', 'Level: 1'), []))
+        slots = [('land_mons', {'species': 'SPECIES_SCEPTILE', 'min_level': 3, 'max_level': 40}, 60)]
+        self.assertEqual(RB.shifted_slots(slots, -10, devolve=self.devolve)[0][1],
+                         {'species': 'SPECIES_TREECKO', 'min_level': 1, 'max_level': 30})
+        seen = []
+        RB.evolve_team([('SPECIES_ARON', 5, None)], -10, None, devolve=lambda sp, level: seen.append(level) or sp)
+        self.assertEqual(seen, [1])
+
+    def test_raise_party_lowers_text_and_reports_devolutions(self):
+        party = ('=== TRAINER_C ===\nName: C\n\nLeaf (Grovyle) (M) @ Oran Berry\nLevel: 18\n- Tackle\n\n'
+                 'Aron\nLevel: 30\n\n'
+                 '=== TRAINER_WALLY_MAUVILLE ===\nName: WALLY\n\nGrovyle\nLevel: 18\n\n'
+                 '=== PARTNER_B ===\nName: B\n\nGrovyle\nLevel: 18\n')
+        lower = {'TRAINER_C': -2, 'TRAINER_WALLY_MAUVILLE': -2, 'PARTNER_B': -2}
+        text, devolved = RB.raise_party(party, lower, devolve=self.devolve)
+        # The nickname, gender and item stay; EVOLVE_EXEMPT's and the partner's Grovyle only drop.
+        self.assertEqual(text, party.replace('Leaf (Grovyle) (M)', 'Leaf (Treecko) (M)')
+                         .replace('Level: 18', 'Level: 16').replace('Level: 30', 'Level: 28'))
+        self.assertEqual(devolved, [('TRAINER_C', 'SPECIES_GROVYLE', 'SPECIES_TREECKO', 16)])
+        self.assertEqual(G.parse_trainers_text(text)['TRAINER_C'].mons[0].species, 'SPECIES_TREECKO')
+
+    def test_unique_team_never_devolves_into_a_duplicate(self):
+        # A boss team keeps the species it would duplicate, and the report says so (before == after).
+        party = '=== TRAINER_C ===\nName: C\n\nTreecko\nLevel: 10\n\nGrovyle\nLevel: 18\n'
+        text, devolved = RB.raise_party(party, {'TRAINER_C': -2}, devolve=self.devolve, unique={'TRAINER_C'})
+        self.assertEqual(text, party.replace('Level: 10', 'Level: 8').replace('Level: 18', 'Level: 16'))
+        self.assertEqual(devolved, [('TRAINER_C', 'SPECIES_GROVYLE', 'SPECIES_GROVYLE', 16)])
+        # Two evolved Pokemon devolving to one base: the first takes it, the second stays.
+        party = '=== TRAINER_C ===\nName: C\n\nGrovyle\nLevel: 18\n\nSceptile\nLevel: 40\n'
+        text, devolved = RB.raise_party(party, {'TRAINER_C': -30}, devolve=self.devolve, unique={'TRAINER_C'})
+        self.assertEqual(text, '=== TRAINER_C ===\nName: C\n\nTreecko\nLevel: 1\n\nSceptile\nLevel: 10\n')
+        self.assertEqual(devolved, [('TRAINER_C', 'SPECIES_GROVYLE', 'SPECIES_TREECKO', 1),
+                                    ('TRAINER_C', 'SPECIES_SCEPTILE', 'SPECIES_SCEPTILE', 10)])
+        # Not a unique team: both devolve.
+        _, devolved = RB.raise_party(party, {'TRAINER_C': -30}, devolve=self.devolve)
+        self.assertEqual([d[2] for d in devolved], ['SPECIES_TREECKO', 'SPECIES_TREECKO'])
+
     def test_party_species_name(self):
         self.assertEqual(RB.party_species_name('SPECIES_KIRLIA'), 'Kirlia')
         self.assertEqual(RB.party_species_name('SPECIES_MR_MIME'), 'Mr Mime')
@@ -1429,6 +1504,77 @@ class TwoPlayers(unittest.TestCase):
         self.assertEqual(st[0]['wild_offset'], 6)
         _, st = self.run_share(wild_gap=100, lower=True)
         self.assertEqual(st[0]['wild_offset'], 0)
+
+    @staticmethod
+    def recording_devolve(seen):
+        """A devolve that turns Sableye into Magikarp and records its calls."""
+        def devolve(species, level):
+            seen.append((species, level))
+            return 'SPECIES_MAGIKARP' if species == 'SPECIES_SABLEYE' else species
+        return devolve
+
+    def test_lowered_teams_devolve_in_the_model(self):
+        seen = []
+        rows, st = self.run_share(lower=True, trainer_gap=0, devolve=self.recording_devolve(seen), **self.MARGINS)
+        plain, _ = self.run_share(lower=True, trainer_gap=0, **self.MARGINS)
+        # The hiker's stage shift (-15): Ralts 7 -> 1, Sableye 20 -> 5; Leader X lowered to its ace.
+        self.assertEqual(st[0]['raise'], -15)
+        self.assertIn(('SPECIES_RALTS', 1), seen)
+        self.assertIn(('SPECIES_SABLEYE', 5), seen)
+        self.assertIn(('SPECIES_SABLEYE', rows[1]['boss_ace']), seen)
+        # The devolved Magikarp gives less exp than the Sableye.
+        self.assertLess(sum(rows[0]['levels']), sum(plain[0]['levels']))
+        # Lowered wild tables devolve too.
+        raised = {i: RB.shifted_slots(s, 6) for i, s in self.inputs['wilds']['modern'].items()}
+        seen.clear()
+        self.run_share(raised, wild_gap=100, lower=True, devolve=self.recording_devolve(seen))
+        self.assertTrue(seen)
+        # Without lower nothing goes down, so nothing devolves.
+        seen.clear()
+        self.run_share(trainer_gap=0, devolve=self.recording_devolve(seen), **self.MARGINS)
+        self.assertEqual(seen, [])
+
+    def test_explore_run_devolves_with_evolve_on(self):
+        seen = []
+        live = dict(self.inputs, devolve=self.recording_devolve(seen))
+        RB.explore_run(live, {**self.MARGINS, 'lower': True, 'evolve': False})
+        self.assertEqual(seen, [])
+        RB.explore_run(live, {**self.MARGINS, 'lower': True})
+        self.assertTrue(any(sp == 'SPECIES_SABLEYE' for sp, _ in seen))
+        self.assertIsNone(curve_inputs(FIXTURE, FIXTURE_STAGES)['devolve'])
+
+    def lowering_plan(self, lower):
+        """apply_plan on the fixture with Leader X's fight given a rival
+        variant two levels lower (Leader Y) and a partner (ace 40)."""
+        trainers = dict(self.inputs['trainers'])
+        variant = copy.deepcopy(trainers['TRAINER_LEADER_X'])
+        partner = copy.deepcopy(trainers['TRAINER_LEADER_X'])
+        for mon in variant.mons:
+            mon.level -= 2
+        for mon in partner.mons:
+            mon.level += 20
+        trainers['TRAINER_LEADER_Y'] = variant
+        stages = copy.deepcopy(self.inputs['stages'])
+        stages[1]['variants'] = {'TRAINER_LEADER_X': ['TRAINER_LEADER_Y']}
+        inputs = dict(self.inputs, trainers=trainers, stages=stages)
+        with open(os.path.join(FIXTURE, RB.VANILLA_WILD), encoding='utf-8') as f:
+            wild = json.load(f)
+        with unittest.mock.patch.dict(RB.PARTNER_FIGHTS, {'PARTNER_X': ('TRAINER_LEADER_X',)}, clear=True):
+            return RB.apply_plan(inputs, {**self.MARGINS, 'lower': lower, 'evolve': False},
+                                 {'PARTNER_X': partner}, wild, G.map_folders(FIXTURE))['raises']
+
+    def test_rival_variants_and_partners_follow_a_lowered_boss(self):
+        raises = self.lowering_plan(True)
+        ace = 20 + raises['TRAINER_LEADER_X']
+        self.assertLess(ace, 18)
+        # The variant (ace 18) and the partner (ace 40) end at the lowered boss's ace.
+        self.assertEqual(18 + raises['TRAINER_LEADER_Y'], ace)
+        self.assertEqual(40 + raises['PARTNER_X'], ace)
+        # Without lower, today's: never below their own levels.
+        raises = self.lowering_plan(False)
+        self.assertNotIn('TRAINER_LEADER_X', raises)
+        self.assertEqual(raises['TRAINER_LEADER_Y'], 2)
+        self.assertNotIn('PARTNER_X', raises)
 
     def test_explore_run_takes_the_forced_data_from_the_snapshot(self):
         for key, value in (('full_margin', None), ('skip_margin', None), ('lower', False)):

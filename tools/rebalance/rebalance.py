@@ -924,6 +924,17 @@ def evolver(info, gd, nonlevel=False):
     return evolve
 
 
+def devolver(info, gd):
+    """restock.SpeciesInfo.devolve as ``devolve(species, level)`` for a
+    lowered Pokemon (#350): the form that fits ``level`` less EVOLVE_GRACE,
+    kept to the species ``gd`` has (else the species stays)."""
+    @functools.lru_cache(maxsize=None)
+    def devolve(species, level):
+        out = info.devolve(species, level - G.R.EVOLVE_GRACE)
+        return out if out in gd.species else species
+    return devolve
+
+
 def team_ace(trainer):
     """A team's highest level."""
     return max(mon.level for mon in trainer.mons)
@@ -946,31 +957,35 @@ def land_mean(slots):
     return sum(lvl * w for _, lvl, w in foes) / total if total else None
 
 
-def evolve_team(mons, delta, evolve, unique=False):
+def evolve_team(mons, delta, evolve, unique=False, devolve=None):
     """The species of a team's Pokemon ([(species, level, gender)]) after a
     raise of ``delta``: each evolves for its raised level (``evolve``, None
-    for none), except, with ``unique`` (a boss's team, #150), into a species
-    the team already has (Drake's Shelgon beside his Salamence)."""
+    for none), or for a negative ``delta`` devolves for its lowered one
+    (``devolve(species, level)``, #350), except, with ``unique`` (a boss's
+    team, #150), into a species the team already has (Drake's Shelgon
+    beside his Salamence)."""
     species = [s for s, _, _ in mons]
-    if delta <= 0 or not evolve:
+    if not (delta > 0 and evolve or delta < 0 and devolve):
         return species
     for i, (s, level, gender) in enumerate(mons):
-        out = evolve(s, min(level + delta, 100), gender)
+        out = evolve(s, min(level + delta, 100), gender) if delta > 0 else devolve(s, max(1, level + delta))
         if not (unique and out != s and out in species):
             species[i] = out
     return species
 
 
-def shifted_slots(slots, shift, evolve=None):
+def shifted_slots(slots, shift, evolve=None, devolve=None):
     """``slots`` ([(field, slot, rate)]) with every level ``shift`` higher,
-    capped at 100. A raised slot's species evolves for its new min level
-    (``evolve(species, level)``), as the restock does (#150)."""
+    between 1 and 100. A raised slot's species evolves for its new min level
+    (``evolve(species, level)``), as the restock does (#150); a lowered
+    one devolves (``devolve(species, level)``, #350)."""
     if not shift:
         return slots
+    change = evolve if shift > 0 else devolve
     out = []
     for field, slot, rate in slots:
         lo, hi = (max(1, min(slot[k] + shift, 100)) for k in ('min_level', 'max_level'))
-        species = evolve(slot['species'], lo) if evolve and shift > 0 else slot['species']
+        species = change(slot['species'], lo) if change else slot['species']
         out.append((field, {**slot, 'species': species, 'min_level': lo, 'max_level': hi}, rate))
     return out
 
@@ -985,7 +1000,7 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
               margin=None, unevolved=False, stage_raises=None, wild_offsets=None, trainer_gap=None,
               wild_gap=None, vanilla_wilds=None, evolve=None, ko_takers=1, boss_ref='bench',
               share_fraction=0.5, overlevel=GAME, league_steps=True, wild_battles=0, relative_gaps=False,
-              postgame=None, skip=None, full_margin=None, skip_margin=None, lower=False):
+              postgame=None, skip=None, full_margin=None, skip_margin=None, lower=False, devolve=None):
     """The share6 party (KO-taker plus five on the Gen 6 Exp. Share bench)
     just before each story boss, on ``gd``'s data and configs: (boss rows,
     stage rows).
@@ -1001,7 +1016,8 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
     tables in ``vanilla_wilds``) moves the catches' levels; the difference
     between ``wilds`` and ``vanilla_wilds`` is what is already applied.
     ``evolve(species, level, gender)`` evolves the raised Pokemon (not
-    EVOLVE_EXEMPT's teams) and the raised wild slots.
+    EVOLVE_EXEMPT's teams) and the raised wild slots, ``devolve(species,
+    level)`` (devolver) devolves the lowered ones.
 
     With ``margin``, each boss is raised, when its ace is lower, to the
     reference level plus ``margin`` and then (``league_steps``) to
@@ -1071,8 +1087,9 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
 
     def fight(p, tid, delta=0):
         mons = trainers[tid].mons
+        exempt = tid in EVOLVE_EXEMPT
         species = evolve_team([(m.species, m.level, m.gender) for m in mons], delta,
-                              None if tid in EVOLVE_EXEMPT else evolve, tid in boss_ids)
+                              None if exempt else evolve, tid in boss_ids, None if exempt else devolve)
         for mon, sp in zip(mons, species):
             p.defeat(gd, scaling, [(gd.species[sp].exp_yield, max(1, min(mon.level + delta, 100)), 1.0)],
                      True, True)
@@ -1137,7 +1154,7 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
             offset = max(0, round(above(start, -wild_gap, relative_gaps) - base), 0 if lower else applied)
         else:
             offset = wild_offsets.get(st['name'], applied)
-        here = shifted_slots(slots, offset - applied, evolve)
+        here = shifted_slots(slots, offset - applied, evolve, devolve)
         foes = wild_battle_foes(gd, here)
         for p in players:
             for _ in range((catch + wild_battles) if foes else 0):
@@ -1198,14 +1215,15 @@ def stage_variants(stages, trainers):
     return {bid: {v: team_ace(trainers[v]) for v in ids} for st in stages for bid, ids in st['variants'].items()}
 
 
-def variant_raises(variants, trainers, raises):
+def variant_raises(variants, trainers, raises, lower=False):
     """The raise for each of ``variants`` (from stage_variants) that lifts
-    its ace to its staged boss's raised ace."""
+    its ace to its staged boss's raised ace (with ``lower``, or drops it,
+    #350)."""
     out = {}
     for bid, aces in variants.items():
         target = raised_ace(trainers, raises, bid)
         for v, ace in aces.items():
-            out[v] = max(0, target - ace)
+            out[v] = target - ace if lower else max(0, target - ace)
     return out
 
 
@@ -1399,7 +1417,8 @@ def explore_run(snap, knobs=None):
         evolve=snap['evolve'] if k['evolve'] else None, ko_takers=k['ko_takers'], boss_ref=k['boss_ref'],
         share_fraction=k['share_fraction'], overlevel=overlevel, league_steps=k['league_steps'],
         wild_battles=k['wild_battles'], relative_gaps=relative, postgame=snap['postgame'],
-        skip=snap.get('forced'), full_margin=k['full_margin'], skip_margin=k['skip_margin'], lower=k['lower'])
+        skip=snap.get('forced'), full_margin=k['full_margin'], skip_margin=k['skip_margin'], lower=k['lower'],
+        devolve=snap.get('devolve') if k['evolve'] else None)
     for r in bosses:
         r['name'] = short(r['boss'])
         r['refs'] = {name: round(f(r['levels'], k['ko_takers']), 1) for name, f in REFERENCES.items()}
@@ -2017,13 +2036,14 @@ PARTNER_FIGHTS = {'PARTNER_STEVEN': ('TRAINER_MAXIE_MOSSDEEP', 'TRAINER_TABITHA_
 
 def repo_inputs(repo, stages_path=DEFAULT_STAGES, info=None, forced_path=None):
     """explore_run's inputs parsed from ``repo`` (load_snapshot's, plus the
-    stages' rival variants); ``info``, a restock.SpeciesInfo, for the
-    evolutions; ``forced_path`` (FORCED_TRAINERS) for the skip player."""
+    stages' rival variants and ``devolve``); ``info``, a restock.SpeciesInfo,
+    for the evolutions and devolutions; ``forced_path`` (FORCED_TRAINERS) for the skip player."""
     gd = G.load(repo)['modern']
     trainers = G.parse_trainers(os.path.join(repo, 'src', 'data', 'trainers.party'))
     stages = load_stages(stages_path, trainers, repo)
     return {'stages': stages, 'trainers': trainers, 'gd': gd, 'scaling': G.parse_scaling_factors(repo),
             'wilds': load_wilds(repo, stages), 'evolve': evolver(info, gd) if info else None,
+            'devolve': devolver(info, gd) if info else None,
             'evolve_nonlevel': evolver(info, gd, nonlevel=True) if info else None,
             'postgame': rematch_ladders(G.parse_rematches(repo), stages, trainers),
             'forced': load_forced(forced_path) if forced_path else None}
@@ -2036,7 +2056,8 @@ def apply_plan(inputs, knobs, partners, wild, folders):
     post-game bosses and rematch ladders), wild: map -> table field -> its
     stage's offset over the vanilla levels, for every table of the stage's
     maps, unique: the teams that keep their species distinct}. Only
-    non-zero entries."""
+    non-zero entries; with the ``lower`` knob a raise may be negative, and
+    the variants and partners follow a lowered team down (#350)."""
     res = explore_run(inputs, knobs)
     stages, trainers = inputs['stages'], inputs['trainers']
     raises = {r['boss']: r['raise'] for r in res['bosses']}
@@ -2045,12 +2066,13 @@ def apply_plan(inputs, knobs, partners, wild, folders):
     if staged:
         raise ValueError(f'rematch teams staged as regular trainers: {sorted(staged)}')
     raises.update(rematches)
-    raises.update(variant_raises(stage_variants(stages, trainers), trainers, raises))
+    lower = res['knobs']['lower']
+    raises.update(variant_raises(stage_variants(stages, trainers), trainers, raises, lower))
     for st, row in zip(stages, res['stages']):
         raises.update(dict.fromkeys(st['regular'], row['raise']))
     for pid, foes in PARTNER_FIGHTS.items():
         target = max(raised_ace(trainers, raises, f) for f in foes)
-        raises[pid] = max(0, target - team_ace(partners[pid]))
+        raises[pid] = target - team_ace(partners[pid]) if lower else max(0, target - team_ace(partners[pid]))
     offsets = collections.defaultdict(dict)
     for _, enc, field, i in stage_tables(wild, stages, folders):
         if res['stages'][i]['wild_offset']:
@@ -2143,12 +2165,14 @@ def mon_level(lines, first, last):
     return level_at, int(lines[level_at].split(':', 1)[1]) if level_at is not None else 100  # trainerproc's default
 
 
-def raise_party(text, raises, evolve=None, unique=()):
+def raise_party(text, raises, evolve=None, unique=(), devolve=None):
     """.party ``text`` with every Pokemon of each team in ``raises`` (id ->
-    levels) that many levels higher, capped at 100. Its species follow
-    evolve_team (``unique``: the teams that keep their species distinct);
-    EVOLVE_EXEMPT's and the partners' teams never evolve. Every other byte
-    is kept. Returns (text, [(team, species before, after, level)])."""
+    levels) that many levels higher (or, negative, lower: #350), between 1
+    and 100. Its species follow evolve_team (``unique``: the teams that keep
+    their species distinct); EVOLVE_EXEMPT's and the partners' teams never
+    evolve or devolve. Every other byte is kept. Returns (text, [(team,
+    species before, after, level)]), where after is before for a Pokemon
+    ``unique`` kept from devolving into a species its team has."""
     lines = text.split('\n')
     evolved = []
     for tid, paras in party_teams(lines):
@@ -2158,16 +2182,19 @@ def raise_party(text, raises, evolve=None, unique=()):
         mons = []
         for first, last in paras:
             level_at, level = mon_level(lines, first, last)
+            new = max(1, min(level + delta, 100))
             if level_at is not None:
-                lines[level_at] = lines[level_at].replace(str(level), str(min(level + delta, 100)), 1)
-            mons.append((first, level, species_line(lines[first])))
-        allowed = evolve if may_evolve(tid) else None
-        after = evolve_team([(sp, level, gender) for _, level, (sp, gender, _) in mons], delta, allowed,
-                            tid in unique)
-        for (first, level, (sp, _, replace)), out in zip(mons, after):
+                lines[level_at] = lines[level_at].replace(str(level), str(new), 1)
+            mons.append((first, level, new, species_line(lines[first])))
+        allowed = may_evolve(tid)
+        after = evolve_team([(sp, level, gender) for _, level, _, (sp, gender, _) in mons], delta,
+                            evolve if allowed else None, tid in unique, devolve if allowed else None)
+        for (first, _, new, (sp, _, replace)), out in zip(mons, after):
             if out != sp:
                 lines[first] = replace(out)
-                evolved.append((tid, sp, out, min(level + delta, 100)))
+                evolved.append((tid, sp, out, new))
+            elif delta < 0 and allowed and devolve and devolve(sp, new) != sp:
+                evolved.append((tid, sp, sp, new))  # unique kept it from a species the team has
     return '\n'.join(lines), evolved
 
 
@@ -2238,7 +2265,7 @@ def apply_round(argv):
     unique = set(plan['unique'])
     for name, file in files.items():
         with open(file, encoding='utf-8') as f:
-            text, evolved = raise_party(f.read(), plan['raises'], inputs['evolve'], unique)
+            text, evolved = raise_party(f.read(), plan['raises'], inputs['evolve'], unique, inputs['devolve'])
         text, boss_evolved = nonlevel_evolve_party(text, unique, inputs['evolve_nonlevel'])
         raised[name] = text, evolved, boss_evolved
     with tempfile.TemporaryDirectory() as tmp:
@@ -2254,8 +2281,11 @@ def apply_round(argv):
         with open(files[name], 'w', encoding='utf-8') as f:
             f.write(text)
         teams = len(set(plan['raises']) & set(G.parse_trainers_text(text)))
-        print(f'{name}: {teams} teams raised, {len(evolved)} Pokemon evolved, '
+        kept = [e for e in evolved if e[1] == e[2]]
+        print(f'{name}: {teams} teams raised or lowered, {len(evolved) - len(kept)} Pokemon evolved or devolved, '
               f'{len(boss_evolved)} more on boss and rival teams by evolutions that aren\'t by level (#181)')
+        for tid, species, _, level in kept:
+            print(f'  {tid}: {species} at {level} kept, not devolved into a species its team has')
     return any(boss_evolved for _, _, boss_evolved in raised.values())
 
 
