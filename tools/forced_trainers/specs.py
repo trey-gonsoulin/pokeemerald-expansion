@@ -117,6 +117,17 @@ HIDDEN_CHIMNEY = 'Mt. Chimney rim trainer: hidden (FLAG_HIDE_MT_CHIMNEY_TRAINERS
 PETALBURG = ('UNCERTAIN', 'Petalburg Gym: each room\'s doors open only after its trainer; every route is lobby -> {RANDALL|MARY} -> {PARKER|ALEXIA|GEORGE} -> {JODY|BERKE} -> Norman, so exactly one trainer per tier (3 battles) is forced, the player picks which')
 WINSTRATE = ('AVOIDABLE', 'Winstrate family: Victor asks YES/NO outside their Route 111 house; the four battles only on YES')
 
+# Choose-one groups: the player must fight exactly one trainer of each group, and picks which.
+# classify.py attaches each as one_of, and fails if the grid finds a group that isn't listed here.
+# Petalburg Gym is one trainer per room; the other two come from the grid search.
+CHOOSE_ONE = (
+    ('TRAINER_RANDALL', 'TRAINER_MARY'),
+    ('TRAINER_PARKER', 'TRAINER_ALEXIA', 'TRAINER_GEORGE'),
+    ('TRAINER_JODY', 'TRAINER_BERKE'),
+    ('TRAINER_GRUNT_WEATHER_INST_1', 'TRAINER_GRUNT_WEATHER_INST_4'),
+    ('TRAINER_SAMUEL', 'TRAINER_SHANNON'),
+)
+
 MANUAL = {
     'TRAINER_SHELBY_1': ('AVOIDABLE', HIDDEN_CHIMNEY),
     'TRAINER_MELISSA': ('AVOIDABLE', HIDDEN_CHIMNEY),

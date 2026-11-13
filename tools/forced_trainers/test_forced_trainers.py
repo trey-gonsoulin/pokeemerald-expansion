@@ -19,6 +19,7 @@ import classify  # noqa: E402
 import engine  # noqa: E402
 import gamedata as G  # noqa: E402
 import rebalance as RB  # noqa: E402
+import specs  # noqa: E402
 
 FLOOR, LEDGE = 0, 1  # metatile ids of the fixture tileset: MB_NORMAL and MB_JUMP_SOUTH
 
@@ -149,6 +150,24 @@ class RealRepo(unittest.TestCase):
                 self.assertEqual(self.data['bosses'][b]['stage'], st['name'], b)
             for t in st['regular']:
                 self.assertIn(self.data['regular'][t]['class'], ('FORCED', 'AVOIDABLE', 'UNCERTAIN'), t)
+
+    def test_choose_one_groups(self):
+        """Petalburg Gym (one per room, 3 of 7), Weather Institute 1F and Victory Road B1F (1 of 2)."""
+        self.assertEqual([len(g) for g in specs.CHOOSE_ONE], [2, 3, 2, 2, 2])
+        self.assertEqual(sum(len(g) for g in specs.CHOOSE_ONE[:3]), 7)
+        for group in specs.CHOOSE_ONE:
+            for tid in group:
+                self.assertEqual(self.data['regular'][tid]['one_of'], list(group), tid)
+                self.assertEqual(self.data['regular'][tid]['class'], 'UNCERTAIN', tid)
+        self.assertEqual(sum('one_of' in e for e in self.data['regular'].values()), 11)
+
+    def test_undeclared_choose_one_group_fails(self):
+        out = {t: {'class': 'UNCERTAIN'} for g in specs.CHOOSE_ONE for t in g}
+        with self.assertRaises(SystemExit):
+            classify.attach_choose_one(out, {'Area': {'choices': [('TRAINER_A', 'TRAINER_B')]}})
+        del out['TRAINER_MARY']
+        with self.assertRaises(SystemExit):
+            classify.attach_choose_one(out, {})
 
     def test_choose_one_groups_name_real_trainers(self):
         for tid, entry in self.data['regular'].items():
