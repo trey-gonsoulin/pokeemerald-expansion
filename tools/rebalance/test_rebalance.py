@@ -1309,5 +1309,31 @@ class RealRepo(unittest.TestCase):
                 self.assertTrue(any(fnmatch.fnmatchcase(folder, g) for g in cfg['unstaged']), folder)
 
 
+class TwoPlayers(unittest.TestCase):
+    FORCED = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'testdata', 'forced_trainers.json')
+
+    @staticmethod
+    def stages():
+        return [
+            {'name': 'One', 'regular': ['TRAINER_A', 'TRAINER_B', 'TRAINER_C'], 'bosses': ['TRAINER_RIVAL_A']},
+            {'name': 'Two', 'regular': ['TRAINER_D', 'TRAINER_E'], 'bosses': ['TRAINER_LEADER_X']},
+        ]
+
+    def test_load_forced_takes_one_of_each_group(self):
+        forced = RB.load_forced(self.FORCED)
+        self.assertEqual(forced.trainers, frozenset({'TRAINER_A', 'TRAINER_C'}))
+        self.assertEqual(forced.optional_bosses, frozenset({'TRAINER_LEADER_X'}))
+
+    def test_skip_stages_drops_optional_bosses_and_skippable_trainers(self):
+        out = RB.skip_stages(self.stages(), RB.load_forced(self.FORCED))
+        self.assertEqual([st['regular'] for st in out], [['TRAINER_A', 'TRAINER_C'], []])
+        self.assertEqual([st['bosses'] for st in out], [['TRAINER_RIVAL_A'], []])
+
+    def test_skip_stages_leaves_the_input_alone(self):
+        stages = self.stages()
+        RB.skip_stages(stages, RB.load_forced(self.FORCED))
+        self.assertEqual(stages, self.stages())
+
+
 if __name__ == '__main__':
     unittest.main()

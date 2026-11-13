@@ -219,6 +219,32 @@ def load_stages(path, trainers, repo):
     return stages
 
 
+FORCED_TRAINERS = os.path.join(G.HERE, 'forced_trainers.json')
+Forced = collections.namedtuple('Forced', 'trainers optional_bosses')
+
+
+def load_forced(path):
+    """The trainers a skip-everything run still fights, and the bosses it may skip.
+
+    That is every FORCED trainer plus the first member of each choose-one group.
+    """
+    with open(path, encoding='utf-8') as f:
+        data = json.load(f)
+    trainers = {tid for tid, e in data['regular'].items() if e['class'] == 'FORCED'}
+    trainers.update(e['one_of'][0] for e in data['regular'].values() if 'one_of' in e)
+    optional = {bid for bid, e in data['bosses'].items() if not e['required']}
+    return Forced(frozenset(trainers), frozenset(optional))
+
+
+def skip_stages(stages, forced):
+    """Copies of the stages with only the forced trainers and the required bosses."""
+    out = copy.deepcopy(stages)
+    for st in out:
+        st['regular'] = [t for t in st['regular'] if t in forced.trainers]
+        st['bosses'] = [b for b in st['bosses'] if b not in forced.optional_bosses]
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Census
 # ---------------------------------------------------------------------------
