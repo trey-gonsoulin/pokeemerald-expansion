@@ -225,24 +225,24 @@ Forced = collections.namedtuple('Forced', 'trainers optional_bosses')
 # The report flags a staged boss whose ace the skip-everything lead meets
 # more than this percent of the ace under (#350).
 OUTLIER_SKIP = 25
-# The teams outside the two-player rules, each with why and its numbers
-# (#350): the staged bosses the margins test leaves be (LEAGUE_STEPS lifts
-# the last four Elite Four fights over the skip rule's ace), and the forced
-# trainers the report flags as met more than OUTLIER_SKIP percent under
-# (the raise-only trainer shift keeps their stage's levels).
+# The teams outside the two-player rules (#350): trainer -> (side, why, with
+# its numbers). Side ``skip`` or ``full``: a staged boss the margins test
+# leaves be on that player's side only (LEAGUE_STEPS lifts the last four
+# Elite Four fights over the skip rule's ace); ``forced``: a forced trainer
+# the report flags as met more than OUTLIER_SKIP percent under (the
+# raise-only trainer shift keeps its stage's levels). The report marks each
+# one accepted.
 OUTLIERS = {
-    'TRAINER_PHOEBE': 'skip lead 62 vs ace 74 (-16%): LEAGUE_STEPS puts her 1 over Sidney (73), over the skip '
-                      "rule's 73 (62 / 0.85); provisionally accepted, owner to confirm (#350)",
-    'TRAINER_GLACIA': 'skip lead 63 vs ace 75 (-16%): LEAGUE_STEPS puts her 1 over Phoebe (74), over the skip '
-                      "rule's 74 (63 / 0.85); provisionally accepted, owner to confirm (#350)",
-    'TRAINER_DRAKE': 'skip lead 64 vs ace 76 (-16%): LEAGUE_STEPS puts him 1 over Glacia (75), over the skip '
-                     "rule's 75 (64 / 0.85); provisionally accepted, owner to confirm (#350)",
-    'TRAINER_WALLACE': 'skip lead 65 vs ace 79 (-18%): LEAGUE_STEPS puts him 3 over Drake (76), over the skip '
-                       "rule's 76 (65 / 0.85); provisionally accepted, owner to confirm (#350)",
-    'TRAINER_EDWARDO': 'forced (Winona stage): skip lead 34 vs ace 47 (-28%); provisionally accepted, owner to '
-                       'confirm (#350)',
-    'TRAINER_FLINT': 'forced (Winona stage): skip lead 35 vs ace 47 (-26%); provisionally accepted, owner to '
-                     'confirm (#350)',
+    'TRAINER_PHOEBE': ('skip', 'skip lead 62 vs ace 74 (-16%): LEAGUE_STEPS puts her 1 over Sidney (73), over the '
+                               "skip rule's 73 (62 / 0.85); owner accepted (#350)"),
+    'TRAINER_GLACIA': ('skip', 'skip lead 63 vs ace 75 (-16%): LEAGUE_STEPS puts her 1 over Phoebe (74), over the '
+                               "skip rule's 74 (63 / 0.85); owner accepted (#350)"),
+    'TRAINER_DRAKE': ('skip', 'skip lead 64 vs ace 76 (-16%): LEAGUE_STEPS puts him 1 over Glacia (75), over the '
+                              "skip rule's 75 (64 / 0.85); owner accepted (#350)"),
+    'TRAINER_WALLACE': ('skip', 'skip lead 65 vs ace 79 (-18%): LEAGUE_STEPS puts him 3 over Drake (76), over the '
+                                "skip rule's 76 (65 / 0.85); owner accepted (#350)"),
+    'TRAINER_EDWARDO': ('forced', 'Winona stage: skip lead 34 vs ace 47 (-28%); owner accepted (#350)'),
+    'TRAINER_FLINT': ('forced', 'Winona stage: skip lead 35 vs ace 47 (-26%); owner accepted (#350)'),
 }
 
 
@@ -517,6 +517,10 @@ def unlearnable_set_moves(teams, gd, info, move_lists):
 # which a replacement set move never is (#139, #159), nor a recharge or self-KO move.
 TWO_TURN_EFFECTS = frozenset(('EFFECT_TWO_TURNS_ATTACK', 'EFFECT_SEMI_INVULNERABLE', 'EFFECT_SOLAR_BEAM',
                               'EFFECT_SKY_DROP'))
+# Moves that cost their user HP (recoil, crash damage, half its HP), which a
+# replacement loses a tie to (#350).
+RECOIL_EFFECTS = frozenset(('EFFECT_RECOIL', 'EFFECT_RECOIL_IF_MISS', 'EFFECT_MAX_HP_50_RECOIL', 'EFFECT_CHLOROBLAST',
+                            'EFFECT_STRUGGLE'))
 # At or below this level a replacement is the best same-type level-up move
 # when there is one, ahead of a stronger TM or egg move (#160).
 LEVEL_UP_REPLACEMENT_LEVEL = 30
@@ -533,8 +537,12 @@ def replacement_move(gd, info, move_lists, species, level, replaced, kept):
     below, the best same-type level-up move ahead of a TM or egg move. Never a
     recharge, self-KO (move_power scores it 0) or TWO_TURN_EFFECTS move, nor an
     HM move (``move_lists``' G.HM_LIST: Surf on a level-9 Wailmer is the early
-    spike #350 removes, and #160 picked none), nor a move in ``kept``. None
-    when the species can learn no such attack."""
+    spike #350 removes, and #160 picked none), nor a move in ``kept``. On an
+    equal score (#350: Eruption's 150 x 0.6 ties Earth Power's 90), a
+    same-type move wins, then a level-up move, then one with no drawback (no
+    RECOIL_EFFECTS, no power from the user's HP, no drop of its own stats),
+    then the name, last in order. None when the species can learn no such
+    attack."""
     types = gd.species[species].types
 
     def score(mv):
@@ -557,11 +565,17 @@ def replacement_move(gd, info, move_lists, species, level, replaced, kept):
         if typed:
             pool = typed
             break
+    level_up = level_up_moves(gd, info, species, level)
     if level <= LEVEL_UP_REPLACEMENT_LEVEL:
-        level_up = level_up_moves(gd, info, species, level)
         same = {m: mv for m, mv in pool.items() if m in level_up and mv.type in types}
         pool = same or pool
-    return max(pool, key=lambda m: (score(pool[m]), m), default=None)
+
+    def rank(m):
+        mv = pool[m]
+        drawback = mv.effect in RECOIL_EFFECTS or mv.effect in P.HP_POWER_EFFECTS or mv.self_drop
+        # Rounded, so a tie isn't lost to float error (150 x 0.6).
+        return round(score(mv), 6), mv.type in types, m in level_up, not drawback, m
+    return max(pool, key=rank, default=None)
 
 
 def party_move_name(move):
@@ -1564,10 +1578,11 @@ UNITS = ('levels', 'percent')
 
 def explorer_defaults(gd):
     """EXPLORER_KNOBS with ``gd``'s exp formula configs (#154): the game as
-    report.md models it: level-scaled or (#350) flat exp, the scaling
-    exponent and the over-level penalty."""
+    report.md models it: level-scaled or (#350) flat exp, the trainer exp
+    1.5x, the scaling exponent and the over-level penalty."""
     o = Overlevel.from_configs(gd)
     return {**EXPLORER_KNOBS, 'scaled_exp': bool(gd.flag('B_SCALED_EXP >= GEN_5 && B_SCALED_EXP != GEN_6')),
+            'trainer_exp': '1.5x on' if gd.flag('B_TRAINER_EXP_MULTIPLIER <= GEN_6') else '1.5x off',
             'scaling_power': 3.5 if gd.flag('B_SCALED_EXP_STEEP') else 2.5,
             'overlevel_cutoff': o and o.cutoff, 'overlevel_unit': 'percent' if o and o.relative else 'levels',
             'overlevel_width': o.width or None if o else None, 'overlevel_floor': o.floor if o else 0,
@@ -2012,9 +2027,9 @@ def two_players_report(rows, forced=()):
         return []
     if forced:
         trainers = [f'The forced trainers a skip lead meets more than {OUTLIER_SKIP}% under their ace:', '',
-                    table(['trainer', 'stage', 'ace', 'skip lead', '%'],
-                          [[short(r['trainer']), r['stage'], r['ace'], r['skip'], f"{r['skip_pct']:+.0f}%"]
-                           for r in forced]), '']
+                    table(['trainer', 'stage', 'ace', 'skip lead', '%', 'flag'],
+                          [[short(r['trainer']), r['stage'], r['ace'], r['skip'], f"{r['skip_pct']:+.0f}%",
+                            'accepted' if r['trainer'] in OUTLIERS else ''] for r in forced]), '']
     else:
         trainers = [f'No forced trainer is met more than {OUTLIER_SKIP}% under its ace.', '']
     return ['## Two players', '',
@@ -2023,11 +2038,13 @@ def two_players_report(rows, forced=()):
             'story trainer and both optional rivals. Skip everything: forced_trainers.json\'s FORCED trainers, '
             'the first of each choose-one group and the required bosses, with the same walking, catches and '
             'wild battles. %: the lead over the boss\'s ace, in percent of the ace. outlier: the skip lead more '
-            f'than {OUTLIER_SKIP}% under (#350).', '',
+            f'than {OUTLIER_SKIP}% under (#350). accepted: the owner accepted it outside the rules '
+            '(rebalance.OUTLIERS).', '',
             table(['boss', 'ace', 'full lead', '%', 'skip lead', '%', 'flag'],
                   [[short(r['boss']), r['ace'], r['full'], f"{r['full_pct']:+.0f}%",
                     'skipped' if r['skip'] is None else r['skip'],
-                    '-' if r['skip_pct'] is None else f"{r['skip_pct']:+.0f}%", 'outlier' if r['outlier'] else '']
+                    '-' if r['skip_pct'] is None else f"{r['skip_pct']:+.0f}%",
+                    ', '.join(f for f, on in (('outlier', r['outlier']), ('accepted', r['boss'] in OUTLIERS)) if on)]
                    for r in rows]), ''] + trainers
 
 

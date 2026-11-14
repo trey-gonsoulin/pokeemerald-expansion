@@ -320,6 +320,7 @@ class Move:
     multi_hit: bool = False  # multiHit: 2-5 strikes
     explosion: bool = False  # faints the user
     recharge: bool = False  # MOVE_EFFECT_RECHARGE on the user (Hyper Beam)
+    self_drop: bool = False  # lowers the user's own stats (Close Combat, Overheat)
 
     @property
     def attacking(self):
@@ -343,6 +344,7 @@ def parse_moves(repo, defines, type_categories):
                       ('type', 'power', 'accuracy', 'category', 'effect', 'strikeCount', 'multiHit', 'explosion'),
                       nested=('MOVE_EFFECT_RECHARGE',))
     split = R.c_eval('B_PHYSICAL_SPECIAL_SPLIT >= GEN_4', defines)
+    drops = self_drop_moves(os.path.join(repo, 'src', 'data', 'moves_info.h'), defines)
     out = {}
     for move, f in raw.items():
         cat = f.get('category', 'DAMAGE_CATEGORY_STATUS')
@@ -351,7 +353,30 @@ def parse_moves(repo, defines, type_categories):
             cat = type_categories.get(typ, cat)  # GetBattleMoveCategory before Gen 4
         out[move] = Move(typ, _int(f.get('power', 0)), _int(f.get('accuracy', 0)), cat, f.get('effect', 'EFFECT_HIT'),
                          max(_int(f.get('strikeCount', 1)), 1), f.get('multiHit') in (True, 'TRUE', 1),
-                         f.get('explosion') in (True, 'TRUE', 1), f.get('MOVE_EFFECT_RECHARGE', False))
+                         f.get('explosion') in (True, 'TRUE', 1), f.get('MOVE_EFFECT_RECHARGE', False),
+                         move in drops)
+    return out
+
+
+def self_drop_moves(path, defines):
+    """The moves with an additional effect that lowers the user's own stats:
+    ``MOVE_EFFECT_STAT_MINUS`` with ``.self = TRUE`` in one effect (Close
+    Combat, Overheat; not Crunch, whose drop is the target's)."""
+    out, current, effect = set(), None, []
+    for line in R.active_lines(path, dict(defines)):
+        m = re.match(r'\s*\[(MOVE_\w+)\]\s*=', line)
+        if m:
+            current, effect = m[1], []
+            continue
+        if '.moveEffect' in line:
+            effect = [line]
+        elif effect:
+            effect.append(line)
+        if effect and '}' in line:
+            text = ''.join(effect)
+            if 'MOVE_EFFECT_STAT_MINUS' in text and re.search(r'\.self\s*=\s*TRUE', text):
+                out.add(current)
+            effect = []
     return out
 
 

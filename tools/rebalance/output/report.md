@@ -389,7 +389,7 @@ Full clear: 29 of 30 bosses have the bench (friendship) within 1 of their ace; t
 
 ## Two players
 
-The Exp. Share lead (the KO-taker) just before each staged boss, on today's levels: curve_settings.json's knobs with the level rules (margins and gaps) off. Fight everyone: every story trainer and both optional rivals. Skip everything: forced_trainers.json's FORCED trainers, the first of each choose-one group and the required bosses, with the same walking, catches and wild battles. %: the lead over the boss's ace, in percent of the ace. outlier: the skip lead more than 25% under (#350).
+The Exp. Share lead (the KO-taker) just before each staged boss, on today's levels: curve_settings.json's knobs with the level rules (margins and gaps) off. Fight everyone: every story trainer and both optional rivals. Skip everything: forced_trainers.json's FORCED trainers, the first of each choose-one group and the required bosses, with the same walking, catches and wild battles. %: the lead over the boss's ace, in percent of the ace. outlier: the skip lead more than 25% under (#350). accepted: the owner accepted it outside the rules (rebalance.OUTLIERS).
 
 | boss | ace | full lead | % | skip lead | % | flag |
 |---|---|---|---|---|---|---|
@@ -419,17 +419,17 @@ The Exp. Share lead (the KO-taker) just before each staged boss, on today's leve
 | Juan 1 | 67 | 83 | +24% | 57 | -15% |  |
 | Wally Vr 1 | 71 | 87 | +22% | 60 | -16% |  |
 | Sidney | 73 | 88 | +20% | 62 | -15% |  |
-| Phoebe | 74 | 88 | +19% | 62 | -16% |  |
-| Glacia | 75 | 88 | +17% | 63 | -16% |  |
-| Drake | 76 | 89 | +17% | 64 | -16% |  |
-| Wallace | 79 | 89 | +13% | 65 | -18% |  |
+| Phoebe | 74 | 88 | +19% | 62 | -16% | accepted |
+| Glacia | 75 | 88 | +17% | 63 | -16% | accepted |
+| Drake | 76 | 89 | +17% | 64 | -16% | accepted |
+| Wallace | 79 | 89 | +13% | 65 | -18% | accepted |
 
 The forced trainers a skip lead meets more than 25% under their ace:
 
-| trainer | stage | ace | skip lead | % |
-|---|---|---|---|---|
-| Edwardo | Winona | 47 | 34 | -28% |
-| Flint | Winona | 47 | 35 | -26% |
+| trainer | stage | ace | skip lead | % | flag |
+|---|---|---|---|---|---|
+| Edwardo | Winona | 47 | 34 | -28% | accepted |
+| Flint | Winona | 47 | 35 | -26% | accepted |
 
 ## Solo walls
 
@@ -446,7 +446,7 @@ Per starter and staged story boss (#350), the starter line alone: its default mo
 | May Route 110 Treecko | 25 | 28 | 31 | 33 | 49 | Plusle 15 |
 | Wally Mauville | 25 | 28 | 15 | 15 | 0 | Plusle 15 |
 | Wattson 1 | 25 | 28 | 22 | 27 | 0 | Plusle 15 |
-| Tabitha Mt Chimney | 29 | 43 | 35 | 40 | 0 | Pelipper 29 |
+| Tabitha Mt Chimney | 29 | 43 | 32 | 38 | 0 | Pelipper 29 |
 | Maxie Mt Chimney | 31 | 43 | 34 | 36 | 0 | Pelipper 29 |
 | Flannery 1 | 32 | 44 | 45 | 54 | 18 | Pelipper 29 |
 | Norman 1 | 36 | 45 | 42 | 50 | 0 | Sandslash 33 |
@@ -483,12 +483,12 @@ Worst wall: May Route 110 Treecko (49 KOs to level 31).
 | May Route 110 Torchic | 25 | 28 | 28 | 30 | 0 | Plusle 15 |
 | Wally Mauville | 25 | 28 | 18 | 18 | 0 | Plusle 15 |
 | Wattson 1 | 25 | 28 | 30 | 36 | 31 | Sableye 16 |
-| Tabitha Mt Chimney | 29 | 43 | 35 | 37 | 0 | Pelipper 29 |
+| Tabitha Mt Chimney | 29 | 43 | 36 | 40 | 0 | Pelipper 29 |
 | Maxie Mt Chimney | 31 | 43 | 34 | 36 | 0 | Pelipper 29 |
 | Flannery 1 | 32 | 44 | 34 | 40 | 0 | Pelipper 29 |
 | Norman 1 | 36 | 45 | 36 | 41 | 0 | Sandslash 33 |
 | May Route 119 Torchic | 45 | 62 | 54 | 58 | 0 | Azumarill 42 |
-| Shelly Weather Institute | 47 | 62 | 49 | 52 | 0 | Azumarill 42 |
+| Shelly Weather Institute | 47 | 62 | 49 | 51 | 0 | Azumarill 42 |
 | Winona 1 | 47 | 62 | 49 | 64 | 0 | Azumarill 42 |
 | May Lilycove Torchic (optional, not budgeted) | 67 | 74 | 75 | 90 | 16 | Golduck 56; 2 battles vs Gabrielle 5 |
 | Tabitha Magma Hideout | 58 | 75 | 63 | 72 | 0 | Walrein 48 |
@@ -520,7 +520,7 @@ Worst wall: Wallace (49 KOs to level 92).
 | May Route 110 Mudkip | 25 | 28 | 29 | 30 | 15 | Plusle 15 |
 | Wally Mauville | 25 | 28 | 16 | 16 | 0 | Plusle 15 |
 | Wattson 1 | 25 | 28 | 21 | 23 | 0 | Plusle 15 |
-| Tabitha Mt Chimney | 29 | 43 | 26 | 32 | 0 | Pelipper 29 |
+| Tabitha Mt Chimney | 29 | 43 | 26 | 33 | 0 | Pelipper 29 |
 | Maxie Mt Chimney | 31 | 43 | 31 | 35 | 0 | Pelipper 29 |
 | Flannery 1 | 32 | 44 | 26 | 32 | 0 | Pelipper 29 |
 | Norman 1 | 36 | 45 | 39 | 45 | 0 | Sandslash 33 |
@@ -620,10 +620,10 @@ Flags (all default Pokemon / story trainers only):
 | measure | value |
 |---|---|
 | trainer Pokemon with set moves | 670 |
-| attacking set moves whose data changed | 629 |
-|   category flips (physical <-> special) | 265 |
-|   of them now on a weaker / similar / stronger stat | 32 / 101 / 132 |
-|   Pokemon with at least one flip | 230 |
+| attacking set moves whose data changed | 631 |
+|   category flips (physical <-> special) | 267 |
+|   of them now on a weaker / similar / stronger stat | 32 / 102 / 133 |
+|   Pokemon with at least one flip | 231 |
 |   Pokemon with a flip onto a weaker stat | 30 |
 |   type changes | 0 |
 |   power changes | 389 |
@@ -634,7 +634,7 @@ Changed attacking moves (set-move slots; weaker/similar/stronger: the category f
 | move | slots |
 |---|---|
 | Tackle | data 45 |
-| Crunch | stronger 21, similar 10 |
+| Crunch | stronger 22, similar 10 |
 | Ice Beam | data 28 |
 | Thunderbolt | data 27 |
 | Flamethrower | data 26 |
@@ -651,7 +651,7 @@ Changed attacking moves (set-move slots; weaker/similar/stronger: the category f
 | Ancient Power | similar 5, stronger 9, weaker 1 |
 | Night Shade | data 12 |
 | Rock Tomb | data 12 |
-| Earth Power | similar 10 |
+| Earth Power | similar 11 |
 | Clear Smog | stronger 9, similar 1 |
 | Fury Cutter | data 10 |
 | Zen Headbutt | similar 7, stronger 2 |
@@ -719,6 +719,7 @@ Changed attacking moves (set-move slots; weaker/similar/stronger: the category f
 |---|---|---|---|---|---|---|
 | Matt | Mightyena | 59 | Crunch | Special -> Physical | 60 -> 90 | stronger |
 | Shelly Weather Institute | Mightyena | 47 | Assurance | Special -> Physical | 60 -> 90 | stronger |
+| Shelly Weather Institute | Mightyena | 47 | Crunch | Special -> Physical | 60 -> 90 | stronger |
 | Sidney | Mightyena | 70 | Crunch | Special -> Physical | 60 -> 90 | stronger |
 | Sidney | Cacturne | 70 | Sucker Punch | Special -> Physical | 115 -> 115 | similar |
 | Phoebe | Banette | 72 | Shadow Ball | Physical -> Special | 115 -> 83 | weaker |
@@ -740,6 +741,7 @@ Changed attacking moves (set-move slots; weaker/similar/stronger: the category f
 | May Route 110 Mudkip | Slugma | 23 | Clear Smog | Physical -> Special | 40 -> 70 | stronger |
 | May Route 110 Mudkip | Slugma | 23 | Ancient Power | Physical -> Special | 40 -> 70 | stronger |
 | May Route 110 Mudkip | Grovyle | 25 | Assurance | Special -> Physical | 85 -> 65 | weaker |
+| Tabitha Mt Chimney | Camerupt | 29 | Earth Power | Physical -> Special | 100 -> 105 | similar |
 | Maxie Magma Hideout | Mightyena | 56 | Crunch | Special -> Physical | 60 -> 90 | stronger |
 
 ## Evolutions that aren't by level (#181)
@@ -837,7 +839,7 @@ Per boss Pokemon: retyping, defensive multipliers that changed (attacking type: 
 
 - Machop 15: takes Fairy new->2x; hits Fairy new->0.5x
 - Meditite 15: takes Fairy new->2x; hits Fairy new->0.5x
-- Makuhita 18: takes Fairy new->2x
+- Makuhita 18: takes Fairy new->2x; hits Fairy new->0.5x
 
 ### May Route 110 Mudkip
 
@@ -883,7 +885,7 @@ Per boss Pokemon: retyping, defensive multipliers that changed (attacking type: 
 
 ### Shelly Weather Institute
 
-- Mightyena 47: takes Fairy new->2x; hits Steel 0.5x->1x
+- Mightyena 47: takes Fairy new->2x; hits Steel 0.5x->1x, Fairy new->0.5x
 - Sharpedo 47 (default moves): takes Fairy new->2x; hits Fire 1x->2x, Ghost 0x->2x, Ground 1x->2x, Psychic 1x->2x, Rock 0.5x->2x, Steel 0.5x->1x
 
 ### Winona 1
@@ -1052,7 +1054,7 @@ Boss Pokemon at least 10% from their level, strongest first (best move; "default
 | Wattson 1 | Magnemite | 23 | 20.2 | -12% | Shock Wave |
 | Brawly 1 | Machop | 15 | 13.1 | -13% | Low Sweep |
 | Wattson 1 | Voltorb | 21 | 18.3 | -13% | Shock Wave |
-| Brawly 1 | Makuhita | 18 | 15.4 | -14% | Double Edge |
+| Brawly 1 | Makuhita | 18 | 15.4 | -14% | Cross Chop |
 | Roxanne 1 | Geodude | 12 | 10.2 | -15% | Bulldoze |
 | Roxanne 1 | Geodude | 12 | 10.2 | -15% | Bulldoze |
 | May Route 110 Mudkip | Grovyle | 25 | 20.5 | -18% | Mega Drain |
@@ -1084,12 +1086,12 @@ Hardest: the boss Pokemon whose best answer on the team is lowest, with that ans
 | Wattson | May Route 110 | 25 | 24 | Combusken 25: 3.10 (Azumarill) | 3/3 | 4.56 | Marshtomp 25: 1.93 (Azumarill) | 3/3 | 8.22 | Grovyle 25: 2.78 (Hariyama) | 3/3 | 5.30 |
 | Wattson | Wally Mauville | 25 | 24 | Ralts 25: inf (Mightyena) | 1/1 | inf | Ralts 25: inf (Mightyena) | 1/1 | inf | Ralts 25: inf (Mightyena) | 1/1 | inf |
 | Wattson | Wattson 1 | 25 | 24 | Manectric 25: 2.09 (Grovyle) | 4/4 | 8.83 | Manectric 25: 0.80 (Minun) | 3/4 | 3.44 | Manectric 25: 1.98 (Marshtomp) | 4/4 | 17.83 |
-| Flannery | Tabitha Mt Chimney | 29 | 37 | Camerupt 29: 3.71 (Altaria) | 4/4 | 15.25 | Camerupt 29: 3.71 (Altaria) | 4/4 | 15.25 | Mightyena 27: 11.74 (Swampert) | 4/4 | 108.58 |
+| Flannery | Tabitha Mt Chimney | 29 | 37 | Camerupt 29: 5.28 (Altaria) | 4/4 | 15.25 | Camerupt 29: 5.28 (Altaria) | 4/4 | 15.25 | Mightyena 27: 11.74 (Swampert) | 4/4 | 108.58 |
 | Flannery | Maxie Mt Chimney | 31 | 37 | Mightyena 30: 4.27 (Sceptile) | 3/3 | 4.27 | Golbat 30: 4.35 (Slaking) | 3/3 | 7.52 | Mightyena 30: 6.74 (Swampert) | 3/3 | 6.74 |
 | Flannery | Flannery 1 | 32 | 37 | Torkoal 32: 1.87 (Gardevoir) | 4/4 | 6.39 | Torkoal 32: 2.90 (Blaziken) | 4/4 | 6.39 | Torkoal 32: 9.69 (Swampert) | 4/4 | 42.96 |
 | Norman | Norman 1 | 36 | 39 | Slaking 36: 1.02 (Sceptile) | 4/4 | 5.28 | Slaking 36: 2.29 (Blaziken) | 4/4 | 8.48 | Slaking 36: 1.66 (Swampert) | 4/4 | 7.49 |
 | Winona | May Route 119 | 45 | 53 | Blaziken 45: 7.50 (Flygon) | 3/3 | 199.26 | Swampert 45: 2.51 (Gardevoir) | 3/3 | 5.14 | Ludicolo 43: 6.83 (Swampert) | 3/3 | 40.96 |
-| Winona | Shelly Weather Institute | 47 | 53 | Mightyena 47: 6.57 (Gardevoir) | 2/2 | 6.57 | Sharpedo 47: 4.37 (Slaking) | 2/2 | 7.22 | Sharpedo 47: 4.37 (Slaking) | 2/2 | 6.57 |
+| Winona | Shelly Weather Institute | 47 | 53 | Mightyena 47: 6.57 (Gardevoir) | 2/2 | 6.57 | Sharpedo 47: 4.37 (Slaking) | 2/2 | 13.66 | Sharpedo 47: 4.37 (Slaking) | 2/2 | 6.57 |
 | Winona | Winona 1 | 47 | 53 | Altaria 47: 3.26 (Gardevoir) | 5/5 | 5.87 | Altaria 47: 3.26 (Gardevoir) | 5/5 | 5.87 | Altaria 47: 3.26 (Gardevoir) | 5/5 | 6.51 |
 | Tate and Liza | May Lilycove | 67 | 64 | Blaziken 67: 3.62 (Flygon) | 4/4 | 4.86 | Swampert 67: 1.71 (Walrein) | 4/4 | 6.90 | Sceptile 67: 3.72 (Muk) | 4/4 | 4.86 |
 | Tate and Liza | Tabitha Magma Hideout | 58 | 65 | Crobat 55: 5.89 (Aggron) | 4/4 | 15.56 | Crobat 55: 5.89 (Aggron) | 4/4 | 15.56 | Crobat 55: 7.44 (Swampert) | 4/4 | 20.82 |
