@@ -395,6 +395,8 @@ Each rival row goes on all six teams of that fight: May or Brendan, with each st
 
 ## 10. Rematch ladders and Steven (#139)
 
+**Replaced by #350** (section 18): the rounds and Steven now take the fight-everyone rule and can go down; Steven is at 94.
+
 `rebalance.py apply` now also writes the rematch ladders (`gRematchTable`) and Steven at Meteor Falls, from the same settings plus `rematch_step: 5` (`curve_settings.json`).
 
 How rematches work (`src/battle_setup.c`):

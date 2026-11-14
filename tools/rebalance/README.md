@@ -139,7 +139,7 @@ The knobs:
     margin over the reference.
   - **Steven:** `POSTGAME_FINAL` follows, at the same rule and at least
     `POSTGAME_FINAL_STEP` (3) over the last round's highest ace (94 since
-    #350, 97 before). All of it is capped at 100.
+    #350, 99 before). All of it is capped at 100.
   - **Ordinary trainers:** `rematch_step` raises their ladders
     (`rematch_raises`). Rematches unlock after Norman (`REMATCH_UNLOCK`, the
     game's `OW_REMATCH_BADGE_COUNT`) at any tier, so a ladder is levelled
