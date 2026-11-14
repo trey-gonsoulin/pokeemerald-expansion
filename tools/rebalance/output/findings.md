@@ -626,7 +626,7 @@ Replaces section 8's exp formula and section 9's boss rule. The design is `docs/
 - With the gaps back on the bench, every stage shift is about 0, and the curve matches the evidence above within a level. The spec's trial numbers came from the old trainer levels, which the bench rule leaves in place.
 - So the boss margins measure on the lead, and the trainer and wild gaps stay on the bench as #150 had them (`gap_ref`), with a raise-only trainer shift: the spec's "today's rule is unchanged".
 
-**The penalty.** `rebalance.py tune` swept cutoffs 20-40 by 5, widths 4, 6 and 8 and floors 20-40 by 5 (75 candidates), each on its own curve with the solo walls fought on it. With the reference split, still none fit the budget as first scored: the optional Lilycove rival for a solo Mudkip needed 400-600 KOs (level 90-91 against an ace near 66, which the full rule alone sets), and Wallace was unwinnable for a solo Mudkip in all 75. With those two out of the budget (the owner's calls below), three pass, all at 49 KOs:
+**The penalty.** `rebalance.py tune` swept cutoffs 20-40 by 5, widths 4, 6 and 8 and floors 20-40 by 5 (75 candidates), each on its own curve with the solo walls fought on it. With the reference split, still none fit the budget as first scored: the optional Lilycove rival for a solo Mudkip needed 400-600 KOs (level 90-91 against an ace near 66, which the full rule alone sets), and Wallace was unwinnable for a solo Mudkip in all 75. With those two out of the budget (the owner's calls below), three passed, all at 49 KOs (this sweep ran on the data before `apply` wrote the new curve; see below for today's):
 
 | cutoff | width | floor | max KOs | full lead at Wallace |
 |---|---|---|---|---|
@@ -637,6 +637,7 @@ Replaces section 8's exp formula and section 9's boss rule. The design is `docs/
 
 - Every floor under 40 fails. Max KOs isn't monotone in the knobs: a softer penalty lifts the skip player, so the bosses, so some walls (35 / 4 / 40 is 118, 40 / 6 / 30 is 157).
 - **30 / 8 / 40**, the strictest that passes (the lowest floor, then cutoff, then width), is in `include/config/battle.h`. Its worst walls: Treecko, the Route 110 rival, 49 KOs (28 -> 31); Torchic, Wallace, 49 (89 -> 92); Mudkip, the Route 110 rival, 15.
+- **Rerun on the applied data**, the same sweep passes 11 candidates, and the strictest is 40 / 4 / 30 at 45 KOs (full lead 94 at Wallace); 30 / 8 / 40 still passes, at 49. The owner kept 30 / 8 / 40 (#350): no game change, and switching would need another `apply`, which moves the data and could move the strictest pick again.
 - `B_EXP_OVERLEVEL_MIN_LEVEL` stays 17: Route 101 then takes a level-5 starter to 7 in 5 KOs (the limit is 8, `Exp.test_early_exp_before_the_first_rival`).
 
 **The curve applied** (`curve_settings.json`: `full_margin` 10, `skip_margin` 15, `lower`, `boss_ref` ace and `gap_ref` bench, with #150's `trainer_gap` 10, `wild_gap` 20, `rematch_step` 5 and `wild_battles` 6; #150's `margin` is gone). The staged bosses, with the report's "Two players" leads:
