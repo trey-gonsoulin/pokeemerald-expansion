@@ -49,7 +49,7 @@ in `unstaged`, and each Trick House puzzle sits after its badge gate.
 
 ```sh
 python3 tools/rebalance/rebalance.py explore     # serves http://127.0.0.1:8151/rebalance/explorer/
-python3 tools/rebalance/rebalance.py curve '{"ko_takers": 6, "margin": 1}'   # the same run as text
+python3 tools/rebalance/rebalance.py curve '{"full_margin": 10, "skip_margin": 15}'   # the same run as text
 ```
 
 A page with sliders for the Exp. Share curve's knobs (`EXPLORER_KNOBS`)
@@ -97,7 +97,9 @@ The knobs:
 - **Targets:** the party levels the rules measure against (`REFERENCES`:
   the bench, the KO-takers' mean, the party's mean, and `ace`, its highest
   member, which is the lead): `boss_ref` for the boss rules and `gap_ref`
-  for the two gaps (#350, both the bench by default). Then the boss margin (off: today's levels) with the Elite Four spacing
+  for the two gaps (#350, both the bench by default). Then #150's
+  single-player boss margin (off: today's levels; the data now uses the
+  two players' margins, below) with the Elite Four spacing
   (`LEAGUE_STEPS`), #150's route-trainer gap (`TRAINER_GAP`: each stage's
   ordinary trainers raised until their aces average that far below the
   gap reference when fought) and wild gap (the stage's land average that
@@ -130,12 +132,14 @@ The knobs:
   `G.parse_rematches`):
   - **Rounds:** the gym leaders' ladders and Wally's (`POSTGAME_LADDERS`)
     are fought in rounds, `Rematch 2` being every ladder's first rematch.
-    With the margin, each round's teams go up to one ace, the margin over
-    the reference at the round's start, and at least 1 over their ladder's
-    previous fight.
-  - **Steven:** `POSTGAME_FINAL` follows, at the margin and at least
-    `POSTGAME_FINAL_STEP` (3) over the last round's highest ace. All of it
-    is capped at 100.
+    With a boss rule, each round's teams go to one ace, the rule's at the
+    round's start, and at least 1 over their ladder's previous fight. Under
+    #350's two players that is the fight-everyone rule alone (the lead /
+    1.10), and with `lower` a round can go down; under #150's it was the
+    margin over the reference.
+  - **Steven:** `POSTGAME_FINAL` follows, at the same rule and at least
+    `POSTGAME_FINAL_STEP` (3) over the last round's highest ace (94 since
+    #350, 97 before). All of it is capped at 100.
   - **Ordinary trainers:** `rematch_step` raises their ladders
     (`rematch_raises`). Rematches unlock after Norman (`REMATCH_UNLOCK`, the
     game's `OW_REMATCH_BADGE_COUNT`) at any tier, so a ladder is levelled
@@ -165,8 +169,9 @@ with them, through `apply_plan`, and writes:
   team by the same amount, capped at 100; with `lower` (#350) a boss team
   can go down too, and a lowered Pokemon below its evolved form's level
   plus `EVOLVE_GRACE` devolves (`devolver`: the form that fits, else the
-  nearest one the team doesn't have, else it stays). A raised Pokemon evolves through
-  `evolve_team`, as the model's fights do: never on an `EVOLVE_EXEMPT` team,
+  nearest one the team doesn't have, else it stays). A raised Pokemon
+  evolves through `evolve_team`, as the model's fights do: never on an
+  `EVOLVE_EXEMPT` team,
   and on a boss's team (bosses and variants) not into a species the team
   already has;
 - `PARTNER_FIGHTS`' partners (Steven at Mossdeep, to his foes' highest ace,
