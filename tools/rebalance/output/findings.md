@@ -148,6 +148,9 @@ Prize money is unchanged: 11,524 by Roxanne, 44,560 by Wattson, 120,964 by Norma
 - **Verdict:** money gets tight only with bulk Hyper Potions, Revives or Game Corner TMs.
 
 ## 7. Exp. Share curve and boss levels (#127)
+
+**Replaced by #350's two-player rule** (section 18): bosses now sit between a fight-everyone and a skip-everything player, and `apply` lowers them too.
+
 The owner's baseline (#113): the Gen 6 Exp. Share on; balance by raising opponent levels, lower ordinary trainers only carefully, never a level cap; evaluate the 1.5x trainer exp; include catch exp and affection; leave the Lucky Egg and traded bonuses out. Numbers are from `report.md`, "Exp. Share curve (#127)".
 
 **Model** (share6: one KO-taker, five on the bench, Medium Slow from 5; modern data):
@@ -590,7 +593,7 @@ Replaces section 8's exp formula and section 9's boss rule. The design is `docs/
 - Flat exp, the 1.5x trainer exp off, and a softer over-level penalty, kept so the full clear doesn't snowball.
 - The standing rules hold: the Exp. Share on, mainly through opponent levels, never a level cap, and a rival change on all six teams.
 
-**Forced trainers** (`tools/forced_trainers`, its README): 46 forced, 389 avoidable (29 only by timing) and 34 uncertain of 469 regular trainers. The spec's first run had 388 and 35; the committed file is the tool's output. The choose-one groups are Petalburg Gym (one per room), Weather Institute 1F and Victory Road B1F. Uncertain trainers count as skippable, apart from one pick per group. The Rustboro and Lilycove rival fights are optional (a YES/NO prompt).
+**Forced trainers** (`tools/forced_trainers`, its README): 46 forced, 389 avoidable (29 only by timing) and 34 uncertain of 469 regular trainers. The choose-one groups are Petalburg Gym (one per room), Weather Institute 1F and Victory Road B1F. Uncertain trainers count as skippable, apart from one pick per group. The Rustboro and Lilycove rival fights are optional (a YES/NO prompt).
 
 **The evidence on the old data** (#150's curve, steep scaled exp, 15 / 4 / 10). Each player's Exp. Share lead, in percent of the ace:
 
