@@ -421,10 +421,10 @@ class Exp(unittest.TestCase):
         self.assertEqual(RB.Overlevel(30, True, 0, 40).apply(1000, 20, 26), 1000)
         self.assertEqual(RB.Overlevel(30, True, 0, 40).apply(1000, 20, 27), 400)
         # A minimum level: a foe below it counts as that level for the cutoff and width, so a level-3
-        # foe's cutoff is 2.1 levels at 7 (0.9 without). At or above it, nothing changes.
-        low = RB.Overlevel(30, True, 8, 40, 7)
-        for foe, getter, exp in ((3, 3, 1000), (3, 4, 938), (3, 5, 733), (3, 6, 502), (3, 7, 420),
-                                 (3, 10, 400), (7, 9, 733), (20, 26, 707), (30, 39, 707)):
+        # foe's cutoff is 5.1 levels at 17 (0.9 without). At or above it, nothing changes.
+        low = RB.Overlevel(30, True, 8, 40, 17)
+        for foe, getter, exp in ((3, 3, 1000), (3, 4, 985), (3, 5, 956), (3, 6, 905), (3, 8, 717),
+                                 (3, 10, 522), (17, 20, 905), (20, 26, 707), (30, 39, 707)):
             self.assertEqual(low.apply(1000, foe, getter), exp, (foe, getter))
         self.assertEqual(game.apply(1000, 3, 5), 406)
         self.assertEqual(RB.Overlevel(3, False, 1, 10, 17).apply(1000, 20, 23), soft.apply(1000, 20, 23))
@@ -1434,7 +1434,7 @@ class RealRepo(unittest.TestCase):
                          G.parse_scaling_factors(G.REPO, 'gExperienceScalingFactorsSteep', 'exp_formula.c'))
         self.assertEqual(list(RB.LOGISTIC), G.parse_scaling_factors(G.REPO, 'sExpLogistic', 'exp_formula.c'))
         gd = G.load(G.REPO)
-        self.assertEqual(RB.Overlevel.from_configs(gd['modern']), RB.Overlevel(30, True, 8, 40, 7))
+        self.assertEqual(RB.Overlevel.from_configs(gd['modern']), RB.Overlevel(30, True, 8, 40, 17))
         self.assertIsNone(RB.Overlevel.from_configs(gd['vanilla']))
         # #350: B_SCALED_EXP_STEEP is off, so the configs keep the level^2.5 table (unused under flat exp).
         self.assertEqual(RB.game_scaling(gd['modern'], RB.scaling_factors(2.5)), RB.scaling_factors(2.5))

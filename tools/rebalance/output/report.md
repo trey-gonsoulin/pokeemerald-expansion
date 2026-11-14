@@ -49,10 +49,10 @@ Party level just before each boss. Every party member is Medium Slow (the starte
 | Rival (Route 103) | May Route 103 Mudkip | 6 | 6.0 | 5 | 5.0 | 5 | 5.0 | 5 | 5.0 |
 | Roxanne | Roxanne 1 | 16 | 14.0 | 21 | 14.0 | 17 | 12.0 | 17 | 14.0 |
 | Brawly | May Rustboro Mudkip | 18 | 17.0 | 24 | 15.8 | 19 | 13.0 | 19 | 16.0 |
-| Brawly | Brawly 1 | 19 | 17.0 | 24 | 16.2 | 19 | 13.2 | 19 | 16.0 |
+| Brawly | Brawly 1 | 19 | 17.0 | 24 | 16.2 | 20 | 13.2 | 20 | 16.0 |
 | Wattson | May Route 110 Mudkip | 26 | 24.7 | 35 | 23.0 | 27 | 19.5 | 27 | 23.0 |
 | Wattson | Wally Mauville | 26 | 26.0 | 36 | 23.5 | 27 | 19.5 | 27 | 24.0 |
-| Wattson | Wattson 1 | 26 | 23.5 | 36 | 23.8 | 27 | 19.5 | 27 | 24.0 |
+| Wattson | Wattson 1 | 26 | 23.5 | 36 | 23.8 | 28 | 19.5 | 28 | 24.0 |
 | Flannery | Tabitha Mt Chimney | 38 | 36.5 | 54 | 35.0 | 42 | 30.0 | 42 | 36.0 |
 | Flannery | Maxie Mt Chimney | 39 | 38.3 | 55 | 35.8 | 42 | 30.2 | 42 | 36.0 |
 | Flannery | Flannery 1 | 39 | 35.8 | 55 | 36.0 | 43 | 30.5 | 43 | 37.0 |
@@ -81,7 +81,7 @@ Party level just before each boss. Every party member is Medium Slow (the starte
 
 | stage | boss | boss ace | boss mean | vanilla solo | vanilla rotate4 | modern solo | modern rotate4 | modern share6 ace | share6 bench |
 |---|---|---|---|---|---|---|---|---|---|
-| Roxanne | Roxanne 1 | 16 | 14.0 | 17 | 11.5 | 14 | 10.0 | 14 | 12.0 |
+| Roxanne | Roxanne 1 | 16 | 14.0 | 17 | 11.5 | 15 | 10.0 | 15 | 12.0 |
 | Brawly | Brawly 1 | 19 | 17.0 | 21 | 14.0 | 17 | 11.8 | 17 | 14.0 |
 | Wattson | Wattson 1 | 26 | 23.5 | 30 | 19.8 | 25 | 16.8 | 25 | 20.0 |
 | Flannery | Flannery 1 | 39 | 35.8 | 45 | 29.8 | 38 | 25.2 | 38 | 31.0 |
@@ -99,12 +99,12 @@ Party level just before each boss. Every party member is Medium Slow (the starte
 
 | stage | boss | boss ace | boss mean | vanilla solo | vanilla rotate4 | modern solo | modern rotate4 | modern share6 ace | share6 bench |
 |---|---|---|---|---|---|---|---|---|---|
-| Roxanne | Roxanne 1 | 16 | 14.0 | 22 | 15.0 | 17 | 13.0 | 17 | 15.0 |
+| Roxanne | Roxanne 1 | 16 | 14.0 | 22 | 15.0 | 18 | 13.0 | 18 | 15.0 |
 | Brawly | Brawly 1 | 19 | 17.0 | 26 | 17.5 | 21 | 15.2 | 21 | 18.0 |
-| Wattson | Wattson 1 | 26 | 23.5 | 37 | 24.8 | 28 | 20.8 | 28 | 25.0 |
-| Flannery | Flannery 1 | 39 | 35.8 | 56 | 36.5 | 43 | 31.2 | 43 | 37.0 |
-| Norman | Norman 1 | 41 | 38.5 | 58 | 37.8 | 45 | 33.2 | 45 | 39.0 |
-| Winona | Winona 1 | 57 | 54.4 | 76 | 49.5 | 61 | 43.5 | 61 | 52.0 |
+| Wattson | Wattson 1 | 26 | 23.5 | 37 | 24.8 | 28 | 21.2 | 28 | 25.0 |
+| Flannery | Flannery 1 | 39 | 35.8 | 56 | 36.5 | 43 | 31.5 | 43 | 37.0 |
+| Norman | Norman 1 | 41 | 38.5 | 58 | 37.8 | 46 | 33.2 | 46 | 39.0 |
+| Winona | Winona 1 | 57 | 54.4 | 76 | 49.5 | 61 | 43.5 | 61 | 53.0 |
 | Tate and Liza | Tate And Liza 1 | 67 | 66.5 | 92 | 59.5 | 74 | 52.5 | 74 | 64.0 |
 | Juan | Juan 1 | 76 | 72.8 | 100 | 65.0 | 82 | 58.0 | 82 | 71.0 |
 | Elite Four | Sidney | 80 | 78.4 | 100 | 68.0 | 86 | 61.0 | 86 | 74.0 |
@@ -121,16 +121,16 @@ The share6 party on modern data: one Pokemon takes every KO (KO-taker) and five 
 
 | stage | boss | boss ace | 1.5x off KO-taker | 1.5x off bench (none / friendship / always) | 1.5x off bench friendship | 1.5x on KO-taker | 1.5x on bench (none / friendship / always) | 1.5x on bench friendship |
 |---|---|---|---|---|---|---|---|---|
-| Rival (Route 103) | May Route 103 Mudkip | 6 | 6 | 5 / 5 / 5 | 66 | 6 | 5 / 5 / 5 | 66 |
-| Roxanne | Roxanne 1 | 16 | 17 | 15 / 15 / 15 | 120 | 18 | 16 / 16 / 16 | 123 |
-| Brawly | May Rustboro Mudkip | 18 | 19 | 16 / 16 / 17 | 141 | 20 | 18 / 18 / 18 | 147 |
-| Brawly | Brawly 1 | 19 | 19 | 17 / 17 / 17 | 144 | 21 | 18 / 18 / 19 | 147 |
-| Wattson | May Route 110 Mudkip | 26 | 27 | 24 / 24 / 24 | 183 | 29 | 26 / 26 / 26 | 189 |
+| Rival (Route 103) | May Route 103 Mudkip | 6 | 6 | 5 / 5 / 6 | 66 | 6 | 5 / 5 / 6 | 66 |
+| Roxanne | Roxanne 1 | 16 | 17 | 15 / 15 / 15 | 120 | 19 | 16 / 16 / 17 | 123 |
+| Brawly | May Rustboro Mudkip | 18 | 19 | 16 / 16 / 17 | 141 | 21 | 18 / 18 / 19 | 147 |
+| Brawly | Brawly 1 | 19 | 20 | 17 / 17 / 18 | 144 | 21 | 19 / 19 / 19 | 150 |
+| Wattson | May Route 110 Mudkip | 26 | 27 | 24 / 24 / 25 | 183 | 29 | 26 / 26 / 27 | 189 |
 | Wattson | Wally Mauville | 26 | 28 | 24 / 24 / 25 | 183 | 30 | 26 / 26 / 27 | 189 |
 | Wattson | Wattson 1 | 26 | 28 | 24 / 24 / 25 | 183 | 30 | 26 / 26 / 27 | 189 |
-| Flannery | Tabitha Mt Chimney | 38 | 43 | 36 / 37 / 38 | 227 | 47 | 39 / 40 / 41 | 236 |
+| Flannery | Tabitha Mt Chimney | 38 | 43 | 36 / 37 / 38 | 227 | 47 | 40 / 40 / 41 | 236 |
 | Flannery | Maxie Mt Chimney | 39 | 44 | 37 / 37 / 38 | 227 | 48 | 40 / 41 / 42 | 238 |
-| Flannery | Flannery 1 | 39 | 44 | 37 / 38 / 39 | 229 | 48 | 40 / 42 / 42 | 240 |
+| Flannery | Flannery 1 | 39 | 44 | 37 / 38 / 39 | 229 | 48 | 41 / 42 / 42 | 240 |
 | Norman | Norman 1 | 41 | 46 | 38 / 39 / 40 | 248 | 50 | 42 / 43 / 44 | 255 |
 | Winona | May Route 119 Mudkip | 56 | 62 | 51 / 53 / 54 | 255 | 66 | 56 / 58 / 59 | 255 |
 | Winona | Shelly Weather Institute | 56 | 62 | 51 / 54 / 54 | 255 | 67 | 57 / 59 / 59 | 255 |
@@ -138,7 +138,7 @@ The share6 party on modern data: one Pokemon takes every KO (KO-taker) and five 
 | Tate and Liza | May Lilycove Mudkip | 66 | 74 | 62 / 65 / 65 | 255 | 80 | 68 / 71 / 71 | 255 |
 | Tate and Liza | Tabitha Magma Hideout | 66 | 75 | 62 / 65 / 65 | 255 | 80 | 68 / 71 / 71 | 255 |
 | Tate and Liza | Maxie Magma Hideout | 67 | 75 | 63 / 65 / 65 | 255 | 81 | 69 / 71 / 71 | 255 |
-| Tate and Liza | Matt | 67 | 75 | 63 / 65 / 66 | 255 | 81 | 69 / 72 / 72 | 255 |
+| Tate and Liza | Matt | 67 | 76 | 63 / 65 / 66 | 255 | 81 | 69 / 72 / 72 | 255 |
 | Tate and Liza | Tate And Liza 1 | 67 | 76 | 63 / 66 / 66 | 255 | 81 | 69 / 72 / 72 | 255 |
 | Juan | Tabitha Mossdeep | 75 | 83 | 69 / 72 / 72 | 255 | 88 | 76 / 78 / 78 | 255 |
 | Juan | Maxie Mossdeep | 75 | 83 | 69 / 72 / 72 | 255 | 89 | 76 / 79 / 79 | 255 |
@@ -157,10 +157,10 @@ The share6 party on modern data: one Pokemon takes every KO (KO-taker) and five 
 | stage | boss | boss ace | 1.5x off KO-taker | 1.5x off bench (none / friendship / always) | 1.5x off bench friendship | 1.5x on KO-taker | 1.5x on bench (none / friendship / always) | 1.5x on bench friendship |
 |---|---|---|---|---|---|---|---|---|
 | Roxanne | Roxanne 1 | 16 | 15 | 12 / 12 / 13 | 111 | 16 | 14 / 14 / 14 | 117 |
-| Brawly | Brawly 1 | 19 | 18 | 15 / 15 / 16 | 138 | 19 | 16 / 16 / 17 | 141 |
+| Brawly | Brawly 1 | 19 | 18 | 15 / 15 / 16 | 138 | 20 | 16 / 16 / 17 | 141 |
 | Wattson | Wattson 1 | 26 | 25 | 21 / 21 / 22 | 174 | 27 | 23 / 23 / 24 | 180 |
-| Flannery | Flannery 1 | 39 | 39 | 31 / 31 / 33 | 215 | 42 | 35 / 35 / 37 | 223 |
-| Norman | Norman 1 | 41 | 40 | 33 / 33 / 35 | 236 | 44 | 37 / 37 / 38 | 244 |
+| Flannery | Flannery 1 | 39 | 39 | 31 / 31 / 33 | 215 | 43 | 35 / 35 / 37 | 223 |
+| Norman | Norman 1 | 41 | 41 | 33 / 33 / 35 | 236 | 44 | 37 / 37 / 38 | 244 |
 | Winona | Winona 1 | 57 | 55 | 43 / 45 / 45 | 255 | 60 | 48 / 50 / 51 | 255 |
 | Tate and Liza | Tate And Liza 1 | 67 | 67 | 52 / 55 / 55 | 255 | 73 | 59 / 62 / 62 | 255 |
 | Juan | Juan 1 | 76 | 74 | 58 / 61 / 61 | 255 | 81 | 65 / 69 / 69 | 255 |
@@ -195,11 +195,11 @@ Target: on a full clear with modelled friendship, each story boss's ace is 1 lev
 | Rival (Route 103) | May Route 103 Mudkip | 6 | +0 -> 6 | +0 -> 6 |
 | Roxanne | Roxanne 1 | 16 | +0 -> 16 | +1 -> 17 |
 | Brawly | May Rustboro Mudkip | 18 | +0 -> 18 | +1 -> 19 |
-| Brawly | Brawly 1 | 19 | +0 -> 19 | +0 -> 19 |
+| Brawly | Brawly 1 | 19 | +0 -> 19 | +1 -> 20 |
 | Wattson | May Route 110 Mudkip | 26 | +0 -> 26 | +1 -> 27 |
 | Wattson | Wally Mauville | 26 | +0 -> 26 | +1 -> 27 |
 | Wattson | Wattson 1 | 26 | +0 -> 26 | +1 -> 27 |
-| Flannery | Tabitha Mt Chimney | 38 | +0 -> 38 | +3 -> 41 |
+| Flannery | Tabitha Mt Chimney | 38 | +0 -> 38 | +4 -> 42 |
 | Flannery | Maxie Mt Chimney | 39 | +0 -> 39 | +3 -> 42 |
 | Flannery | Flannery 1 | 39 | +0 -> 39 | +4 -> 43 |
 | Norman | Norman 1 | 41 | +0 -> 41 | +3 -> 44 |
@@ -239,11 +239,11 @@ Full clear: 7 of 30 bosses have the bench (friendship) within 1 of their ace; th
 
 | stage | boss | ace | KO-taker | full bench (none / friendship / always) | full bench - ace | half bench (none / friendship / always) | half bench - ace |
 |---|---|---|---|---|---|---|---|
-| Rival (Route 103) | May Route 103 Mudkip | 6 | 6 | 5 / 5 / 5 | -1 | 5 / 5 / 5 | -1 |
+| Rival (Route 103) | May Route 103 Mudkip | 6 | 6 | 5 / 5 / 6 | -1 | 5 / 5 / 6 | -1 |
 | Roxanne | Roxanne 1 | 16 | 17 | 15 / 15 / 15 | -1 | 12 / 12 / 13 | -4 |
 | Brawly | May Rustboro Mudkip | 18 | 19 | 16 / 16 / 17 | -2 | 14 / 14 / 15 | -4 |
-| Brawly | Brawly 1 | 19 | 19 | 17 / 17 / 17 | -2 | 15 / 15 / 16 | -4 |
-| Wattson | May Route 110 Mudkip | 26 | 27 | 24 / 24 / 24 | -2 | 20 / 20 / 21 | -6 |
+| Brawly | Brawly 1 | 19 | 20 | 17 / 17 / 18 | -2 | 15 / 15 / 16 | -4 |
+| Wattson | May Route 110 Mudkip | 26 | 27 | 24 / 24 / 25 | -2 | 20 / 20 / 21 | -6 |
 | Wattson | Wally Mauville | 26 | 28 | 24 / 24 / 25 | -2 | 21 / 21 / 22 | -5 |
 | Wattson | Wattson 1 | 26 | 28 | 24 / 24 / 25 | -2 | 21 / 21 / 22 | -5 |
 | Flannery | Tabitha Mt Chimney | 38 | 43 | 36 / 37 / 38 | -1 | 30 / 30 / 32 | -8 |
@@ -256,7 +256,7 @@ Full clear: 7 of 30 bosses have the bench (friendship) within 1 of their ace; th
 | Tate and Liza | May Lilycove Mudkip | 66 | 74 | 62 / 65 / 65 | -1 | 51 / 53 / 54 | -13 |
 | Tate and Liza | Tabitha Magma Hideout | 66 | 75 | 62 / 65 / 65 | -1 | 51 / 54 / 54 | -12 |
 | Tate and Liza | Maxie Magma Hideout | 67 | 75 | 63 / 65 / 65 | -2 | 52 / 54 / 55 | -13 |
-| Tate and Liza | Matt | 67 | 75 | 63 / 65 / 66 | -2 | 52 / 55 / 55 | -12 |
+| Tate and Liza | Matt | 67 | 76 | 63 / 65 / 66 | -2 | 52 / 55 / 55 | -12 |
 | Tate and Liza | Tate And Liza 1 | 67 | 76 | 63 / 66 / 66 | -1 | 52 / 55 / 55 | -12 |
 | Juan | Tabitha Mossdeep | 75 | 83 | 69 / 72 / 72 | -3 | 57 / 60 / 60 | -15 |
 | Juan | Maxie Mossdeep | 75 | 83 | 69 / 72 / 72 | -3 | 57 / 60 / 60 | -15 |
@@ -276,18 +276,18 @@ Full clear: 30 of 30 bosses have the bench (friendship) within 1 of their ace; t
 
 | stage | boss | ace | KO-taker | full bench (none / friendship / always) | full bench - ace | half bench (none / friendship / always) | half bench - ace |
 |---|---|---|---|---|---|---|---|
-| Rival (Route 103) | May Route 103 Mudkip | 6 | 6 | 5 / 5 / 5 | -1 | 5 / 5 / 5 | -1 |
-| Roxanne | Roxanne 1 | 17 | 18 | 16 / 16 / 16 | -1 | 14 / 14 / 14 | -3 |
-| Brawly | May Rustboro Mudkip | 19 | 20 | 18 / 18 / 18 | -1 | 16 / 16 / 17 | -3 |
-| Brawly | Brawly 1 | 19 | 21 | 18 / 18 / 19 | -1 | 17 / 17 / 17 | -2 |
-| Wattson | May Route 110 Mudkip | 27 | 29 | 26 / 26 / 27 | -1 | 23 / 23 / 23 | -4 |
+| Rival (Route 103) | May Route 103 Mudkip | 6 | 6 | 5 / 5 / 6 | -1 | 5 / 5 / 6 | -1 |
+| Roxanne | Roxanne 1 | 17 | 19 | 16 / 16 / 17 | -1 | 14 / 14 / 14 | -3 |
+| Brawly | May Rustboro Mudkip | 19 | 21 | 18 / 18 / 19 | -1 | 16 / 16 / 17 | -3 |
+| Brawly | Brawly 1 | 20 | 22 | 19 / 19 / 19 | -1 | 17 / 17 / 17 | -3 |
+| Wattson | May Route 110 Mudkip | 27 | 29 | 26 / 26 / 27 | -1 | 23 / 23 / 24 | -4 |
 | Wattson | Wally Mauville | 27 | 30 | 26 / 26 / 27 | -1 | 23 / 23 / 24 | -4 |
 | Wattson | Wattson 1 | 27 | 30 | 26 / 26 / 27 | -1 | 23 / 23 / 24 | -4 |
-| Flannery | Tabitha Mt Chimney | 41 | 47 | 39 / 40 / 41 | -1 | 34 / 34 / 35 | -7 |
+| Flannery | Tabitha Mt Chimney | 42 | 47 | 40 / 41 / 41 | -1 | 34 / 34 / 35 | -8 |
 | Flannery | Maxie Mt Chimney | 42 | 48 | 40 / 41 / 42 | -1 | 34 / 35 / 36 | -7 |
-| Flannery | Flannery 1 | 43 | 49 | 41 / 42 / 42 | -1 | 35 / 35 / 37 | -8 |
+| Flannery | Flannery 1 | 43 | 49 | 41 / 42 / 42 | -1 | 35 / 36 / 37 | -7 |
 | Norman | Norman 1 | 44 | 50 | 42 / 43 / 44 | -1 | 37 / 37 / 39 | -7 |
-| Winona | May Route 119 Mudkip | 60 | 66 | 56 / 59 / 59 | -1 | 48 / 50 / 50 | -10 |
+| Winona | May Route 119 Mudkip | 60 | 67 | 56 / 59 / 59 | -1 | 48 / 50 / 50 | -10 |
 | Winona | Shelly Weather Institute | 60 | 67 | 57 / 59 / 59 | -1 | 48 / 50 / 51 | -10 |
 | Winona | Winona 1 | 60 | 67 | 57 / 59 / 59 | -1 | 49 / 51 / 51 | -9 |
 | Tate and Liza | May Lilycove Mudkip | 72 | 80 | 68 / 71 / 71 | -1 | 58 / 60 / 61 | -12 |
@@ -313,18 +313,18 @@ Full clear: 30 of 30 bosses have the bench (friendship) within 1 of their ace; t
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | 1.5x off | as modelled | 15 | 17 | 24 | 38 | 39 | 54 | 66 | 73 | 76 | 76 | 77 | 77 | 77 |
 | 1.5x off | no catches | 14 | 16 | 24 | 37 | 39 | 54 | 65 | 72 | 76 | 76 | 76 | 77 | 77 |
-| 1.5x off | 6 catches per stage | 15 | 17 | 24 | 38 | 39 | 54 | 66 | 73 | 76 | 77 | 77 | 77 | 78 |
+| 1.5x off | 6 catches per stage | 15 | 17 | 24 | 38 | 40 | 54 | 66 | 73 | 76 | 77 | 77 | 77 | 78 |
 | 1.5x off | no walking | 15 | 17 | 24 | 37 | 38 | 52 | 64 | 72 | 75 | 75 | 76 | 76 | 76 |
 | 1.5x off | 8,192 steps per stage | 15 | 17 | 25 | 39 | 40 | 54 | 66 | 73 | 76 | 76 | 77 | 77 | 78 |
 | 1.5x off | every stage trainer +3 | 16 | 18 | 25 | 40 | 41 | 56 | 68 | 74 | 78 | 78 | 78 | 79 | 79 |
-| 1.5x off | whole party unevolved (1.2x) | 15 | 17 | 25 | 39 | 41 | 56 | 69 | 76 | 79 | 80 | 80 | 80 | 81 |
-| 1.5x on | as modelled | 16 | 18 | 26 | 42 | 43 | 59 | 72 | 79 | 83 | 84 | 84 | 84 | 85 |
+| 1.5x off | whole party unevolved (1.2x) | 15 | 18 | 25 | 39 | 41 | 56 | 69 | 76 | 79 | 80 | 80 | 80 | 81 |
+| 1.5x on | as modelled | 16 | 19 | 26 | 42 | 43 | 59 | 72 | 79 | 83 | 84 | 84 | 84 | 85 |
 | 1.5x on | no catches | 16 | 18 | 26 | 42 | 43 | 59 | 72 | 79 | 83 | 83 | 84 | 84 | 85 |
-| 1.5x on | 6 catches per stage | 16 | 18 | 26 | 42 | 43 | 59 | 72 | 79 | 83 | 84 | 84 | 85 | 85 |
-| 1.5x on | no walking | 16 | 18 | 26 | 40 | 42 | 57 | 71 | 79 | 83 | 83 | 84 | 84 | 84 |
-| 1.5x on | 8,192 steps per stage | 16 | 18 | 27 | 42 | 44 | 59 | 72 | 79 | 83 | 84 | 84 | 84 | 85 |
+| 1.5x on | 6 catches per stage | 16 | 19 | 26 | 42 | 43 | 59 | 72 | 79 | 83 | 84 | 84 | 85 | 85 |
+| 1.5x on | no walking | 16 | 19 | 26 | 41 | 42 | 57 | 71 | 79 | 83 | 83 | 84 | 84 | 85 |
+| 1.5x on | 8,192 steps per stage | 16 | 19 | 27 | 42 | 44 | 59 | 72 | 79 | 83 | 84 | 84 | 84 | 85 |
 | 1.5x on | every stage trainer +3 | 18 | 20 | 28 | 44 | 45 | 61 | 74 | 82 | 86 | 86 | 86 | 87 | 87 |
-| 1.5x on | whole party unevolved (1.2x) | 16 | 19 | 27 | 43 | 45 | 61 | 74 | 82 | 86 | 87 | 87 | 87 | 88 |
+| 1.5x on | whole party unevolved (1.2x) | 17 | 19 | 27 | 43 | 45 | 61 | 74 | 82 | 86 | 87 | 87 | 87 | 88 |
 
 ### Default movesets of the raised boss Pokemon (1.5x off)
 
@@ -337,7 +337,7 @@ Full clear: 30 of 30 bosses have the bench (friendship) within 1 of their ace; t
 | boss | species | lv | modern default now | raised | flags now -> raised |
 |---|---|---|---|---|---|
 | Wally Mauville | Ralts | 26 -> 27 | Teleport, Psybeam, Life Dew, Charm | Psybeam, Life Dew, Charm, Calm Mind | - -> - |
-| Tabitha Mt Chimney | Crobat | 38 -> 41 | Poison Fang, Quick Guard, Air Cutter, Bite | Quick Guard, Air Cutter, Bite, Haze | - -> - |
+| Tabitha Mt Chimney | Crobat | 38 -> 42 | Poison Fang, Quick Guard, Air Cutter, Bite | Quick Guard, Air Cutter, Bite, Haze | - -> - |
 | Maxie Mt Chimney | Crobat | 38 -> 41 | Poison Fang, Quick Guard, Air Cutter, Bite | Quick Guard, Air Cutter, Bite, Haze | - -> - |
 | Tabitha Magma Hideout | Crobat | 63 -> 69 | Haze, Venoshock, Confuse Ray, Air Slash | Venoshock, Confuse Ray, Air Slash, Leech Life | new_strong -> new_strong |
 | Maxie Magma Hideout | Crobat | 66 -> 71 | Haze, Venoshock, Confuse Ray, Air Slash | Venoshock, Confuse Ray, Air Slash, Leech Life | new_strong -> new_strong |
@@ -352,10 +352,10 @@ The Exp. Share lead (the KO-taker) just before each staged boss, on today's leve
 
 | boss | ace | full lead | % | skip lead | % | flag |
 |---|---|---|---|---|---|---|
-| May Route 103 Mudkip | 6 | 7 | +17% | 7 | +17% |  |
-| Roxanne 1 | 16 | 17 | +6% | 13 | -19% |  |
+| May Route 103 Mudkip | 6 | 8 | +33% | 8 | +33% |  |
+| Roxanne 1 | 16 | 18 | +12% | 13 | -19% |  |
 | May Rustboro Mudkip | 18 | 20 | +11% | skipped | - |  |
-| Brawly 1 | 19 | 20 | +5% | 16 | -16% |  |
+| Brawly 1 | 19 | 21 | +10% | 17 | -10% |  |
 | May Route 110 Mudkip | 26 | 28 | +8% | 22 | -15% |  |
 | Wally Mauville | 26 | 28 | +8% | 23 | -12% |  |
 | Wattson 1 | 26 | 28 | +8% | 23 | -12% |  |
@@ -363,7 +363,7 @@ The Exp. Share lead (the KO-taker) just before each staged boss, on today's leve
 | Maxie Mt Chimney | 39 | 44 | +13% | 30 | -23% |  |
 | Flannery 1 | 39 | 45 | +15% | 32 | -18% |  |
 | Norman 1 | 41 | 47 | +15% | 36 | -12% |  |
-| May Route 119 Mudkip | 56 | 62 | +11% | 43 | -23% |  |
+| May Route 119 Mudkip | 56 | 62 | +11% | 44 | -21% |  |
 | Shelly Weather Institute | 56 | 63 | +12% | 45 | -20% |  |
 | Winona 1 | 57 | 63 | +10% | 46 | -19% |  |
 | May Lilycove Mudkip | 66 | 75 | +14% | skipped | - |  |
@@ -393,10 +393,10 @@ Per starter and staged story boss (#350), the starter line alone: its default mo
 
 | boss | ace | lead | wall | sweep | KOs | source |
 |---|---|---|---|---|---|---|
-| May Route 103 Treecko | 6 | 7 | 8 | 8 | 3 | Zigzagoon 5 |
-| Roxanne 1 | 16 | 17 | 14 | 16 | 0 | Marill 6 |
+| May Route 103 Treecko | 6 | 8 | 8 | 8 | 0 | Zigzagoon 5 |
+| Roxanne 1 | 16 | 18 | 14 | 16 | 0 | Marill 6 |
 | May Rustboro Treecko (optional, not budgeted) | 18 | 20 | 23 | 24 | 14 | Sableye 16 |
-| Brawly 1 | 19 | 20 | 16 | 19 | 0 | Sableye 16 |
+| Brawly 1 | 19 | 21 | 16 | 19 | 0 | Sableye 16 |
 | May Route 110 Treecko | 26 | 28 | 32 | 34 | 68 | Plusle 15 |
 | Wally Mauville | 26 | 28 | 16 | 16 | 0 | Plusle 15 |
 | Wattson 1 | 26 | 28 | 25 | 29 | 0 | Plusle 15 |
@@ -430,10 +430,10 @@ Worst wall: Flannery 1 (226 KOs to level 54).
 
 | boss | ace | lead | wall | sweep | KOs | source |
 |---|---|---|---|---|---|---|
-| May Route 103 Torchic | 6 | 7 | 8 | 8 | 3 | Zigzagoon 5 |
-| Roxanne 1 | 16 | 17 | 20 | 29 | 67 | Marill 6 |
+| May Route 103 Torchic | 6 | 8 | 8 | 8 | 0 | Zigzagoon 5 |
+| Roxanne 1 | 16 | 18 | 20 | 29 | 47 | Poochyena 9 |
 | May Rustboro Torchic (optional, not budgeted) | 18 | 20 | 20 | 21 | 0 | Sableye 16 |
-| Brawly 1 | 19 | 20 | 16 | 19 | 0 | Sableye 16 |
+| Brawly 1 | 19 | 21 | 16 | 19 | 0 | Sableye 16 |
 | May Route 110 Torchic | 26 | 28 | 29 | 33 | 15 | Plusle 15 |
 | Wally Mauville | 26 | 28 | 19 | 19 | 0 | Plusle 15 |
 | Wattson 1 | 26 | 28 | 35 | 36 | 133 | Plusle 15 |
@@ -467,11 +467,11 @@ Worst wall: Wallace (unwinnable); then Drake (195 KOs to level 99).
 
 | boss | ace | lead | wall | sweep | KOs | source |
 |---|---|---|---|---|---|---|
-| May Route 103 Mudkip | 6 | 7 | 8 | 8 | 3 | Zigzagoon 5 |
-| Roxanne 1 | 16 | 17 | 14 | 16 | 0 | Marill 6 |
-| May Rustboro Mudkip (optional, not budgeted) | 18 | 20 | 24 | 24 | 22 | Sableye 16 |
-| Brawly 1 | 19 | 20 | 17 | 20 | 0 | Sableye 16 |
-| May Route 110 Mudkip | 26 | 28 | 30 | 31 | 32 | Plusle 15 |
+| May Route 103 Mudkip | 6 | 8 | 8 | 8 | 0 | Zigzagoon 5 |
+| Roxanne 1 | 16 | 18 | 14 | 16 | 0 | Marill 6 |
+| May Rustboro Mudkip (optional, not budgeted) | 18 | 20 | 24 | 24 | 21 | Sableye 16 |
+| Brawly 1 | 19 | 21 | 17 | 20 | 0 | Sableye 16 |
+| May Route 110 Mudkip | 26 | 28 | 30 | 31 | 31 | Sableye 16 |
 | Wally Mauville | 26 | 28 | 16 | 16 | 0 | Plusle 15 |
 | Wattson 1 | 26 | 28 | 22 | 24 | 0 | Plusle 15 |
 | Tabitha Mt Chimney | 38 | 44 | 35 | 37 | 0 | Pelipper 28 |
@@ -1034,7 +1034,7 @@ Hardest: the boss Pokemon whose best answer on the team is lowest, with that ans
 | Rival (Route 103) | May Route 103 | 6 | 5 | Torchic 6: 0.52 (Treecko) | 0/1 | 0.52 | Mudkip 6: 0.55 (Torchic) | 0/1 | 0.55 | Treecko 6: 0.55 (Mudkip) | 0/1 | 0.55 |
 | Roxanne | Roxanne 1 | 16 | 15 | Nosepass 16: 2.02 (Grovyle) | 3/3 | 10.69 | Nosepass 16: 1.28 (Lombre) | 3/3 | 6.69 | Nosepass 16: 3.98 (Marshtomp) | 3/3 | 11.53 |
 | Brawly | May Rustboro | 18 | 16 | Combusken 18: 2.00 (Kadabra) | 2/2 | 15.16 | Torkoal 16: 2.39 (Combusken) | 2/2 | 2.39 | Wingull 16: 6.50 (Marshtomp) | 2/2 | 6.50 |
-| Brawly | Brawly 1 | 19 | 17 | Makuhita 19: 1.82 (Kadabra) | 3/3 | inf | Makuhita 19: 1.82 (Kadabra) | 3/3 | inf | Makuhita 19: 1.82 (Kadabra) | 3/3 | inf |
+| Brawly | Brawly 1 | 19 | 17 | Makuhita 19: 1.82 (Kadabra) | 3/3 | inf | Makuhita 19: 2.88 (Combusken) | 3/3 | inf | Makuhita 19: 1.89 (Marshtomp) | 3/3 | inf |
 | Wattson | May Route 110 | 26 | 24 | Combusken 26: 2.71 (Azumarill) | 3/3 | 3.89 | Marshtomp 26: 1.69 (Azumarill) | 3/3 | 2.17 | Grovyle 26: 2.49 (Hariyama) | 3/3 | 4.73 |
 | Wattson | Wally Mauville | 26 | 24 | Ralts 26: inf (Mightyena) | 1/1 | inf | Ralts 26: inf (Mightyena) | 1/1 | inf | Ralts 26: inf (Mightyena) | 1/1 | inf |
 | Wattson | Wattson 1 | 26 | 24 | Magneton 24: 1.60 (Hariyama) | 4/4 | 7.51 | Magneton 24: 0.57 (Mightyena) | 2/4 | 2.94 | Manectric 26: 1.77 (Marshtomp) | 4/4 | 16.08 |
@@ -1048,7 +1048,7 @@ Hardest: the boss Pokemon whose best answer on the team is lowest, with that ans
 | Tate and Liza | May Lilycove | 66 | 65 | Ludicolo 64: 3.90 (Sceptile) | 4/4 | 5.44 | Swampert 66: 1.93 (Walrein) | 4/4 | 7.30 | Sceptile 66: 4.08 (Muk) | 4/4 | 5.44 |
 | Tate and Liza | Tabitha Magma Hideout | 66 | 65 | Crobat 63: 4.40 (Aggron) | 4/4 | 9.36 | Crobat 63: 4.40 (Aggron) | 4/4 | 9.36 | Crobat 63: 4.40 (Aggron) | 4/4 | 13.10 |
 | Tate and Liza | Maxie Magma Hideout | 67 | 65 | Crobat 66: 3.33 (Aggron) | 3/3 | 3.45 | Crobat 66: 3.33 (Aggron) | 3/3 | 5.48 | Crobat 66: 3.33 (Aggron) | 3/3 | 6.43 |
-| Tate and Liza | Matt | 67 | 65 | Mightyena 67: 3.72 (Sceptile) | 2/2 | 3.72 | Crobat 67: 3.72 (Aggron) | 2/2 | 5.95 | Crobat 67: 3.72 (Aggron) | 2/2 | 7.18 |
+| Tate and Liza | Matt | 67 | 65 | Crobat 67: 3.72 (Aggron) | 2/2 | 3.89 | Crobat 67: 3.72 (Aggron) | 2/2 | 6.26 | Crobat 67: 3.72 (Aggron) | 2/2 | 7.18 |
 | Tate and Liza | Tate And Liza 1 (double) | 67 | 66 | Xatu 66: 3.23 (Gardevoir) | 4/4 | 4.63 | Claydol 66: 1.66 (Walrein) | 4/4 | 1.66 | Lunatone 67: 2.24 (Gardevoir) | 4/4 | 2.35 |
 | Juan | Tabitha Mossdeep | 75 | 72 | Crobat 75: 3.31 (Aggron) | 3/3 | 6.68 | Crobat 75: 3.31 (Aggron) | 3/3 | 6.68 | Crobat 75: 3.31 (Aggron) | 3/3 | 9.39 |
 | Juan | Maxie Mossdeep | 75 | 72 | Crobat 74: 3.20 (Aggron) | 3/3 | 3.67 | Crobat 74: 3.20 (Aggron) | 3/3 | 4.95 | Crobat 74: 3.20 (Aggron) | 3/3 | 3.25 |
@@ -1074,9 +1074,9 @@ The stand-in teams at each stage's last boss, with their attacks:
 | Roxanne | Treecko | Grovyle 17 (Leafage, Mega Drain); Beautifly 15 (Bug Bite, Poison Sting, Absorb); Slakoth 15 (Headbutt); Marill 15 (Bubble Beam, Slam, Bounce) |
 | Roxanne | Torchic | Combusken 17 (Flame Charge, Quick Attack); Beautifly 15 (Bug Bite, Poison Sting, Absorb); Lombre 15 (Mega Drain, Flail); Slakoth 15 (Headbutt) |
 | Roxanne | Mudkip | Marshtomp 17 (Rock Throw, Water Gun); Beautifly 15 (Bug Bite, Poison Sting, Absorb); Nuzleaf 15 (Rollout, Astonish); Slakoth 15 (Headbutt) |
-| Brawly | Treecko | Grovyle 19 (Bullet Seed, Rock Tomb, Leafage, Mega Drain); Kadabra 17 (Psybeam); Beautifly 17 (Bug Bite, Absorb); Sableye 17 (Rock Tomb, Shadow Sneak, Astonish); Aron 17 (Rock Tomb, Metal Claw, Headbutt); Slakoth 17 (Headbutt, Rock Tomb) |
-| Brawly | Torchic | Combusken 19 (Flame Charge, Rock Tomb, Quick Attack); Kadabra 17 (Psybeam); Beautifly 17 (Bug Bite, Absorb); Sableye 17 (Rock Tomb, Shadow Sneak, Astonish); Lombre 17 (Bullet Seed, Flail, Mega Drain); Aron 17 (Rock Tomb, Metal Claw, Headbutt) |
-| Brawly | Mudkip | Marshtomp 19 (Rock Tomb, Water Gun, Rock Throw); Kadabra 17 (Psybeam); Beautifly 17 (Bug Bite, Absorb); Sableye 17 (Rock Tomb, Shadow Sneak, Astonish); Aron 17 (Rock Tomb, Metal Claw, Headbutt); Shroomish 17 (Bullet Seed, Headbutt, Mega Drain) |
+| Brawly | Treecko | Grovyle 20 (Bullet Seed, Rock Tomb, Assurance, Mega Drain); Kadabra 17 (Psybeam); Beautifly 17 (Bug Bite, Absorb); Sableye 17 (Rock Tomb, Shadow Sneak, Astonish); Aron 17 (Rock Tomb, Metal Claw, Headbutt); Slakoth 17 (Headbutt, Rock Tomb) |
+| Brawly | Torchic | Combusken 20 (Flame Charge, Rock Tomb, Aerial Ace); Kadabra 17 (Psybeam); Beautifly 17 (Bug Bite, Absorb); Sableye 17 (Rock Tomb, Shadow Sneak, Astonish); Lombre 17 (Bullet Seed, Flail, Mega Drain); Aron 17 (Rock Tomb, Metal Claw, Headbutt) |
+| Brawly | Mudkip | Marshtomp 20 (Water Pulse, Rock Tomb, Rock Throw); Kadabra 17 (Psybeam); Beautifly 17 (Bug Bite, Absorb); Sableye 17 (Rock Tomb, Shadow Sneak, Astonish); Aron 17 (Rock Tomb, Metal Claw, Headbutt); Shroomish 17 (Bullet Seed, Headbutt, Mega Drain) |
 | Wattson | Treecko | Grovyle 28 (Bullet Seed, Rock Tomb, Assurance, Giga Drain); Hariyama 24 (Force Palm, Knock Off, Rock Tomb); Ninjask 24 (False Swipe, Absorb); Vigoroth 24 (Uproar, Rock Tomb, Fury Swipes, Slash); Azumarill 24 (Aqua Tail, Bounce, Slam); Mightyena 24 (Assurance) |
 | Wattson | Torchic | Combusken 28 (Rock Tomb, Aerial Ace, Slash); Ninjask 24 (False Swipe, Absorb); Vigoroth 24 (Uproar, Rock Tomb, Fury Swipes, Slash); Azumarill 24 (Aqua Tail, Bounce, Slam); Mightyena 24 (Assurance); Minun 24 (Swift, Electro Ball) |
 | Wattson | Mudkip | Marshtomp 28 (Rock Slide, Water Pulse, Sludge Bomb, Rock Tomb); Hariyama 24 (Force Palm, Knock Off, Rock Tomb); Ninjask 24 (False Swipe, Absorb); Vigoroth 24 (Uproar, Rock Tomb, Fury Swipes, Slash); Mightyena 24 (Assurance); Minun 24 (Swift, Electro Ball) |
