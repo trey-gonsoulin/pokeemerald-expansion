@@ -245,7 +245,7 @@ Each rival row goes on all six teams of that fight: May or Brendan, with each st
   #131 and #132 should work from that list once the levels land. The full-game flag table in "Default movesets" updates with them too.
 
 **Applied** (owner's choice, 2026-10-29: 1.5x off, these targets): `src/data/trainers.party` has the 1.5x-off column, plus the owner's Elite Four and Champion spacing above: levels only, 165 Pokémon on 53 teams (the 28 raised bosses, 100 Pokémon, and the other 25 rival teams, 65), with `B_TRAINER_EXP_MULTIPLIER` unchanged. The numbers above (and in the table) are from before the raises. `report.md` now measures the raised data:
-- Its "Proposed boss raises" show +0 for 1.5x off. The 1.5x-on column is now relative to the applied levels (Juan +6 -> 63, Wallace +5 -> 71), and its after-raise curve is unchanged.
+- Its "Proposed boss raises" showed +0 for 1.5x off (historical: #350's "Two players" replaced this single-player rule, section 18, and the section now proposes raises against the #350 data, kept for comparison). The 1.5x-on column is now relative to the applied levels (Juan +6 -> 63, Wallace +5 -> 71), and its after-raise curve is unchanged.
 - Its "Default movesets of the raised boss Pokemon" lists none for 1.5x off.
 - Its story flags in "Default movesets" moved from 9 / 59 / 43 / 14 / 157 (no attack / one attack / lost STAB / above band / new strong) to 9 / 61 / 46 / 12 / 163. The story counts leave out the five rival teams the model doesn't play; over every trainer they moved from 15 / 132 / 85 / 39 / 429 to 15 / 134 / 91 / 32 / 447.
 - The #113 level curve's boss aces are the raised ones.

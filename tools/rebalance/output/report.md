@@ -188,6 +188,8 @@ Each stage's regular trainers by their highest-level Pokemon, against the full-c
 
 ### Proposed boss raises
 
+#127's single-player rule, kept for comparison: #350's "Two players" (below) replaced it, and the data follows that.
+
 Target: on a full clear with modelled friendship, each story boss's ace is 1 level(s) above the bench. Bosses are only raised, every Pokemon of the team by the same amount, in story order so each raise counts toward the later stages' exp. Raises are against the current trainers.party.
 
 | stage | boss | ace now | 1.5x off: raise -> ace | 1.5x on: raise -> ace |
