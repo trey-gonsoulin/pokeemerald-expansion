@@ -73,9 +73,11 @@ The knobs:
   team in turn), the share of route trainers fought, catches, wild KOs and
   steps per stage, and the affection bracket.
 - **Exp formula:** the 1.5x trainer exp, level-scaled exp
-  (`B_SCALED_EXP`), and three options:
+  (`B_SCALED_EXP`; the fork runs Gen 6's flat exp since #350), and three
+  options:
   - `scaling_power`: the scaling table is `floor(i^p / 4)`. It's 2.5 in
-    upstream and 3.5 under the fork's `B_SCALED_EXP_STEEP` (#154).
+    upstream and 3.5 under `B_SCALED_EXP_STEEP` (#154, off since #350:
+    it does nothing under flat exp).
   - `overlevel_cutoff`, `overlevel_width` and `overlevel_floor`: the
     over-level penalty (`Overlevel`). Above the foe's level, the exp falls
     on a logistic curve: fastest at the cutoff, over the width, then
@@ -85,29 +87,44 @@ The knobs:
     straight past the cutoff. In percent, `overlevel_min_level` counts a
     foe below that level as that level for the cutoff and width, so an
     early foe's cutoff is still a few levels. The fork's
-    `B_EXP_OVERLEVEL_PENALTY` (#154, #189) is 15%, 4% and 10%, with a
-    minimum level of 17 (`B_EXP_OVERLEVEL_MIN_LEVEL`).
+    `B_EXP_OVERLEVEL_PENALTY` (#154, #189) is 30%, 8% and 40% since #350
+    (`tune`, below; #189's were 15%, 4% and 10%), with a minimum level of
+    17 (`B_EXP_OVERLEVEL_MIN_LEVEL`).
   - `share_fraction`: the Exp. Share bench's share, the game's half; not a
     game option.
 
   The defaults (`explorer_defaults`) are the game's configs.
-- **Targets:** the party level everything measures against (`REFERENCES`:
-  the bench, the KO-takers' mean, the party's mean, its highest member),
-  the boss margin (off: today's levels) with the Elite Four spacing
+- **Targets:** the party levels the rules measure against (`REFERENCES`:
+  the bench, the KO-takers' mean, the party's mean, and `ace`, its highest
+  member, which is the lead): `boss_ref` for the boss rules and `gap_ref`
+  for the two gaps (#350, both the bench by default). Then the boss margin (off: today's levels) with the Elite Four spacing
   (`LEAGUE_STEPS`), #150's route-trainer gap (`TRAINER_GAP`: each stage's
   ordinary trainers raised until their aces average that far below the
-  reference when fought) and wild gap (the stage's land average that far
-  below the reference at its start, over the vanilla tables), and whether
+  gap reference when fought) and wild gap (the stage's land average that
+  far below it at the stage's start, over the vanilla tables), and whether
   raised Pokemon evolve (`restock.SpeciesInfo.evolve`, `EVOLVE_GRACE`
   levels past a level evolution; `EVOLVE_EXEMPT`'s teams never do).
   `gap_unit` puts the margin and both gaps in percent of the reference
-  instead of levels. #350's two players: `full_margin` and `skip_margin`
-  (percent of the ace, on and off together) replace the boss margin, each
-  staged boss's ace sitting `full_margin` under the fight-everyone
-  reference, or `skip_margin` over the skip-everything one if that is
-  lower (`forced_trainers.json`: the FORCED trainers, the first of each
-  choose-one group and the required bosses); `lower` lets the margins and
-  the gaps move levels down too, devolving the lowered Pokemon (`devolver`).
+  instead of levels.
+- **Two players (#350):** `full_margin` and `skip_margin` (percent of the
+  ace, on and off together) replace the boss margin. Each staged boss's
+  ace sits `full_margin` under the fight-everyone player's boss reference,
+  or `skip_margin` over the skip-everything player's if that is lower. The
+  skip player fights only `forced_trainers.json`'s FORCED trainers, the
+  first of each choose-one group and the required bosses
+  (`tools/forced_trainers` writes it), with the same walking, catches and
+  wild battles. A boss it skips (the optional rivals) and the post-game
+  take the full rule alone. `lower` lets the boss rules move levels down
+  too (bosses, rival variants, the partner and the post-game) and the wild
+  offsets fall to the vanilla tables at most, devolving lowered Pokemon to
+  the form that fits (`devolver`); the stage's trainer shift only ever
+  raises.
+  - Why `gap_ref` is separate: the lead runs far ahead of the bench under
+    the Exp. Share. With the gaps on the lead, route trainers 10% under it
+    pay it more exp, which raises the next stage's trainers again, until
+    it reaches 100 by Tabitha at Mossdeep. So the bosses measure on the
+    lead (`boss_ref: "ace"`) and the gaps on the bench (`findings.md`
+    section 18).
 - **The post-game (#139):** after Wallace the chart goes on through the
   rematch rounds and Steven (`rematch_ladders` reads `gRematchTable` through
   `G.parse_rematches`):
@@ -131,7 +148,7 @@ The knobs:
   - Neither kind gives the story stages any exp: the story curve doesn't
     count rematches.
 
-### Applying a curve (#150)
+### Applying a curve (#150, #350)
 
 ```sh
 python3 tools/rebalance/rebalance.py apply    # writes the data for curve_settings.json
@@ -139,17 +156,21 @@ python3 tools/rebalance/rebalance.py          # then refresh report.md and curve
 ```
 
 `curve_settings.json` holds the explorer settings the data is built for
-(the owner's choice, `findings.md` section 8). `apply` runs `explore_run` on
-the repo's own data with them, through `apply_plan`, and writes:
-- the raises into `src/data/trainers.party`, for the staged bosses, their
-  rival variants (to the boss's ace, `variant_raises`) and every regular
-  trainer of each stage. `raise_party` raises every Pokemon of a team by
-  the same amount, capped at 100. A raised Pokemon evolves through
+(the owner's choice: #350's two players, `findings.md` section 18, which
+replaced section 8's). `apply` runs `explore_run` on the repo's own data
+with them, through `apply_plan`, and writes:
+- the level changes into `src/data/trainers.party`, for the staged bosses,
+  their rival variants (to the boss's ace, `variant_raises`) and every
+  regular trainer of each stage. `raise_party` moves every Pokemon of a
+  team by the same amount, capped at 100; with `lower` (#350) a boss team
+  can go down too, and a lowered Pokemon below its evolved form's level
+  plus `EVOLVE_GRACE` devolves (`devolver`: the form that fits, else the
+  nearest one the team doesn't have, else it stays). A raised Pokemon evolves through
   `evolve_team`, as the model's fights do: never on an `EVOLVE_EXEMPT` team,
   and on a boss's team (bosses and variants) not into a species the team
   already has;
-- `PARTNER_FIGHTS`' partners (Steven at Mossdeep, to his foes' highest ace;
-  partners don't evolve) into `src/data/battle_partners.party`;
+- `PARTNER_FIGHTS`' partners (Steven at Mossdeep, to his foes' highest ace,
+  up or down; partners don't evolve) into `src/data/battle_partners.party`;
 - each stage's wild offset over the vanilla levels, for every table of its
   maps (a water table counts from `SURF_STAGE`), into
   `tools/area_archetypes/level_offsets.json`, through `restock --write`.
@@ -163,20 +184,32 @@ the repo's own data with them, through `apply_plan`, and writes:
   Pokemon is `EVOLVE_GRACE` levels past the evolved form's `min_level`
   (`restock.SpeciesInfo.nonlevel_evolution`; `NONLEVEL_PREFER` picks a split's
   target). The highest level goes first and none evolves into a species the
-  team has, so of two copies the ace evolves. The report's "Evolutions that
-  aren't by level" section lists the ones held back and the other trainers'.
+  team has, so of two copies the ace evolves. A Pokemon the round devolved,
+  or kept from devolving, is skipped. The report's "Evolutions that
+  aren't by level" section lists the ones held back and the other trainers';
+- in both `.party` files, a replacement for every set move a lowered
+  Pokemon can no longer learn (#350, `rewrite_unlearnable`): #160's rule
+  in `replacement_move`, the strongest legal attack, keeping the replaced
+  move's type or the set's STAB, the best same-type level-up move at
+  `LEVEL_UP_REPLACEMENT_LEVEL` (30) or below, never an HM, recharge,
+  two-turn or self-KO move, and ties to STAB, then level up, then no
+  drawback, then the name (`docs/fork/balance.md`).
 
-It only raises. On data it already wrote it asks for nothing, which
+`apply` prints every change: the teams moved, each devolution, each team
+Pokemon kept from devolving, each #181 evolution and each move rewrite
+("kept, fix by hand" when no legal attack qualifies). Review them before
+committing. On data it already wrote it asks for nothing, which
 `RealRepo.test_data_meets_the_curve_settings` checks. A round that evolves boss
 Pokemon raises the exp curve, so `apply` goes again from the data it wrote
 until a round evolves none (`APPLY_ROUNDS`). After a change to
 `trainers.party`, the wild tables or the exp formula, rerun `apply` and
 `rebalance.py` (or change the settings and do the same).
 `apply` doesn't touch trainers outside the stages and the rematch table.
-Hand-written movesets don't move with the levels: after a raise, check the
-report's default-moveset flags (#139 hand-wrote the flagged rematch sets, #159
-the story ones, #161 the off-stage ones), and after lowering a level run the
-tests, which check that every set move is still learnable (#145).
+Hand-written movesets don't move with the levels: after a level change,
+check the report's default-moveset flags and hand-write what they flag (#139
+hand-wrote the flagged rematch sets, #159 the story ones, #161 the off-stage
+ones, #350 Shelly's Weather Institute Mightyena). The tests check that every
+set move is still learnable (#145).
 
 The page's files are `explorer/index.html`, `app.js` (the controls and the
 Chart.js chart), `worker.js` and `model.js` (the module list and the Python
@@ -190,10 +223,10 @@ python3 tools/rebalance/rebalance.py tune    # cutoffs 20-40 by 5, widths 4 6 8,
 ```
 
 `tune` runs each penalty (`tune_penalty`) through `explore_run` with
-`curve_settings.json` and `TUNE_KNOBS` (flat exp, the two players' margins,
-lowering, the lead as the bosses' reference and the bench as the trainer and
-wild gaps', `gap_ref`: on the lead the route trainers feed it until it runs
-away), then fights each starter's solo walls
+`curve_settings.json` and `TUNE_KNOBS`: flat exp, the two players' margins
+and `lower`, with `boss_ref` the lead and `gap_ref` the bench (see "Two
+players" above for why the gaps stay on the bench). It then fights each
+starter's solo walls
 (`solo.py`) on that run's own curve: its boss teams, moved, evolved and
 devolved as the run fights them, its wild tables and its exp. It prints the
 table and the strictest candidate (the lowest floor, then cutoff, then width)
@@ -201,7 +234,10 @@ whose walls all fit `solo.GRIND_BUDGET`; an unwinnable wall fails the budget.
 The budget leaves out the optional rival fights (`required: false` in
 `forced_trainers.json`) and the walls the owner accepted (`solo.SOLO_OUTLIERS`:
 Wallace for a solo Mudkip); the report still lists them, marked.
-When none passes, it prints the closest ones and what fails.
+When none passes, it prints the closest ones and what fails. The sweep
+behind the game's 30 / 8 / 40 is in `findings.md` section 18, and
+`RealRepo.test_solo_walls_fit_the_grind_budget` pins the budget on the
+committed data.
 
 ## What it measures
 
@@ -241,7 +277,28 @@ When none passes, it prints the closest ones and what fails.
   (`curve_settings.json`'s knobs with the level rules off), the ace and the
   Exp. Share lead of a player who fights everyone and of one who skips
   everything (`two_players`), each in percent of the ace, flagging an
-  outlier where the skip lead is more than `OUTLIER_SKIP` (25%) under.
+  outlier where the skip lead is more than `OUTLIER_SKIP` (25%) under; then
+  the forced trainers the skip lead meets that far under. `OUTLIERS` lists
+  the teams the owner accepted outside the rules, each with its side
+  (`skip`, `full` or `forced`) and its numbers: the last three Elite Four
+  fights and Wallace, which `LEAGUE_STEPS` lifts over the skip rule, and
+  the forced Edwardo and Flint. The report marks them "accepted", and
+  `RealRepo.test_both_players_meet_the_margins` exempts each on its side
+  only and fails on a stale entry.
+- **Solo walls** (#350, `solo.py`): per starter and staged boss, the
+  starter line alone (its default moves plus the TMs open by then, picked
+  for coverage; IV 15, full EVs spread evenly) against the boss team on
+  `power.score` with the type chart. The wall is the lowest level that wins
+  each one-on-one (healing between), the sweep the lowest that beats the
+  team without healing, and the KOs the grind from the fight-everyone lead
+  to the wall against the reachable wild Pokemon that takes the fewest
+  (grass before Winona, Surf from her, no rods; max friendship, no Lucky
+  Egg) under the game's exp configs; after Norman, also the battles against
+  the strongest open rematch team. `solo.GRIND_BUDGET` (50 KOs) leaves out
+  the optional rival fights (`required: false` in `forced_trainers.json`)
+  and `solo.SOLO_OUTLIERS` (Wallace for a solo Mudkip, unwinnable by 100),
+  both the owner's calls; the report marks them and leaves them out of each
+  starter's worst wall. Tate and Liza's double battle is fought one-on-one.
 - **Default movesets**: `GiveBoxMonInitialMoveset` (the last four distinct
   level-up moves, level-0 evolution moves skipped) under both learnsets, for
   every trainer Pokemon without set moves. Fixed-damage moves (Seismic
