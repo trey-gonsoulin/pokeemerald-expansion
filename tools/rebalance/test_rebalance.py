@@ -1928,6 +1928,55 @@ class Solo(unittest.TestCase):
         self.assertEqual(S.best_wild(gd, wilds, 2, 2), (150, 30, 'SPECIES_SWIM'))
         self.assertEqual(S.best_wild(gd, wilds, 2, None), (100, 20, 'SPECIES_LAND'))
 
+    def test_best_wild_takes_the_fewest_kos_under_the_penalty(self):
+        gd = fake_regime(B_SCALED_EXP='GEN_6')
+        gd.species = {'SPECIES_RICH': G.Species((), {}, 250, '', ''), 'SPECIES_PEER': G.Species((), {}, 150, '', '')}
+        scaling = G.parse_scaling_factors(FIXTURE)
+        penalty = RB.Overlevel(10, True, 4, 10, 0)
+
+        def slot(species, level):
+            return {'species': species, 'min_level': level, 'max_level': level}
+        wilds = {0: [('land_mons', slot('SPECIES_RICH', 20), 20), ('land_mons', slot('SPECIES_PEER', 30), 20)]}
+
+        def cost(foe):
+            return S.grind_kos(gd, scaling, penalty, 30, 40, [foe])
+        # Rich's yield x level (5000) beats Peer's (4500), but a climb from 30 sits far over it.
+        self.assertEqual(S.best_wild(gd, wilds, 0, None), (250, 20, 'SPECIES_RICH'))
+        self.assertLess(cost((150, 30)), cost((250, 20)))
+        self.assertEqual(S.best_wild(gd, wilds, 0, None, cost), (150, 30, 'SPECIES_PEER'))
+        # Without the penalty Rich takes fewer KOs again; at no climb (every cost 0), yield x level decides.
+        self.assertEqual(S.best_wild(gd, wilds, 0, None, lambda foe: S.grind_kos(gd, scaling, None, 30, 40, [foe])),
+                         (250, 20, 'SPECIES_RICH'))
+        self.assertEqual(S.best_wild(gd, wilds, 0, None, lambda foe: 0), (250, 20, 'SPECIES_RICH'))
+        # A source that gives no exp (None) is never picked over one that does.
+        self.assertEqual(S.best_wild(gd, wilds, 0, None, lambda foe: None if foe[0] == 250 else 99),
+                         (150, 30, 'SPECIES_PEER'))
+
+    def test_boss_foes_evolve_and_devolve_with_the_curve(self):
+        gd = self.regime()
+        seen = []
+
+        def evolve(species, level, gender=None):
+            return 'SPECIES_TREE' if species == 'SPECIES_SEED' and level >= 16 else species
+
+        def devolve(species, level, taken=()):
+            seen.append((species, level, taken))
+            return 'SPECIES_SEED' if species == 'SPECIES_TREE' and level < 18 else species
+        boss = G.Trainer('TRAINER_B', '', 'Leader', [], False, [G.TrainerMon('SPECIES_TREE', 30, []),
+                                                                 G.TrainerMon('SPECIES_SEED', 12, [])])
+        # Lowered 15 (ace 15): the Tree devolves for its level, as the run and apply do.
+        self.assertEqual(S.boss_foes(gd, boss, 15, evolve, devolve),
+                         self.foes(gd, ('SPECIES_SEED', 15), ('SPECIES_SEED', 1)))
+        # A boss team keeps distinct species: the Tree is the highest, so it goes first.
+        self.assertEqual(seen[0], ('SPECIES_TREE', 15, frozenset({'SPECIES_TREE', 'SPECIES_SEED'})))
+        # Raised 5 (ace 35): the Seed at 17 would evolve, but the team has a Tree already.
+        self.assertEqual(S.boss_foes(gd, boss, 35, evolve, devolve),
+                         self.foes(gd, ('SPECIES_TREE', 35), ('SPECIES_SEED', 17)))
+        lone = G.Trainer('TRAINER_C', '', 'Leader', [], False, [G.TrainerMon('SPECIES_SEED', 12, [])])
+        self.assertEqual(S.boss_foes(gd, lone, 17, evolve, devolve), self.foes(gd, ('SPECIES_TREE', 17)))
+        # Without the evolutions, only the levels move.
+        self.assertEqual(S.boss_foes(gd, boss, 15), self.foes(gd, ('SPECIES_TREE', 15), ('SPECIES_SEED', 1)))
+
     def test_solo_walls_on_the_fixture(self):
         inp = curve_inputs(FIXTURE, FIXTURE_STAGES)
         gd, stages, wilds = inp['gd'], inp['stages'], inp['wilds']['modern']
@@ -1950,6 +1999,114 @@ class Solo(unittest.TestCase):
             self.assertIsNone(r['battles'])  # no rematches before Norman
         # Leader X's Sableye is 20 and the lead far lower: a grind.
         self.assertGreater(out[1]['kos'], 0)
+
+    TUNE = {'cutoffs': (20, 30), 'widths': (4, 6), 'floors': (20, 30)}
+    TUNE_BASE = {'trainer_gap': 10, 'wild_gap': 0, 'gap_unit': 'percent'}  # raises stage One's wild table 1
+
+    @staticmethod
+    def fake_walls(calls):
+        """solo_walls for tune_penalty: its KOs set by the penalty. Floor
+        20 takes 60 KOs (over the budget), except cutoff 20 width 4's 10,
+        which has an unwinnable wall too; floor 30 takes 45 at cutoff 30 or
+        width 6, else 55."""
+        def walls(trainers, gd, stages, rows, wilds, map_tms, teachables, evolve, scaling, overlevel, settings,
+                  **kw):
+            calls.append(dict(kw, rows=rows, wilds=wilds, gd=gd, scaling=scaling, overlevel=overlevel,
+                              evolve=evolve, settings=settings))
+            c, w, f = overlevel.cutoff, overlevel.width, overlevel.floor
+            if f == 20:
+                kos = 10 if (c, w) == (20, 4) else 60
+            else:
+                kos = 45 if c == 30 or w == 6 else 55
+            out = [{'boss': 'TRAINER_LEADER_X', 'starter': 'A', 'lead': 10, 'wall': 30, 'sweep': 31, 'kos': kos,
+                    'source': ['SPECIES_SABLEYE', 9]},
+                   {'boss': 'TRAINER_RIVAL_A', 'starter': 'B', 'lead': 5, 'wall': 6, 'sweep': 6, 'kos': 3,
+                    'source': ['SPECIES_MAGIKARP', 5]}]
+            if (c, w, f) == (20, 4, 20):
+                out.append({'boss': 'TRAINER_LEADER_X', 'starter': 'B', 'lead': 10, 'wall': None, 'sweep': None,
+                            'kos': None, 'source': None})
+            return out
+        return walls
+
+    def tune(self, calls):
+        inp = dict(curve_inputs(FIXTURE, FIXTURE_STAGES),
+                   solo={'map_tms': {}, 'teachables': {}, 'settings': {'starters': {}}, 'evolve': self.evolve})
+        with unittest.mock.patch.object(S, 'solo_walls', self.fake_walls(calls)):
+            return inp, RB.tune_penalty(inp, self.TUNE_BASE, **self.TUNE)
+
+    def candidate_knobs(self, cutoff, width, floor):
+        return {**self.TUNE_BASE, **RB.TUNE_KNOBS, 'overlevel_cutoff': cutoff, 'overlevel_unit': 'percent',
+                'overlevel_width': width, 'overlevel_floor': floor}
+
+    def test_tune_picks_the_strictest_passing_candidate(self):
+        inp, out = self.tune([])
+        self.assertEqual(len(out), 8)
+        by = {(r['cutoff'], r['width'], r['floor']): r for r in out}
+        self.assertEqual(set(by), {(c, w, f) for c in (20, 30) for w in (4, 6) for f in (20, 30)})
+        self.assertEqual(by[(30, 4, 30)]['max_kos'], 45)
+        self.assertTrue(by[(30, 4, 30)]['passes'])
+        self.assertFalse(by[(20, 4, 30)]['passes'])  # 55 KOs
+        # An unwinnable wall fails the budget whatever the KOs, and is listed apart.
+        low = by[(20, 4, 20)]
+        self.assertEqual((low['max_kos'], low['passes']), (10, False))
+        self.assertEqual([(r['boss'], r['starter']) for r in low['unwinnable']], [('TRAINER_LEADER_X', 'B')])
+        # Each starter's worst wall.
+        self.assertEqual({s: r['kos'] for s, r in by[(30, 4, 30)]['worst'].items()}, {'A': 45, 'B': 3})
+        # The strictest: the lowest floor, then cutoff, then width. Passing: (30, 4, 30), (20, 6, 30), (30, 6, 30).
+        chosen = RB.pick_penalty(out)
+        self.assertEqual((chosen['cutoff'], chosen['width'], chosen['floor']), (20, 6, 30))
+        self.assertIsNone(RB.pick_penalty([r for r in out if not r['passes']]))
+        # The full-clear lead at the last staged boss (Wallace in the game) comes from the candidate's own run.
+        run = RB.explore_run(inp, self.candidate_knobs(20, 6, 30))
+        final = [r for r in run['bosses'] if r['boss'] == 'TRAINER_LEADER_X'][0]
+        self.assertEqual(chosen['final_lead'], final['levels'][0])
+
+    def test_tune_fights_each_candidates_own_curve(self):
+        calls = []
+        inp, _ = self.tune(calls)
+        self.assertEqual(len(calls), 8)
+        self.assertEqual((RB.TUNE_KNOBS['scaled_exp'], RB.TUNE_KNOBS['full_margin'], RB.TUNE_KNOBS['skip_margin'],
+                          RB.TUNE_KNOBS['lower'], RB.TUNE_KNOBS['boss_ref']), (False, 10, 15, True, 'ace'))
+        min_level = RB.explorer_defaults(inp['gd'])['overlevel_min_level']
+        modern, vanilla = inp['wilds']['modern'], inp['wilds']['vanilla']
+        for call in calls:
+            o = call['overlevel']
+            self.assertEqual(o, RB.Overlevel(o.cutoff, True, o.width, o.floor, min_level))
+            run = RB.explore_run(inp, self.candidate_knobs(o.cutoff, o.width, o.floor))
+            # The boss rows (levels, raises) are the candidate's run's.
+            self.assertEqual(call['rows'], run['bosses'])
+            # Its wild tables are the run's, as restock writes them for its offsets.
+            for i, s in enumerate(run['stages']):
+                self.assertEqual(call['wilds'].get(i, []), RB.run_wilds(
+                    modern.get(i, ()), vanilla.get(i, ()), s['wild_offset'], s['wild_applied'], None,
+                    inp['gd'].species), i)
+        self.assertTrue(any(s['wild_offset'] != s['wild_applied'] for s in run['stages']))
+        self.assertNotEqual(calls[0]['wilds'], dict(modern))
+        call = calls[0]
+        # The candidate's exp: flat, 1.5x trainer exp as the knobs say.
+        self.assertFalse(call['gd'].flag('B_SCALED_EXP >= GEN_5 && B_SCALED_EXP != GEN_6'))
+        self.assertEqual(call['gd'].defines['B_TRAINER_EXP_MULTIPLIER'], RB.TRAINER_EXP['1.5x off'])
+        # The bosses evolve and devolve as the run's teams do; the player's line evolves on time.
+        self.assertIs(call['evolve'], self.evolve)
+        self.assertIs(call['foe_evolve'], inp['evolve'])
+        self.assertIs(call['foe_devolve'], inp['devolve'])
+
+    def test_tune_prints_the_table_and_the_choice(self):
+        _, out = self.tune([])
+        text = '\n'.join(RB.tune_report(out))
+        self.assertIn('| cutoff | width | floor | max KOs | unwinnable | full lead at Leader X | passes |', text)
+        self.assertIn('| 20 | 4 | 20 | 10 | 1 |', text)
+        self.assertIn('Chosen: cutoff 20, width 6, floor 30: max 45 KOs', text)
+        self.assertIn('  A worst wall: Leader X, 45 KOs from 10 to 30 on Sableye 9', text)
+        # None passes: the closest, by unwinnable walls then KOs, with what fails and by how much.
+        failing = [r for r in out if not r['passes']]
+        none = RB.tune_report(failing)
+        start = none.index('No candidate passes the 50-KO budget. Closest:')
+        self.assertTrue(none[start + 1].startswith('cutoff 20, width 4, floor 30: max 55 KOs'))
+        self.assertIn('  Over the 50-KO budget: Leader X (A) 55 (+5)', none)
+        self.assertEqual(sum(line.startswith('cutoff ') for line in none[start:]), RB.TUNE_CLOSEST)
+        alone = RB.tune_report([r for r in failing if r['unwinnable']])
+        self.assertIn('  Unwinnable: Leader X (B)', alone)
 
     def test_report_has_solo_walls_section(self):
         def row(boss, starter, ace, lead, wall, sweep, kos, battles=None, rematch=None):
