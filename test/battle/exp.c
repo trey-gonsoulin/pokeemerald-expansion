@@ -72,8 +72,6 @@ WILD_BATTLE_TEST("Lucky Egg boosts gained exp points by 50%", s32 exp)
     }
 }
 
-#if (B_SCALED_EXP == GEN_5 || B_SCALED_EXP >= GEN_7)
-
 WILD_BATTLE_TEST("Exp is scaled to player and opponent's levels", s32 exp)
 {
     u8 level = 0;
@@ -82,6 +80,7 @@ WILD_BATTLE_TEST("Exp is scaled to player and opponent's levels", s32 exp)
     PARAMETRIZE { level = 10; }
 
     GIVEN {
+        WITH_CONFIG(B_SCALED_EXP, GEN_LATEST); // Emerald Plus (#350): the fork's default is Gen 6's flat exp
         WITH_CONFIG(B_EXP_OVERLEVEL_PENALTY, FALSE);
         PLAYER(SPECIES_WOBBUFFET) { Level(level); }
         OPPONENT(SPECIES_CATERPIE) { Level(5); HP(1); }
@@ -95,8 +94,6 @@ WILD_BATTLE_TEST("Exp is scaled to player and opponent's levels", s32 exp)
         EXPECT_GT(results[0].exp, results[1].exp);
     }
 }
-
-#endif
 
 WILD_BATTLE_TEST("Large exp gains are supported", s32 exp) // #1455
 {
@@ -733,6 +730,8 @@ TEST("Exp formula: the over-level penalty follows a logistic curve down to its f
 
 WILD_BATTLE_TEST("Exp formula: the over-level penalty applies its configs in battle (#189)", s32 exp)
 {
+    // Its own penalty configs (cutoff 15, width 4, floor 10, minimum level 17), not the defaults:
+    // the percentages below follow these.
     u32 foe = 0, getter = 0, penalty = FALSE, width = 4, floorPercent = 10, minLevel = 17;
 
     PARAMETRIZE { foe = 30; getter = 30; penalty = FALSE; }
