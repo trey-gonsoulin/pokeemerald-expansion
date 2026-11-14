@@ -730,6 +730,12 @@ def game_scaling(gd, table):
     return scaling_factors(3.5, len(table)) if gd.flag('B_SCALED_EXP_STEEP') else table
 
 
+def level_scaled(gd):
+    """Whether ``gd``'s configs scale exp by the level gap (Cmd_getexp's
+    B_SCALED_EXP test); else flat (#350)."""
+    return bool(gd.flag('B_SCALED_EXP >= GEN_5 && B_SCALED_EXP != GEN_6'))
+
+
 # sExpLogistic: 4096 / (1 + e^(k/16)) for t from 0 to 10, the over-level penalty's curve (#189).
 LOGISTIC = tuple(round(4096 / (1 + math.exp(k / 16))) for k in range(161))
 # exp_award's overlevel default: the penalty gd's configs set.
@@ -802,7 +808,7 @@ def exp_award(gd, scaling, yield_, foe_level, getter_level, trainer, sent_in, se
     ignores it), and ``overlevel``, an Overlevel penalty applied last (at
     least 1 exp; GAME: the configs', None: none). ``scaling`` can be any
     scaling_factors table (game_scaling: the configs')."""
-    scaled = gd.flag('B_SCALED_EXP >= GEN_5 && B_SCALED_EXP != GEN_6')
+    scaled = level_scaled(gd)
     calc = yield_ * foe_level // (5 if scaled else 7)
     if trainer and gd.flag('B_TRAINER_EXP_MULTIPLIER <= GEN_6'):
         calc = calc * 150 // 100
@@ -1229,9 +1235,9 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
     rows gain ``skip_levels`` and ``skip_ref`` (None for a boss it skips),
     its stage rows ``skip_gap`` and ``skip_trainers`` ([{trainer, ace,
     lead}]: each trainer it fights, with its ace and the skip lead that
-    meets it). With ``full_margin`` and ``skip_margin``
-    (percent, both or neither), their rule replaces ``margin``'s: a boss's
-    ace sits ``full_margin`` percent of itself under the full party's
+    meets it). With ``full_margin`` and ``skip_margin`` (percent, both
+    or neither, and not with ``margin``), their rule replaces ``margin``'s:
+    a boss's ace sits ``full_margin`` percent of itself under the full party's
     reference, or ``skip_margin`` percent of itself over the skip party's
     if that is lower (the full rule alone for a boss the skip player skips,
     and after the story). ``lower`` lets the boss raises and the wild
@@ -1239,6 +1245,8 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
     under ``trainer_gap`` only ever raises (#350: today's trainer rule)."""
     if (full_margin is None) != (skip_margin is None):
         raise ValueError('full_margin and skip_margin go together')
+    if full_margin is not None and margin is not None:
+        raise ValueError('margin or full_margin and skip_margin, not both')
     boss_rule = full_margin is not None or margin is not None
     raises = dict(raises or {})
     stage_raises, wild_offsets = stage_raises or {}, wild_offsets or {}
@@ -1581,7 +1589,7 @@ def explorer_defaults(gd):
     report.md models it: level-scaled or (#350) flat exp, the trainer exp
     1.5x, the scaling exponent and the over-level penalty."""
     o = Overlevel.from_configs(gd)
-    return {**EXPLORER_KNOBS, 'scaled_exp': bool(gd.flag('B_SCALED_EXP >= GEN_5 && B_SCALED_EXP != GEN_6')),
+    return {**EXPLORER_KNOBS, 'scaled_exp': level_scaled(gd),
             'trainer_exp': '1.5x on' if gd.flag('B_TRAINER_EXP_MULTIPLIER <= GEN_6') else '1.5x off',
             'scaling_power': 3.5 if gd.flag('B_SCALED_EXP_STEEP') else 2.5,
             'overlevel_cutoff': o and o.cutoff, 'overlevel_unit': 'percent' if o and o.relative else 'levels',
@@ -1652,7 +1660,7 @@ def print_curve(res):
                  + ([' '.join(map(str, r['skip_levels'])) if r['skip_levels'] else 'skipped', r['skip_ref'] or '-']
                     if skip else []) for r in res['bosses']]))
     print()
-    print(table(['stage', 'reference at start', 'trainers', 'trainer raise', 'trainer ace mean', 'gap when fought',
+    print(table(['stage', 'gap reference at start', 'trainers', 'trainer raise', 'trainer ace mean', 'gap when fought',
                  'wild offset', 'wild land mean'] + ['skip gap'] * skip,
                 [[s['stage'], round(s['start_ref'], 1), s['trainers'], f"{s['raise']:+}", s['trainer_ace_mean'],
                   s['gap'], s['wild_offset'], s['wild_land_mean']] + [s['skip_gap']] * skip for s in res['stages']]))
@@ -1809,6 +1817,8 @@ def share_report(share, raised_defaults, stage_trainers):
                     + [f"+{share[n]['raises'][r['boss']]} -> {r['base_ace'] + share[n]['raises'][r['boss']]}"
                        for n in names])
     out += ['### Proposed boss raises', '',
+            '#127\'s single-player rule, kept for comparison: #350\'s "Two players" (below) replaced it, and the '
+            'data follows that.', '',
             f'Target: on a full clear with modelled friendship, each story boss\'s ace is {TARGET_MARGIN} level(s) '
             'above the bench. Bosses are only raised, every Pokemon of the team by the same amount, in story order '
             'so each raise counts toward the later stages\' exp. Raises are against the current trainers.party.', '',
@@ -2685,12 +2695,11 @@ def explore_main(argv):
 # The over-level penalty against the solo grind budget (#350)
 # ---------------------------------------------------------------------------
 
-# What every candidate of the sweep runs with (spec section 4): flat exp,
-# both players' boss rule, lowering, the lead as the bosses' reference and
-# the bench as the trainer and wild gaps'. The
+# What every candidate of the sweep runs with that the curve settings don't
+# carry (spec section 4): flat exp. The settings decide the rest (the
+# margins, lowering and the references), and the settings win over this. The
 # penalty is relative; its minimum level is the game's (explorer_defaults).
-TUNE_KNOBS = {'scaled_exp': False, 'full_margin': 10, 'skip_margin': 15, 'lower': True, 'boss_ref': 'ace',
-              'gap_ref': 'bench'}
+TUNE_KNOBS = {'scaled_exp': False}
 TUNE_CUTOFFS = tuple(range(20, 41, 5))
 TUNE_WIDTHS = (4, 6, 8)
 TUNE_FLOORS = tuple(range(20, 41, 5))
@@ -2700,7 +2709,7 @@ def tune_penalty(inputs, knobs, cutoffs, widths, floors):
     """Each over-level penalty (cutoff, width and floor, in percent) run
     through explore_run on ``inputs`` (repo_inputs', plus ``solo``:
     {map_tms, teachables, settings, evolve}, solo_walls' arguments of those
-    names, ``evolve`` the player's line) with ``knobs`` and TUNE_KNOBS, and
+    names, ``evolve`` the player's line) with TUNE_KNOBS under ``knobs``, and
     each starter's solo walls fought on that run's own curve: its boss rows
     (the teams moved, evolved and devolved as the run fights them), its
     wild tables (run_wilds) and its exp configs (run_exp). The budget
@@ -2717,7 +2726,7 @@ def tune_penalty(inputs, knobs, cutoffs, widths, floors):
     optional = inputs['forced'].optional_bosses if inputs.get('forced') else frozenset()
     out = []
     for cutoff, width, floor in itertools.product(cutoffs, widths, floors):
-        res = explore_run(inputs, {**knobs, **TUNE_KNOBS, 'overlevel_cutoff': cutoff, 'overlevel_unit': 'percent',
+        res = explore_run(inputs, {**TUNE_KNOBS, **knobs, 'overlevel_cutoff': cutoff, 'overlevel_unit': 'percent',
                                    'overlevel_width': width, 'overlevel_floor': floor})
         gd, scaling, overlevel = run_exp(inputs, res['knobs'])
         evolve = inputs['evolve'] if res['knobs']['evolve'] else None
