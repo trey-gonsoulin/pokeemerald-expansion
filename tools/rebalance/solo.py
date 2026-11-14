@@ -32,7 +32,11 @@ import power as P
 import rebalance as R
 
 SOLO_EVS = 85  # per stat: 510 EVs spread evenly
-GRIND_BUDGET = 50  # KOs from the fight-everyone lead to any solo wall
+GRIND_BUDGET = 50  # KOs from the fight-everyone lead to any budgeted solo wall
+# Solo walls the owner accepted over the budget: (boss team, starter) -> why.
+SOLO_OUTLIERS = {('TRAINER_WALLACE', 'MUDKIP'): 'owner accepted, #350'}
+OPTIONAL = 'optional, not budgeted'
+ACCEPTED = 'accepted outlier'
 AFFECTION = 1.2  # max friendship's 4915/4096 (B_AFFECTION_MECHANICS)
 
 
@@ -153,14 +157,16 @@ def boss_foes(gd, trainer, ace, evolve=None, devolve=None):
 
 
 def solo_walls(trainers, gd, stages, rows, wilds, map_tms, teachables, evolve, scaling, overlevel, settings,
-               ladders=(), foe_evolve=None, foe_devolve=None, cache=None):
+               ladders=(), foe_evolve=None, foe_devolve=None, cache=None, optional=frozenset()):
     """Per staged story boss with a row in ``rows`` (share_run's boss rows:
     ``levels[0]`` is the fight-everyone lead, ``boss_ace`` the team's ace)
     and starter in ``settings`` (matchup_settings.json's; starters ``gd``
     lacks are skipped): {stage, boss (the team met after choosing that
     starter), starter, ace, double, lead, wall, sweep, kos, source (the
     grind's wild [species, level]: best_wild's fewest KOs), rematch,
-    battles}. ``kos``: the grind from the lead to the wall (0 at or below
+    battles, exempt}. ``exempt``: why the wall is outside the grind budget
+    (OPTIONAL for a boss in ``optional``, the optional fights;
+    ACCEPTED for SOLO_OUTLIERS), else None. ``kos``: the grind from the lead to the wall (0 at or below
     the lead, None when the wall is). ``battles``: the same climb against
     the best ``ladders`` rematch team (``rematch``) after Norman, else None.
     ``wilds``: stage -> stage_slots' slots; ``map_tms``: gamedata.map_tms;
@@ -218,5 +224,7 @@ def solo_walls(trainers, gd, stages, rows, wilds, map_tms, teachables, evolve, s
                             'double': trainers[tid].double, 'lead': lead, 'wall': wall, 'sweep': sweep,
                             'kos': grind(wild and [wild[:2]]), 'source': wild and [wild[2], wild[1]],
                             'rematch': rematch and rematch[1],
-                            'battles': battles if not battles else battles // len(rematch[2])})
+                            'battles': battles if not battles else battles // len(rematch[2]),
+                            'exempt': OPTIONAL if tid in optional else ACCEPTED if (tid, name) in SOLO_OUTLIERS
+                            else None})
     return out

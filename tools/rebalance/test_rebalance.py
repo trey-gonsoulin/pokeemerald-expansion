@@ -1630,7 +1630,8 @@ class TwoPlayers(unittest.TestCase):
             [boss('One', 'TRAINER_RIVAL_A', 'PKMN_TRAINER_1', 5, 7, 12, 11, 11, [13, 11, 11, 11, 11, 11], 96),
              boss('Two', 'TRAINER_LEADER_X', 'LEADER', 20, 0, 13, 11, 11, [13, 11, 11, 11, 11, 11], 112)],
             [stage('One', 5, 1, -185.7, 0, 20.0, 4.0, 0), stage('Two', 11, 0, None, 0, None, None, 0)]))
-        rows = self.run_share(margin=1, trainer_gap=-20, wild_gap=0, ko_takers=3, boss_ref='ko_mean')
+        rows = self.run_share(margin=1, trainer_gap=-20, wild_gap=0, ko_takers=3, boss_ref='ko_mean',
+                              gap_ref='ko_mean')
         self.assertEqual(rows, (
             [boss('One', 'TRAINER_RIVAL_A', 'PKMN_TRAINER_1', 5, 9, 14, 12, 12.7, [12, 14, 12, 12, 12, 12], 101),
              boss('Two', 'TRAINER_LEADER_X', 'LEADER', 20, 0, 15, 12, 13.7, [13, 15, 13, 12, 12, 12], 117)],
@@ -1697,13 +1698,36 @@ class TwoPlayers(unittest.TestCase):
         kept, _ = self.run_share(skip=self.NONE_FORCED, **self.MARGINS)
         self.assertEqual((lowered[1]['raise'], lowered[1]['boss_ace']), (7 - 20, 7))
         self.assertEqual((kept[1]['raise'], kept[1]['boss_ace']), (0, 20))
-        # The stage shift too: the smallest (most negative) that meets the gap.
-        # The hiker (ace 20) is fought at reference 5: 15 lower puts it at 0.
-        _, st = self.run_share(trainer_gap=0, lower=True)
-        self.assertEqual((st[0]['raise'], st[0]['gap']), (-15, 0))
+        # A given stage shift can still lower its trainers.
         _, above = self.run_share(stage_raises={'One': -16})
         self.assertGreater(above[0]['gap'], 0)
-        self.assertEqual(self.run_share(trainer_gap=0)[1][0]['raise'], 0)
+
+    def test_trainer_shift_never_lowers(self):
+        # The hiker (ace 20) is fought at reference 5, far over a gap of 0, but the
+        # trainer rule only ever raises (#350: today's rule), with lower or without.
+        for lower in (True, False):
+            _, st = self.run_share(trainer_gap=0, lower=lower, **self.MARGINS)
+            self.assertEqual(st[0]['raise'], 0, lower)
+            self.assertLess(st[0]['gap'], 0)
+
+    def test_gaps_measure_on_gap_ref_and_margins_on_boss_ref(self):
+        def run(**kw):
+            bosses, st = self.run_share(trainer_gap=0, wild_gap=0, margin=0, **kw)
+            return ([(r['boss_ace'], r['ref']) for r in bosses],
+                    [(s['raise'], s['wild_offset'], s['start_ref'], s['gap']) for s in st])
+        bench_bosses, bench_gaps = run()
+        ace_bosses, ace_gaps = run(gap_ref='ace')
+        # boss_ref moves the bosses only (#350), gap_ref the trainer and wild gaps only.
+        self.assertEqual(run(boss_ref='ace')[1], bench_gaps)
+        self.assertNotEqual(run(boss_ref='ace')[0], bench_bosses)
+        self.assertEqual(ace_bosses, bench_bosses)
+        self.assertNotEqual(ace_gaps, bench_gaps)
+        self.assertEqual(run(boss_ref='ace', gap_ref='ace'), (run(boss_ref='ace')[0], ace_gaps))
+        # Both default to the bench, in share_run and the explorer.
+        self.assertEqual(run(boss_ref='bench', gap_ref='bench'), (bench_bosses, bench_gaps))
+        self.assertEqual((RB.EXPLORER_KNOBS['boss_ref'], RB.EXPLORER_KNOBS['gap_ref']), ('bench', 'bench'))
+        res = RB.explore_run(self.inputs, {'trainer_gap': 0, 'wild_gap': 0, 'margin': 0, 'gap_ref': 'ace'})
+        self.assertEqual([(s['raise'], s['wild_offset'], s['start_ref'], s['gap']) for s in res['stages']], ace_gaps)
 
     def test_wild_offset_never_below_vanilla(self):
         raised = {i: RB.shifted_slots(s, 6) for i, s in self.inputs['wilds']['modern'].items()}
@@ -1724,8 +1748,9 @@ class TwoPlayers(unittest.TestCase):
 
     def test_lowered_teams_devolve_in_the_model(self):
         seen = []
-        rows, st = self.run_share(lower=True, trainer_gap=0, devolve=self.recording_devolve(seen), **self.MARGINS)
-        plain, _ = self.run_share(lower=True, trainer_gap=0, **self.MARGINS)
+        rows, st = self.run_share(lower=True, stage_raises={'One': -15}, devolve=self.recording_devolve(seen),
+                                  **self.MARGINS)
+        plain, _ = self.run_share(lower=True, stage_raises={'One': -15}, **self.MARGINS)
         # The hiker's stage shift (-15): Ralts 7 -> 1, Sableye 20 -> 5; Leader X lowered to its ace.
         self.assertEqual(st[0]['raise'], -15)
         self.assertIn(('SPECIES_RALTS', 1), seen)
@@ -1831,8 +1856,12 @@ class TwoPlayers(unittest.TestCase):
         # apply's path (repo_inputs) and the explorer's give the same rows, lowered and devolved.
         for knobs in ({**self.MARGINS, 'lower': True}, {**self.MARGINS, 'lower': True, 'trainer_gap': 0}):
             self.assertEqual(RB.explore_run(snap, knobs), RB.explore_run(live, knobs), knobs)
-        # The hiker's lowered Sableye (20 -> 5) devolves into a Ralts, which gives the rival's party less exp.
-        self.assertNotEqual(RB.explore_run(snap, knobs), RB.explore_run(dict(live, devolve=None), knobs))
+        # Leader X lowered (20 -> 10) devolves its Sableye into a Ralts (10 less EVOLVE_GRACE is under 8) the
+        # same way on both paths.
+        self.assertEqual(RB.explore_run(snap, knobs)['bosses'][1]['boss_ace'], 10)
+        for inputs in (snap, live):
+            self.assertEqual(RB.team_species(inputs['trainers']['TRAINER_LEADER_X'], -10, inputs['evolve'],
+                                             inputs['devolve'], True), ['SPECIES_RALTS', 'SPECIES_MR_MIME'])
 
 
 class Solo(unittest.TestCase):
@@ -1999,6 +2028,13 @@ class Solo(unittest.TestCase):
             self.assertIsNone(r['battles'])  # no rematches before Norman
         # Leader X's Sableye is 20 and the lead far lower: a grind.
         self.assertGreater(out[1]['kos'], 0)
+        self.assertEqual([r['exempt'] for r in out], [None, None])
+        # The optional fights and SOLO_OUTLIERS are marked outside the budget.
+        with unittest.mock.patch.dict(S.SOLO_OUTLIERS, {('TRAINER_RIVAL_A', 'A'): 'test'}):
+            marked = S.solo_walls(inp['trainers'], gd, stages, rows, wilds, {}, {}, lambda sp, lv: sp, scaling, None,
+                                  settings, optional=frozenset({'TRAINER_LEADER_X'}))
+        self.assertEqual([r['exempt'] for r in marked], [S.ACCEPTED, S.OPTIONAL])
+        self.assertEqual(S.SOLO_OUTLIERS, {('TRAINER_WALLACE', 'MUDKIP'): 'owner accepted, #350'})
 
     TUNE = {'cutoffs': (20, 30), 'widths': (4, 6), 'floors': (20, 30)}
     TUNE_BASE = {'trainer_gap': 10, 'wild_gap': 0, 'gap_unit': 'percent'}  # raises stage One's wild table 1
@@ -2025,6 +2061,11 @@ class Solo(unittest.TestCase):
             if (c, w, f) == (20, 4, 20):
                 out.append({'boss': 'TRAINER_LEADER_X', 'starter': 'B', 'lead': 10, 'wall': None, 'sweep': None,
                             'kos': None, 'source': None})
+            # Outside the budget: an optional fight's 500 KOs and an accepted unwinnable wall.
+            out += [{'boss': 'TRAINER_RIVAL_A', 'starter': 'A', 'lead': 5, 'wall': 40, 'sweep': 41, 'kos': 500,
+                     'source': ['SPECIES_MAGIKARP', 5], 'exempt': S.OPTIONAL},
+                    {'boss': 'TRAINER_LEADER_X', 'starter': 'C', 'lead': 10, 'wall': None, 'sweep': None,
+                     'kos': None, 'source': None, 'exempt': S.ACCEPTED}]
             return out
         return walls
 
@@ -2050,6 +2091,9 @@ class Solo(unittest.TestCase):
         low = by[(20, 4, 20)]
         self.assertEqual((low['max_kos'], low['passes']), (10, False))
         self.assertEqual([(r['boss'], r['starter']) for r in low['unwinnable']], [('TRAINER_LEADER_X', 'B')])
+        # The exempt walls (an optional fight, an accepted outlier) count for nothing, but stay in walls.
+        self.assertEqual(len(by[(30, 4, 30)]['walls']), 4)
+        self.assertNotIn('C', by[(30, 4, 30)]['worst'])
         # Each starter's worst wall.
         self.assertEqual({s: r['kos'] for s, r in by[(30, 4, 30)]['worst'].items()}, {'A': 45, 'B': 3})
         # The strictest: the lowest floor, then cutoff, then width. Passing: (30, 4, 30), (20, 6, 30), (30, 6, 30).
@@ -2090,6 +2134,13 @@ class Solo(unittest.TestCase):
         self.assertIs(call['evolve'], self.evolve)
         self.assertIs(call['foe_evolve'], inp['evolve'])
         self.assertIs(call['foe_devolve'], inp['devolve'])
+        # The fixture's inputs have no forced data: no optional fights.
+        self.assertEqual(call['optional'], frozenset())
+        forced = RB.Forced(frozenset(), frozenset({'TRAINER_LEADER_X'}))
+        calls.clear()
+        with unittest.mock.patch.object(S, 'solo_walls', self.fake_walls(calls)):
+            RB.tune_penalty(dict(inp, forced=forced), self.TUNE_BASE, [20], [4], [20])
+        self.assertEqual(calls[0]['optional'], forced.optional_bosses)
 
     def test_tune_prints_the_table_and_the_choice(self):
         _, out = self.tune([])
@@ -2109,10 +2160,11 @@ class Solo(unittest.TestCase):
         self.assertIn('  Unwinnable: Leader X (B)', alone)
 
     def test_report_has_solo_walls_section(self):
-        def row(boss, starter, ace, lead, wall, sweep, kos, battles=None, rematch=None):
+        def row(boss, starter, ace, lead, wall, sweep, kos, battles=None, rematch=None, exempt=None):
             return {'stage': 'S', 'boss': boss, 'starter': starter, 'ace': ace,
                     'double': boss == 'TRAINER_TATE_AND_LIZA_1', 'lead': lead, 'wall': wall, 'sweep': sweep,
-                    'kos': kos, 'source': ['SPECIES_WAILMER', 35], 'battles': battles, 'rematch': rematch}
+                    'kos': kos, 'source': ['SPECIES_WAILMER', 35], 'battles': battles, 'rematch': rematch,
+                    'exempt': exempt}
         res = RB.analyze(FIXTURE, FIXTURE_STAGES, FIXTURE_FORCED)
         # The fixture has none of the real starters: no rows.
         self.assertEqual(res['solo_walls'], [])
@@ -2121,7 +2173,8 @@ class Solo(unittest.TestCase):
             row('TRAINER_TATE_AND_LIZA_1', 'TREECKO', 42, 44, 60, 70, 80, 9, 'TRAINER_ROSE_5'),
             row('TRAINER_WALLACE', 'TREECKO', 58, 60, 70, 80, 30, 4, 'TRAINER_ROSE_5'),
             row('TRAINER_ROXANNE_1', 'MUDKIP', 15, 16, 10, 12, 0),
-            row('TRAINER_WALLACE', 'MUDKIP', 58, 60, None, None, None),
+            row('TRAINER_MAY_LILYCOVE_MUDKIP', 'MUDKIP', 50, 55, 91, 99, 600, exempt=S.OPTIONAL),
+            row('TRAINER_WALLACE', 'MUDKIP', 58, 60, None, None, None, exempt=S.ACCEPTED),
             row('TRAINER_ROXANNE_1', 'TORCHIC', 15, 16, 20, 22, 40),
             row('TRAINER_WALLACE', 'TORCHIC', 58, 60, None, None, None)]
         with tempfile.TemporaryDirectory() as tmp:
@@ -2139,7 +2192,12 @@ class Solo(unittest.TestCase):
                       section)
         self.assertIn('| Wallace | 58 | 60 | unwinnable | - | - | Wailmer 35 |', section)
         self.assertIn('Worst wall: Tate And Liza 1 (80 KOs to level 60).', section)
-        self.assertIn('Worst wall: Wallace (unwinnable).', section)  # Mudkip: no climb but that one
+        # Mudkip: its optional fight and its accepted outlier are marked and outside its worst wall.
+        self.assertIn('| May Lilycove Mudkip (optional, not budgeted) | 50 | 55 | 91 | 99 | 600 | Wailmer 35 |',
+                      section)
+        self.assertIn('| Wallace (accepted outlier) | 58 | 60 | unwinnable | - | - | Wailmer 35 |', section)
+        self.assertIn('Worst wall: none above the lead.', section)
+        self.assertIn('It leaves out the optional rival fights', section)
         self.assertIn('Worst wall: Wallace (unwinnable); then Roxanne 1 (40 KOs to level 20).', section)
 
 

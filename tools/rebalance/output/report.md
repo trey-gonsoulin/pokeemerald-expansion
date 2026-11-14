@@ -375,7 +375,7 @@ No forced trainer is met more than 25% under its ace.
 
 ## Solo walls
 
-Per starter and staged story boss (#350), the starter line alone: its default moves plus the TMs open by then, picked for coverage, IV 15 and full EVs spread evenly, against the boss team on `power.score` with the type chart. lead: the fight-everyone lead (Two players' full lead). wall: the lowest level at which it wins each one-on-one (healing between Pokemon; unwinnable: not by 100). sweep: the lowest at which it beats the team without healing. KOs: the grind from the lead to the wall against the best wild Pokemon reachable by then (source: the one that takes the fewest KOs under the over-level penalty, else the highest exp yield x level; grass before Winona, Surf from Winona, no rods; DexNav can hunt it), with max friendship and no Lucky Egg, under the game's exp configs. After Norman, source also gives the battles the same climb takes against the strongest rematch team open by then. Tate and Liza is a double battle; the model fights it one-on-one. The grind budget is 50 KOs.
+Per starter and staged story boss (#350), the starter line alone: its default moves plus the TMs open by then, picked for coverage, IV 15 and full EVs spread evenly, against the boss team on `power.score` with the type chart. lead: the fight-everyone lead (Two players' full lead). wall: the lowest level at which it wins each one-on-one (healing between Pokemon; unwinnable: not by 100). sweep: the lowest at which it beats the team without healing. KOs: the grind from the lead to the wall against the best wild Pokemon reachable by then (source: the one that takes the fewest KOs under the over-level penalty, else the highest exp yield x level; grass before Winona, Surf from Winona, no rods; DexNav can hunt it), with max friendship and no Lucky Egg, under the game's exp configs. After Norman, source also gives the battles the same climb takes against the strongest rematch team open by then. Tate and Liza is a double battle; the model fights it one-on-one. The grind budget is 50 KOs. It leaves out the optional rival fights (marked "optional, not budgeted") and the walls the owner accepted (marked "accepted outlier"), and so does each worst wall.
 
 ### Treecko line
 
@@ -383,7 +383,7 @@ Per starter and staged story boss (#350), the starter line alone: its default mo
 |---|---|---|---|---|---|---|
 | May Route 103 Treecko | 6 | 7 | 8 | 8 | 3 | Zigzagoon 5 |
 | Roxanne 1 | 16 | 16 | 14 | 16 | 0 | Marill 6 |
-| May Rustboro Treecko | 18 | 19 | 23 | 24 | 82 | Sableye 16 |
+| May Rustboro Treecko (optional, not budgeted) | 18 | 19 | 23 | 24 | 82 | Sableye 16 |
 | Brawly 1 | 19 | 19 | 16 | 19 | 0 | Sableye 16 |
 | May Route 110 Treecko | 26 | 25 | 32 | 34 | 763 | Sableye 16 |
 | Wally Mauville | 26 | 25 | 16 | 16 | 0 | Plusle 15 |
@@ -395,7 +395,7 @@ Per starter and staged story boss (#350), the starter line alone: its default mo
 | May Route 119 Treecko | 56 | 56 | 68 | 70 | 1342 | Azumarill 42; 32 battles vs Jeffrey 5 |
 | Shelly Weather Institute | 56 | 56 | 48 | 53 | 0 | Azumarill 42 |
 | Winona 1 | 57 | 57 | 71 | 95 | 1802 | Azumarill 42; 67 battles vs Jeffrey 5 |
-| May Lilycove Treecko | 66 | 66 | 77 | 93 | 798 | Golduck 56; 56 battles vs Gabrielle 5 |
+| May Lilycove Treecko (optional, not budgeted) | 66 | 66 | 77 | 93 | 798 | Golduck 56; 56 battles vs Gabrielle 5 |
 | Tabitha Magma Hideout | 66 | 67 | 65 | 75 | 0 | Walrein 48 |
 | Maxie Magma Hideout | 67 | 68 | 70 | 79 | 81 | Golduck 56; 5 battles vs Gabrielle 5 |
 | Matt | 67 | 68 | 68 | 73 | 0 | Walrein 48 |
@@ -420,7 +420,7 @@ Worst wall: Flannery 1 (2181 KOs to level 54).
 |---|---|---|---|---|---|---|
 | May Route 103 Torchic | 6 | 7 | 8 | 8 | 3 | Zigzagoon 5 |
 | Roxanne 1 | 16 | 16 | 20 | 29 | 668 | Poochyena 9 |
-| May Rustboro Torchic | 18 | 19 | 20 | 21 | 6 | Sableye 16 |
+| May Rustboro Torchic (optional, not budgeted) | 18 | 19 | 20 | 21 | 6 | Sableye 16 |
 | Brawly 1 | 19 | 19 | 16 | 19 | 0 | Sableye 16 |
 | May Route 110 Torchic | 26 | 25 | 29 | 33 | 338 | Sableye 16 |
 | Wally Mauville | 26 | 25 | 19 | 19 | 0 | Plusle 15 |
@@ -432,7 +432,7 @@ Worst wall: Flannery 1 (2181 KOs to level 54).
 | May Route 119 Torchic | 56 | 56 | 63 | 67 | 646 | Azumarill 42; 9 battles vs Jeffrey 5 |
 | Shelly Weather Institute | 56 | 56 | 58 | 60 | 148 | Azumarill 42; 2 battles vs Jeffrey 5 |
 | Winona 1 | 57 | 57 | 60 | 77 | 256 | Azumarill 42; 4 battles vs Jeffrey 5 |
-| May Lilycove Torchic | 66 | 66 | 74 | 89 | 438 | Golduck 56; 25 battles vs Gabrielle 5 |
+| May Lilycove Torchic (optional, not budgeted) | 66 | 66 | 74 | 89 | 438 | Golduck 56; 25 battles vs Gabrielle 5 |
 | Tabitha Magma Hideout | 66 | 67 | 65 | 86 | 0 | Walrein 48 |
 | Maxie Magma Hideout | 67 | 68 | 69 | 84 | 35 | Golduck 56; 2 battles vs Gabrielle 5 |
 | Matt | 67 | 68 | 63 | 67 | 0 | Walrein 48 |
@@ -457,7 +457,7 @@ Worst wall: Wallace (unwinnable); then Drake (1951 KOs to level 99).
 |---|---|---|---|---|---|---|
 | May Route 103 Mudkip | 6 | 7 | 8 | 8 | 3 | Zigzagoon 5 |
 | Roxanne 1 | 16 | 16 | 14 | 16 | 0 | Marill 6 |
-| May Rustboro Mudkip | 18 | 19 | 24 | 24 | 129 | Sableye 16 |
+| May Rustboro Mudkip (optional, not budgeted) | 18 | 19 | 24 | 24 | 129 | Sableye 16 |
 | Brawly 1 | 19 | 19 | 17 | 20 | 0 | Sableye 16 |
 | May Route 110 Mudkip | 26 | 25 | 30 | 31 | 461 | Sableye 16 |
 | Wally Mauville | 26 | 25 | 16 | 16 | 0 | Plusle 15 |
@@ -469,7 +469,7 @@ Worst wall: Wallace (unwinnable); then Drake (1951 KOs to level 99).
 | May Route 119 Mudkip | 56 | 56 | 76 | 79 | 2993 | Azumarill 42; 179 battles vs Jeffrey 5 |
 | Shelly Weather Institute | 56 | 56 | 51 | 57 | 0 | Azumarill 42 |
 | Winona 1 | 57 | 57 | 56 | 78 | 0 | Azumarill 42 |
-| May Lilycove Mudkip | 66 | 66 | 91 | 99 | 3621 | Golduck 56; 418 battles vs Gabrielle 5 |
+| May Lilycove Mudkip (optional, not budgeted) | 66 | 66 | 91 | 99 | 3621 | Golduck 56; 418 battles vs Gabrielle 5 |
 | Tabitha Magma Hideout | 66 | 67 | 50 | 63 | 0 | Walrein 48 |
 | Maxie Magma Hideout | 67 | 68 | 57 | 67 | 0 | Walrein 48 |
 | Matt | 67 | 68 | 55 | 63 | 0 | Walrein 48 |
@@ -484,9 +484,9 @@ Worst wall: Wallace (unwinnable); then Drake (1951 KOs to level 99).
 | Phoebe | 81 | 81 | 69 | 97 | 0 | Aggron 64 |
 | Glacia | 82 | 82 | 79 | - | 0 | Aggron 64 |
 | Drake | 83 | 83 | 77 | - | 0 | Aggron 64 |
-| Wallace | 86 | 84 | unwinnable | - | - | Aggron 64 |
+| Wallace (accepted outlier) | 86 | 84 | unwinnable | - | - | Aggron 64 |
 
-Worst wall: Wallace (unwinnable); then May Lilycove Mudkip (3621 KOs to level 91).
+Worst wall: May Route 119 Mudkip (2993 KOs to level 76).
 
 ## Default movesets (Gen 3 vs Gen 9 learnsets)
 
