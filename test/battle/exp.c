@@ -72,8 +72,6 @@ WILD_BATTLE_TEST("Lucky Egg boosts gained exp points by 50%", s32 exp)
     }
 }
 
-#if (B_SCALED_EXP == GEN_5 || B_SCALED_EXP >= GEN_7)
-
 WILD_BATTLE_TEST("Exp is scaled to player and opponent's levels", s32 exp)
 {
     u8 level = 0;
@@ -82,6 +80,7 @@ WILD_BATTLE_TEST("Exp is scaled to player and opponent's levels", s32 exp)
     PARAMETRIZE { level = 10; }
 
     GIVEN {
+        WITH_CONFIG(B_SCALED_EXP, GEN_LATEST); // Emerald Plus (#350): the fork's default is Gen 6's flat exp
         WITH_CONFIG(B_EXP_OVERLEVEL_PENALTY, FALSE);
         PLAYER(SPECIES_WOBBUFFET) { Level(level); }
         OPPONENT(SPECIES_CATERPIE) { Level(5); HP(1); }
@@ -95,8 +94,6 @@ WILD_BATTLE_TEST("Exp is scaled to player and opponent's levels", s32 exp)
         EXPECT_GT(results[0].exp, results[1].exp);
     }
 }
-
-#endif
 
 WILD_BATTLE_TEST("Large exp gains are supported", s32 exp) // #1455
 {
@@ -704,33 +701,37 @@ WILD_BATTLE_TEST("Exp formula: steep scaling gives less from lower-level foes, m
 
 TEST("Exp formula: the over-level penalty follows a logistic curve down to its floor (#189)")
 {
-    // The same cases as tools/rebalance's test_overlevel, at the configs' 15 / 4 / 10%.
+    // The same cases as tools/rebalance's test_overlevel, at the configs' 30 / 8 / 40% (#350).
     // Retuning the configs fails here: update these cases and the model's with them.
-    EXPECT_EQ(B_EXP_OVERLEVEL_CUTOFF, 15);
-    EXPECT_EQ(B_EXP_OVERLEVEL_WIDTH, 4);
-    EXPECT_EQ(B_EXP_OVERLEVEL_FLOOR, 10);
+    EXPECT_EQ(B_EXP_OVERLEVEL_CUTOFF, 30);
+    EXPECT_EQ(B_EXP_OVERLEVEL_WIDTH, 8);
+    EXPECT_EQ(B_EXP_OVERLEVEL_FLOOR, 40);
     EXPECT_EQ(B_EXP_OVERLEVEL_MIN_LEVEL, 17);
     EXPECT_EQ(ApplyOverlevelPenalty(1000, 30, 30), 1000); // full exp at the foe's level
     EXPECT_EQ(ApplyOverlevelPenalty(1000, 30, 25), 1000); // and below it
-    EXPECT_EQ(ApplyOverlevelPenalty(1000, 30, 31), 973);  // slowly at first
-    EXPECT_EQ(ApplyOverlevelPenalty(1000, 30, 33), 816);
-    EXPECT_EQ(ApplyOverlevelPenalty(1000, 30, 35), 466);  // fastest around the cutoff
-    EXPECT_EQ(ApplyOverlevelPenalty(1000, 30, 36), 305);
-    EXPECT_EQ(ApplyOverlevelPenalty(1000, 30, 40), 109);
-    EXPECT_EQ(ApplyOverlevelPenalty(1000, 20, 23), 560);  // the cutoff, in percent of the foe's level
-    EXPECT_EQ(ApplyOverlevelPenalty(1000, 40, 46), 560);
-    EXPECT_EQ(ApplyOverlevelPenalty(1000, 20, 60), 100);  // the floor
-    EXPECT_EQ(ApplyOverlevelPenalty(5, 20, 60), 1);       // at least 1
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 30, 31), 992);  // slowly at first
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 30, 33), 967);
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 30, 36), 877);
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 30, 39), 707);  // fastest around the cutoff
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 30, 42), 536);
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 30, 50), 406);
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 20, 26), 707);  // the cutoff, in percent of the foe's level
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 40, 52), 707);
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 20, 60), 400);  // the floor
+    EXPECT_EQ(ApplyOverlevelPenalty(5, 20, 60), 2);       // 40% of 5
     EXPECT_EQ(ApplyOverlevelPenalty(0, 20, 60), 0);       // no exp stays no exp
-    EXPECT_EQ(ApplyOverlevelPenalty(1000, 3, 4), 935);    // below the minimum level, the foe counts as level 17:
-    EXPECT_EQ(ApplyOverlevelPenalty(1000, 3, 5), 737);    // the cutoff is 2.55 levels, not 0.45
-    EXPECT_EQ(ApplyOverlevelPenalty(1000, 3, 6), 413);
-    EXPECT_EQ(ApplyOverlevelPenalty(1000, 3, 7), 198);
-    EXPECT_EQ(ApplyOverlevelPenalty(1000, 3, 10), 101);
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 3, 4), 985);    // below the minimum level, the foe counts as level 17:
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 3, 5), 956);    // the cutoff is 5.1 levels, not 0.9
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 3, 6), 905);
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 3, 8), 717);
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 3, 10), 522);
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 17, 20), 905);  // at the minimum level, the same as 3 over a level-3 foe
 }
 
 WILD_BATTLE_TEST("Exp formula: the over-level penalty applies its configs in battle (#189)", s32 exp)
 {
+    // Its own penalty configs (cutoff 15, width 4, floor 10, minimum level 17), not the defaults:
+    // the percentages below follow these.
     u32 foe = 0, getter = 0, penalty = FALSE, width = 4, floorPercent = 10, minLevel = 17;
 
     PARAMETRIZE { foe = 30; getter = 30; penalty = FALSE; }
