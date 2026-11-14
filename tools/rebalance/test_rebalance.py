@@ -409,24 +409,42 @@ class Exp(unittest.TestCase):
         self.assertEqual(soft.apply(1000, 20, 23), 572)
         self.assertEqual(soft.apply(1000, 20, 40), 100)
         self.assertEqual(RB.Overlevel(3, width=1).apply(1000, 20, 40), 1)
-        # The same cases as test/battle/exp.c's, at the game's 15 / 4 / 10%.
-        game = RB.Overlevel(15, True, 4, 10)
-        for foe, getter, exp in ((30, 30, 1000), (30, 31, 973), (30, 33, 816), (30, 35, 466), (30, 36, 305),
-                                 (30, 40, 109), (20, 23, 560), (40, 46, 560), (20, 60, 100)):
+        # The same cases as test/battle/exp.c's, at the game's 30 / 8 / 40% (#350).
+        game = RB.Overlevel(30, True, 8, 40)
+        for foe, getter, exp in ((30, 30, 1000), (30, 31, 992), (30, 33, 967), (30, 36, 877), (30, 39, 707),
+                                 (30, 42, 536), (30, 50, 406), (20, 26, 707), (40, 52, 707), (20, 60, 400)):
             self.assertEqual(game.apply(1000, foe, getter), exp, (foe, getter))
         self.assertEqual(game.apply(0, 20, 60), 0)
-        self.assertEqual(game.apply(5, 20, 60), 1)
+        self.assertEqual(game.apply(5, 20, 60), 2)
+        self.assertEqual(RB.Overlevel(30, True, 8, 0).apply(5, 20, 60), 1)
         # Width 0: the floor straight past the cutoff.
-        self.assertEqual(RB.Overlevel(15, True, 0, 10).apply(1000, 20, 23), 1000)
-        self.assertEqual(RB.Overlevel(15, True, 0, 10).apply(1000, 20, 24), 100)
+        self.assertEqual(RB.Overlevel(30, True, 0, 40).apply(1000, 20, 26), 1000)
+        self.assertEqual(RB.Overlevel(30, True, 0, 40).apply(1000, 20, 27), 400)
         # A minimum level: a foe below it counts as that level for the cutoff and width, so a level-3
-        # foe's cutoff is 2.55 levels at 17 (0.45 without). At or above it, nothing changes.
-        low = RB.Overlevel(15, True, 4, 10, 17)
-        for foe, getter, exp in ((3, 3, 1000), (3, 4, 935), (3, 5, 737), (3, 6, 413), (3, 7, 198),
-                                 (3, 10, 101), (17, 20, 413), (20, 23, 560), (30, 35, 466)):
+        # foe's cutoff is 2.1 levels at 7 (0.9 without). At or above it, nothing changes.
+        low = RB.Overlevel(30, True, 8, 40, 7)
+        for foe, getter, exp in ((3, 3, 1000), (3, 4, 938), (3, 5, 733), (3, 6, 502), (3, 7, 420),
+                                 (3, 10, 400), (7, 9, 733), (20, 26, 707), (30, 39, 707)):
             self.assertEqual(low.apply(1000, foe, getter), exp, (foe, getter))
-        self.assertEqual(game.apply(1000, 3, 5), 100)
+        self.assertEqual(game.apply(1000, 3, 5), 406)
         self.assertEqual(RB.Overlevel(3, False, 1, 10, 17).apply(1000, 20, 23), soft.apply(1000, 20, 23))
+
+    def test_early_exp_before_the_first_rival(self):
+        """#189 (and #350's flat exp): under the game's configs, a level-5 Medium Slow starter reaches
+        level 7 in at most 8 Route 101 KOs, even when every KO is the foe that gives it the least."""
+        gd = G.load(G.REPO)['modern']
+        scaling = RB.game_scaling(gd, G.parse_scaling_factors(G.REPO))
+        with open(os.path.join(G.REPO, 'src', 'data', 'wild_encounters.json'), encoding='utf-8') as f:
+            route = next(e for g in json.load(f)['wild_encounter_groups'] for e in g['encounters']
+                         if e.get('map') == 'MAP_ROUTE101')
+        foes = {(gd.species[s['species']].exp_yield, lvl) for s in route['land_mons']['mons']
+                for lvl in range(s['min_level'], s['max_level'] + 1)}
+        exp, kos = RB.exp_for_level('GROWTH_MEDIUM_SLOW', 5), 0
+        while RB.level_for_exp('GROWTH_MEDIUM_SLOW', exp) < 7 and kos <= 8:
+            level = RB.level_for_exp('GROWTH_MEDIUM_SLOW', exp)
+            exp += min(RB.exp_award(gd, scaling, y, lvl, level, False, 1) for y, lvl in foes)
+            kos += 1
+        self.assertLessEqual(kos, 8)
 
     def test_scaling_factors(self):
         # The fixture copies the game's table, which is (i^2.5)/4.
@@ -1416,9 +1434,10 @@ class RealRepo(unittest.TestCase):
                          G.parse_scaling_factors(G.REPO, 'gExperienceScalingFactorsSteep', 'exp_formula.c'))
         self.assertEqual(list(RB.LOGISTIC), G.parse_scaling_factors(G.REPO, 'sExpLogistic', 'exp_formula.c'))
         gd = G.load(G.REPO)
-        self.assertEqual(RB.Overlevel.from_configs(gd['modern']), RB.Overlevel(15, True, 4, 10, 17))
+        self.assertEqual(RB.Overlevel.from_configs(gd['modern']), RB.Overlevel(30, True, 8, 40, 7))
         self.assertIsNone(RB.Overlevel.from_configs(gd['vanilla']))
-        self.assertEqual(RB.game_scaling(gd['modern'], RB.scaling_factors(2.5)), RB.scaling_factors(3.5))
+        # #350: B_SCALED_EXP_STEEP is off, so the configs keep the level^2.5 table (unused under flat exp).
+        self.assertEqual(RB.game_scaling(gd['modern'], RB.scaling_factors(2.5)), RB.scaling_factors(2.5))
 
     def test_rematch_ladders(self):
         rematches = G.parse_rematches(G.REPO)
