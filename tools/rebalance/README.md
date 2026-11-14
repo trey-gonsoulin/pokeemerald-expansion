@@ -230,19 +230,20 @@ python3 tools/rebalance/rebalance.py tune    # cutoffs 20-40 by 5, widths 4 6 8,
 `tune` runs each penalty (`tune_penalty`) through `explore_run` with
 `curve_settings.json` over `TUNE_KNOBS` (flat exp). The settings decide the
 rest: today the two players' margins and `lower`, with `boss_ref` the lead
-and `gap_ref` the bench (see "Two players" above for why the gaps stay on
-the bench), so a margin changed there is the one the sweep runs. It then fights each
-starter's solo walls
-(`solo.py`) on that run's own curve: its boss teams, moved, evolved and
+and `gap_ref` the bench (see "Two players" above for why the gaps stay on the bench), so
+a margin changed there is the one the sweep runs. It then fights each
+starter's solo walls (`solo.py`) on that run's own curve: its boss teams, moved, evolved and
 devolved as the run fights them, its wild tables and its exp. It prints the
 table and the strictest candidate (the lowest floor, then cutoff, then width)
 whose walls all fit `solo.GRIND_BUDGET`; an unwinnable wall fails the budget.
 The budget leaves out the optional rival fights (`required: false` in
 `forced_trainers.json`) and the walls the owner accepted (`solo.SOLO_OUTLIERS`:
 Wallace for a solo Mudkip); the report still lists them, marked.
-When none passes, it prints the closest ones and what fails. The sweep
-behind the game's 30 / 8 / 40 is in `findings.md` section 18, and
-`RealRepo.test_solo_walls_fit_the_grind_budget` pins the budget on the
+When none passes, it prints the closest ones and what fails. The game's
+30 / 8 / 40 came from the sweep before `apply` wrote the new curve (section 18
+of `findings.md`); rerun on today's data, `tune` picks a stricter candidate
+(40 / 4 / 30), and the owner kept 30 / 8 / 40.
+The test `RealRepo.test_solo_walls_fit_the_grind_budget` pins the budget on the
 committed data.
 
 ## What it measures
