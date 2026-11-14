@@ -625,7 +625,7 @@ Mightyena
 Level: 47
 IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 - Assurance
-- Double Edge
+- Crunch
 - Taunt
 - Yawn
 
@@ -5151,7 +5151,7 @@ Level: 18
 IVs: 24 HP / 24 Atk / 24 Def / 24 SpA / 24 SpD / 24 Spe
 - Arm Thrust
 - Force Palm
-- Double Edge
+- Cross Chop
 - Bulk Up
 
 === TRAINER_WATTSON_1 ===
@@ -11653,7 +11653,7 @@ IVs: 6 HP / 6 Atk / 6 Def / 6 SpA / 6 SpD / 6 Spe
 - Incinerate
 - Bulldoze
 - Curse
-- Eruption
+- Earth Power
 
 === TRAINER_JONATHAN ===
 Name: JONATHAN

@@ -208,6 +208,35 @@ class MoveLegality(unittest.TestCase):
         self.assertEqual(self.replace(50, 'MOVE_MEGA_KICK', ['MOVE_THUNDERBOLT', 'MOVE_BOOMBURST']),
                          'MOVE_VOLT_TACKLE')
 
+    def tie(self, moves, level_up=()):
+        """replace() at 50 for Raichu's Mega Kick with only ``moves`` (name -> Move, from its
+        teachables, or ``level_up`` at level 1) left to pick: the stronger ones are kept."""
+        self.scored()
+        self.gd.moves.update(moves)
+        self.lists['sRaichuTeachables'] |= set(moves) - set(level_up)
+        self.gd.learnsets['sRaichuLearnset'] += [(1, m) for m in level_up]
+        return self.replace(50, 'MOVE_MEGA_KICK', ['MOVE_THUNDERBOLT', 'MOVE_BOOMBURST', 'MOVE_SURF'])
+
+    def test_replacement_ties_go_to_stab_then_level_up_then_no_drawback(self):
+        # #350: an equal score never falls to the move's name (Z would win it). Same type first:
+        # Electric 80 x 1.5 against Normal 120, both on Special Attack.
+        spec = 'DAMAGE_CATEGORY_SPECIAL'
+        self.assertEqual(self.tie({'MOVE_A_SHOCK': G.Move('TYPE_ELECTRIC', 80, 100, spec),
+                                   'MOVE_Z_BLAST': G.Move('TYPE_NORMAL', 120, 100, spec)}), 'MOVE_A_SHOCK')
+        # Then a level-up move over a TM, tutor or egg move.
+        self.assertEqual(self.tie({'MOVE_A_LEVEL': G.Move('TYPE_ELECTRIC', 80, 100, spec),
+                                   'MOVE_Z_TM': G.Move('TYPE_ELECTRIC', 80, 100, spec)}, ['MOVE_A_LEVEL']),
+                         'MOVE_A_LEVEL')
+        # Then no recoil, no power from the user's HP (Eruption's 150 x 0.6) and no drop of its own stats.
+        clean = G.Move('TYPE_ELECTRIC', 90, 100, spec)
+        for name, drawback in (('MOVE_Z_RECOIL', G.Move('TYPE_ELECTRIC', 90, 100, spec, 'EFFECT_RECOIL')),
+                               ('MOVE_Z_SPOUT', G.Move('TYPE_ELECTRIC', 150, 100, spec,
+                                                       'EFFECT_POWER_BASED_ON_USER_HP')),
+                               ('MOVE_Z_DROP', G.Move('TYPE_ELECTRIC', 90, 100, spec, self_drop=True))):
+            self.assertEqual(self.tie({'MOVE_A_CLEAN': clean, name: drawback}), 'MOVE_A_CLEAN', name)
+        # Then the name, so the pick is deterministic.
+        self.assertEqual(self.tie({'MOVE_A_CLEAN': clean, 'MOVE_B_CLEAN': clean}), 'MOVE_B_CLEAN')
+
     def test_replacement_prefers_level_up_at_30_or_below_fixture(self):
         self.scored()
         # Thunder Punch (on evolving) over the stronger Thunderbolt from the teachables, up to level 30.
@@ -1078,6 +1107,13 @@ class Analysis(unittest.TestCase):
         self.assertEqual([r['full_pct'] for r in rows], [10.0, 10.0, 2.6, 10.0])
         # More than 25% under: -25% exactly is not flagged; Tabitha at Mt Chimney's -32% is.
         self.assertEqual([r['outlier'] for r in rows], [False, True, True, False])
+        # rebalance.OUTLIERS' bosses are marked accepted, flagged or not (#350).
+        with unittest.mock.patch.dict(RB.OUTLIERS, {'TRAINER_A': ('skip', 'why'), 'TRAINER_B': ('skip', 'why')},
+                                      clear=True):
+            section = '\n'.join(RB.two_players_report(rows))
+        self.assertIn('| A | 100 | 110 | +10% | 75 | -25% | accepted |', section)
+        self.assertIn('| B | 100 | 110 | +10% | 74 | -26% | outlier, accepted |', section)
+        self.assertIn('| C | 38 | 39 | +3% | 26 | -32% | outlier |', section)
 
 
 def team(tid, cls, *levels, species='SPECIES_SABLEYE'):
@@ -1549,28 +1585,32 @@ class RealRepo(unittest.TestCase):
                          f'walls over the {S.GRIND_BUDGET}-KO budget')
 
     def test_both_players_meet_the_margins(self):
-        """Each staged boss but rebalance.OUTLIERS' (#350): the fight-everyone lead at least
-        full_margin percent of the ace over it, and the skip-everything lead (when it fights the
-        boss) at most skip_margin percent under. The ace is the rule's rounded half up, so the bound
-        is the ace the unrounded target rounds to: a lead of 12 meets an ace of 11 (12 / 1.10 = 10.9)."""
+        """Each staged boss (#350): the fight-everyone lead at least full_margin percent of the
+        ace over it, and the skip-everything lead (when it fights the boss) at most skip_margin
+        percent under, but on the side rebalance.OUTLIERS accepts it on. The ace is the rule's
+        rounded half up, so the bound is the ace the unrounded target rounds to: a lead of 12 meets
+        an ace of 11 (12 / 1.10 = 10.9). The report's forced-trainer outliers are exactly
+        OUTLIERS' forced entries, and no entry is stale."""
         with open(RB.CURVE_SETTINGS, encoding='utf-8') as f:
             knobs = json.load(f)
         full, skip = knobs['full_margin'], knobs['skip_margin']
-        rows = real_analysis()['two_players']
+        res = real_analysis()
+        rows = res['two_players']
         self.assertTrue(rows)
-        bad = []
+        outside = []
         for r in rows:
-            if r['boss'] in RB.OUTLIERS:
-                continue
             if r['ace'] > int(r['full'] * 100 / (100 + full) + 0.5):
-                bad.append((r['boss'], 'full', r['full'], r['ace'], r['full_pct']))
+                outside.append((r['boss'], 'full', r['full'], r['ace'], r['full_pct']))
             if r['skip'] is not None and r['ace'] > int(r['skip'] * 100 / (100 - skip) + 0.5):
-                bad.append((r['boss'], 'skip', r['skip'], r['ace'], r['skip_pct']))
-        self.assertEqual(bad, [], '(boss, player, lead, ace, %) outside the margins')
-        # Every outlier is a trainer, with a reason.
-        trainers = G.parse_trainers(os.path.join(G.REPO, 'src', 'data', 'trainers.party'))
-        self.assertEqual(sorted(set(RB.OUTLIERS) - set(trainers)), [])
-        self.assertTrue(all(RB.OUTLIERS.values()))
+                outside.append((r['boss'], 'skip', r['skip'], r['ace'], r['skip_pct']))
+        accepted = {(tid, side) for tid, (side, _) in RB.OUTLIERS.items()}
+        self.assertEqual([o for o in outside if o[:2] not in accepted], [],
+                         '(boss, player, lead, ace, %) outside the margins')
+        bosses = {(tid, side) for tid, side in accepted if side != 'forced'}
+        self.assertEqual(sorted(bosses - {o[:2] for o in outside}), [], 'stale OUTLIERS boss entries')
+        forced = {(r['trainer'], 'forced') for r in res['forced_outliers']}
+        self.assertEqual(sorted(forced ^ (accepted - bosses)), [], 'forced outliers not matching OUTLIERS')
+        self.assertTrue(all(side in ('full', 'skip', 'forced') and why for side, why in RB.OUTLIERS.values()))
 
     def test_scaling_factors_are_the_games(self):
         self.assertEqual(RB.scaling_factors(2.5), G.parse_scaling_factors(G.REPO))
@@ -1584,6 +1624,10 @@ class RealRepo(unittest.TestCase):
         # the fixture's B_SCALED_EXP GEN_LATEST still scales.
         self.assertIs(RB.explorer_defaults(gd['modern'])['scaled_exp'], False)
         self.assertIs(RB.explorer_defaults(G.load(FIXTURE)['modern'])['scaled_exp'], True)
+        # And the game's trainer exp: 1.5x off (GEN_LATEST), on at GEN_6 or before.
+        self.assertEqual(RB.explorer_defaults(gd['modern'])['trainer_exp'], '1.5x off')
+        on = RB.with_configs(gd['modern'], B_TRAINER_EXP_MULTIPLIER='GEN_6')
+        self.assertEqual(RB.explorer_defaults(on)['trainer_exp'], '1.5x on')
         self.assertIsNone(RB.Overlevel.from_configs(gd['vanilla']))
         # #350: B_SCALED_EXP_STEEP is off, so the configs keep the level^2.5 table (unused under flat exp).
         self.assertEqual(RB.game_scaling(gd['modern'], RB.scaling_factors(2.5)), RB.scaling_factors(2.5))
@@ -1730,6 +1774,24 @@ class RealMoveReplacement(unittest.TestCase):
                                       ['MOVE_SUPERSONIC', 'MOVE_SHOCK_WAVE', 'MOVE_THUNDER_WAVE']),
                          'MOVE_THUNDER_SHOCK')
 
+    def test_replacement_ties_on_the_real_moves(self):
+        # #350's apply: each tied with the move it lost to by name.
+        # Tabitha Mt Chimney's Camerupt 29: Earth Power (90 x 1.5) over Eruption (150 x 1.5 x 0.6).
+        self.assertEqual(self.replace('SPECIES_CAMERUPT', 29, 'MOVE_TAKE_DOWN',
+                                      ['MOVE_INCINERATE', 'MOVE_BULLDOZE', 'MOVE_CURSE']), 'MOVE_EARTH_POWER')
+        # Brawly's Makuhita 18: Cross Chop (100 x 1.5 x 0.8) over Double-Edge (120), same type first.
+        self.assertEqual(self.replace('SPECIES_MAKUHITA', 18, 'MOVE_KNOCK_OFF',
+                                      ['MOVE_ARM_THRUST', 'MOVE_FORCE_PALM', 'MOVE_BULK_UP']), 'MOVE_CROSS_CHOP')
+        # Shelly's Weather Institute Mightyena 47: Crunch (80 x 1.5) over Double-Edge (120).
+        self.assertEqual(self.replace('SPECIES_MIGHTYENA', 47, 'MOVE_SCARY_FACE',
+                                      ['MOVE_ASSURANCE', 'MOVE_TAUNT', 'MOVE_YAWN']), 'MOVE_CRUNCH')
+
+    def test_self_drop_moves(self):
+        self.assertTrue(self.gd.moves['MOVE_CLOSE_COMBAT'].self_drop)
+        self.assertTrue(self.gd.moves['MOVE_OVERHEAT'].self_drop)
+        self.assertFalse(self.gd.moves['MOVE_CRUNCH'].self_drop)  # the target's Defense
+        self.assertFalse(self.gd.moves['MOVE_FLAME_CHARGE'].self_drop)  # raises its own Speed
+
     def test_replacement_is_never_an_hm(self):
         # Lucas 2's Wailmer at 9 learns no Water move by level up: Water Pulse from the TMs, not Surf.
         self.assertEqual(self.replace('SPECIES_WAILMER', 9, 'MOVE_WATER_GUN', ['MOVE_SPLASH']), 'MOVE_WATER_PULSE')
@@ -1855,8 +1917,11 @@ class TwoPlayers(unittest.TestCase):
         self.assertEqual([r['trainer'] for r in RB.forced_outliers(rows)], ['TRAINER_B'])
         self.assertEqual(RB.forced_outliers([{'stage': 'One'}]), [])
         section = '\n'.join(RB.two_players_report([], RB.forced_outliers(st)))
-        self.assertIn('| trainer | stage | ace | skip lead | % |', section)
-        self.assertIn('| Hiker A | One | 20 | 6 | -70% |', section)
+        self.assertIn('| trainer | stage | ace | skip lead | % | flag |', section)
+        self.assertIn('| Hiker A | One | 20 | 6 | -70% |  |', section)
+        with unittest.mock.patch.dict(RB.OUTLIERS, {'TRAINER_HIKER_A': ('forced', 'why')}, clear=True):
+            section = '\n'.join(RB.two_players_report([], RB.forced_outliers(st)))
+        self.assertIn('| Hiker A | One | 20 | 6 | -70% | accepted |', section)
         section = '\n'.join(RB.two_players_report([], []))
         self.assertIn(f'No forced trainer is met more than {RB.OUTLIER_SKIP}% under its ace.', section)
 
