@@ -1136,7 +1136,7 @@ def share_curve(*args, **kwargs):
 def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friendship',
               catches=CATCHES_PER_STAGE, walk_steps=WALK_STEPS_PER_STAGE, trainer_raise=0, raises=None,
               margin=None, unevolved=False, stage_raises=None, wild_offsets=None, trainer_gap=None,
-              wild_gap=None, vanilla_wilds=None, evolve=None, ko_takers=1, boss_ref='bench',
+              wild_gap=None, vanilla_wilds=None, evolve=None, ko_takers=1, boss_ref='bench', gap_ref='bench',
               share_fraction=0.5, overlevel=GAME, league_steps=True, wild_battles=0, relative_gaps=False,
               postgame=None, skip=None, full_margin=None, skip_margin=None, lower=False, devolve=None):
     """The share6 party (KO-taker plus five on the Gen 6 Exp. Share bench)
@@ -1172,10 +1172,13 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
 
     The party (#151): the KOs rotate over ``ko_takers`` members (Party),
     and ``share_fraction`` and ``overlevel`` change the exp
-    (exp_award). ``boss_ref`` picks the reference level from REFERENCES;
-    each row's ``bench`` is the lowest member off the KO rotation (the
-    lowest member when all six take KOs), ``ref`` the reference level and
-    ``levels`` every member's.
+    (exp_award). ``boss_ref`` picks the reference level the boss rules
+    (``margin``, ``full_margin`` and ``skip_margin``) measure against from
+    REFERENCES, and ``gap_ref`` the one ``trainer_gap`` and ``wild_gap``
+    do (#350: the lead runs far ahead of the bench, and route trainers 10%
+    under the lead feed it until it runs away); each row's ``bench`` is the
+    lowest member off the KO rotation (the lowest member when all six take
+    KOs), ``ref`` the boss reference level and ``levels`` every member's.
 
     ``postgame`` (rematch_ladders' {boss, final}, #139) adds rows after the
     last stage: each round of the boss ladders (stage ``Rematch <tier>``),
@@ -1198,15 +1201,15 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
     ace sits ``full_margin`` percent of itself under the full party's
     reference, or ``skip_margin`` percent of itself over the skip party's
     if that is lower (the full rule alone for a boss the skip player skips,
-    and after the story). ``lower`` lets the boss raises, the stage shifts
-    (searched from -100 up) and the wild offsets (down to the vanilla
-    tables) go negative."""
+    and after the story). ``lower`` lets the boss raises and the wild
+    offsets (down to the vanilla tables) go negative; a stage's shift
+    under ``trainer_gap`` only ever raises (#350: today's trainer rule)."""
     if (full_margin is None) != (skip_margin is None):
         raise ValueError('full_margin and skip_margin go together')
     boss_rule = full_margin is not None or margin is not None
     raises = dict(raises or {})
     stage_raises, wild_offsets = stage_raises or {}, wild_offsets or {}
-    reference = REFERENCES[boss_ref]
+    reference, gap_reference = REFERENCES[boss_ref], REFERENCES[gap_ref]
     ladders = (postgame or {}).get('boss', [])
     finals = (postgame or {}).get('final', [])
     boss_ids = {b for st in stages for b in st['bosses']} | {t for lad in ladders for t in lad} | set(finals)
@@ -1222,6 +1225,9 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
 
     def ref(p):
         return reference(p.levels(), ko_takers)
+
+    def gap_ref_of(p):
+        return gap_reference(p.levels(), ko_takers)
 
     def gap_of(level, ace):
         return (level - ace) * 100 / level if relative_gaps else level - ace
@@ -1240,7 +1246,7 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
         gaps, aces, leads = [], [], []
         for tid in cleared(st['regular'], clear) if regular is None else regular:
             aces.append(max(1, min(team_ace(trainers[tid]) + trainer_raise + d, 100)))
-            gaps.append(gap_of(ref(p), aces[-1]))
+            gaps.append(gap_of(gap_ref_of(p), aces[-1]))
             leads.append(p.levels()[0])
             fight(p, tid, trainer_raise + d)
         return gaps, aces, leads
@@ -1286,7 +1292,7 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
     for i, st in enumerate(stages):
         for p in players:
             p.befriend('walk', walk_steps // 128, chance=0.5)
-        start = ref(party)
+        start = gap_ref_of(party)
         slots = wilds.get(i, ())
         base, now = land_mean((vanilla_wilds or {}).get(i, ())), land_mean(slots)
         applied = round(now - base) if base is not None and now is not None else 0
@@ -1301,7 +1307,7 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
             for _ in range((catch + wild_battles) if foes else 0):
                 p.defeat(gd, scaling, foes, False, True)
         if trainer_gap is not None and st['regular']:
-            d = next((d for d in range(-100 if lower else 0, 100) if meets_gap(st, d)), 100)
+            d = next((d for d in range(100) if meets_gap(st, d)), 100)
         else:
             d = stage_raises.get(st['name'], 0)
         gaps, aces, _ = fight_trainers(party, st, d)
@@ -1526,7 +1532,8 @@ def load_snapshot(data):
 # (explorer_defaults): share6, full clear, modelled friendship, 1.5x off,
 # today's levels.
 EXPLORER_KNOBS = {
-    'ko_takers': 1, 'boss_ref': 'bench', 'clear': 1.0, 'catches': CATCHES_PER_STAGE, 'wild_battles': 0,
+    'ko_takers': 1, 'boss_ref': 'bench', 'gap_ref': 'bench', 'clear': 1.0, 'catches': CATCHES_PER_STAGE,
+    'wild_battles': 0,
     'walk_steps': WALK_STEPS_PER_STAGE, 'affection': 'friendship', 'trainer_exp': '1.5x off',
     'scaled_exp': True, 'scaling_power': 2.5, 'overlevel_cutoff': None, 'overlevel_unit': 'levels',
     'overlevel_width': None, 'overlevel_floor': 0, 'overlevel_min_level': 0, 'share_fraction': 0.5, 'gap_unit': 'levels', 'margin': None,
@@ -1583,6 +1590,7 @@ def explore_run(snap, knobs=None):
         affection=k['affection'], catches=k['catches'], walk_steps=k['walk_steps'], margin=k['margin'],
         trainer_gap=k['trainer_gap'], wild_gap=k['wild_gap'], vanilla_wilds=snap['wilds']['vanilla'],
         evolve=snap['evolve'] if k['evolve'] else None, ko_takers=k['ko_takers'], boss_ref=k['boss_ref'],
+        gap_ref=k['gap_ref'],
         share_fraction=k['share_fraction'], overlevel=overlevel, league_steps=k['league_steps'],
         wild_battles=k['wild_battles'], relative_gaps=relative, postgame=snap['postgame'],
         skip=snap.get('forced'), full_margin=k['full_margin'], skip_margin=k['skip_margin'], lower=k['lower'],
@@ -2019,7 +2027,9 @@ def solo_walls_report(rows):
            f'{SURF_STAGE}, Surf from {SURF_STAGE}, no rods; DexNav can hunt it), with max friendship and no Lucky '
            "Egg, under the game's exp configs. After Norman, source also gives the battles the same climb takes "
            'against the strongest rematch team open by then. Tate and Liza is a double battle; the model fights '
-           f'it one-on-one. The grind budget is {S.GRIND_BUDGET} KOs.', '']
+           f'it one-on-one. The grind budget is {S.GRIND_BUDGET} KOs. It leaves out the optional rival fights '
+           f'(marked "{S.OPTIONAL}") and the walls the owner accepted (marked "{S.ACCEPTED}"), and so does each '
+           'worst wall.', '']
     for name in dict.fromkeys(r['starter'] for r in rows):
         rows_ = [r for r in rows if r['starter'] == name]
         cells = []
@@ -2027,11 +2037,15 @@ def solo_walls_report(rows):
             source = f"{short(r['source'][0])} {r['source'][1]}" if r['source'] else '-'
             if r['battles']:  # no climb, no battles
                 source += f"; {r['battles']} battles vs {short(r['rematch'])}"
-            cells.append([short(r['boss']) + (' (double)' if r['double'] else ''), r['ace'], r['lead'],
+            boss = short(r['boss']) + (' (double)' if r['double'] else '')
+            if r.get('exempt'):
+                boss += f" ({r['exempt']})"
+            cells.append([boss, r['ace'], r['lead'],
                           'unwinnable' if r['wall'] is None else r['wall'], '-' if r['sweep'] is None else r['sweep'],
                           '-' if r['kos'] is None else r['kos'], source])
-        worst = [f"{short(r['boss'])} (unwinnable)" for r in rows_ if r['wall'] is None]
-        most = max((r for r in rows_ if r['kos']), key=lambda r: r['kos'], default=None)
+        budgeted = [r for r in rows_ if not r.get('exempt')]
+        worst = [f"{short(r['boss'])} (unwinnable)" for r in budgeted if r['wall'] is None]
+        most = max((r for r in budgeted if r['kos']), key=lambda r: r['kos'], default=None)
         if most:
             worst.append(f"{short(most['boss'])} ({most['kos']} KOs to level {most['wall']})")
         out += [f"### {short('X_' + name)} line", '',
@@ -2282,7 +2296,8 @@ def analyze(repo, stages_path, forced_path=FORCED_TRAINERS):
     map_tms = G.map_tms(repo)
     solo = S.solo_walls(trainers, m, stages, run['bosses'], wilds['modern'], map_tms, teachables, evolve_on_time,
                         scaling, Overlevel.from_configs(m), M.load_settings(), ladders['regular'],
-                        foe_evolve=snap['evolve'], foe_devolve=snap['devolve'])
+                        foe_evolve=snap['evolve'], foe_devolve=snap['devolve'],
+                        optional=forced.optional_bosses if forced is not None else frozenset())
     return {
         'census': census(trainers),
         'story_trainers': len(story),
@@ -2617,9 +2632,11 @@ def explore_main(argv):
 # ---------------------------------------------------------------------------
 
 # What every candidate of the sweep runs with (spec section 4): flat exp,
-# both players' boss rule, lowering, and the lead as the reference. The
+# both players' boss rule, lowering, the lead as the bosses' reference and
+# the bench as the trainer and wild gaps'. The
 # penalty is relative; its minimum level is the game's (explorer_defaults).
-TUNE_KNOBS = {'scaled_exp': False, 'full_margin': 10, 'skip_margin': 15, 'lower': True, 'boss_ref': 'ace'}
+TUNE_KNOBS = {'scaled_exp': False, 'full_margin': 10, 'skip_margin': 15, 'lower': True, 'boss_ref': 'ace',
+              'gap_ref': 'bench'}
 TUNE_CUTOFFS = tuple(range(20, 41, 5))
 TUNE_WIDTHS = (4, 6, 8)
 TUNE_FLOORS = tuple(range(20, 41, 5))
@@ -2632,18 +2649,22 @@ def tune_penalty(inputs, knobs, cutoffs, widths, floors):
     names, ``evolve`` the player's line) with ``knobs`` and TUNE_KNOBS, and
     each starter's solo walls fought on that run's own curve: its boss rows
     (the teams moved, evolved and devolved as the run fights them), its
-    wild tables (run_wilds) and its exp configs (run_exp). Per candidate:
-    {cutoff, width, floor, walls (solo_walls' rows), max_kos (the most KOs
-    of any wall with a grind, None for none), unwinnable (the walls with no
-    KO count: unwinnable by 100, or no exp to climb with), over (the walls
-    over solo.GRIND_BUDGET), worst (starter -> its wall with the most KOs),
-    passes (no unwinnable wall and none over the budget), final_boss (the
-    last staged boss) and final_lead (the full lead that meets it)}."""
+    wild tables (run_wilds) and its exp configs (run_exp). The budget
+    leaves out the optional fights (the inputs' forced optional bosses)
+    and solo.SOLO_OUTLIERS (each wall's ``exempt``). Per candidate:
+    {cutoff, width, floor, walls (solo_walls' rows, all of them), max_kos
+    (the most KOs of any budgeted wall with a grind, None for none),
+    unwinnable (the budgeted walls with no KO count: unwinnable by 100, or
+    no exp to climb with), over (those over solo.GRIND_BUDGET), worst
+    (starter -> its budgeted wall with the most KOs), passes (no
+    unwinnable wall and none over the budget), final_boss (the last staged
+    boss) and final_lead (the full lead that meets it)}."""
     import solo as S  # not at the top: solo imports this module, and the explorer needs neither
     solo, stages = inputs['solo'], inputs['stages']
     modern, vanilla = inputs['wilds']['modern'], inputs['wilds']['vanilla']
     final = [b for st in stages for b in st['bosses']][-1]
     cache = {}  # the walls depend only on each team's ace, whatever the penalty
+    optional = inputs['forced'].optional_bosses if inputs.get('forced') else frozenset()
     out = []
     for cutoff, width, floor in itertools.product(cutoffs, widths, floors):
         res = explore_run(inputs, {**knobs, **TUNE_KNOBS, 'overlevel_cutoff': cutoff, 'overlevel_unit': 'percent',
@@ -2655,13 +2676,14 @@ def tune_penalty(inputs, knobs, cutoffs, widths, floors):
                               gd.species) for i, row in enumerate(res['stages'])}
         walls = S.solo_walls(inputs['trainers'], gd, stages, res['bosses'], wilds, solo['map_tms'],
                              solo['teachables'], solo['evolve'], scaling, overlevel, solo['settings'],
-                             foe_evolve=evolve, foe_devolve=devolve, cache=cache)
-        climbs = [w for w in walls if w['kos'] is not None]
+                             foe_evolve=evolve, foe_devolve=devolve, cache=cache, optional=optional)
+        budgeted = [w for w in walls if not w.get('exempt')]
+        climbs = [w for w in budgeted if w['kos'] is not None]
         worst = {}
         for w in climbs:
             if w['starter'] not in worst or w['kos'] > worst[w['starter']]['kos']:
                 worst[w['starter']] = w
-        unwinnable = [w for w in walls if w['kos'] is None]
+        unwinnable = [w for w in budgeted if w['kos'] is None]
         over = [w for w in climbs if w['kos'] > S.GRIND_BUDGET]
         out.append({'cutoff': cutoff, 'width': width, 'floor': floor, 'walls': walls,
                     'max_kos': max((w['kos'] for w in climbs), default=None), 'unwinnable': unwinnable,

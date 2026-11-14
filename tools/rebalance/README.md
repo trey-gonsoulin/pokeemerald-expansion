@@ -191,11 +191,16 @@ python3 tools/rebalance/rebalance.py tune    # cutoffs 20-40 by 5, widths 4 6 8,
 
 `tune` runs each penalty (`tune_penalty`) through `explore_run` with
 `curve_settings.json` and `TUNE_KNOBS` (flat exp, the two players' margins,
-lowering, the lead as the reference), then fights each starter's solo walls
+lowering, the lead as the bosses' reference and the bench as the trainer and
+wild gaps', `gap_ref`: on the lead the route trainers feed it until it runs
+away), then fights each starter's solo walls
 (`solo.py`) on that run's own curve: its boss teams, moved, evolved and
 devolved as the run fights them, its wild tables and its exp. It prints the
 table and the strictest candidate (the lowest floor, then cutoff, then width)
 whose walls all fit `solo.GRIND_BUDGET`; an unwinnable wall fails the budget.
+The budget leaves out the optional rival fights (`required: false` in
+`forced_trainers.json`) and the walls the owner accepted (`solo.SOLO_OUTLIERS`:
+Wallace for a solo Mudkip); the report still lists them, marked.
 When none passes, it prints the closest ones and what fails.
 
 ## What it measures
