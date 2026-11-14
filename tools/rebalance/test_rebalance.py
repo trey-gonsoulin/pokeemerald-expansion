@@ -11,6 +11,7 @@ import io
 import json
 import os
 import re
+import shutil
 import sys
 import tempfile
 import types
@@ -40,6 +41,12 @@ def fake_regime(**overrides):
 
 # The fixture's inputs without the real forced trainers, which name none of its trainers.
 curve_inputs = functools.partial(RB.repo_inputs, forced_path=None)
+
+
+@functools.lru_cache(maxsize=None)
+def real_analysis():
+    """rebalance.analyze on the repo, once for the tests that read it."""
+    return RB.analyze(G.REPO, RB.DEFAULT_STAGES)
 
 
 class Expressions(unittest.TestCase):
@@ -1338,6 +1345,110 @@ Aron
         _, devolved = RB.raise_party(party, {'TRAINER_C': -30}, devolve=self.devolve)
         self.assertEqual([d[2] for d in devolved], ['SPECIES_TREECKO', 'SPECIES_TREECKO'])
 
+    def test_nonlevel_evolve_party_skips_what_this_round_devolved(self):
+        # #350: a Pokemon raise_party just devolved (or kept from devolving) doesn't evolve back
+        # in the same round; the rest of the team still does.
+        party = '=== TRAINER_C ===\nName: C\n\nDusclops\nLevel: 77\n\nGolbat\nLevel: 60\n'
+        evolve = {('SPECIES_DUSCLOPS', 77): 'SPECIES_DUSKNOIR', ('SPECIES_GOLBAT', 60): 'SPECIES_CROBAT'}
+
+        def evolver(species, level, gender=None):
+            return evolve.get((species, level), species)
+        text, evolved = RB.nonlevel_evolve_party(party, {'TRAINER_C'}, evolver,
+                                                 skip={('TRAINER_C', 'SPECIES_DUSCLOPS')})
+        self.assertEqual(text, party.replace('Golbat', 'Crobat'))
+        self.assertEqual(evolved, [('TRAINER_C', 'SPECIES_GOLBAT', 'SPECIES_CROBAT', 60)])
+
+    # The fixture for apply (#350): Sableye comes from Mr. Mime through an evolution that
+    # isn't by level (so from level 30), the rival fight has two more variants (one above the
+    # rival's ace, so lowered) and Leader X a partner.
+    APPLY_EVOS = {'SPECIES_MR_MIME': [('EVO_ITEM', 'ITEM_DUSK_STONE', 'SPECIES_SABLEYE', [])]}
+    APPLY_VARIANTS = ('\n=== TRAINER_RIVAL_B ===\nName: RIVAL\nClass: Pkmn Trainer 1\nPic: Hiker\n'
+                      'Gender: Male\nMusic: Hiker\nDouble Battle: No\n\nSableye\nLevel: 12\n- Shadow Ball\n\n'
+                      'Magikarp\nLevel: 9\n'
+                      '\n=== TRAINER_RIVAL_C ===\nName: RIVAL\nClass: Pkmn Trainer 1\nPic: Hiker\n'
+                      'Gender: Male\nMusic: Hiker\nDouble Battle: No\n\nMagikarp\nLevel: 3\n')
+    APPLY_PARTNER = ('=== PARTNER_X ===\nName: X\nClass: Leader\nPic: Hiker\nGender: Female\nMusic: Female\n'
+                     'Double Battle: No\n\nSableye\nLevel: 40\n')
+
+    def apply_fixture(self, rounds):
+        """A copy of the fixture after ``rounds`` runs of ``rebalance.py apply`` with
+        curve_settings.json: {file: text} of the files apply writes, after each run."""
+        info = G.R.SpeciesInfo.from_evolutions({}, self.APPLY_EVOS)
+        with open(FIXTURE_STAGES, encoding='utf-8') as f:
+            stages = json.load(f)
+        stages['rival_variants'] = {'STARTER': ['A', 'B', 'C']}
+        files = ('src/data/trainers.party', 'src/data/battle_partners.party', 'src/data/wild_encounters.json',
+                 RB.LEVEL_OFFSETS)
+
+        def restock(argv):
+            """restock --write with ratio 0: the vanilla tables shifted by the offsets."""
+            repo, levels = (argv[argv.index(k) + 1] for k in ('--repo', '--levels'))
+            with open(os.path.join(repo, RB.VANILLA_WILD), encoding='utf-8') as f:
+                wild = json.load(f)
+            with open(levels, encoding='utf-8') as f:
+                offsets = json.load(f)
+            species = G.load(repo)['modern'].species
+            G.R.shift_levels(wild, offsets, types.SimpleNamespace(evolve=info.evolve, enabled=species))
+            G.R.dump_wild(wild, os.path.join(repo, 'src', 'data', 'wild_encounters.json'))
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = os.path.join(tmp, 'repo')
+            shutil.copytree(FIXTURE, repo)
+            with open(os.path.join(repo, 'src', 'data', 'trainers.party'), 'a', encoding='utf-8') as f:
+                f.write(self.APPLY_VARIANTS)
+            with open(os.path.join(repo, 'src', 'data', 'battle_partners.party'), 'w', encoding='utf-8') as f:
+                f.write(self.APPLY_PARTNER)
+            stages_path = os.path.join(tmp, 'stages.json')
+            with open(stages_path, 'w', encoding='utf-8') as f:
+                json.dump(stages, f)
+            out = []
+            with unittest.mock.patch.object(G.R, 'SpeciesInfo', lambda repo: info), \
+                    unittest.mock.patch.object(G.R, 'main', restock), \
+                    unittest.mock.patch.object(G, 'move_lists', lambda repo: {}), \
+                    unittest.mock.patch.dict(RB.PARTNER_FIGHTS, {'PARTNER_X': ('TRAINER_LEADER_X',)}, clear=True), \
+                    contextlib.redirect_stdout(io.StringIO()):
+                for _ in range(rounds):
+                    self.assertEqual(RB.apply_main(['--repo', repo, '--stages', stages_path]), 0)
+                    texts = {}
+                    for name in files:
+                        with open(os.path.join(repo, name), encoding='utf-8') as f:
+                            texts[name] = f.read()
+                    out.append(texts)
+            return out
+
+    def test_apply_twice_changes_nothing(self):
+        """Review Focus 3: apply's data is the curve's fixed point, so a second apply writes the
+        same bytes (no devolve and evolve-back oscillation, #181 and #350)."""
+        first, second = self.apply_fixture(2)
+        with open(os.path.join(FIXTURE, 'src', 'data', 'trainers.party'), encoding='utf-8') as f:
+            self.assertNotEqual(first['src/data/trainers.party'], f.read() + self.APPLY_VARIANTS)
+        self.assertEqual(first, second)
+        # Leader X was lowered under Sableye's 30 but keeps it (its Mr. Mime has the base form),
+        # and the rival's variant B devolved its Sableye; the set moves are rewritten to moves the
+        # species can learn at the new level, so nothing is left for the allowlist.
+        trainers = G.parse_trainers_text(first['src/data/trainers.party'])
+        leader = trainers['TRAINER_LEADER_X']
+        self.assertLess(RB.team_ace(leader), 20)
+        self.assertEqual([m.species for m in leader.mons], ['SPECIES_SABLEYE', 'SPECIES_MR_MIME'])
+        self.assertNotIn('MOVE_SHADOW_BALL', leader.mons[0].moves)
+        self.assertEqual(trainers['TRAINER_RIVAL_B'].mons[0].species, 'SPECIES_MR_MIME')
+        self.assertEqual(trainers['TRAINER_RIVAL_B'].mons[0].moves, ['MOVE_CONFUSION'])
+        gd = G.load(FIXTURE)['modern']
+        info = G.R.SpeciesInfo.from_evolutions({}, self.APPLY_EVOS)
+        self.assertEqual(RB.unlearnable_set_moves(trainers, gd, info, {}), [])
+
+    def test_rival_variants_share_levels_after_lowering(self):
+        """Review Focus 4: every rival variant ends at the staged rival's ace, the one above it
+        lowered (and devolved), the one below raised; the partner follows Leader X down."""
+        (texts,) = self.apply_fixture(1)
+        trainers = G.parse_trainers_text(texts['src/data/trainers.party'])
+        ace = RB.team_ace(trainers['TRAINER_RIVAL_A'])
+        self.assertEqual([RB.team_ace(trainers[t]) for t in ('TRAINER_RIVAL_B', 'TRAINER_RIVAL_C')], [ace, ace])
+        self.assertLess(ace, 12)
+        self.assertNotIn('SPECIES_SABLEYE', [m.species for m in trainers['TRAINER_RIVAL_B'].mons])
+        partner = G.parse_trainers_text(texts['src/data/battle_partners.party'])['PARTNER_X']
+        self.assertEqual(RB.team_ace(partner), RB.team_ace(trainers['TRAINER_LEADER_X']))
+        self.assertEqual(partner.mons[0].species, 'SPECIES_SABLEYE')  # partners never devolve
+
     def test_party_species_name(self):
         self.assertEqual(RB.party_species_name('SPECIES_KIRLIA'), 'Kirlia')
         self.assertEqual(RB.party_species_name('SPECIES_MR_MIME'), 'Mr Mime')
@@ -1427,6 +1538,40 @@ class RealRepo(unittest.TestCase):
         with open(os.path.join(G.REPO, RB.LEVEL_OFFSETS), encoding='utf-8') as f:
             self.assertEqual(plan['wild'], json.load(f))
 
+    def test_solo_walls_fit_the_grind_budget(self):
+        """Every budgeted solo wall (#350) is winnable and at most solo.GRIND_BUDGET KOs above the
+        fight-everyone lead, on the committed data and the game's exp configs. The budget is the
+        penalty tuning's (solo.budget): no optional rival fight, no SOLO_OUTLIERS wall."""
+        b = S.budget(real_analysis()['solo_walls'])
+        self.assertTrue(b['budgeted'])
+        self.assertEqual([(w['boss'], w['starter']) for w in b['unwinnable']], [], 'unwinnable walls')
+        self.assertEqual([(w['boss'], w['starter'], w['kos']) for w in b['over']], [],
+                         f'walls over the {S.GRIND_BUDGET}-KO budget')
+
+    def test_both_players_meet_the_margins(self):
+        """Each staged boss but rebalance.OUTLIERS' (#350): the fight-everyone lead at least
+        full_margin percent of the ace over it, and the skip-everything lead (when it fights the
+        boss) at most skip_margin percent under. The ace is the rule's rounded half up, so the bound
+        is the ace the unrounded target rounds to: a lead of 12 meets an ace of 11 (12 / 1.10 = 10.9)."""
+        with open(RB.CURVE_SETTINGS, encoding='utf-8') as f:
+            knobs = json.load(f)
+        full, skip = knobs['full_margin'], knobs['skip_margin']
+        rows = real_analysis()['two_players']
+        self.assertTrue(rows)
+        bad = []
+        for r in rows:
+            if r['boss'] in RB.OUTLIERS:
+                continue
+            if r['ace'] > int(r['full'] * 100 / (100 + full) + 0.5):
+                bad.append((r['boss'], 'full', r['full'], r['ace'], r['full_pct']))
+            if r['skip'] is not None and r['ace'] > int(r['skip'] * 100 / (100 - skip) + 0.5):
+                bad.append((r['boss'], 'skip', r['skip'], r['ace'], r['skip_pct']))
+        self.assertEqual(bad, [], '(boss, player, lead, ace, %) outside the margins')
+        # Every outlier is a trainer, with a reason.
+        trainers = G.parse_trainers(os.path.join(G.REPO, 'src', 'data', 'trainers.party'))
+        self.assertEqual(sorted(set(RB.OUTLIERS) - set(trainers)), [])
+        self.assertTrue(all(RB.OUTLIERS.values()))
+
     def test_scaling_factors_are_the_games(self):
         self.assertEqual(RB.scaling_factors(2.5), G.parse_scaling_factors(G.REPO))
         # #154's tables: the model computes the game's steep scaling and over-level penalty.
@@ -1435,6 +1580,10 @@ class RealRepo(unittest.TestCase):
         self.assertEqual(list(RB.LOGISTIC), G.parse_scaling_factors(G.REPO, 'sExpLogistic', 'exp_formula.c'))
         gd = G.load(G.REPO)
         self.assertEqual(RB.Overlevel.from_configs(gd['modern']), RB.Overlevel(30, True, 8, 40, 17))
+        # #350: the explorer's defaults (so apply's curve and the report) model the game's flat exp;
+        # the fixture's B_SCALED_EXP GEN_LATEST still scales.
+        self.assertIs(RB.explorer_defaults(gd['modern'])['scaled_exp'], False)
+        self.assertIs(RB.explorer_defaults(G.load(FIXTURE)['modern'])['scaled_exp'], True)
         self.assertIsNone(RB.Overlevel.from_configs(gd['vanilla']))
         # #350: B_SCALED_EXP_STEEP is off, so the configs keep the level^2.5 table (unused under flat exp).
         self.assertEqual(RB.game_scaling(gd['modern'], RB.scaling_factors(2.5)), RB.scaling_factors(2.5))
