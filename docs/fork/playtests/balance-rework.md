@@ -31,13 +31,13 @@ Report: Flannery 1, ace 32, lead 44, wall 45, sweep 54, 18 KOs, source Pelipper 
 
 Setup:
 
-1. Clear Party; give Treecko's line at its form for level 44 (Sceptile) with default moves and a TM or two.
+1. Clear Party; give Sceptile (Treecko evolves to Grovyle at 16 and to Sceptile at 36, so 44 is the final form) with default moves and a TM or two.
 2. Toggle All badges. Warp to `LavaridgeTown`.
 
 Do:
 
 1. Trainers: Trainer 1 Flannery 1, Try Battle, with the level-44 lead. Note the result.
-2. Grind 18 KOs on Pelipper 29 (a Pelipper from the wild tables open by Flannery: use the encounters on the maps in `src/data/wild_encounters.json`, with "Encounter OFF" off), or give a fresh level-45 Pokémon instead. Fight again at 45.
+2. Grind 18 KOs on Pelipper 29 in the grass of Route 115 (`Route115`, Pelipper 28 to 29 on land; the model grinds grass before Winona), with "Encounter OFF" off. Or give a fresh level-45 Pokémon instead. Fight again at 45.
 3. Give a level-54 one and fight with no heals.
 
 Expected:
@@ -45,7 +45,7 @@ Expected:
 - 45 wins with heals.
 - 44 is one under the wall, so it may lose.
 - 54 sweeps the four without a heal.
-- The grind from 44 reaches 45 in about 18 KOs, and the exp isn't wasted at the over-level penalty.
+- The grind from 44 reaches 45 in about 18 KOs.
 
 ### 1b. Mudkip line before the Route 119 rival
 
@@ -55,7 +55,7 @@ Setup: Clear Party; give Swampert at level 62 with default moves and a TM or two
 
 Do: Trainers: Trainer 1 May Route 119 Mudkip, Try Battle. Repeat with a level-61 Pokémon and a level-64 one with no heals.
 
-Expected: 62 wins with heals (the lead is the wall, so no grinding); 61 loses or only just wins; 64 sweeps. The Azumarill 42 source, if you grind anyway, should give no more than a handful of KOs per level here.
+Expected: 62 wins with heals (the lead is the wall, so no grinding); 61 loses or only just wins; 64 sweeps.
 
 ### 1c. Worst walls
 
@@ -63,13 +63,32 @@ Each starter's worst budgeted wall. Same method as 1a, with the fight at the wal
 
 | starter | boss | ace | lead | wall | sweep | KOs and source | boss team |
 |---|---|---|---|---|---|---|---|
-| Treecko | May Route 110 Treecko | 25 | 28 | 31 | 33 | 49, Plusle 15 | |
+| Treecko | May Route 110 Treecko | 25 | 28 | 31 | 33 | 49, Plusle 15 | Wingull 23, Lombre 23, Combusken 25 |
 | Mudkip | May Route 110 Mudkip | 25 | 28 | 29 | 30 | 15, Plusle 15 | Wingull 23, Slugma 23, Grovyle 25 |
-| Torchic | Wallace | 79 | 89 | 92 | - | 49, Aggron 65 (17 battles vs Gabrielle 5) | |
+| Torchic | Wallace | 79 | 89 | 92 | - | 49, Aggron 65 (17 battles vs Gabrielle 5) | Wailord 78, Tentacruel 76, Ludicolo 77, Whiscash 77, Gyarados 77, Milotic 79 |
 
-- The Treecko row (49 of 50 KOs) is the one to feel: it should take the budget and no more, and be tolerable as a grind. Warp to `Route110`.
-- The Torchic row is the endgame. Run it last, if at all. Its team isn't listed in this plan: read it from `src/data/trainers.party` (`TRAINER_WALLACE`).
+- The Treecko row (49 of 50 KOs) is the one to feel: it should take the budget and no more, and be tolerable as a grind. Setup and steps are in 1d.
+- The Torchic row is the endgame. Run it last, if at all. Give a level-89 Blaziken, grind in the grass of Victory Road B2F (`VictoryRoad_B2F`, Aggron 61 to 65 on land; 49 KOs, plus 17 battles against Gabrielle 5 in the model's rematch climb) up to 92, and fight Wallace with Trainers: Trainer 1 Wallace, Try Battle.
 - Mudkip's Wallace has no winning level in the model ("unwinnable", an accepted outlier). Fight him with a high-level Mudkip to see how hard it really is.
+
+### 1d. Route 110 rival, Treecko and Mudkip
+
+The worst budgeted wall for Treecko (49 KOs) and the one grind case for Mudkip (15 KOs). The fight is May on Route 110 (`TRAINER_MAY_ROUTE_110_TREECKO`: Wingull 23, Lombre 23, Combusken 25; `TRAINER_MAY_ROUTE_110_MUDKIP`: Wingull 23, Slugma 23, Grovyle 25).
+
+Report rows: ace 25, lead 28, source Plusle 15. Treecko: wall 31, sweep 33, 49 KOs. Mudkip: wall 29, sweep 30, 15 KOs.
+
+Setup:
+
+1. Clear Party; give Grovyle at level 28 (Treecko run) or Marshtomp at level 28 (Mudkip run), with default moves and a TM or two. Both are the middle form, since the final form comes at 36.
+2. Toggle All badges. Warp to `Route110`.
+
+Do:
+
+1. Grind in the grass of Route 110 (Plusle 14 to 15 on land), counting KOs, until the Pokémon reaches the wall: 31 for Treecko, 29 for Mudkip. Note the KO count.
+2. Trainers: Trainer 1 the matching May Route 110 team, Try Battle. No items in battle.
+3. Repeat from a fresh level-28 Pokémon (the lead) for comparison, and at the sweep level (33 or 30) with no heals.
+
+Expected: the KO counts land near 49 (Treecko) and 15 (Mudkip); the wall level wins with heals; the lead may lose; the sweep level wins without heals.
 
 ## 2. The spread at Roxanne, Norman and Juan
 
@@ -89,7 +108,7 @@ Teams:
 
 Setup (per boss and lead):
 
-1. Clear Party. Give the lead's Pokémon at the lead level and two or three others a few levels under it, to stand in for the Exp. Share bench. Use fully evolved forms where the level allows, with default moves.
+1. Clear Party. Give the lead's Pokémon at the lead level and two or three others a few levels under it, to stand in for the Exp. Share bench. Use the form each level allows, with default moves. Every starter line evolves at 16 and 36, so a bench member at 16 to 35 is the middle form and one at 36 or above is the final form (Roxanne's bench, around 17, is Grovyle, Combusken or Marshtomp).
 2. Toggle All badges. Warp to the gym (`RustboroCity_Gym`, `PetalburgCity_Gym`, `SootopolisCity_Gym_1F`), or use Trainers, Try Battle where you stand.
 
 Do: fight the boss from the full lead, then from the skip lead.
