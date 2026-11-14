@@ -23,7 +23,7 @@
 #define B_EXP_OVERLEVEL_CUTOFF      30         // fastest around B_EXP_OVERLEVEL_CUTOFF percent above the fainted Pokémon's level, over B_EXP_OVERLEVEL_WIDTH percent of its level (at 0, all at once past the cutoff),
 #define B_EXP_OVERLEVEL_WIDTH       8          // then levelling out at B_EXP_OVERLEVEL_FLOOR percent of the experience (at least 1). Full experience at the fainted Pokémon's level.
 #define B_EXP_OVERLEVEL_FLOOR       40         // The cutoff and width at most 255, the floor at most 100. Emerald Plus (#350): 30 / 8 / 40, softer than #189's 15 / 4 / 10, so a lone Pokémon can grind to any story wall within 50 KOs.
-#define B_EXP_OVERLEVEL_MIN_LEVEL   7          // Emerald Plus: below this level, the fainted Pokémon counts as this level for the cutoff and width, so a low-level foe's cutoff is still a few levels (2.1 at 30 percent of 7). 0: no minimum. At most 255. #350: 7, the lowest that takes a level-5 starter to level 7 in 8 Route 101 KOs.
+#define B_EXP_OVERLEVEL_MIN_LEVEL   17         // Emerald Plus: below this level, the fainted Pokémon counts as this level for the cutoff and width, so a low-level foe's cutoff is still a few levels (5.1 at 30 percent of 17). 0: no minimum. At most 255.
 
 // Stat settings
 #define B_BADGE_BOOST               GEN_LATEST // In Gen4+, Gym Badges no longer boost a Pokémon's stats. (Setting this to GEN_2 does not include the additional boost to the type matching the Gym the Badge is from.)

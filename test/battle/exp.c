@@ -709,7 +709,7 @@ TEST("Exp formula: the over-level penalty follows a logistic curve down to its f
     EXPECT_EQ(B_EXP_OVERLEVEL_CUTOFF, 30);
     EXPECT_EQ(B_EXP_OVERLEVEL_WIDTH, 8);
     EXPECT_EQ(B_EXP_OVERLEVEL_FLOOR, 40);
-    EXPECT_EQ(B_EXP_OVERLEVEL_MIN_LEVEL, 7);
+    EXPECT_EQ(B_EXP_OVERLEVEL_MIN_LEVEL, 17);
     EXPECT_EQ(ApplyOverlevelPenalty(1000, 30, 30), 1000); // full exp at the foe's level
     EXPECT_EQ(ApplyOverlevelPenalty(1000, 30, 25), 1000); // and below it
     EXPECT_EQ(ApplyOverlevelPenalty(1000, 30, 31), 992);  // slowly at first
@@ -723,12 +723,12 @@ TEST("Exp formula: the over-level penalty follows a logistic curve down to its f
     EXPECT_EQ(ApplyOverlevelPenalty(1000, 20, 60), 400);  // the floor
     EXPECT_EQ(ApplyOverlevelPenalty(5, 20, 60), 2);       // 40% of 5
     EXPECT_EQ(ApplyOverlevelPenalty(0, 20, 60), 0);       // no exp stays no exp
-    EXPECT_EQ(ApplyOverlevelPenalty(1000, 3, 4), 938);    // below the minimum level, the foe counts as level 7:
-    EXPECT_EQ(ApplyOverlevelPenalty(1000, 3, 5), 733);    // the cutoff is 2.1 levels, not 0.9
-    EXPECT_EQ(ApplyOverlevelPenalty(1000, 3, 6), 502);
-    EXPECT_EQ(ApplyOverlevelPenalty(1000, 3, 7), 420);
-    EXPECT_EQ(ApplyOverlevelPenalty(1000, 3, 10), 400);
-    EXPECT_EQ(ApplyOverlevelPenalty(1000, 7, 9), 733);    // at the minimum level, the same as 2 over a level-3 foe
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 3, 4), 985);    // below the minimum level, the foe counts as level 17:
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 3, 5), 956);    // the cutoff is 5.1 levels, not 0.9
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 3, 6), 905);
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 3, 8), 717);
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 3, 10), 522);
+    EXPECT_EQ(ApplyOverlevelPenalty(1000, 17, 20), 905);  // at the minimum level, the same as 3 over a level-3 foe
 }
 
 WILD_BATTLE_TEST("Exp formula: the over-level penalty applies its configs in battle (#189)", s32 exp)
