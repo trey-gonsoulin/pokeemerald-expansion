@@ -41,15 +41,17 @@ Details in `docs/fork/features.md` unless noted.
 - Summary first when switching in battle (#200, #213, `B_SWITCH_SUMMARY_FIRST`, `src/battle_switch_summary.c`).
 - Rematch ball over trainers (#207, `src/rematch_indicator.c`).
 - Debug menu (`src/debug_menu_ui.c`; `docs/fork/debug-menu.md`).
-- Exp formula (#154, #189, `src/exp_formula.c`), boss levels, AI, moves and evolutions and the owner's level curve (`tools/rebalance`, `tools/area_archetypes`; `docs/fork/balance.md`).
+- Exp formula (#154, #189, `src/exp_formula.c`; flat exp and a 30 / 8 / 40 over-level penalty since #350), boss levels, AI, moves and evolutions, and the two-player level curve (#350: bosses between a fight-everyone and a skip-everything player, a 50-KO solo grind budget; `tools/rebalance`, `tools/forced_trainers`, `tools/area_archetypes`; `docs/fork/balance.md`).
 - Random obtainable party roller for challenge runs (`tools/random_party`, its README).
 
 ### Rules that apply across changes
 
 - **Turned down by the owner, so don't re-propose:** `OW_SHOW_ITEM_DESCRIPTIONS`, `B_SHOW_TYPES`, `B_HP_PERCENTAGE_DISPLAY`, `B_FAST_INTRO_NO_SLIDE`, `TEXT_SPEED_INSTANT`, `AUTO_SCROLL_TEXT`, `P_ENABLE_MOVE_RELEARNERS`.
-- **Balance:** the owner balances with the Exp. Share on and the 1.5x trainer exp off, mainly by raising opponent levels, never with a level cap.
+- **Balance:** the owner balances with the Exp. Share on and the 1.5x trainer exp off, mainly through opponent levels, never with a level cap.
   - After a `trainers.party`, wild-table or exp-formula change, rerun `python3 tools/rebalance/rebalance.py apply`, then `python3 tools/rebalance/rebalance.py`, and commit the data with the regenerated outputs. CI checks for drift, and `RealRepo.test_data_meets_the_curve_settings` fails when the data no longer meets the settings.
-  - Hand-written movesets don't move with level changes: after a raise, hand-write what `rebalance.py` flags.
+  - `apply` can lower levels as well as raise them, devolve lowered Pokémon and rewrite set moves they can no longer learn. Review the changes it prints before committing.
+  - Hand-written movesets don't move with level changes: after one, hand-write the default-moveset slots `rebalance.py` flags.
+  - After a story map or trainer script change, rerun `python3 tools/forced_trainers/classify.py` (its unittest fails when `forced_trainers.json` is stale).
   - A rival level change has to go on all six teams of that fight (May or Brendan with each starter).
 - **Save room:** SaveBlock3 is at 1576 of 1624 bytes (`test/save.c` pins it), so `OW_ITEM_DESCRIPTIONS_FIRST_TIME`'s 110 bytes don't fit and a large upstream species addition would trip the `src/save.c` assert.
 - **Exp tests:** a test that measures exp across a level gap needs the over-level penalty off with `WITH_CONFIG`, as `WITH_EXP_AWARD_CONFIGS` does.
@@ -95,7 +97,7 @@ make pokeemerald-test.elf TESTS="Lucky Egg" TOOLCHAIN=/opt/devkitpro/devkitARM  
 
 - Tests live in `test/` (mostly battle mechanics). They use `ASSUMPTIONS` / `GIVEN` / `WHEN` / `SCENE` blocks; see `docs/tutorials/how_to_testing_system.md`.
 - Name related tests with a shared prefix so `TESTS=` can select them.
-- CI: `.github/workflows/emerald-plus.yml` runs the full `make check`, both ROMs and the area_archetypes unittests on pushes to `emerald-plus` and `issue-*` and on PRs into `emerald-plus`. KNOWN_FAILING, TO_DO and ASSUMPTIONS_FAILED results don't fail it (upstream fails on skipped assumptions only in rh-hideout's own CI), but a KNOWN_FAILING test that passes does. The job times out after 60 min, a backstop now that hydra stops a runner that makes no progress for 300 s (#73, #124): the ROM's 60 s TIMEOUT (a Timer2 interrupt) can't catch every hang. Upstream's `build.yml` doesn't run on fork pushes, but it does run on every PR.
+- CI: `.github/workflows/emerald-plus.yml` runs the full `make check`, both ROMs and the Python tools' unittests (area_archetypes, rebalance, forced_trainers and others) on pushes to `emerald-plus` and `issue-*` and on PRs into `emerald-plus`. KNOWN_FAILING, TO_DO and ASSUMPTIONS_FAILED results don't fail it (upstream fails on skipped assumptions only in rh-hideout's own CI), but a KNOWN_FAILING test that passes does. The job times out after 60 min, a backstop now that hydra stops a runner that makes no progress for 300 s (#73, #124): the ROM's 60 s TIMEOUT (a Timer2 interrupt) can't catch every hang. Upstream's `build.yml` doesn't run on fork pushes, but it does run on every PR.
 - What a green `make check` doesn't prove (#73):
   - Headless tests skip every battle animation except Transform and Ally Switch, and record battle messages without drawing them.
   - The memory checks are heap corruption, leaked heap blocks and leaked tasks, plus guard elements (#125, #134, #342, fork changes): test builds give `gObjectEvents` and the per-battler arrays one extra element (`+ TESTING` in their declarations), which is filled with 0xFF, and a test that passed (and was expected to) fails if any byte changed. The static arrays (`gBattleMons`, `gBattlerPartyIndexes`, the rest of `battle_main.c`'s, the controllers' and `gAnimBattlerSpecies`; `sGuardElements`, `test/test_runner.c`) are filled before each test, and the 27 in `struct BattleStruct` (`sBattleStructGuardElements`) when `AllocateBattleResources` allocates `gBattleStruct`, and checked before `FreeBattleResources` frees it. It catches writes only, and only into the element just past the end: an out-of-bounds read (#57's `gBattlerPartyIndexes[4]`), a write further out, or one into any other array still passes. Clear a guarded array by its real elements (`sizeof(array[0]) * MAX_BATTLERS_COUNT`, as the `gSpecialStatuses` clears do): a memset of its `sizeof` zeroes the guard, which fails the test.

@@ -148,6 +148,9 @@ Prize money is unchanged: 11,524 by Roxanne, 44,560 by Wattson, 120,964 by Norma
 - **Verdict:** money gets tight only with bulk Hyper Potions, Revives or Game Corner TMs.
 
 ## 7. Exp. Share curve and boss levels (#127)
+
+**Replaced by #350's two-player rule** (section 18): bosses now sit between a fight-everyone and a skip-everything player, and `apply` lowers them too.
+
 The owner's baseline (#113): the Gen 6 Exp. Share on; balance by raising opponent levels, lower ordinary trainers only carefully, never a level cap; evaluate the 1.5x trainer exp; include catch exp and affection; leave the Lucky Egg and traded bonuses out. Numbers are from `report.md`, "Exp. Share curve (#127)".
 
 **Model** (share6: one KO-taker, five on the bench, Medium Slow from 5; modern data):
@@ -242,7 +245,7 @@ Each rival row goes on all six teams of that fight: May or Brendan, with each st
   #131 and #132 should work from that list once the levels land. The full-game flag table in "Default movesets" updates with them too.
 
 **Applied** (owner's choice, 2026-10-29: 1.5x off, these targets): `src/data/trainers.party` has the 1.5x-off column, plus the owner's Elite Four and Champion spacing above: levels only, 165 Pokémon on 53 teams (the 28 raised bosses, 100 Pokémon, and the other 25 rival teams, 65), with `B_TRAINER_EXP_MULTIPLIER` unchanged. The numbers above (and in the table) are from before the raises. `report.md` now measures the raised data:
-- Its "Proposed boss raises" show +0 for 1.5x off. The 1.5x-on column is now relative to the applied levels (Juan +6 -> 63, Wallace +5 -> 71), and its after-raise curve is unchanged.
+- Its "Proposed boss raises" showed +0 for 1.5x off (historical: #350's "Two players" replaced this single-player rule, section 18, and the section now proposes raises against the #350 data, kept for comparison). The 1.5x-on column is now relative to the applied levels (Juan +6 -> 63, Wallace +5 -> 71), and its after-raise curve is unchanged.
 - Its "Default movesets of the raised boss Pokemon" lists none for 1.5x off.
 - Its story flags in "Default movesets" moved from 9 / 59 / 43 / 14 / 157 (no attack / one attack / lost STAB / above band / new strong) to 9 / 61 / 46 / 12 / 163. The story counts leave out the five rival teams the model doesn't play; over every trainer they moved from 15 / 132 / 85 / 39 / 429 to 15 / 134 / 91 / 32 / 447.
 - The #113 level curve's boss aces are the raised ones.
@@ -252,6 +255,8 @@ Each rival row goes on all six teams of that fight: May or Brendan, with each st
 - **Post-game rematches now sit below some first fights (not changed here):** Tate and Liza's rematch 2 has ace 50 against 51 for the first fight, Juan's rematches 2 and 3 have 51 and 56 against 57, and Wally's Victory Road rematches 2-5 have 48-57 against 60. The rematches are outside the story model. Lifting each rematch ladder above its raised first fight is a follow-up.
 
 ## 8. Exp formula options (#151)
+
+**Replaced by #350** (section 18): flat exp, and the over-level penalty at 30 / 8 / 40.
 
 #150's targets (route trainers averaging 5 below the bench when fought, wild land averages 10 below it, bosses 1 above it with the Elite Four spacing, raised Pokémon evolving) run away, because a raise feeds the exp that sets the next raise. #151 measures what the exp formula could do about it. No decision yet: the owner explores the knobs in the curve explorer (`python3 tools/rebalance/rebalance.py explore`, README) and picks a curve there.
 
@@ -350,6 +355,8 @@ Each rival row goes on all six teams of that fight: May or Brendan, with each st
 
 ## 9. The chosen curve applied (#150)
 
+**#350 replaced its boss rule** (section 18), and its levels with it. The trainer and wild rules stay.
+
 `rebalance.py apply` wrote the owner's curve (`curve_settings.json`, section 8, with #154's exp formula) into the data. Measured with those settings, 1 lead and 5 benched:
 
 | stage | regular trainers | trainer raise | their aces when fought | wild offset (land mean) |
@@ -387,6 +394,8 @@ Each rival row goes on all six teams of that fight: May or Brendan, with each st
   - Several rematch 2 teams then sat far below the raised first fight, for example Juan 2 at 51 against Juan's 75.
 
 ## 10. Rematch ladders and Steven (#139)
+
+**Replaced by #350** (section 18): the rounds and Steven now take the fight-everyone rule and can go down; Steven is at 94.
 
 `rebalance.py apply` now also writes the rematch ladders (`gRematchTable`) and Steven at Meteor Falls, from the same settings plus `rematch_step: 5` (`curve_settings.json`).
 
@@ -573,6 +582,128 @@ So each of the 791 ordinary story slots was scored with `power.py`'s effective l
 - **Late slots highest over their level:** Mollie's Medicham 60 (effective 70.5), Vito's Dodrio 67 (75.3), Michelle's Medicham 67 (73.8), Albert's Muk 68 (74.5), Kelvin's Walrein 60 (67.1), the Gardevoir 58 (64.4) and the Gyarados with Hydro Pump, Hurricane and Hyper Beam. All stay well under their bosses.
 - **The other bosses and rivals:** 36 flagged slots, such as Mightyena's Sucker Punch and Play Rough, Sharpedo's Liquidation and the Lilycove Tropius's Outrage and Solar Beam.
 - **`above_band`:** the 8 story slots (7 Azumarill, Jaylen's Trapinch 28 with Dig) all score under their levels without Huge Power.
+
+## 18. The two-player curve and flat exp (#350)
+Replaces section 8's exp formula and section 9's boss rule. The design is `docs/superpowers/specs/2026-11-13-balance-rework-design.md`, and the in-game checks are `docs/fork/playtests/balance-rework.md`.
+
+**Why.** A single-Pokémon run couldn't finish the game. On `power.score` with the type chart, a solo starter (its default moves, the open TMs, full EVs) met walls 10-25 levels over the curve from Wattson on, and the Elite Four and Wallace at about 95 to over 100. #189's penalty made closing those gaps cost 1,000-4,000 wild KOs. And the curve modelled one player only, the full clear.
+
+**The owner's goals:**
+- One curve, bracketed by how many trainers you fight: a player who skips every skippable trainer meets each boss with a lead about 15% under its ace, and one who fights every trainer about 10% over.
+- Lower the bosses to fit, so a full clear still reaches Wallace in the high 80s, with room under 100 for the post-game.
+- A solo starter that fights everyone gets past each of its walls with at most 50 KOs of grinding (about half an hour).
+- Flat exp, the 1.5x trainer exp off, and a softer over-level penalty, kept so the full clear doesn't snowball.
+- The standing rules hold: the Exp. Share on, mainly through opponent levels, never a level cap, and a rival change on all six teams.
+
+**Forced trainers** (`tools/forced_trainers`, its README): 46 forced, 389 avoidable (29 only by timing) and 34 uncertain of 469 regular trainers. The choose-one groups are Petalburg Gym (one per room), Weather Institute 1F and Victory Road B1F. Uncertain trainers count as skippable, apart from one pick per group. The Rustboro and Lilycove rival fights are optional (a YES/NO prompt).
+
+**The evidence on the old data** (#150's curve, steep scaled exp, 15 / 4 / 10). Each player's Exp. Share lead, in percent of the ace:
+
+| boss (ace) | fight everyone | skip everything |
+|---|---|---|
+| Roxanne (16) | 16 (+0%) | 13 (-19%) |
+| Wattson (26) | 26 (+0%) | 23 (-12%) |
+| Tabitha, Mt Chimney (38) | 39 (+3%) | 26 (-32%) |
+| Norman (41) | 43 (+5%) | 36 (-12%) |
+| Winona (57) | 57 (+0%) | 46 (-19%) |
+| Juan (76) | 76 (+0%) | 65 (-14%) |
+| Wallace (86) | 84 (-2%) | 75 (-13%) |
+
+- The two ends sat 12-20 points apart, and the targets need about 25. The steep scaled exp (#154) kept them close: an under-levelled Pokémon gets much more exp per KO, so the skip player caught up.
+- The 1.5x, or raising every regular trainer by 10% or 20%, widened the gap only a few points and lifted the whole curve.
+- Flat exp with a softer penalty (the trial 30 / 6 / 30) gave full / skip leads of Roxanne 18/13, Wattson 28/22, Norman 46/32, Winona 62/41, Juan 83/58 and Wallace 89/67.
+
+**The runaway, and the reference split.** The first sweep measured the bosses, the route trainers and the wild tables all on the lead. No candidate passed: the full-clear lead reached 100 by Tabitha at Mossdeep in every one. 10% under the lead raised each stage's trainers by +4 (Roxanne) to +27 (Juan), and under flat exp those higher trainers paid the lead more, which raised the next stage again. At the trial 30 / 6 / 30, full / skip leads and the boss ace:
+
+| variant | Roxanne | Wattson | Norman | Winona | Juan | Wallace | lead at 100 |
+|---|---|---|---|---|---|---|---|
+| gaps on the lead | 20/13, 15 | 34/24, 28 | 60/36, 42 | 78/46, 54 | 100/63, 74 | 100/71, 86 | Tabitha, Mossdeep |
+| trainers at their old levels | 18/13, 15 | 28/22, 25 | 45/32, 38 | 62/41, 48 | 83/58, 68 | 89/66, 80 | Winona rematch 4 |
+| gaps on the bench, raise-only trainer shift | 18/13, 15 | 28/22, 25 | 44/31, 36 | 61/40, 47 | 83/57, 67 | 89/65, 79 | Winona rematch 4 |
+| everything on the bench, margins too | 18/13, 12 | 27/21, 21 | 43/30, 28 | 59/38, 36 | 80/54, 52 | 84/62, 62 | never |
+
+- Lowering trainers wasn't the cause: a raise-only shift ran away the same, since the lead asked for every shift to be positive.
+- With the gaps back on the bench, every stage shift is about 0, and the curve matches the evidence above within a level. The spec's trial numbers came from the old trainer levels, which the bench rule leaves in place.
+- So the boss margins measure on the lead, and the trainer and wild gaps stay on the bench as #150 had them (`gap_ref`), with a raise-only trainer shift: the spec's "today's rule is unchanged".
+
+**The penalty.** `rebalance.py tune` swept cutoffs 20-40 by 5, widths 4, 6 and 8 and floors 20-40 by 5 (75 candidates), each on its own curve with the solo walls fought on it. With the reference split, still none fit the budget as first scored: the optional Lilycove rival for a solo Mudkip needed 400-600 KOs (level 90-91 against an ace near 66, which the full rule alone sets), and Wallace was unwinnable for a solo Mudkip in all 75. With those two out of the budget (the owner's calls below), three passed, all at 49 KOs (this sweep ran on the data before `apply` wrote the new curve; see below for today's):
+
+| cutoff | width | floor | max KOs | full lead at Wallace |
+|---|---|---|---|---|
+| **30** | **8** | **40** | **49** | **89** |
+| 35 | 6 | 40 | 49 | 92 |
+| 35 | 8 | 40 | 49 | 91 |
+| 35 | 8 | 35 | 55 (the closest that fails) | 91 |
+
+- Every floor under 40 fails. Max KOs isn't monotone in the knobs: a softer penalty lifts the skip player, so the bosses, so some walls (35 / 4 / 40 is 118, 40 / 6 / 30 is 157).
+- **30 / 8 / 40**, the strictest that passes (the lowest floor, then cutoff, then width), is in `include/config/battle.h`. Its worst walls: Treecko, the Route 110 rival, 49 KOs (28 -> 31); Torchic, Wallace, 49 (89 -> 92); Mudkip, the Route 110 rival, 15.
+- **Rerun on the applied data**, the same sweep passes 11 candidates, and the strictest is 40 / 4 / 30 at 45 KOs (full lead 94 at Wallace); 30 / 8 / 40 still passes, at 49. The owner kept 30 / 8 / 40 (#350): no game change, and switching would need another `apply`, which moves the data and could move the strictest pick again.
+- `B_EXP_OVERLEVEL_MIN_LEVEL` stays 17: Route 101 then takes a level-5 starter to 7 in 5 KOs (the limit is 8, `Exp.test_early_exp_before_the_first_rival`).
+
+**The curve applied** (`curve_settings.json`: `full_margin` 10, `skip_margin` 15, `lower`, `boss_ref` ace and `gap_ref` bench, with #150's `trainer_gap` 10, `wild_gap` 20, `rematch_step` 5 and `wild_battles` 6; #150's `margin` is gone). The staged bosses, with the report's "Two players" leads:
+
+| boss | ace before | ace after | full lead | skip lead |
+|---|---|---|---|---|
+| Route 103 rival | 6 | 7 | 8 (+14%) | 8 (+14%) |
+| Roxanne | 16 | 15 | 18 (+20%) | 13 (-13%) |
+| Rustboro rival (optional) | 18 | 18 | 20 (+11%) | skipped |
+| Brawly | 19 | 18 | 20 (+11%) | 16 (-11%) |
+| Route 110 rival | 26 | 25 | 28 (+12%) | 21 (-16%) |
+| Wally, Mauville | 26 | 25 | 28 (+12%) | 22 (-12%) |
+| Wattson | 26 | 25 | 28 (+12%) | 22 (-12%) |
+| Tabitha, Mt Chimney | 38 | 29 | 43 (+48%) | 25 (-14%) |
+| Maxie, Mt Chimney | 39 | 31 | 43 (+39%) | 26 (-16%) |
+| Flannery | 39 | 32 | 44 (+38%) | 27 (-16%) |
+| Norman | 41 | 36 | 45 (+25%) | 31 (-14%) |
+| Route 119 rival | 56 | 45 | 62 (+38%) | 38 (-16%) |
+| Shelly, Weather Institute | 56 | 47 | 62 (+32%) | 40 (-15%) |
+| Winona | 57 | 47 | 62 (+32%) | 40 (-15%) |
+| Lilycove rival (optional) | 66 | 67 | 74 (+10%) | skipped |
+| Tabitha / Maxie, Magma Hideout | 66 / 67 | 58 / 58 | 75 (+29%) | 49 (-16%) |
+| Matt | 67 | 59 | 75 (+27%) | 50 (-15%) |
+| Tate and Liza | 67 | 60 | 75 (+25%) | 51 (-15%) |
+| Tabitha / Maxie, Mossdeep | 75 / 75 | 64 / 65 | 83 (+30% / +28%) | 54 / 55 (-16% / -15%) |
+| Shelly, Seafloor Cavern / Archie | 75 / 75 | 66 / 66 | 83 (+26%) | 56 (-15%) |
+| Juan | 76 | 67 | 83 (+24%) | 57 (-15%) |
+| Wally, Victory Road | 79 | 71 | 87 (+22%) | 60 (-16%) |
+| Sidney | 80 | 73 | 88 (+20%) | 62 (-15%) |
+| Phoebe | 81 | 74 | 88 (+19%) | 62 (-16%) |
+| Glacia | 82 | 75 | 88 (+17%) | 63 (-16%) |
+| Drake | 83 | 76 | 89 (+17%) | 64 (-16%) |
+| Wallace | 86 | 79 | 89 (+13%) | 65 (-18%) |
+| Steven, Meteor Falls | 99 | 94 | - | - |
+
+- Through the mid-game the full side sits far over +10%: there the two players are more than 25 points apart, the skip rule sets the ace, and a skip run gets harsher still. A -16% within the rule is its half-up rounding (21 / 0.85 = 24.7 -> 25).
+- Every rival variant shares its fight's level.
+- **Data:** 188 teams moved in `trainers.party`. 123 rose (121 by +1, 2 by +2): the stage shifts of the Flannery, Juan and Elite Four stages, the Route 103 and Lilycove rivals and the Isaiah and Katelyn rematch ladders. 65 fell, by 1 to 11: the bosses, the Route 110 and 119 rival variants and the gym and Wally rematch tiers 3-5. Steven's Mossdeep partner fell 10 with Maxie and Tabitha. 75 wild tables rose by 1 (the Flannery stage's 2 -> 3, the Juan and Elite Four stages' 20 -> 21) and none fell. A second `apply` changes nothing.
+- **Devolved:** Wattson's Magneton -> Magnemite 23; Tabitha's Mt Chimney Crobat -> Golbat 29; Maxie's Mt Chimney Crobat -> Golbat 30 and Camerupt -> Numel 31, so his ace is a Numel. **Kept evolved**, since the team has the base form: Wattson's Manectric 25, Flannery's Camerupt 29, Norman's Slaking 36 and Tabitha's Mt Chimney Camerupt 29. No #181 evolutions this run.
+- **Moves rewritten by `apply`:** Brawly's Makuhita 18 Knock Off -> Cross Chop; Flannery's Numel 27 Take Down -> Lava Plume; Tabitha's Mt Chimney Numel 25 Curse -> Lava Plume and Take Down -> Ember; her Camerupt 29 Take Down -> Earth Power. **Hand-written:** Shelly's Weather Institute Mightyena 47 (lowered from 56) was flagged one attack, and its Scary Face became Crunch by the same rule. The flags are back to the usual 6 no attack.
+
+**Decisions.** The owner's (2026-11-13):
+- The optional rival fights (Rustboro and Lilycove, all six variants) are out of the solo budget. The report still lists them, marked.
+- Wallace for a solo Mudkip is an accepted outlier (`solo.SOLO_OUTLIERS`): no candidate penalty makes it winnable, and only lowering Wallace by hand would.
+- The penalty is 30 / 8 / 40.
+- All six margin outliers are accepted (`rebalance.OUTLIERS`, marked "accepted" in the report, and exempt in `test_both_players_meet_the_margins` on their own side only):
+  - Phoebe, Glacia and Drake (skip leads 62, 63 and 64 against aces 74, 75 and 76: -16%) and Wallace (65 against 79: -18%). The Elite Four step (`LEAGUE_STEPS`) lifts each over the skip rule.
+  - Edwardo and Flint, forced on Winona's stage (skip leads 34 and 35 against ace 47: -28% and -26%). The raise-only trainer shift kept their old levels while the bosses fell, and smoothing them would mean lowering regular trainers.
+  - Tabitha at Mt Chimney, the old -32%, is no longer an outlier.
+- The optional Lilycove rival keeps ace 67, which the full rule alone sets.
+
+The rulings made while building it, each with its reason:
+- **Margins in percent of the ace,** `(lead - ace) * 100 / ace`, matching the rule (/1.10, /0.85) and the evidence (Tabitha 26 against 38 is -32%). `trainer_gap` and `wild_gap` keep #150's percent of the reference.
+- **All six variants** of the Rustboro and Lilycove rival fights are optional, since they share a fight.
+- **A choose-one group's skip pick** is the first id in `specs.CHOOSE_ONE`'s order: any pick is a valid skip route, and the order is fixed.
+- **The post-game lowers too,** keeping the +1 ladder step and Steven's 3, since it is regenerated from the new curve by its existing rules. Rival variants and Steven's partner follow a lowered team as they follow a raised one.
+- **Gaps on the bench, margins on the lead** (`gap_ref`), with a raise-only trainer shift: above.
+- **The wild model writes what restock writes:** vanilla plus the offset, evolving only on a raise and never devolving. Restock rebuilds the tables from vanilla, so it is the source of truth.
+- **A devolve blocked by a duplicate** takes the nearest form the team doesn't have (a Sceptile 10 becomes a Grovyle if the team has a Treecko), and of two copies the higher level claims first, as #181's pass does: "the pre-evolution that fits", with no duplicates.
+- **The explorer and `tune` devolve as `apply` does,** from each team Pokémon's devolve line in `curve_data.json`: the model has to show what `apply` writes.
+- **`explorer_defaults` reads flat exp and the 1.5x from the game** (`B_SCALED_EXP`, `B_TRAINER_EXP_MULTIPLIER`). It had always modelled scaled exp, so the first `apply` under flat exp aimed at the old formula (Wallace 93, the full lead 99).
+- **Rewrites follow the written rule** (#160's, `docs/fork/balance.md`): Earthquake over Earth Power for a Camerupt at 38, where #160 hand-picked Earth Power, and never an HM (Lucas 2's Wailmer at 9 gets Water Pulse, not Surf), since an HM at a low level is an early spike. The rule reproduces 84 of #160's 100 picks.
+- **Ties go to STAB, then level up, then no drawback, then the name.** By name alone the rule gave Tabitha's Camerupt 29 Eruption, and Brawly's Makuhita 18 and Shelly's Mightyena 47 Double-Edge; #160 never picked by alphabet.
+- **`B_EXP_OVERLEVEL_MIN_LEVEL` stays 17,** though 7 is the lowest that passes on today's Route 101: the sweep was run at 17, and only 17 still passes if Route 101 falls to its vanilla levels.
+
+**Limits of the model.** It fights one-on-one on `power.score`, so a level or two either way is noise, and Tate and Liza's double battle is fought one-on-one too. `tune`'s boss teams evolve and devolve by level only (no #181 evolutions or move rewrites) and keep their set moves after a devolve. The forced classification still has in-game checks to make (the Mauville and Lavaridge gyms, the patrols, Fortree's gates and Mossdeep's spin tiles), which the playtest plan covers.
 
 ## Proposed balance changes (owner to accept or reject; each can be its own issue)
 1. **Soft level cap at each gym ace** (config). Set `B_LEVEL_CAP_TYPE LEVEL_CAP_FLAG_LIST` and `B_EXP_CAP_TYPE EXP_CAP_SOFT`. `sLevelCapFlagMap` in `src/caps.c` already holds exactly the measured aces (15/19/24/29/31/33/42/46/58). Consider `B_RARE_CANDY_CAP` too.

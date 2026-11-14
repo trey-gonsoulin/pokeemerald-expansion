@@ -2,6 +2,8 @@
 // The model runs in worker.js; each change posts the knobs and redraws.
 
 const pct = v => `${Math.round(v * 100)}%`;
+// A raise or offset with its sign, as print_curve's {:+} gives it; blank for 0.
+const signed = v => (v ? (v > 0 ? '+' : '') + v : '');
 const UNITS = of => [['levels', 'levels'], ['percent', `% of ${of}`]];
 const REFS = {
     bench: 'bench (lowest off the KO rotation, or lowest)',
@@ -15,6 +17,8 @@ const REFS = {
 // with a unit (the key of a levels/percent select) takes its range from pct
 // in percent, and fmt gets the unit's suffix. Two optional knobs with each
 // other's key as pair go on and off together (share_run takes both or neither).
+// Turning on an optional knob turns off those in its excludes (share_run
+// takes the boss margin or the two players' margins, not both).
 const KNOBS = [
     { group: 'Play style' },
     { key: 'ko_takers', label: 'KO rotation', type: 'range', min: 1, max: 6, step: 1,
@@ -61,14 +65,15 @@ const KNOBS = [
     { key: 'gap_unit', label: 'Margin and gaps in', type: 'select', options: UNITS('the reference level') },
     { key: 'margin', label: 'Boss margin', type: 'optional', min: -3, max: 8, step: 1,
       unit: 'gap_unit', pct: [-5, 20, 1], fmt: (v, u) => `ace ${v >= 0 ? '+' : ''}${v}${u}`,
+      excludes: ['full_margin', 'skip_margin'],
       help: 'Raise each boss (never lower, unless Lower levels too is on) so its ace sits this far above the reference. Off: today\'s levels.' },
     { key: 'league_steps', label: 'Elite Four spacing', type: 'check',
       help: 'With the margin: each Elite Four member at least 1 above the last, Wallace 3 above Drake.' },
     { key: 'full_margin', label: 'Fight-everyone margin', type: 'optional', min: 0, max: 20, step: 1,
-      pair: 'skip_margin', fmt: v => `lead ${v}% over the ace`,
+      pair: 'skip_margin', excludes: ['margin'], fmt: v => `lead ${v}% over the ace`,
       help: 'With the skip-everything margin, replaces the boss margin: each staged boss\'s ace sits where a player who fights every trainer has their lead this far over it (in percent of the ace), or lower for the skip-everything margin. The two go on and off together.' },
     { key: 'skip_margin', label: 'Skip-everything margin', type: 'optional', min: 0, max: 30, step: 1,
-      pair: 'full_margin', fmt: v => `lead ${v}% under the ace`,
+      pair: 'full_margin', excludes: ['margin'], fmt: v => `lead ${v}% under the ace`,
       help: 'A player who skips every trainer they can (forced_trainers.json: the forced ones, one of each choose-one group, the required bosses) meets each boss they fight with their lead this far under its ace, where that puts the ace lower.' },
     { key: 'lower', label: 'Lower levels too', type: 'check',
       help: 'The boss margins and the wild gap move levels down as well as up (wild tables down to vanilla); the route trainer gap only raises. A lowered Pokémon devolves to the form that fits, with Evolve on.' },
@@ -81,8 +86,8 @@ const KNOBS = [
     { key: 'rematch_step', label: 'Rematch step', type: 'optional', min: 1, max: 10, step: 1,
       unit: 'gap_unit', pct: [1, 20, 1], fmt: (v, u) => `+${v}${u} a rematch`,
       help: 'Raise each ordinary trainer\'s rematches this far per rematch over a base: the route trainer gap at the earliest stage they can be fought, or the first fight. The gym leaders\' and Wally\'s rematch rounds and Steven follow the boss margin.' },
-    { key: 'evolve', label: 'Evolve raised Pokémon', type: 'check',
-      help: 'A raised trainer or wild Pokémon evolves 3 levels past a level evolution.' },
+    { key: 'evolve', label: 'Evolve raised Pokémon, devolve lowered ones', type: 'check',
+      help: 'A raised trainer or wild Pokémon evolves 3 levels past a level evolution; a lowered one devolves to the form that fits.' },
 ];
 
 const $ = sel => document.querySelector(sel);
@@ -121,6 +126,9 @@ function buildControls() {
         row.addEventListener('input', () => {
             if (k.pair)
                 pairOn(k, row.querySelector('.on').checked);
+            if (k.excludes && row.querySelector('.on').checked)
+                for (const key of k.excludes)
+                    turnOff(key);
             showValue(k, row);
             for (const d of KNOBS.filter(d => d.unit === k.key))
                 applyUnit(d);
@@ -135,6 +143,13 @@ function pairOn(k, on) {
     const other = $(`.knob[data-key="${k.pair}"]`);
     other.querySelector('.on').checked = on;
     showValue(KNOBS.find(d => d.key === k.pair), other);
+}
+
+// Turns the optional knob with this key off.
+function turnOff(key) {
+    const row = $(`.knob[data-key="${key}"]`);
+    row.querySelector('.on').checked = false;
+    showValue(KNOBS.find(d => d.key === key), row);
 }
 
 const inPercent = k => k.unit && $(`.knob[data-key="${k.unit}"] select`).value === 'percent';
@@ -332,12 +347,12 @@ function drawTables(res) {
         last boss ${Math.min(...last.levels)}–${Math.max(...last.levels)} · highest member's peak ${peak}`
         + (res.lv100 ? ` · <b class="warn">Lv 100 by ${res.lv100}</b>` : '');
     $('#bosses tbody').innerHTML = res.bosses.map(b => `<tr><td>${b.name}</td><td>${b.stage}</td><td>${b.base_ace}</td>
-        <td>${b.raise ? '+' + b.raise : ''}</td><td><b>${b.boss_ace}</b></td>
+        <td>${signed(b.raise)}</td><td><b>${b.boss_ace}</b></td>
         <td>${Math.min(...b.levels)}–${Math.max(...b.levels)}</td><td>${b.ref}</td>
         <td>${b.skip_ref ?? ''}</td></tr>`).join('');
     $('#stages tbody').innerHTML = res.stages.map(s => `<tr><td>${s.stage}</td><td>${+s.start_ref.toFixed(1)}</td>
-        <td>${s.trainers}</td><td>${s.raise ? '+' + s.raise : ''}</td><td>${s.trainer_ace_mean ?? ''}</td>
-        <td>${s.gap ?? ''}${s.gap !== null && res.knobs.gap_unit === 'percent' ? '%' : ''}</td><td>${s.wild_offset ? '+' + s.wild_offset : ''}</td>
+        <td>${s.trainers}</td><td>${signed(s.raise)}</td><td>${s.trainer_ace_mean ?? ''}</td>
+        <td>${s.gap ?? ''}${s.gap !== null && res.knobs.gap_unit === 'percent' ? '%' : ''}</td><td>${signed(s.wild_offset)}</td>
         <td>${s.wild_land_mean ?? ''}</td></tr>`).join('');
     const ladders = new Map();
     for (const r of res.rematches) {
