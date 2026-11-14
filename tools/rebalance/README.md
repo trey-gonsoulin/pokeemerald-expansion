@@ -17,6 +17,7 @@ It reads the repo's own headers twice:
 ```sh
 python3 tools/rebalance/rebalance.py                  # writes tools/rebalance/output/
 python3 tools/rebalance/rebalance.py explore          # the curve explorer (below)
+python3 tools/rebalance/rebalance.py tune             # the over-level penalty against the solo grind budget
 python3 -m unittest discover -s tools/rebalance       # tests
 ```
 
@@ -181,6 +182,21 @@ The page's files are `explorer/index.html`, `app.js` (the controls and the
 Chart.js chart), `worker.js` and `model.js` (the module list and the Python
 bootstrap). The repo's `.gitignore` ignores `*.js`, so add new ones with
 `git add -f`.
+
+### Tuning the over-level penalty (#350)
+
+```sh
+python3 tools/rebalance/rebalance.py tune    # cutoffs 20-40 by 5, widths 4 6 8, floors 20-40 by 5
+```
+
+`tune` runs each penalty (`tune_penalty`) through `explore_run` with
+`curve_settings.json` and `TUNE_KNOBS` (flat exp, the two players' margins,
+lowering, the lead as the reference), then fights each starter's solo walls
+(`solo.py`) on that run's own curve: its boss teams, moved, evolved and
+devolved as the run fights them, its wild tables and its exp. It prints the
+table and the strictest candidate (the lowest floor, then cutoff, then width)
+whose walls all fit `solo.GRIND_BUDGET`; an unwinnable wall fails the budget.
+When none passes, it prints the closest ones and what fails.
 
 ## What it measures
 

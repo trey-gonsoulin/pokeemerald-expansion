@@ -1080,6 +1080,16 @@ def evolve_team(mons, delta, evolve, unique=False, devolve=None):
     return species
 
 
+def team_species(trainer, delta, evolve, devolve, unique):
+    """evolve_team for ``trainer``'s Pokemon moved ``delta`` levels, as the
+    curve fights them (share_run) and the solo walls meet them: none of
+    EVOLVE_EXEMPT's evolve or devolve, and ``unique`` (a boss's team) keeps
+    its species distinct."""
+    exempt = trainer.id in EVOLVE_EXEMPT
+    return evolve_team([(m.species, m.level, m.gender) for m in trainer.mons], delta, None if exempt else evolve,
+                       unique, None if exempt else devolve)
+
+
 def shifted_slots(slots, shift, evolve=None):
     """``slots`` ([(field, slot, rate)]) with every level ``shift`` higher,
     between 1 and 100. A raised slot's species evolves for its new min level
@@ -1106,6 +1116,16 @@ def restocked_slots(vanilla, offset, evolve, species):
     G.R.shift_levels(wild, {'STAGE': dict.fromkeys({field for field, _, _ in vanilla}, offset)}, info)
     encounters = wild['wild_encounter_groups'][0]['encounters']
     return [(field, enc[field]['mons'][0], rate) for (field, _, rate), enc in zip(vanilla, encounters)]
+
+
+def run_wilds(slots, vanilla, offset, applied, evolve, species):
+    """A stage's wild ``slots`` at ``offset`` over ``vanilla`` (``applied``:
+    the offset ``slots`` has now), as share_run meets them: rebuilt from
+    vanilla as restock writes them when the offset changes
+    (restocked_slots, kept to ``species``), else shifted (shifted_slots)."""
+    if offset != applied and vanilla:
+        return restocked_slots(vanilla, offset, evolve, species)
+    return shifted_slots(slots, offset - applied, evolve)
 
 
 def share_curve(*args, **kwargs):
@@ -1208,9 +1228,7 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
 
     def fight(p, tid, delta=0):
         mons = trainers[tid].mons
-        exempt = tid in EVOLVE_EXEMPT
-        species = evolve_team([(m.species, m.level, m.gender) for m in mons], delta,
-                              None if exempt else evolve, tid in boss_ids, None if exempt else devolve)
+        species = team_species(trainers[tid], delta, evolve, devolve, tid in boss_ids)
         for mon, sp in zip(mons, species):
             p.defeat(gd, scaling, [(gd.species[sp].exp_yield, max(1, min(mon.level + delta, 100)), 1.0)],
                      True, True)
@@ -1277,10 +1295,7 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
             offset = max(0, round(above(start, -wild_gap, relative_gaps) - base), 0 if lower else applied)
         else:
             offset = wild_offsets.get(st['name'], applied)
-        if offset != applied and (vanilla_wilds or {}).get(i):
-            here = restocked_slots(vanilla_wilds[i], offset, evolve, gd.species)  # as apply writes it
-        else:
-            here = shifted_slots(slots, offset - applied, evolve)
+        here = run_wilds(slots, (vanilla_wilds or {}).get(i), offset, applied, evolve, gd.species)
         foes = wild_battle_foes(gd, here)
         for p in players:
             for _ in range((catch + wild_battles) if foes else 0):
@@ -1531,6 +1546,21 @@ def explorer_defaults(gd):
             'overlevel_min_level': o.min_level if o else 0}
 
 
+def run_exp(snap, k):
+    """The exp configs explore_run's knobs ``k`` (all of them) give on
+    ``snap``: (gd with the trainer exp and scaling configs, the scaling
+    table, the Overlevel penalty or None)."""
+    overlevel = None if k['overlevel_cutoff'] is None else Overlevel(
+        k['overlevel_cutoff'], k['overlevel_unit'] == 'percent', k['overlevel_width'] or 0, k['overlevel_floor'] or 0,
+        k['overlevel_min_level'] or 0)
+    gd = with_configs(snap['gd'], B_TRAINER_EXP_MULTIPLIER=TRAINER_EXP[k['trainer_exp']],
+                      B_SCALED_EXP='GEN_LATEST' if k['scaled_exp'] else 'GEN_6')
+    # The game's own table at its exponent (scaling_factors matches it, tested).
+    scaling = snap['scaling'] if k['scaling_power'] == 2.5 else scaling_factors(k['scaling_power'],
+                                                                                   len(snap['scaling']))
+    return gd, scaling, overlevel
+
+
 def explore_run(snap, knobs=None):
     """share_run for EXPLORER_KNOBS settings on ``snap`` (load_snapshot's
     inputs, or the same dict from the parsed repo): {knobs, bosses
@@ -1546,14 +1576,7 @@ def explore_run(snap, knobs=None):
     for key in ('overlevel_unit', 'gap_unit'):
         if k[key] not in UNITS:
             raise ValueError(f'{key} must be one of {UNITS}')
-    overlevel = None if k['overlevel_cutoff'] is None else Overlevel(
-        k['overlevel_cutoff'], k['overlevel_unit'] == 'percent', k['overlevel_width'] or 0, k['overlevel_floor'] or 0,
-        k['overlevel_min_level'] or 0)
-    gd = with_configs(snap['gd'], B_TRAINER_EXP_MULTIPLIER=TRAINER_EXP[k['trainer_exp']],
-                      B_SCALED_EXP='GEN_LATEST' if k['scaled_exp'] else 'GEN_6')
-    # The game's own table at its exponent (scaling_factors matches it, tested).
-    scaling = snap['scaling'] if k['scaling_power'] == 2.5 else scaling_factors(k['scaling_power'],
-                                                                                   len(snap['scaling']))
+    gd, scaling, overlevel = run_exp(snap, k)
     relative = k['gap_unit'] == 'percent'
     bosses, stage_rows = share_run(
         snap['stages'], snap['trainers'], gd, scaling, snap['wilds']['modern'], clear=k['clear'],
@@ -1991,7 +2014,8 @@ def solo_walls_report(rows):
            '`power.score` with the type chart. lead: the fight-everyone lead (Two players\' full lead). wall: the '
            'lowest level at which it wins each one-on-one (healing between Pokemon; unwinnable: not by 100). '
            'sweep: the lowest at which it beats the team without healing. KOs: the grind from the lead to the '
-           'wall against the best wild Pokemon reachable by then (source: the highest exp yield x level, grass before '
+           'wall against the best wild Pokemon reachable by then (source: the one that takes the fewest KOs under the '
+           'over-level penalty, else the highest exp yield x level; grass before '
            f'{SURF_STAGE}, Surf from {SURF_STAGE}, no rods; DexNav can hunt it), with max friendship and no Lucky '
            "Egg, under the game's exp configs. After Norman, source also gives the battles the same climb takes "
            'against the strongest rematch team open by then. Tate and Liza is a double battle; the model fights '
@@ -2215,6 +2239,15 @@ def combat_power(trainers, gd, stages, share):
             'bosses': bosses}
 
 
+def on_time_evolver(info, gd):
+    """``evolve(species, level)`` for the player's Pokemon, which evolve at
+    their level (no EVOLVE_GRACE), kept to the species ``gd`` has."""
+    def evolve(species, level):
+        out = info.evolve(species, level, grace=0)
+        return out if out in gd.species else species
+    return evolve
+
+
 def analyze(repo, stages_path, forced_path=FORCED_TRAINERS):
     """Everything the report shows; ``forced_path`` gives the skip player
     (two_players, forced_outliers and the explorer's snapshot), None for
@@ -2236,11 +2269,7 @@ def analyze(repo, stages_path, forced_path=FORCED_TRAINERS):
     helpers = os.path.isdir(os.path.join(repo, 'tools', 'learnset_helpers'))
     teachables = G.move_lists(repo) if helpers else {}
     m = gd['modern']
-
-    def evolve_on_time(species, level):
-        """The player's Pokemon evolve at their level: no EVOLVE_GRACE."""
-        out = info.evolve(species, level, grace=0)
-        return out if out in m.species else species
+    evolve_on_time = on_time_evolver(info, m)
     bench_rows = {r['boss']: r for r in share[POWER_BENCH[0]]['now'][POWER_BENCH[1]]}
     forced = load_forced(forced_path) if forced_path else None
     with open(CURVE_SETTINGS, encoding='utf-8') as f:
@@ -2252,7 +2281,8 @@ def analyze(repo, stages_path, forced_path=FORCED_TRAINERS):
     import solo as S  # not at the top: solo imports this module, and the explorer needs neither
     map_tms = G.map_tms(repo)
     solo = S.solo_walls(trainers, m, stages, run['bosses'], wilds['modern'], map_tms, teachables, evolve_on_time,
-                        scaling, Overlevel.from_configs(m), M.load_settings(), ladders['regular'])
+                        scaling, Overlevel.from_configs(m), M.load_settings(), ladders['regular'],
+                        foe_evolve=snap['evolve'], foe_devolve=snap['devolve'])
     return {
         'census': census(trainers),
         'story_trainers': len(story),
@@ -2582,7 +2612,139 @@ def explore_main(argv):
     return serve_explorer(p.parse_args(argv).port)
 
 
-SUBCOMMANDS = {'curve': curve_main, 'explore': explore_main, 'apply': apply_main}
+# ---------------------------------------------------------------------------
+# The over-level penalty against the solo grind budget (#350)
+# ---------------------------------------------------------------------------
+
+# What every candidate of the sweep runs with (spec section 4): flat exp,
+# both players' boss rule, lowering, and the lead as the reference. The
+# penalty is relative; its minimum level is the game's (explorer_defaults).
+TUNE_KNOBS = {'scaled_exp': False, 'full_margin': 10, 'skip_margin': 15, 'lower': True, 'boss_ref': 'ace'}
+TUNE_CUTOFFS = tuple(range(20, 41, 5))
+TUNE_WIDTHS = (4, 6, 8)
+TUNE_FLOORS = tuple(range(20, 41, 5))
+
+
+def tune_penalty(inputs, knobs, cutoffs, widths, floors):
+    """Each over-level penalty (cutoff, width and floor, in percent) run
+    through explore_run on ``inputs`` (repo_inputs', plus ``solo``:
+    {map_tms, teachables, settings, evolve}, solo_walls' arguments of those
+    names, ``evolve`` the player's line) with ``knobs`` and TUNE_KNOBS, and
+    each starter's solo walls fought on that run's own curve: its boss rows
+    (the teams moved, evolved and devolved as the run fights them), its
+    wild tables (run_wilds) and its exp configs (run_exp). Per candidate:
+    {cutoff, width, floor, walls (solo_walls' rows), max_kos (the most KOs
+    of any wall with a grind, None for none), unwinnable (the walls with no
+    KO count: unwinnable by 100, or no exp to climb with), over (the walls
+    over solo.GRIND_BUDGET), worst (starter -> its wall with the most KOs),
+    passes (no unwinnable wall and none over the budget), final_boss (the
+    last staged boss) and final_lead (the full lead that meets it)}."""
+    import solo as S  # not at the top: solo imports this module, and the explorer needs neither
+    solo, stages = inputs['solo'], inputs['stages']
+    modern, vanilla = inputs['wilds']['modern'], inputs['wilds']['vanilla']
+    final = [b for st in stages for b in st['bosses']][-1]
+    cache = {}  # the walls depend only on each team's ace, whatever the penalty
+    out = []
+    for cutoff, width, floor in itertools.product(cutoffs, widths, floors):
+        res = explore_run(inputs, {**knobs, **TUNE_KNOBS, 'overlevel_cutoff': cutoff, 'overlevel_unit': 'percent',
+                                   'overlevel_width': width, 'overlevel_floor': floor})
+        gd, scaling, overlevel = run_exp(inputs, res['knobs'])
+        evolve = inputs['evolve'] if res['knobs']['evolve'] else None
+        devolve = inputs.get('devolve') if res['knobs']['evolve'] else None
+        wilds = {i: run_wilds(modern.get(i, ()), vanilla.get(i, ()), row['wild_offset'], row['wild_applied'], evolve,
+                              gd.species) for i, row in enumerate(res['stages'])}
+        walls = S.solo_walls(inputs['trainers'], gd, stages, res['bosses'], wilds, solo['map_tms'],
+                             solo['teachables'], solo['evolve'], scaling, overlevel, solo['settings'],
+                             foe_evolve=evolve, foe_devolve=devolve, cache=cache)
+        climbs = [w for w in walls if w['kos'] is not None]
+        worst = {}
+        for w in climbs:
+            if w['starter'] not in worst or w['kos'] > worst[w['starter']]['kos']:
+                worst[w['starter']] = w
+        unwinnable = [w for w in walls if w['kos'] is None]
+        over = [w for w in climbs if w['kos'] > S.GRIND_BUDGET]
+        out.append({'cutoff': cutoff, 'width': width, 'floor': floor, 'walls': walls,
+                    'max_kos': max((w['kos'] for w in climbs), default=None), 'unwinnable': unwinnable,
+                    'over': over, 'worst': worst, 'passes': not unwinnable and not over, 'final_boss': final,
+                    'final_lead': next(r['levels'][0] for r in res['bosses'] if r['boss'] == final)})
+    return out
+
+
+def pick_penalty(results):
+    """The strictest of tune_penalty's passing candidates: the lowest
+    floor, then the lowest cutoff, then the lowest width. None if none
+    passes."""
+    return min((r for r in results if r['passes']), key=lambda r: (r['floor'], r['cutoff'], r['width']),
+               default=None)
+
+
+TUNE_CLOSEST = 3
+
+
+def tune_report(results):
+    """tune_penalty's candidates as text lines: the table, then the chosen
+    one (pick_penalty), or when none passes the TUNE_CLOSEST closest (the
+    fewest unwinnable walls, then the fewest KOs), each with its starters'
+    worst walls, the walls over the budget and the unwinnable ones."""
+    import solo as S  # not at the top: solo imports this module, and the explorer needs neither
+    if not results:
+        return ['No candidates.']
+    final = short(results[0]['final_boss'])
+    lines = [table(['cutoff', 'width', 'floor', 'max KOs', 'unwinnable', f'full lead at {final}', 'passes'],
+                   [[r['cutoff'], r['width'], r['floor'], '-' if r['max_kos'] is None else r['max_kos'],
+                     len(r['unwinnable']), r['final_lead'], 'yes' if r['passes'] else 'no'] for r in results]), '']
+
+    def wall(w):
+        return f"{short(w['boss'])} ({w['starter']})"
+
+    def details(r):
+        out = [f"cutoff {r['cutoff']}, width {r['width']}, floor {r['floor']}: max {r['max_kos']} KOs, "
+               f"full lead {r['final_lead']} at {final}"]
+        out += [f"  {starter} worst wall: {short(w['boss'])}, {w['kos']} KOs from {w['lead']} to {w['wall']}"
+                + (f" on {short(w['source'][0])} {w['source'][1]}" if w['source'] else '')
+                for starter, w in r['worst'].items()]
+        if r['over']:
+            out.append(f'  Over the {S.GRIND_BUDGET}-KO budget: '
+                       + ', '.join(f"{wall(w)} {w['kos']} (+{w['kos'] - S.GRIND_BUDGET})" for w in r['over']))
+        if r['unwinnable']:
+            out.append('  Unwinnable: ' + ', '.join(
+                wall(w) + ('' if w['wall'] is None else ' (no exp to climb with)') for w in r['unwinnable']))
+        return out
+    chosen = pick_penalty(results)
+    if chosen:
+        lines += ['Chosen: ' + details(chosen)[0]] + details(chosen)[1:]
+    else:
+        closest = sorted(results, key=lambda r: (len(r['unwinnable']), r['max_kos'] or 0,
+                                                 r['floor'], r['cutoff'], r['width']))[:TUNE_CLOSEST]
+        lines.append(f'No candidate passes the {S.GRIND_BUDGET}-KO budget. Closest:')
+        for r in closest:
+            lines += details(r)
+    return lines
+
+
+def tune_main(argv):
+    """``tune``: sweep the over-level penalty (tune_penalty) on the repo's
+    data with the curve settings, and print the strictest candidate whose
+    solo walls all fit the grind budget."""
+    p = argparse.ArgumentParser(prog='rebalance.py tune', description=tune_main.__doc__.split('\n')[0])
+    p.add_argument('--cutoffs', type=int, nargs='+', default=TUNE_CUTOFFS, help='percent (default: 20 to 40 by 5)')
+    p.add_argument('--widths', type=int, nargs='+', default=TUNE_WIDTHS, help='percent (default: 4 6 8)')
+    p.add_argument('--floors', type=int, nargs='+', default=TUNE_FLOORS, help='percent (default: 20 to 40 by 5)')
+    p.add_argument('--settings', default=CURVE_SETTINGS, help='explorer settings JSON (default: curve_settings.json)')
+    p.add_argument('--repo', default=G.REPO, help=argparse.SUPPRESS)
+    p.add_argument('--stages', default=DEFAULT_STAGES, help=argparse.SUPPRESS)
+    args = p.parse_args(argv)
+    with open(args.settings, encoding='utf-8') as f:
+        knobs = json.load(f)
+    info = G.R.SpeciesInfo(args.repo)
+    inputs = repo_inputs(args.repo, args.stages, info)
+    inputs['solo'] = {'map_tms': G.map_tms(args.repo), 'teachables': G.move_lists(args.repo),
+                      'settings': M.load_settings(), 'evolve': on_time_evolver(info, inputs['gd'])}
+    print('\n'.join(tune_report(tune_penalty(inputs, knobs, args.cutoffs, args.widths, args.floors))))
+    return 0
+
+
+SUBCOMMANDS = {'curve': curve_main, 'explore': explore_main, 'apply': apply_main, 'tune': tune_main}
 
 
 def main(argv=None):
@@ -2590,8 +2752,9 @@ def main(argv=None):
     if argv[:1] and argv[0] in SUBCOMMANDS:
         return SUBCOMMANDS[argv[0]](argv[1:])
     p = argparse.ArgumentParser(description=__doc__.split('\n\n')[0],
-                                epilog='Also: rebalance.py curve [KNOBS] and rebalance.py explore (the curve '
-                                       'explorer, #151); each takes --help.')
+                                epilog='Also: rebalance.py curve [KNOBS], rebalance.py explore (the curve '
+                                       'explorer, #151), rebalance.py apply and rebalance.py tune (the over-level '
+                                       'penalty against the solo grind budget, #350); each takes --help.')
     p.add_argument('--repo', default=G.REPO, help='repo root (default: this checkout)')
     p.add_argument('--stages', default=DEFAULT_STAGES, help='story stage file (default: story_stages.json)')
     p.add_argument('--out-dir', default=DEFAULT_OUT_DIR)

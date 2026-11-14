@@ -24,6 +24,7 @@ only.
 """
 
 import dataclasses
+import functools
 
 import gamedata as G
 import matchup as M
@@ -69,22 +70,29 @@ def sweep_level(gd, species, foes, tm_moves, teachables, evolve, targets, ivs, s
                        lambda scores: sum(1 / s if s else float('inf') for s in scores) <= 1, start, moves)
 
 
-def best_wild(gd, wilds, stage_index, surf_index):
-    """The wild Pokemon worth the most exp per KO (yield x level) in the
-    stages up to ``stage_index`` (``wilds``: stage -> rebalance.stage_slots'
-    slots), at its slot's highest level, as (yield, level, species): land
-    tables, and water from ``surf_index`` (None: never). No rods or Rock
-    Smash. None when there is none."""
+def best_wild(gd, wilds, stage_index, surf_index, cost=None):
+    """The wild Pokemon to grind on in the stages up to ``stage_index``
+    (``wilds``: stage -> rebalance.stage_slots' slots), at its slot's
+    highest level, as (yield, level, species): land tables, and water from
+    ``surf_index`` (None: never). No rods or Rock Smash. With ``cost``
+    (``cost((yield, level))``: the KOs a climb takes on it, None for no
+    exp), the one with the fewest KOs (#350: under the over-level penalty
+    the most exp per KO isn't always the fewest KOs); else, and on a tie,
+    the one worth the most exp per KO (yield x level). None when there is
+    none."""
     fields = ('land_mons', 'water_mons') if surf_index is not None and stage_index >= surf_index else ('land_mons',)
-    best = None
+    found = set()
     for i in range(stage_index + 1):
         for field, slot, _ in wilds.get(i, ()):
-            if field not in fields or slot['species'] not in gd.species:
-                continue
-            here = (gd.species[slot['species']].exp_yield, slot['max_level'], slot['species'])
-            if best is None or (here[0] * here[1], here) > (best[0] * best[1], best):
-                best = here
-    return best
+            if field in fields and slot['species'] in gd.species:
+                found.add((gd.species[slot['species']].exp_yield, slot['max_level'], slot['species']))
+    ranked = sorted(found, key=lambda c: (c[0] * c[1], c), reverse=True)
+    if cost is None or not ranked:
+        return ranked[0] if ranked else None
+    # More yield and more level never cost more KOs: only the rest can be the fewest.
+    front = [c for c in ranked if not any(o[:2] != c[:2] and o[0] >= c[0] and o[1] >= c[1] for o in ranked)]
+    kos = {c[:2]: cost(c[:2]) for c in front}
+    return min(front, key=lambda c: (kos[c[:2]] is None, kos[c[:2]] or 0))
 
 
 def grind_kos(gd, scaling, overlevel, start, target, foes, mult=AFFECTION, growth='GROWTH_MEDIUM_SLOW',
@@ -129,42 +137,55 @@ def best_rematch(gd, trainers, stages, ladders, stage_index):
     return best
 
 
-def boss_foes(gd, trainer, ace):
-    """``trainer``'s Pokemon as power.Fighters, shifted to the boss row's
-    ``ace`` (a curve's raise, or a rival variant at its fight's levels)."""
+def boss_foes(gd, trainer, ace, evolve=None, devolve=None):
+    """``trainer``'s Pokemon as power.Fighters, moved to the boss row's
+    ``ace`` (a curve's raise or lowering, or a rival variant at its fight's
+    levels), and evolved (``evolve(species, level, gender)``) or devolved
+    (rebalance.devolver's ``devolve``) for it as the curve's run fights
+    them (rebalance.team_species, a boss's team's species kept distinct).
+    Set moves stay; a default moveset follows the new species and level."""
     delta = ace - R.team_ace(trainer)
     out = []
-    for mon in trainer.mons:
-        level = max(1, min(mon.level + delta, 100))
-        mon = dataclasses.replace(mon, level=level)
-        out.append(P.fighter(gd, mon.species, level, P.team_moves(gd, mon), mon.ivs))
+    for mon, species in zip(trainer.mons, R.team_species(trainer, delta, evolve, devolve, True)):
+        mon = dataclasses.replace(mon, species=species, level=max(1, min(mon.level + delta, 100)))
+        out.append(P.fighter(gd, mon.species, mon.level, P.team_moves(gd, mon), mon.ivs))
     return out
 
 
 def solo_walls(trainers, gd, stages, rows, wilds, map_tms, teachables, evolve, scaling, overlevel, settings,
-               ladders=()):
+               ladders=(), foe_evolve=None, foe_devolve=None, cache=None):
     """Per staged story boss with a row in ``rows`` (share_run's boss rows:
     ``levels[0]`` is the fight-everyone lead, ``boss_ace`` the team's ace)
     and starter in ``settings`` (matchup_settings.json's; starters ``gd``
     lacks are skipped): {stage, boss (the team met after choosing that
     starter), starter, ace, double, lead, wall, sweep, kos, source (the
-    grind's wild [species, level]), rematch, battles}. ``kos``: the grind
-    from the lead to the wall (0 at or below the lead, None when the wall
-    is). ``battles``: the same climb against the best ``ladders`` rematch
-    team (``rematch``) after Norman, else None. ``wilds``: stage ->
-    stage_slots' slots; ``map_tms``: gamedata.map_tms; ``teachables``:
-    gamedata.move_lists; ``evolve(species, level)``: the player's line;
-    ``gd``, ``scaling`` and ``overlevel``: the exp configs."""
+    grind's wild [species, level]: best_wild's fewest KOs), rematch,
+    battles}. ``kos``: the grind from the lead to the wall (0 at or below
+    the lead, None when the wall is). ``battles``: the same climb against
+    the best ``ladders`` rematch team (``rematch``) after Norman, else None.
+    ``wilds``: stage -> stage_slots' slots; ``map_tms``: gamedata.map_tms;
+    ``teachables``: gamedata.move_lists; ``evolve(species, level)``: the
+    player's line; ``gd``, ``scaling`` and ``overlevel``: the exp configs.
+    The boss teams move to their row's ace evolved by ``foe_evolve`` and
+    devolved by ``foe_devolve`` (boss_foes: the run's own evolver and
+    devolver). ``cache`` (a dict) keeps each wall and sweep by stage, team,
+    starter and ace for later calls on the same data and evolutions (the
+    penalty sweep's candidates, which differ only in their exp and
+    levels)."""
     by_boss = {r['boss']: r for r in rows}
     starters = {k: v for k, v in settings['starters'].items() if v in gd.species}
     targets = M.defending_types(gd)
     ivs = dict.fromkeys(G.IV_STATS, settings['ivs'])
     names = [st['name'] for st in stages]
     surf = names.index(R.SURF_STAGE) if R.SURF_STAGE in names else None
+    cache = {} if cache is None else cache
+
+    @functools.lru_cache(maxsize=None)
+    def climb(lead, wall, growth, foes, trainer=False):
+        return grind_kos(gd, scaling, overlevel, lead, wall, list(foes), growth=growth, trainer=trainer)
     out = []
     for i, st in enumerate(stages):
         tm_moves = [mv for mv in M.open_tms(map_tms, stages, i, settings['tm_exclude_maps']) if mv in gd.moves]
-        wild = best_wild(gd, wilds, i, surf)
         rematch = best_rematch(gd, trainers, stages, ladders, i)
         for bid in st['bosses']:
             row = by_boss.get(bid)
@@ -175,18 +196,23 @@ def solo_walls(trainers, gd, stages, rows, wilds, map_tms, teachables, evolve, s
                 tid = M.starter_boss(bid, name, starters, trainers)
                 if tid is None:
                     continue
-                args = (gd, species, boss_foes(gd, trainers[tid], row['boss_ace']), tm_moves, teachables, evolve,
-                        targets, ivs)
-                wall = wall_level(*args, moves=settings['moves'])
-                sweep = None if wall is None else sweep_level(*args, start=wall, moves=settings['moves'])
+                key = (i, tid, name, row['boss_ace'])
+                if key not in cache:
+                    foes = boss_foes(gd, trainers[tid], row['boss_ace'], foe_evolve, foe_devolve)
+                    args = (gd, species, foes, tm_moves, teachables, evolve, targets, ivs)
+                    wall = wall_level(*args, moves=settings['moves'])
+                    cache[key] = wall, None if wall is None else sweep_level(*args, start=wall,
+                                                                            moves=settings['moves'])
+                wall, sweep = cache[key]
                 growth = gd.species[species].growth
+                climbs = wall is not None and wall > lead
+                wild = best_wild(gd, wilds, i, surf, (lambda foe: climb(lead, wall, growth, (foe,))) if climbs
+                                 else None)
 
                 def grind(foes, trainer=False):
                     if wall is None or foes is None:
                         return None
-                    if wall <= lead:
-                        return 0
-                    return grind_kos(gd, scaling, overlevel, lead, wall, foes, growth=growth, trainer=trainer)
+                    return climb(lead, wall, growth, tuple(foes), trainer) if climbs else 0
                 battles = grind(rematch and rematch[2], True)
                 out.append({'stage': st['name'], 'boss': tid, 'starter': name, 'ace': row['boss_ace'],
                             'double': trainers[tid].double, 'lead': lead, 'wall': wall, 'sweep': sweep,
