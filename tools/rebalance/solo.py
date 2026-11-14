@@ -228,3 +228,22 @@ def solo_walls(trainers, gd, stages, rows, wilds, map_tms, teachables, evolve, s
                             'exempt': OPTIONAL if tid in optional else ACCEPTED if (tid, name) in SOLO_OUTLIERS
                             else None})
     return out
+
+
+def budget(walls):
+    """solo_walls' ``walls`` against the grind budget: {budgeted (the walls
+    with no ``exempt``: not an optional fight nor a SOLO_OUTLIERS wall),
+    unwinnable (the budgeted walls with no KO count: unwinnable by 100, or
+    no exp to climb with), over (the budgeted walls over GRIND_BUDGET),
+    worst (starter -> its budgeted wall with the most KOs), max_kos (the
+    most KOs of any, None for none) and passes (none unwinnable or over)}."""
+    budgeted = [w for w in walls if not w.get('exempt')]
+    climbs = [w for w in budgeted if w['kos'] is not None]
+    worst = {}
+    for w in climbs:
+        if w['starter'] not in worst or w['kos'] > worst[w['starter']]['kos']:
+            worst[w['starter']] = w
+    unwinnable = [w for w in budgeted if w['kos'] is None]
+    over = [w for w in climbs if w['kos'] > GRIND_BUDGET]
+    return {'budgeted': budgeted, 'unwinnable': unwinnable, 'over': over, 'worst': worst,
+            'max_kos': max((w['kos'] for w in climbs), default=None), 'passes': not unwinnable and not over}
