@@ -228,9 +228,10 @@ python3 tools/rebalance/rebalance.py tune    # cutoffs 20-40 by 5, widths 4 6 8,
 ```
 
 `tune` runs each penalty (`tune_penalty`) through `explore_run` with
-`curve_settings.json` and `TUNE_KNOBS`: flat exp, the two players' margins
-and `lower`, with `boss_ref` the lead and `gap_ref` the bench (see "Two
-players" above for why the gaps stay on the bench). It then fights each
+`curve_settings.json` over `TUNE_KNOBS` (flat exp). The settings decide the
+rest: today the two players' margins and `lower`, with `boss_ref` the lead
+and `gap_ref` the bench (see "Two players" above for why the gaps stay on
+the bench), so a margin changed there is the one the sweep runs. It then fights each
 starter's solo walls
 (`solo.py`) on that run's own curve: its boss teams, moved, evolved and
 devolved as the run fights them, its wild tables and its exp. It prints the

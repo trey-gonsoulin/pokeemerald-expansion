@@ -377,6 +377,9 @@ class Exp(unittest.TestCase):
         # "Exp is scaled to player and opponent's levels": a higher getter gets less.
         self.assertGreater(RB.exp_award(d, self.scaling, 39, 5, 5, False, 1),
                            RB.exp_award(d, self.scaling, 39, 5, 10, False, 1))
+        # Cmd_getexp scales in Gen 5 and Gen 7+, not in Gen 6 or before.
+        self.assertEqual([RB.level_scaled(fake_regime(B_SCALED_EXP=g)) for g in ('GEN_3', 'GEN_5', 'GEN_6', 'GEN_7')],
+                         [False, True, False, True])
 
     def test_affection_boost_before_scaling(self):
         # ApplyExperienceMultipliers: 4+ hearts give 4915/4096, before the level scaling.
@@ -1902,6 +1905,11 @@ class TwoPlayers(unittest.TestCase):
         self.assertEqual([r['boss_ace'] for r in rows], [int(r['ref'] / 1.10 + 0.5) for r in rows])
         with self.assertRaises(ValueError):
             self.run_share(full_margin=10)
+        # The boss margin and the two players' margins don't mix: the one would be ignored.
+        with self.assertRaises(ValueError):
+            self.run_share(margin=1, **self.MARGINS)
+        with self.assertRaises(ValueError):
+            RB.explore_run(self.inputs, {'margin': 1, **self.MARGINS})
 
     def test_forced_trainer_outliers(self):
         # The skip player fights the forced hiker (ace 20) at 6, after the stage's catches.
@@ -2270,7 +2278,9 @@ class Solo(unittest.TestCase):
         self.assertEqual(S.SOLO_OUTLIERS, {('TRAINER_WALLACE', 'MUDKIP'): 'owner accepted, #350'})
 
     TUNE = {'cutoffs': (20, 30), 'widths': (4, 6), 'floors': (20, 30)}
-    TUNE_BASE = {'trainer_gap': 10, 'wild_gap': 0, 'gap_unit': 'percent'}  # raises stage One's wild table 1
+    # The committed settings' boss rule; the gaps raise stage One's wild table 1.
+    TUNE_BASE = {'trainer_gap': 10, 'wild_gap': 0, 'gap_unit': 'percent', 'full_margin': 10, 'skip_margin': 15,
+                 'lower': True, 'boss_ref': 'ace', 'gap_ref': 'bench'}
 
     @staticmethod
     def fake_walls(calls):
@@ -2309,7 +2319,7 @@ class Solo(unittest.TestCase):
             return inp, RB.tune_penalty(inp, self.TUNE_BASE, **self.TUNE)
 
     def candidate_knobs(self, cutoff, width, floor):
-        return {**self.TUNE_BASE, **RB.TUNE_KNOBS, 'overlevel_cutoff': cutoff, 'overlevel_unit': 'percent',
+        return {**RB.TUNE_KNOBS, **self.TUNE_BASE, 'overlevel_cutoff': cutoff, 'overlevel_unit': 'percent',
                 'overlevel_width': width, 'overlevel_floor': floor}
 
     def test_tune_picks_the_strictest_passing_candidate(self):
@@ -2342,8 +2352,8 @@ class Solo(unittest.TestCase):
         calls = []
         inp, _ = self.tune(calls)
         self.assertEqual(len(calls), 8)
-        self.assertEqual((RB.TUNE_KNOBS['scaled_exp'], RB.TUNE_KNOBS['full_margin'], RB.TUNE_KNOBS['skip_margin'],
-                          RB.TUNE_KNOBS['lower'], RB.TUNE_KNOBS['boss_ref']), (False, 10, 15, True, 'ace'))
+        # Flat exp is the sweep's own; the curve settings carry the rest.
+        self.assertEqual(RB.TUNE_KNOBS, {'scaled_exp': False})
         min_level = RB.explorer_defaults(inp['gd'])['overlevel_min_level']
         modern, vanilla = inp['wilds']['modern'], inp['wilds']['vanilla']
         for call in calls:
@@ -2361,7 +2371,7 @@ class Solo(unittest.TestCase):
         self.assertNotEqual(calls[0]['wilds'], dict(modern))
         call = calls[0]
         # The candidate's exp: flat, 1.5x trainer exp as the knobs say.
-        self.assertFalse(call['gd'].flag('B_SCALED_EXP >= GEN_5 && B_SCALED_EXP != GEN_6'))
+        self.assertFalse(RB.level_scaled(call['gd']))
         self.assertEqual(call['gd'].defines['B_TRAINER_EXP_MULTIPLIER'], RB.TRAINER_EXP['1.5x off'])
         # The bosses evolve and devolve as the run's teams do; the player's line evolves on time.
         self.assertIs(call['evolve'], self.evolve)
@@ -2374,6 +2384,24 @@ class Solo(unittest.TestCase):
         with unittest.mock.patch.object(S, 'solo_walls', self.fake_walls(calls)):
             RB.tune_penalty(dict(inp, forced=forced), self.TUNE_BASE, [20], [4], [20])
         self.assertEqual(calls[0]['optional'], forced.optional_bosses)
+
+    def test_tune_takes_the_margins_and_references_from_the_settings(self):
+        # The settings decide the margins, lowering and the references, over TUNE_KNOBS.
+        inp = dict(curve_inputs(FIXTURE, FIXTURE_STAGES),
+                   solo={'map_tms': {}, 'teachables': {}, 'settings': {'starters': {}}, 'evolve': self.evolve})
+        settings = dict(self.TUNE_BASE, full_margin=5, skip_margin=20, lower=False, boss_ref='bench', gap_ref='ace',
+                        scaled_exp=True)
+        with unittest.mock.patch.object(S, 'solo_walls', self.fake_walls([])), \
+                unittest.mock.patch.object(RB, 'explore_run', wraps=RB.explore_run) as run:
+            RB.tune_penalty(inp, settings, [20], [4], [20])
+        knobs = run.call_args.args[1]
+        self.assertEqual({k: knobs[k] for k in settings}, settings)
+        self.assertEqual((knobs['overlevel_cutoff'], knobs['overlevel_width'], knobs['overlevel_floor']), (20, 4, 20))
+        # Without them in the settings, the sweep's own flat exp.
+        with unittest.mock.patch.object(S, 'solo_walls', self.fake_walls([])), \
+                unittest.mock.patch.object(RB, 'explore_run', wraps=RB.explore_run) as run:
+            RB.tune_penalty(inp, self.TUNE_BASE, [20], [4], [20])
+        self.assertFalse(run.call_args.args[1]['scaled_exp'])
 
     def test_tune_prints_the_table_and_the_choice(self):
         _, out = self.tune([])
