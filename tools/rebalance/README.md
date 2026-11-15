@@ -287,11 +287,17 @@ committed data.
   outlier where the skip lead is more than `OUTLIER_SKIP` (25%) under; then
   the forced trainers the skip lead meets that far under. `OUTLIERS` lists
   the teams the owner accepted outside the rules, each with its side
-  (`skip`, `full` or `forced`) and its numbers: the last three Elite Four
-  fights and Wallace, which `LEAGUE_STEPS` lifts over the skip rule, and
-  the forced Edwardo and Flint. The report marks them "accepted", and
-  `RealRepo.test_both_players_meet_the_margins` exempts each on its side
-  only and fails on a stale entry.
+  (`skip`, `full` or `forced`), the percent accepted and its numbers: the
+  last three Elite Four fights and Wallace, which `LEAGUE_STEPS` lifts over
+  the skip rule, and the forced Edwardo and Flint. The report marks them
+  "accepted", and `RealRepo.test_both_players_meet_the_margins` exempts
+  each on its side only, fails on a stale entry, and fails when one moves
+  more than `OUTLIER_SLACK` (1) points from its accepted percent, worse or
+  better (#354; re-accept by updating the number).
+  `RealRepo.test_forced_trainers_name_the_staged_trainers` (#356) fails
+  when `forced_trainers.json` names a trainer that isn't staged (or isn't
+  in `trainers.party`) or misses one that is, or has a class other than
+  `FORCED`, `AVOIDABLE` or `UNCERTAIN`.
 - **Solo walls** (#350, `solo.py`): per starter and staged boss, the
   starter line alone (its default moves plus the TMs open by then, picked
   for coverage; IV 15, full EVs spread evenly) against the boss team on

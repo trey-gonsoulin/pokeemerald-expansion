@@ -171,6 +171,11 @@ def fmt_types(types):
 # Story stages
 # ---------------------------------------------------------------------------
 
+def staged_bosses(stages):
+    """Every staged boss and its other rival and starter teams (load_stages' ``variants``)."""
+    return {b for st in stages for b in st['bosses']}.union(*(ids for st in stages for ids in st['variants'].values()))
+
+
 def load_stages(path, trainers, repo):
     """Each stage's regular trainers (by map), bosses and maps.
 
@@ -198,7 +203,7 @@ def load_stages(path, trainers, repo):
             if ids:
                 st['variants'][bid] = sorted(ids)
     # Variants are kept out of the regular trainers and overrides like the bosses.
-    bosses = staged.union(*(ids for st in stages for ids in st['variants'].values()))
+    bosses = staged_bosses(stages)
     missing = sorted(b for b in bosses if b not in trainers)
     if missing:
         raise SystemExit(f'{path}: unknown boss trainers {missing}')
@@ -225,25 +230,29 @@ Forced = collections.namedtuple('Forced', 'trainers optional_bosses')
 # The report flags a staged boss whose ace the skip-everything lead meets
 # more than this percent of the ace under (#350).
 OUTLIER_SKIP = 25
-# The teams outside the two-player rules (#350): trainer -> (side, why, with
-# its numbers). Side ``skip`` or ``full``: a staged boss the margins test
-# leaves be on that player's side only (LEAGUE_STEPS lifts the last four
+# The teams outside the two-player rules (#350): trainer -> (side, pct, why,
+# with its numbers). Side ``skip`` or ``full``: a staged boss the margins
+# test leaves be on that player's side only (LEAGUE_STEPS lifts the last four
 # Elite Four fights over the skip rule's ace); ``forced``: a forced trainer
 # the report flags as met more than OUTLIER_SKIP percent under (the
-# raise-only trainer shift keeps its stage's levels). The report marks each
-# one accepted.
+# raise-only trainer shift keeps its stage's levels). pct: that side's lead
+# over the ace, in percent of the ace, as the owner accepted it (#354). The
+# margins test fails when the figure moves more than OUTLIER_SLACK points
+# from it either way; re-accept by updating pct. The report marks each one
+# accepted.
 OUTLIERS = {
-    'TRAINER_PHOEBE': ('skip', 'skip lead 62 vs ace 74 (-16%): LEAGUE_STEPS puts her 1 over Sidney (73), over the '
-                               "skip rule's 73 (62 / 0.85); owner accepted (#350)"),
-    'TRAINER_GLACIA': ('skip', 'skip lead 63 vs ace 75 (-16%): LEAGUE_STEPS puts her 1 over Phoebe (74), over the '
-                               "skip rule's 74 (63 / 0.85); owner accepted (#350)"),
-    'TRAINER_DRAKE': ('skip', 'skip lead 64 vs ace 76 (-16%): LEAGUE_STEPS puts him 1 over Glacia (75), over the '
-                              "skip rule's 75 (64 / 0.85); owner accepted (#350)"),
-    'TRAINER_WALLACE': ('skip', 'skip lead 65 vs ace 79 (-18%): LEAGUE_STEPS puts him 3 over Drake (76), over the '
-                                "skip rule's 76 (65 / 0.85); owner accepted (#350)"),
-    'TRAINER_EDWARDO': ('forced', 'Winona stage: skip lead 34 vs ace 47 (-28%); owner accepted (#350)'),
-    'TRAINER_FLINT': ('forced', 'Winona stage: skip lead 35 vs ace 47 (-26%); owner accepted (#350)'),
+    'TRAINER_PHOEBE': ('skip', -16.2, 'skip lead 62 vs ace 74: LEAGUE_STEPS puts her 1 over Sidney (73), over the '
+                                      "skip rule's 73 (62 / 0.85); owner accepted (#350)"),
+    'TRAINER_GLACIA': ('skip', -16.0, 'skip lead 63 vs ace 75: LEAGUE_STEPS puts her 1 over Phoebe (74), over the '
+                                      "skip rule's 74 (63 / 0.85); owner accepted (#350)"),
+    'TRAINER_DRAKE': ('skip', -15.8, 'skip lead 64 vs ace 76: LEAGUE_STEPS puts him 1 over Glacia (75), over the '
+                                     "skip rule's 75 (64 / 0.85); owner accepted (#350)"),
+    'TRAINER_WALLACE': ('skip', -17.7, 'skip lead 65 vs ace 79: LEAGUE_STEPS puts him 3 over Drake (76), over the '
+                                       "skip rule's 76 (65 / 0.85); owner accepted (#350)"),
+    'TRAINER_EDWARDO': ('forced', -27.7, 'Winona stage: skip lead 34 vs ace 47; owner accepted (#350)'),
+    'TRAINER_FLINT': ('forced', -25.5, 'Winona stage: skip lead 35 vs ace 47; owner accepted (#350)'),
 }
+OUTLIER_SLACK = 1
 
 
 def load_forced(path):
@@ -2449,9 +2458,7 @@ def boss_teams(stages, postgame):
     their species distinct (#150) and take evolutions that aren't by level
     (#181): every staged boss and its rival variants, the post-game boss
     ladders and POSTGAME_FINAL."""
-    return sorted({b for st in stages for b in st['bosses']}
-                  | {v for st in stages for ids in st['variants'].values() for v in ids}
-                  | {t for ladder in postgame['boss'] for t in ladder} | set(postgame['final']))
+    return sorted(staged_bosses(stages) | {t for ladder in postgame['boss'] for t in ladder} | set(postgame['final']))
 
 
 def nonlevel_candidates(trainers, teams, evolve, evolve_nonlevel):
