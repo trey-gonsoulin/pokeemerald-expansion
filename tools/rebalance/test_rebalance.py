@@ -1614,35 +1614,31 @@ class RealRepo(unittest.TestCase):
         self.assertEqual(sorted(bosses - {o[:2] for o in outside}), [], 'stale OUTLIERS boss entries')
         forced = {(r['trainer'], 'forced') for r in res['forced_outliers']}
         self.assertEqual(sorted(forced ^ (accepted - bosses)), [], 'forced outliers not matching OUTLIERS')
-        self.assertTrue(all(side in ('full', 'skip', 'forced') and isinstance(pct, float) and why
+        self.assertTrue(all(side in ('full', 'skip', 'forced') and isinstance(pct, (int, float)) and why
                             for side, pct, why in RB.OUTLIERS.values()))
         figures = [(o[0], o[1], o[4]) for o in outside if o[:2] in accepted]
         figures += [(r['trainer'], 'forced', r['skip_pct']) for r in res['forced_outliers']]
-        self.assertEqual([(tid, side, pct, RB.OUTLIERS[tid][1]) for tid, side, pct in figures
-                          if pct < RB.OUTLIERS[tid][1] - RB.OUTLIER_SLACK], [],
+        figures = [(tid, side, pct, RB.OUTLIERS[tid][1]) for tid, side, pct in figures]
+        self.assertEqual([f for f in figures if f[2] < f[3] - RB.OUTLIER_SLACK], [],
                          f'(trainer, player, %, accepted %) more than {RB.OUTLIER_SLACK} points worse than accepted: '
                          're-accept by updating rebalance.OUTLIERS')
 
     def test_forced_trainers_name_the_staged_trainers(self):
-        """forced_trainers.json (#356) names only trainers.party trainers: its regular ids are the
-        staged regular trainers, each choose-one member among them, and its bosses the staged bosses
-        with their other rival and starter teams, as classify.py writes them. load_forced reads plain
-        sets, so a renamed or dropped trainer would otherwise just go missing from the skip run."""
+        """forced_trainers.json (#356): its regular ids are the staged regular trainers, each
+        choose-one member among them, and its bosses the staged bosses with their other rival and
+        starter teams, as classify.py writes them (load_stages takes all of those from
+        trainers.party). load_forced reads plain sets, so a renamed or dropped trainer would
+        otherwise just go missing from the skip run."""
         trainers = G.parse_trainers(os.path.join(G.REPO, 'src', 'data', 'trainers.party'))
         stages = RB.load_stages(RB.DEFAULT_STAGES, trainers, G.REPO)
         with open(RB.FORCED_TRAINERS, encoding='utf-8') as f:
             data = json.load(f)
         regular = {t for st in stages for t in st['regular']}
-        bosses = {b for st in stages for b in st['bosses']}.union(*(v for st in stages for v in st['variants'].values()))
         one_of = {t for e in data['regular'].values() for t in e.get('one_of', ())}
-        hint = ': rerun python3 tools/forced_trainers/classify.py'
-        self.assertEqual(sorted((set(data['regular']) | one_of | set(data['bosses'])) - set(trainers)), [],
-                         'forced_trainers.json ids not in trainers.party' + hint)
-        self.assertEqual(sorted(set(data['regular']) - regular), [], 'regular ids that are not staged regular trainers' + hint)
-        self.assertEqual(sorted(regular - set(data['regular'])), [], 'staged regular trainers missing from regular' + hint)
-        self.assertEqual(sorted(one_of - regular), [], 'one_of members that are not staged regular trainers' + hint)
-        self.assertEqual(sorted(set(data['bosses']) - bosses), [], 'bosses ids that are not staged bosses' + hint)
-        self.assertEqual(sorted(bosses - set(data['bosses'])), [], 'staged bosses missing from bosses' + hint)
+        hint = 'forced_trainers.json vs the staged {}: rerun python3 tools/forced_trainers/classify.py'
+        self.assertEqual(set(data['regular']), regular, hint.format('regular trainers'))
+        self.assertLessEqual(one_of, regular, hint.format('regular trainers (one_of)'))
+        self.assertEqual(set(data['bosses']), RB.staged_bosses(stages), hint.format('bosses'))
 
     def test_scaling_factors_are_the_games(self):
         self.assertEqual(RB.scaling_factors(2.5), G.parse_scaling_factors(G.REPO))

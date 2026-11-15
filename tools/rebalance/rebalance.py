@@ -171,6 +171,11 @@ def fmt_types(types):
 # Story stages
 # ---------------------------------------------------------------------------
 
+def staged_bosses(stages):
+    """Every staged boss and its other rival and starter teams (load_stages' ``variants``)."""
+    return {b for st in stages for b in st['bosses']}.union(*(ids for st in stages for ids in st['variants'].values()))
+
+
 def load_stages(path, trainers, repo):
     """Each stage's regular trainers (by map), bosses and maps.
 
@@ -198,7 +203,7 @@ def load_stages(path, trainers, repo):
             if ids:
                 st['variants'][bid] = sorted(ids)
     # Variants are kept out of the regular trainers and overrides like the bosses.
-    bosses = staged.union(*(ids for st in stages for ids in st['variants'].values()))
+    bosses = staged_bosses(stages)
     missing = sorted(b for b in bosses if b not in trainers)
     if missing:
         raise SystemExit(f'{path}: unknown boss trainers {missing}')
@@ -2452,9 +2457,7 @@ def boss_teams(stages, postgame):
     their species distinct (#150) and take evolutions that aren't by level
     (#181): every staged boss and its rival variants, the post-game boss
     ladders and POSTGAME_FINAL."""
-    return sorted({b for st in stages for b in st['bosses']}
-                  | {v for st in stages for ids in st['variants'].values() for v in ids}
-                  | {t for ladder in postgame['boss'] for t in ladder} | set(postgame['final']))
+    return sorted(staged_bosses(stages) | {t for ladder in postgame['boss'] for t in ladder} | set(postgame['final']))
 
 
 def nonlevel_candidates(trainers, teams, evolve, evolve_nonlevel):
