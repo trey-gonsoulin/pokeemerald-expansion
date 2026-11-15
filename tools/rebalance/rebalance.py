@@ -237,8 +237,9 @@ OUTLIER_SKIP = 25
 # the report flags as met more than OUTLIER_SKIP percent under (the
 # raise-only trainer shift keeps its stage's levels). pct: that side's lead
 # over the ace, in percent of the ace, as the owner accepted it (#354). The
-# margins test fails when the lead falls more than OUTLIER_SLACK points
-# under it; re-accept by updating pct. The report marks each one accepted.
+# margins test fails when the figure moves more than OUTLIER_SLACK points
+# from it either way; re-accept by updating pct. The report marks each one
+# accepted.
 OUTLIERS = {
     'TRAINER_PHOEBE': ('skip', -16.2, 'skip lead 62 vs ace 74: LEAGUE_STEPS puts her 1 over Sidney (73), over the '
                                       "skip rule's 73 (62 / 0.85); owner accepted (#350)"),

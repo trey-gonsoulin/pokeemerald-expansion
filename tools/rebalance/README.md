@@ -291,9 +291,9 @@ committed data.
   last three Elite Four fights and Wallace, which `LEAGUE_STEPS` lifts over
   the skip rule, and the forced Edwardo and Flint. The report marks them
   "accepted", and `RealRepo.test_both_players_meet_the_margins` exempts
-  each on its side only, fails on a stale entry, and fails when one gets
-  more than `OUTLIER_SLACK` (1) points worse than its accepted percent
-  (#354; re-accept by updating the number).
+  each on its side only, fails on a stale entry, and fails when one moves
+  more than `OUTLIER_SLACK` (1) points from its accepted percent, worse or
+  better (#354; re-accept by updating the number).
   `RealRepo.test_forced_trainers_name_the_staged_trainers` (#356) fails
   when `forced_trainers.json` names a trainer that isn't staged (or isn't
   in `trainers.party`) or misses one that is.

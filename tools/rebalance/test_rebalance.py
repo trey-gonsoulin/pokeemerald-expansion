@@ -1594,7 +1594,8 @@ class RealRepo(unittest.TestCase):
         rounded half up, so the bound is the ace the unrounded target rounds to: a lead of 12 meets
         an ace of 11 (12 / 1.10 = 10.9). The report's forced-trainer outliers are exactly
         OUTLIERS' forced entries, and no entry is stale. No outlier is more than OUTLIER_SLACK points
-        worse than the figure the owner accepted (#354)."""
+        from the figure the owner accepted (#354): worse needs a re-accept, and better an update so
+        the stored figure keeps guarding."""
         with open(RB.CURVE_SETTINGS, encoding='utf-8') as f:
             knobs = json.load(f)
         full, skip = knobs['full_margin'], knobs['skip_margin']
@@ -1614,21 +1615,21 @@ class RealRepo(unittest.TestCase):
         self.assertEqual(sorted(bosses - {o[:2] for o in outside}), [], 'stale OUTLIERS boss entries')
         forced = {(r['trainer'], 'forced') for r in res['forced_outliers']}
         self.assertEqual(sorted(forced ^ (accepted - bosses)), [], 'forced outliers not matching OUTLIERS')
-        self.assertTrue(all(side in ('full', 'skip', 'forced') and isinstance(pct, (int, float)) and why
+        self.assertTrue(all(side in ('full', 'skip', 'forced') and type(pct) in (int, float) and why
                             for side, pct, why in RB.OUTLIERS.values()))
         figures = [(o[0], o[1], o[4]) for o in outside if o[:2] in accepted]
         figures += [(r['trainer'], 'forced', r['skip_pct']) for r in res['forced_outliers']]
         figures = [(tid, side, pct, RB.OUTLIERS[tid][1]) for tid, side, pct in figures]
-        self.assertEqual([f for f in figures if f[2] < f[3] - RB.OUTLIER_SLACK], [],
-                         f'(trainer, player, %, accepted %) more than {RB.OUTLIER_SLACK} points worse than accepted: '
+        self.assertEqual([f for f in figures if abs(f[2] - f[3]) > RB.OUTLIER_SLACK], [],
+                         f'(trainer, player, %, accepted %) more than {RB.OUTLIER_SLACK} points from accepted: '
                          're-accept by updating rebalance.OUTLIERS')
 
     def test_forced_trainers_name_the_staged_trainers(self):
         """forced_trainers.json (#356): its regular ids are the staged regular trainers, each
         choose-one member among them, and its bosses the staged bosses with their other rival and
         starter teams, as classify.py writes them (load_stages takes all of those from
-        trainers.party). load_forced reads plain sets, so a renamed or dropped trainer would
-        otherwise just go missing from the skip run."""
+        trainers.party), and every class is one classify.py writes. load_forced reads plain
+        sets, so a renamed or dropped trainer would otherwise just go missing from the skip run."""
         trainers = G.parse_trainers(os.path.join(G.REPO, 'src', 'data', 'trainers.party'))
         stages = RB.load_stages(RB.DEFAULT_STAGES, trainers, G.REPO)
         with open(RB.FORCED_TRAINERS, encoding='utf-8') as f:
@@ -1637,8 +1638,11 @@ class RealRepo(unittest.TestCase):
         one_of = {t for e in data['regular'].values() for t in e.get('one_of', ())}
         hint = 'forced_trainers.json vs the staged {}: rerun python3 tools/forced_trainers/classify.py'
         self.assertEqual(set(data['regular']), regular, hint.format('regular trainers'))
-        self.assertLessEqual(one_of, regular, hint.format('regular trainers (one_of)'))
+        self.assertEqual(sorted(one_of - regular), [], hint.format('regular trainers (one_of)'))
         self.assertEqual(set(data['bosses']), RB.staged_bosses(stages), hint.format('bosses'))
+        # load_forced keeps a trainer by its class, so a misspelt class drops it from the skip run too.
+        self.assertEqual({tid: e['class'] for tid, e in data['regular'].items()
+                          if e['class'] not in ('FORCED', 'AVOIDABLE', 'UNCERTAIN')}, {}, 'unknown classes')
 
     def test_scaling_factors_are_the_games(self):
         self.assertEqual(RB.scaling_factors(2.5), G.parse_scaling_factors(G.REPO))
