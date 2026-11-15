@@ -190,10 +190,15 @@ TEST("Reflection palette: with no free slot a high bridge reflection's retry lea
 TEST("Reflection palette: a high bridge reflection leaves the fade of a bridge palette another reflection loaded alone")
 {
     u32 mainSpriteId, reflectionSpriteId, bridgeSlot, reflectionSlot;
-    bool32 reflectionFaded, controlFaded;
+    bool32 reflectionInUse, reflectionFaded, controlFaded;
     u16 bridgeColors[16], bridgeSlotColors[16];
     u8 savedState, savedY;
     u16 savedBlendColor;
+
+    // Another bridge reflection loaded the palette
+    CpuFill16(RGB(10, 10, 10), bridgeColors, sizeof(bridgeColors));
+    bridgeSlot = LoadSpritePaletteWithTag(bridgeColors, HIGH_BRIDGE_PAL_TAG);
+    ASSUME(bridgeSlot != 0xFF);
 
     // Each weather update in a fade-out blends the slot's faded colours again, toward the fade's color
     savedState = gWeatherPtr->palProcessingState;
@@ -203,16 +208,13 @@ TEST("Reflection palette: a high bridge reflection leaves the fade of a bridge p
     gPaletteFade.y = 8;
     gPaletteFade.blendColor = RGB_WHITE;
 
-    // Another bridge reflection loaded the palette and applied the weather update
-    CpuFill16(RGB(10, 10, 10), bridgeColors, sizeof(bridgeColors));
-    bridgeSlot = LoadSpritePaletteWithTag(bridgeColors, HIGH_BRIDGE_PAL_TAG);
-    ASSUME(bridgeSlot != 0xFF);
+    // ...and applied the weather update
     UpdateSpritePaletteWithWeather(bridgeSlot, TRUE);
     CpuCopy16(&gPlttBufferFaded[OBJ_PLTT_ID(bridgeSlot)], bridgeSlotColors, sizeof(bridgeSlotColors));
 
     // The new reflection shares the loaded bridge slot, and the weather update must not blend it again
     reflectionSpriteId = SetUpObjectWithReflection(&mainSpriteId, FALSE, TRUE);
-    ASSUME(gSprites[reflectionSpriteId].inUse);
+    reflectionInUse = gSprites[reflectionSpriteId].inUse;
     reflectionSlot = gSprites[reflectionSpriteId].oam.paletteNum;
     reflectionFaded = memcmp(&gPlttBufferFaded[OBJ_PLTT_ID(bridgeSlot)], bridgeSlotColors, sizeof(bridgeSlotColors)) != 0;
     // Control: a second weather update on the bridge slot does blend it again
@@ -224,6 +226,7 @@ TEST("Reflection palette: a high bridge reflection leaves the fade of a bridge p
     gPaletteFade.blendColor = savedBlendColor;
     TearDownObjectWithReflection(mainSpriteId, reflectionSpriteId);
 
+    ASSUME(reflectionInUse); // Checked after the restore, so a failure leaves no fade or object behind
     EXPECT_EQ(reflectionSlot, bridgeSlot);
     EXPECT(controlFaded);
     EXPECT(!reflectionFaded);
