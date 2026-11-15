@@ -6,6 +6,7 @@
 #include "sprite.h"
 #include "constants/event_objects.h"
 #include "constants/metatile_behaviors.h"
+#include "constants/rgb.h"
 #include "test/test.h"
 
 #define TEST_PALETTE_TAG 0x7304
@@ -184,4 +185,49 @@ TEST("Reflection palette: with no free slot a high bridge reflection's retry lea
 
     EXPECT(controlFaded);
     EXPECT(!retryFaded);
+}
+
+TEST("Reflection palette: a high bridge reflection leaves the fade of a bridge palette another reflection loaded alone")
+{
+    u32 mainSpriteId, reflectionSpriteId, bridgeSlot, reflectionSlot;
+    bool32 reflectionInUse, reflectionFaded, controlFaded;
+    u16 bridgeColors[16], bridgeSlotColors[16];
+    u8 savedState, savedY;
+    u16 savedBlendColor;
+
+    // Another bridge reflection loaded the palette
+    CpuFill16(RGB(10, 10, 10), bridgeColors, sizeof(bridgeColors));
+    bridgeSlot = LoadSpritePaletteWithTag(bridgeColors, HIGH_BRIDGE_PAL_TAG);
+    ASSUME(bridgeSlot != 0xFF);
+
+    // Each weather update in a fade-out blends the slot's faded colours again, toward the fade's color
+    savedState = gWeatherPtr->palProcessingState;
+    savedY = gPaletteFade.y;
+    savedBlendColor = gPaletteFade.blendColor;
+    gWeatherPtr->palProcessingState = WEATHER_PAL_STATE_SCREEN_FADING_OUT;
+    gPaletteFade.y = 8;
+    gPaletteFade.blendColor = RGB_WHITE;
+
+    // ...and applied the weather update
+    UpdateSpritePaletteWithWeather(bridgeSlot, TRUE);
+    CpuCopy16(&gPlttBufferFaded[OBJ_PLTT_ID(bridgeSlot)], bridgeSlotColors, sizeof(bridgeSlotColors));
+
+    // The new reflection shares the loaded bridge slot, and the weather update must not blend it again
+    reflectionSpriteId = SetUpObjectWithReflection(&mainSpriteId, FALSE, TRUE);
+    reflectionInUse = gSprites[reflectionSpriteId].inUse;
+    reflectionSlot = gSprites[reflectionSpriteId].oam.paletteNum;
+    reflectionFaded = memcmp(&gPlttBufferFaded[OBJ_PLTT_ID(bridgeSlot)], bridgeSlotColors, sizeof(bridgeSlotColors)) != 0;
+    // Control: a second weather update on the bridge slot does blend it again
+    UpdateSpritePaletteWithWeather(bridgeSlot, TRUE);
+    controlFaded = memcmp(&gPlttBufferFaded[OBJ_PLTT_ID(bridgeSlot)], bridgeSlotColors, sizeof(bridgeSlotColors)) != 0;
+
+    gWeatherPtr->palProcessingState = savedState;
+    gPaletteFade.y = savedY;
+    gPaletteFade.blendColor = savedBlendColor;
+    TearDownObjectWithReflection(mainSpriteId, reflectionSpriteId);
+
+    ASSUME(reflectionInUse); // Checked after the restore, so a failure leaves no fade or object behind
+    EXPECT_EQ(reflectionSlot, bridgeSlot);
+    EXPECT(controlFaded);
+    EXPECT(!reflectionFaded);
 }
