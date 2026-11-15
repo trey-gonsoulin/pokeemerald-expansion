@@ -1041,7 +1041,7 @@ def level_curve(stages, trainers, gd, scaling, wilds, clear=1.0, wild_per_stage=
             for name, (_, size, share) in PARTY_MODELS.items():
                 levels = parties[name].levels()
                 if share:
-                    row[name] = levels[0]
+                    row[name] = M.lead(levels)
                     row[name + '_bench'] = round(sum(levels[1:]) / (size - 1), 1)
                 else:
                     row[name] = levels[0] if size == 1 else round(sum(levels) / size, 1)
@@ -1297,7 +1297,7 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
         for tid in cleared(st['regular'], clear) if regular is None else regular:
             aces.append(max(1, min(team_ace(trainers[tid]) + trainer_raise + d, 100)))
             gaps.append(gap_of(gap_ref_of(p), aces[-1]))
-            leads.append(p.levels()[0])
+            leads.append(M.lead(p.levels()))
             fight(p, tid, trainer_raise + d)
         return gaps, aces, leads
 
@@ -2015,8 +2015,8 @@ def two_players(bosses, stages):
     for r in bosses:
         if r['boss'] not in staged:
             continue
-        ace, full = r['boss_ace'], r['levels'][0]
-        skip = r['skip_levels'][0] if r['skip_levels'] else None
+        ace, full = r['boss_ace'], M.lead(r['levels'])
+        skip = M.lead(r['skip_levels']) if r['skip_levels'] else None
         skip_pct = None if skip is None else (skip - ace) * 100 / ace
         out.append({'stage': r['stage'], 'boss': r['boss'], 'ace': ace, 'full': full,
                     'full_pct': round((full - ace) * 100 / ace, 1), 'skip': skip,
@@ -2746,7 +2746,7 @@ def tune_penalty(inputs, knobs, cutoffs, widths, floors):
         b = S.budget(walls)
         out.append({'cutoff': cutoff, 'width': width, 'floor': floor, 'walls': walls,
                     **{k: b[k] for k in ('max_kos', 'unwinnable', 'over', 'worst', 'passes')}, 'final_boss': final,
-                    'final_lead': next(r['levels'][0] for r in res['bosses'] if r['boss'] == final)})
+                    'final_lead': next(M.lead(r['levels']) for r in res['bosses'] if r['boss'] == final)})
     return out
 
 

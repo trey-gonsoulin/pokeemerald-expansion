@@ -96,8 +96,13 @@ The knobs:
   The defaults (`explorer_defaults`) are the game's configs.
 - **Targets:** the party levels the rules measure against (`REFERENCES`:
   the bench, the KO-takers' mean, the party's mean, and `ace`, its highest
-  member, which is the lead): `boss_ref` for the boss rules and `gap_ref`
-  for the two gaps (#350, both the bench by default). Then #150's
+  member): `boss_ref` for the boss rules and `gap_ref` for the two gaps
+  (#350, both the bench by default). The lead is slot 0, the first
+  KO-taker (`matchup.lead`, #355), which the two-player report, the solo
+  walls and the stand-in teams follow. With one KO-taker it is also the
+  highest member, so `curve_settings.json`'s `boss_ref: "ace"` sets the
+  bosses against it, and `RealRepo.test_the_lead_is_the_boss_reference`
+  fails if the two split. Then #150's
   single-player boss margin (off: today's levels; the data now uses the
   two players' margins, below) with the Elite Four spacing
   (`LEAGUE_STEPS`), #150's route-trainer gap (`TRAINER_GAP`: each stage's

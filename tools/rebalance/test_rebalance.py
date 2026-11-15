@@ -1624,6 +1624,24 @@ class RealRepo(unittest.TestCase):
                          f'(trainer, player, %, accepted %) more than {RB.OUTLIER_SLACK} points from accepted: '
                          're-accept by updating rebalance.OUTLIERS')
 
+    def test_the_lead_is_the_boss_reference(self):
+        """matchup.lead, the Pokemon the two-player report, the solo walls and the stand-ins follow,
+        is the level curve_settings.json's boss_ref sets the bosses against (#355), for both players,
+        with the level rules on (apply's run) and off (the report's). A second KO-taker or another
+        boss_ref would otherwise set the bosses against one Pokemon and report on another."""
+        with open(RB.CURVE_SETTINGS, encoding='utf-8') as f:
+            settings = json.load(f)
+        live = RB.repo_inputs(G.REPO, RB.DEFAULT_STAGES, G.R.SpeciesInfo(G.REPO))
+        for knobs in (settings, {k: v for k, v in settings.items() if k not in RB.CURVE_RULES}):
+            rows = RB.explore_run(live, knobs)['bosses']
+            self.assertTrue(any(r['skip_levels'] for r in rows))
+            split = [(r['boss'], 'full', M.lead(r['levels']), r['ref']) for r in rows
+                     if M.lead(r['levels']) != r['ref']]
+            split += [(r['boss'], 'skip', M.lead(r['skip_levels']), r['skip_ref']) for r in rows
+                      if r['skip_levels'] and M.lead(r['skip_levels']) != r['skip_ref']]
+            self.assertEqual(split, [], f"(boss, player, lead, {settings['boss_ref']} reference) with "
+                                        f"{'the rules on' if knobs is settings else 'the rules off'}")
+
     def test_forced_trainers_name_the_staged_trainers(self):
         """forced_trainers.json (#356): its regular ids are the staged regular trainers, each
         choose-one member among them, and its bosses the staged bosses with their other rival and

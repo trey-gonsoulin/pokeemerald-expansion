@@ -159,9 +159,9 @@ def boss_foes(gd, trainer, ace, evolve=None, devolve=None):
 def solo_walls(trainers, gd, stages, rows, wilds, map_tms, teachables, evolve, scaling, overlevel, settings,
                ladders=(), foe_evolve=None, foe_devolve=None, cache=None, optional=frozenset()):
     """Per staged story boss with a row in ``rows`` (share_run's boss rows:
-    ``levels[0]`` is the fight-everyone lead, ``boss_ace`` the team's ace)
-    and starter in ``settings`` (matchup_settings.json's; starters ``gd``
-    lacks are skipped): {stage, boss (the team met after choosing that
+    ``levels`` is the fight-everyone party, its lead matchup.lead's,
+    ``boss_ace`` the team's ace) and starter in ``settings``
+    (matchup_settings.json's; starters ``gd`` lacks are skipped): {stage, boss (the team met after choosing that
     starter), starter, ace, double, lead, wall, sweep, kos, source (the
     grind's wild [species, level]: best_wild's fewest KOs), rematch,
     battles, exempt}. ``exempt``: why the wall is outside the grind budget
@@ -197,7 +197,7 @@ def solo_walls(trainers, gd, stages, rows, wilds, map_tms, teachables, evolve, s
             row = by_boss.get(bid)
             if row is None:
                 continue
-            lead = row['levels'][0]
+            lead = M.lead(row['levels'])
             for name, species in starters.items():
                 tid = M.starter_boss(bid, name, starters, trainers)
                 if tid is None:
