@@ -209,6 +209,7 @@ TEST("Reflection palette: a high bridge reflection leaves the fade of a bridge p
 
     // The new reflection shares the loaded bridge slot, and the weather update must not land on it again
     reflectionSpriteId = SetUpObjectWithReflection(&mainSpriteId, FALSE, TRUE);
+    ASSUME(gSprites[reflectionSpriteId].inUse);
     reflectionSlot = gSprites[reflectionSpriteId].oam.paletteNum;
     reflectionFaded = memcmp(&gPlttBufferFaded[OBJ_PLTT_ID(bridgeSlot)], bridgeSlotColors, sizeof(bridgeSlotColors)) != 0;
     // Control: the same fade does land on the bridge slot when the weather update is given it
@@ -219,7 +220,6 @@ TEST("Reflection palette: a high bridge reflection leaves the fade of a bridge p
     gWeatherPtr->fadeInFirstFrame = savedFirstFrame;
     gWeatherPtr->fadeDestColor = savedColor;
     TearDownObjectWithReflection(mainSpriteId, reflectionSpriteId);
-    FreeSpritePaletteByTag(HIGH_BRIDGE_PAL_TAG);
 
     EXPECT_EQ(reflectionSlot, bridgeSlot);
     EXPECT(controlFaded);
