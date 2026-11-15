@@ -41,6 +41,11 @@ def bst(gd, species):
     return sum(gd.species[species].stats.values())
 
 
+def lead(levels):
+    """The lead of a party's ``levels`` (#355): slot 0, the first KO-taker."""
+    return levels[0]
+
+
 def starter_boss(bid, starter, starters, trainers):
     """The team of fight ``bid`` met after choosing ``starter``: a rival
     team's id with that starter's suffix, any other boss as it is."""
@@ -93,24 +98,25 @@ def stand_in(gd, species, level, ivs, tm_moves, teachables, n, targets):
 
 def stand_in_team(gd, settings, stage_index, levels, starter, seen, tm_moves, teachables, evolve, targets):
     """The stand-in team before a boss of stage ``stage_index``: the
-    ``starter`` species line at the lead's level (``levels[0]``: the Exp.
+    ``starter`` species line at the lead's level (``levels``: the Exp.
     Share curve's party, lead first), then up to ``catches_per_stage`` catches
     per earlier stage from ``seen`` (the species of the wild tables met by
     then), each evolved for the bench's level (``evolve(species, level)``)
     and picked by base stat total, new types first."""
     ivs = dict.fromkeys(G.IV_STATS, settings['ivs'])
     n = settings['moves']
-    lead = stand_in(gd, evolve(starter, levels[0]), levels[0], ivs, tm_moves, teachables, n, targets)
-    team = [lead] if lead['moves'] else []
+    lead_level = lead(levels)
+    first = stand_in(gd, evolve(starter, lead_level), lead_level, ivs, tm_moves, teachables, n, targets)
+    team = [first] if first['moves'] else []
     room = min(settings['team_size'] - 1, settings['catches_per_stage'] * stage_index, len(levels) - 1)
     if room <= 0:
         return team
     bench = levels[1:1 + room]
     level = min(bench)
     exclude = set(settings['exclude'])
-    options = sorted({evolve(sp, level) for sp in seen if sp in gd.species} - exclude - {lead['species']},
+    options = sorted({evolve(sp, level) for sp in seen if sp in gd.species} - exclude - {first['species']},
                      key=lambda sp: (-bst(gd, sp), sp))
-    picked, types = [], set(gd.species[lead['species']].types)
+    picked, types = [], set(gd.species[first['species']].types)
     for new_types_only in (True, False):
         for sp in options:
             if len(picked) == room:

@@ -1041,7 +1041,7 @@ def level_curve(stages, trainers, gd, scaling, wilds, clear=1.0, wild_per_stage=
             for name, (_, size, share) in PARTY_MODELS.items():
                 levels = parties[name].levels()
                 if share:
-                    row[name] = levels[0]
+                    row[name] = M.lead(levels)
                     row[name + '_bench'] = round(sum(levels[1:]) / (size - 1), 1)
                 else:
                     row[name] = levels[0] if size == 1 else round(sum(levels) / size, 1)
@@ -1297,7 +1297,7 @@ def share_run(stages, trainers, gd, scaling, wilds, clear=1.0, affection='friend
         for tid in cleared(st['regular'], clear) if regular is None else regular:
             aces.append(max(1, min(team_ace(trainers[tid]) + trainer_raise + d, 100)))
             gaps.append(gap_of(gap_ref_of(p), aces[-1]))
-            leads.append(p.levels()[0])
+            leads.append(M.lead(p.levels()))
             fight(p, tid, trainer_raise + d)
         return gaps, aces, leads
 
@@ -2015,8 +2015,8 @@ def two_players(bosses, stages):
     for r in bosses:
         if r['boss'] not in staged:
             continue
-        ace, full = r['boss_ace'], r['levels'][0]
-        skip = r['skip_levels'][0] if r['skip_levels'] else None
+        ace, full = r['boss_ace'], M.lead(r['levels'])
+        skip = M.lead(r['skip_levels']) if r['skip_levels'] else None
         skip_pct = None if skip is None else (skip - ace) * 100 / ace
         out.append({'stage': r['stage'], 'boss': r['boss'], 'ace': ace, 'full': full,
                     'full_pct': round((full - ace) * 100 / ace, 1), 'skip': skip,
@@ -2344,7 +2344,7 @@ def analyze(repo, stages_path, forced_path=FORCED_TRAINERS):
     bench_rows = {r['boss']: r for r in share[POWER_BENCH[0]]['now'][POWER_BENCH[1]]}
     forced = load_forced(forced_path) if forced_path else None
     with open(CURVE_SETTINGS, encoding='utf-8') as f:
-        knobs = {k: v for k, v in json.load(f).items() if k not in CURVE_RULES}
+        knobs = report_knobs(json.load(f))
     snap = {'stages': stages, 'trainers': trainers, 'gd': m, 'scaling': base_scaling, 'wilds': wilds,
             'evolve': evolver(info, m), 'devolve': devolver(info, m), 'postgame': ladders, 'forced': forced}
     run = explore_run(snap, knobs)
@@ -2393,6 +2393,13 @@ def analyze(repo, stages_path, forced_path=FORCED_TRAINERS):
 CURVE_SETTINGS = os.path.join(G.HERE, 'curve_settings.json')
 # The knobs that set levels: two_players' run turns them off, to measure the data as it is.
 CURVE_RULES = ('margin', 'trainer_gap', 'wild_gap', 'rematch_step', 'full_margin', 'skip_margin')
+
+
+def report_knobs(settings):
+    """The curve ``settings`` with the level rules off: two_players' run."""
+    return {k: v for k, v in settings.items() if k not in CURVE_RULES}
+
+
 # restock's wild level offsets (map -> table field -> levels over vanilla), which apply writes.
 LEVEL_OFFSETS = os.path.relpath(G.R.AA.LEVEL_OFFSETS, G.R.AA.REPO)
 RESTOCK_SETTINGS = os.path.relpath(G.R.AA.RESTOCK_SETTINGS, G.R.AA.REPO)
@@ -2746,7 +2753,7 @@ def tune_penalty(inputs, knobs, cutoffs, widths, floors):
         b = S.budget(walls)
         out.append({'cutoff': cutoff, 'width': width, 'floor': floor, 'walls': walls,
                     **{k: b[k] for k in ('max_kos', 'unwinnable', 'over', 'worst', 'passes')}, 'final_boss': final,
-                    'final_lead': next(r['levels'][0] for r in res['bosses'] if r['boss'] == final)})
+                    'final_lead': next(M.lead(r['levels']) for r in res['bosses'] if r['boss'] == final)})
     return out
 
 
