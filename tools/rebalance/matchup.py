@@ -42,13 +42,7 @@ def bst(gd, species):
 
 
 def lead(levels):
-    """The lead of a modelled party's ``levels`` (rebalance.Party.levels,
-    #355): slot 0, the first KO-taker, which the two-player report, the
-    solo walls and the stand-in team all follow. curve_settings.json's
-    ``boss_ref`` sets the bosses against rebalance.REFERENCES instead
-    ('ace': the highest member). The two agree while the lead takes the KOs
-    alone, and RealRepo.test_the_lead_is_the_boss_reference fails when they
-    split."""
+    """The lead of a party's ``levels`` (#355): slot 0, the first KO-taker."""
     return levels[0]
 
 

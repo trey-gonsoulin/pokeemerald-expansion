@@ -49,6 +49,12 @@ def real_analysis():
     return RB.analyze(G.REPO, RB.DEFAULT_STAGES)
 
 
+@functools.lru_cache(maxsize=None)
+def real_inputs():
+    """rebalance.repo_inputs on the repo, once for the tests that run it (none changes it)."""
+    return RB.repo_inputs(G.REPO, RB.DEFAULT_STAGES, G.R.SpeciesInfo(G.REPO))
+
+
 class Expressions(unittest.TestCase):
     def setUp(self):
         self.d = G.regime_defines(FIXTURE)
@@ -1568,7 +1574,7 @@ class RealRepo(unittest.TestCase):
         trainers.party, wild or exp-formula change, rerun apply (or change the settings)."""
         with open(RB.CURVE_SETTINGS, encoding='utf-8') as f:
             knobs = json.load(f)
-        inputs = RB.repo_inputs(G.REPO, info=G.R.SpeciesInfo(G.REPO))
+        inputs = real_inputs()
         partners = G.parse_trainers(os.path.join(G.REPO, 'src', 'data', 'battle_partners.party'))
         with open(os.path.join(G.REPO, RB.VANILLA_WILD), encoding='utf-8') as f:
             wild = json.load(f)
@@ -1631,16 +1637,14 @@ class RealRepo(unittest.TestCase):
         boss_ref would otherwise set the bosses against one Pokemon and report on another."""
         with open(RB.CURVE_SETTINGS, encoding='utf-8') as f:
             settings = json.load(f)
-        live = RB.repo_inputs(G.REPO, RB.DEFAULT_STAGES, G.R.SpeciesInfo(G.REPO))
-        for knobs in (settings, {k: v for k, v in settings.items() if k not in RB.CURVE_RULES}):
-            rows = RB.explore_run(live, knobs)['bosses']
+        for rules, knobs in (('on', settings), ('off', RB.report_knobs(settings))):
+            rows = RB.explore_run(real_inputs(), knobs)['bosses']
             self.assertTrue(any(r['skip_levels'] for r in rows))
-            split = [(r['boss'], 'full', M.lead(r['levels']), r['ref']) for r in rows
-                     if M.lead(r['levels']) != r['ref']]
-            split += [(r['boss'], 'skip', M.lead(r['skip_levels']), r['skip_ref']) for r in rows
-                      if r['skip_levels'] and M.lead(r['skip_levels']) != r['skip_ref']]
-            self.assertEqual(split, [], f"(boss, player, lead, {settings['boss_ref']} reference) with "
-                                        f"{'the rules on' if knobs is settings else 'the rules off'}")
+            leads = [(r['boss'], player, M.lead(r[levels]), r[ref]) for r in rows
+                     for player, levels, ref in (('full', 'levels', 'ref'), ('skip', 'skip_levels', 'skip_ref'))
+                     if r[levels]]
+            self.assertEqual([x for x in leads if x[2] != x[3]], [],
+                             f"(boss, player, lead, {settings['boss_ref']} reference) with the rules {rules}")
 
     def test_forced_trainers_name_the_staged_trainers(self):
         """forced_trainers.json (#356): its regular ids are the staged regular trainers, each
@@ -1703,7 +1707,7 @@ class RealRepo(unittest.TestCase):
     def test_committed_curve_data_runs_the_repo_model(self):
         """output/curve_data.json (the explorer's data) gives the curve the
         repo's own data gives: rerun rebalance.py after a data change."""
-        live = RB.repo_inputs(G.REPO, RB.DEFAULT_STAGES, G.R.SpeciesInfo(G.REPO))
+        live = real_inputs()
         self.assertTrue(live['forced'])
         with open(os.path.join(RB.DEFAULT_OUT_DIR, RB.CURVE_DATA), encoding='utf-8') as f:
             snap = RB.load_snapshot(json.load(f))
@@ -2306,7 +2310,7 @@ class Solo(unittest.TestCase):
         names = [st['name'] for st in stages]
         for r, row in zip(out, rows):
             self.assertLessEqual({'boss', 'starter', 'lead', 'wall', 'sweep', 'kos', 'source'}, set(r))
-            self.assertEqual((r['lead'], r['ace']), (row['levels'][0], row['boss_ace']))
+            self.assertEqual((r['lead'], r['ace']), (M.lead(row['levels']), row['boss_ace']))
             self.assertLessEqual(r['wall'], r['sweep'])
             y, level, species = S.best_wild(gd, wilds, names.index(r['stage']), None)
             self.assertEqual(r['source'], [species, level])
@@ -2393,7 +2397,7 @@ class Solo(unittest.TestCase):
         # The full-clear lead at the last staged boss (Wallace in the game) comes from the candidate's own run.
         run = RB.explore_run(inp, self.candidate_knobs(20, 6, 30))
         final = [r for r in run['bosses'] if r['boss'] == 'TRAINER_LEADER_X'][0]
-        self.assertEqual(chosen['final_lead'], final['levels'][0])
+        self.assertEqual(chosen['final_lead'], M.lead(final['levels']))
 
     def test_tune_fights_each_candidates_own_curve(self):
         calls = []

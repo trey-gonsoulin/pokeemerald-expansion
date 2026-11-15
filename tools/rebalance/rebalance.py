@@ -2344,7 +2344,7 @@ def analyze(repo, stages_path, forced_path=FORCED_TRAINERS):
     bench_rows = {r['boss']: r for r in share[POWER_BENCH[0]]['now'][POWER_BENCH[1]]}
     forced = load_forced(forced_path) if forced_path else None
     with open(CURVE_SETTINGS, encoding='utf-8') as f:
-        knobs = {k: v for k, v in json.load(f).items() if k not in CURVE_RULES}
+        knobs = report_knobs(json.load(f))
     snap = {'stages': stages, 'trainers': trainers, 'gd': m, 'scaling': base_scaling, 'wilds': wilds,
             'evolve': evolver(info, m), 'devolve': devolver(info, m), 'postgame': ladders, 'forced': forced}
     run = explore_run(snap, knobs)
@@ -2393,6 +2393,13 @@ def analyze(repo, stages_path, forced_path=FORCED_TRAINERS):
 CURVE_SETTINGS = os.path.join(G.HERE, 'curve_settings.json')
 # The knobs that set levels: two_players' run turns them off, to measure the data as it is.
 CURVE_RULES = ('margin', 'trainer_gap', 'wild_gap', 'rematch_step', 'full_margin', 'skip_margin')
+
+
+def report_knobs(settings):
+    """The curve ``settings`` with the level rules off: two_players' run."""
+    return {k: v for k, v in settings.items() if k not in CURVE_RULES}
+
+
 # restock's wild level offsets (map -> table field -> levels over vanilla), which apply writes.
 LEVEL_OFFSETS = os.path.relpath(G.R.AA.LEVEL_OFFSETS, G.R.AA.REPO)
 RESTOCK_SETTINGS = os.path.relpath(G.R.AA.RESTOCK_SETTINGS, G.R.AA.REPO)
