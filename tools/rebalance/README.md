@@ -296,7 +296,8 @@ committed data.
   better (#354; re-accept by updating the number).
   `RealRepo.test_forced_trainers_name_the_staged_trainers` (#356) fails
   when `forced_trainers.json` names a trainer that isn't staged (or isn't
-  in `trainers.party`) or misses one that is.
+  in `trainers.party`) or misses one that is, or has a class other than
+  `FORCED`, `AVOIDABLE` or `UNCERTAIN`.
 - **Solo walls** (#350, `solo.py`): per starter and staged boss, the
   starter line alone (its default moves plus the TMs open by then, picked
   for coverage; IV 15, full EVs spread evenly) against the boss team on
