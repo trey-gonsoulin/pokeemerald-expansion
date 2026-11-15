@@ -10,7 +10,7 @@ python3 tools/forced_trainers/render.py Route110 3  # draw a map (folder, stage 
 python3 -m unittest discover -s tools/forced_trainers
 ```
 
-Rerun it after a change to a story map, a trainer's script or object, `story_stages.json`, or `specs.py`. `RealRepo.test_committed_file_is_current` and CI fail when the JSON is stale.
+Rerun it after a change to a story map, a trainer's script or object, `story_stages.json`, or `specs.py`. `RealRepo.test_committed_file_is_current` and CI fail when the JSON is stale. On the reading side, `tools/rebalance`'s `RealRepo.test_forced_trainers_name_the_staged_trainers` (#356) fails when an id in it isn't a staged trainer or a staged one is missing, without running the grid.
 
 ## Method
 
