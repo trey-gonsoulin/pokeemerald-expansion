@@ -185,3 +185,43 @@ TEST("Reflection palette: with no free slot a high bridge reflection's retry lea
     EXPECT(controlFaded);
     EXPECT(!retryFaded);
 }
+
+TEST("Reflection palette: a high bridge reflection leaves the fade of a bridge palette another reflection loaded alone")
+{
+    u32 mainSpriteId, reflectionSpriteId, bridgeSlot, reflectionSlot;
+    bool32 reflectionFaded, controlFaded;
+    u16 bridgeSlotColors[16];
+    u8 savedState, savedFirstFrame;
+    u16 savedColor;
+
+    // Another bridge reflection loaded the palette, and its weather update is already done
+    bridgeSlot = LoadSpritePaletteWithTag(gPlttBufferUnfaded, HIGH_BRIDGE_PAL_TAG);
+    ASSUME(bridgeSlot != 0xFF);
+    CpuCopy16(&gPlttBufferFaded[OBJ_PLTT_ID(bridgeSlot)], bridgeSlotColors, sizeof(bridgeSlotColors));
+
+    // The first frame of a weather fade-in writes fadeDestColor over the whole slot it updates
+    savedState = gWeatherPtr->palProcessingState;
+    savedFirstFrame = gWeatherPtr->fadeInFirstFrame;
+    savedColor = gWeatherPtr->fadeDestColor;
+    gWeatherPtr->palProcessingState = WEATHER_PAL_STATE_SCREEN_FADING_IN;
+    gWeatherPtr->fadeInFirstFrame = TRUE;
+    gWeatherPtr->fadeDestColor = ~bridgeSlotColors[0] & 0x7FFF;
+
+    // The new reflection shares the loaded bridge slot, and the weather update must not land on it again
+    reflectionSpriteId = SetUpObjectWithReflection(&mainSpriteId, FALSE, TRUE);
+    reflectionSlot = gSprites[reflectionSpriteId].oam.paletteNum;
+    reflectionFaded = memcmp(&gPlttBufferFaded[OBJ_PLTT_ID(bridgeSlot)], bridgeSlotColors, sizeof(bridgeSlotColors)) != 0;
+    // Control: the same fade does land on the bridge slot when the weather update is given it
+    UpdateSpritePaletteWithWeather(bridgeSlot, TRUE);
+    controlFaded = memcmp(&gPlttBufferFaded[OBJ_PLTT_ID(bridgeSlot)], bridgeSlotColors, sizeof(bridgeSlotColors)) != 0;
+
+    gWeatherPtr->palProcessingState = savedState;
+    gWeatherPtr->fadeInFirstFrame = savedFirstFrame;
+    gWeatherPtr->fadeDestColor = savedColor;
+    TearDownObjectWithReflection(mainSpriteId, reflectionSpriteId);
+    FreeSpritePaletteByTag(HIGH_BRIDGE_PAL_TAG);
+
+    EXPECT_EQ(reflectionSlot, bridgeSlot);
+    EXPECT(controlFaded);
+    EXPECT(!reflectionFaded);
+}
