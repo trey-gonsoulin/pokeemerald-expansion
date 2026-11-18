@@ -623,12 +623,12 @@ Flags (all default Pokemon / story trainers only):
 |---|---|
 | trainer Pokemon with set moves | 670 |
 | attacking set moves whose data changed | 631 |
-|   category flips (physical <-> special) | 267 |
-|   of them now on a weaker / similar / stronger stat | 32 / 102 / 133 |
-|   Pokemon with at least one flip | 231 |
-|   Pokemon with a flip onto a weaker stat | 30 |
+|   category flips (physical <-> special) | 269 |
+|   of them now on a weaker / similar / stronger stat | 34 / 102 / 133 |
+|   Pokemon with at least one flip | 233 |
+|   Pokemon with a flip onto a weaker stat | 32 |
 |   type changes | 0 |
-|   power changes | 389 |
+|   power changes | 387 |
 |   accuracy changes | 79 |
 
 Changed attacking moves (set-move slots; weaker/similar/stronger: the category flipped onto that stat; data: only power, accuracy or type changed):
@@ -655,9 +655,9 @@ Changed attacking moves (set-move slots; weaker/similar/stronger: the category f
 | Rock Tomb | data 12 |
 | Earth Power | similar 11 |
 | Clear Smog | stronger 9, similar 1 |
-| Fury Cutter | data 10 |
 | Zen Headbutt | similar 7, stronger 2 |
 | Hydro Pump | data 9 |
+| Fury Cutter | data 8 |
 | Fire Punch | similar 6, stronger 2 |
 | Air Slash | stronger 7 |
 | High Jump Kick | data 7 |
@@ -670,6 +670,7 @@ Changed attacking moves (set-move slots; weaker/similar/stronger: the category f
 | Assurance | stronger 3, weaker 2 |
 | Lick | data 5 |
 | Night Slash | stronger 5 |
+| Mud Slap | similar 3, weaker 2 |
 | Dragon Claw | stronger 5 |
 | Future Sight | data 5 |
 | Fire Blast | data 5 |
@@ -684,7 +685,6 @@ Changed attacking moves (set-move slots; weaker/similar/stronger: the category f
 | Dual Chop | stronger 3 |
 | Echoed Voice | similar 3 |
 | Crabhammer | stronger 3 |
-| Mud Slap | similar 3 |
 | Sucker Punch | similar 1, stronger 2 |
 | Rock Smash | data 3 |
 | Gust | stronger 2, similar 1 |
@@ -994,19 +994,19 @@ Per boss Pokemon: retyping, defensive multipliers that changed (attacking type: 
 
 `power.py` scores each Pokemon one-on-one against a reference Pokemon of its own level (base 80 in every stat, IV 15, no type) on turns to KO, with its best expected damage per turn (STAB, accuracy, strikes, half for recharge and two-turn moves) and up to 0.5 turn for the faster side. Its effective level is the level at which the reference itself would score the same: what level of typical Pokemon it fights like. Types, abilities, items, status and stat moves are left out (README, "Matchup-relative strength").
 
-The reference's expected power is fitted to every trainer Pokemon's best move: 1.99 + 28.53 ln(level), 48 at 5, 94 at 25, 114 at 50, 125 at 75, 133 at 100.
+The reference's expected power is fitted to every trainer Pokemon's best move: 1.56 + 28.64 ln(level), 48 at 5, 94 at 25, 114 at 50, 125 at 75, 133 at 100.
 
 Bench: the Exp. Share bench before the fight (1.5x off, full / friendship, the Exp. Share curve's). Strongest: the highest effective level on the team.
 
 | stage | boss | ace level | strongest (level -> effective) | mean level | mean effective | bench | strongest - bench |
 |---|---|---|---|---|---|---|---|
-| Rival (Route 103) | May Route 103 Mudkip | 7 | Treecko 7 -> 4.8 | 7.0 | 4.8 | 5 | -0.2 |
-| Roxanne | Roxanne 1 | 15 | Nosepass 15 -> 13.3 | 13.0 | 11.2 | 15 | -1.7 |
+| Rival (Route 103) | May Route 103 Mudkip | 7 | Treecko 7 -> 4.9 | 7.0 | 4.9 | 5 | -0.1 |
+| Roxanne | Roxanne 1 | 15 | Nosepass 15 -> 13.4 | 13.0 | 11.3 | 15 | -1.6 |
 | Brawly | May Rustboro Mudkip | 18 | Grovyle 18 -> 14.7 | 17.0 | 12.4 | 16 | -1.3 |
-| Brawly | Brawly 1 | 18 | Makuhita 18 -> 15.4 | 16.0 | 14.2 | 17 | -1.6 |
+| Brawly | Brawly 1 | 18 | Makuhita 18 -> 15.5 | 16.0 | 14.3 | 17 | -1.5 |
 | Wattson | May Route 110 Mudkip | 25 | Grovyle 25 -> 20.5 | 23.7 | 17.2 | 24 | -3.5 |
 | Wattson | Wally Mauville | 25 | Ralts 25 -> 14.8 | 25.0 | 14.8 | 24 | -9.2 |
-| Wattson | Wattson 1 | 25 | Manectric 25 -> 26.4 | 22.5 | 20.5 | 24 | +2.4 |
+| Wattson | Wattson 1 | 25 | Manectric 25 -> 26.5 | 22.5 | 20.5 | 24 | +2.5 |
 | Flannery | Tabitha Mt Chimney | 29 | Camerupt 29 -> 29.3 | 27.5 | 25.0 | 37 | -7.7 |
 | Flannery | Maxie Mt Chimney | 31 | Mightyena 30 -> 28.3 | 30.3 | 26.9 | 37 | -8.7 |
 | Flannery | Flannery 1 | 32 | Torkoal 32 -> 36.9 | 28.8 | 29.9 | 37 | -0.1 |
@@ -1051,12 +1051,12 @@ Boss Pokemon at least 10% from their level, strongest first (best move; "default
 | Wallace | Tentacruel | 76 | 84.4 | +11% | Sludge Bomb |
 | Tate And Liza 1 | Claydol | 59 | 65.4 | +11% | Earthquake |
 | Winona 1 | Pelipper | 44 | 39.4 | -10% | Water Gun |
+| Roxanne 1 | Nosepass | 15 | 13.4 | -11% | Rock Tomb |
 | Norman 1 | Spinda | 32 | 28.4 | -11% | Facade |
-| Roxanne 1 | Nosepass | 15 | 13.3 | -11% | Rock Tomb |
-| Wattson 1 | Magnemite | 23 | 20.2 | -12% | Shock Wave |
+| Wattson 1 | Magnemite | 23 | 20.3 | -12% | Shock Wave |
 | Brawly 1 | Machop | 15 | 13.1 | -13% | Low Sweep |
 | Wattson 1 | Voltorb | 21 | 18.3 | -13% | Shock Wave |
-| Brawly 1 | Makuhita | 18 | 15.4 | -14% | Cross Chop |
+| Brawly 1 | Makuhita | 18 | 15.5 | -14% | Cross Chop |
 | Roxanne 1 | Geodude | 12 | 10.2 | -15% | Bulldoze |
 | Roxanne 1 | Geodude | 12 | 10.2 | -15% | Bulldoze |
 | May Route 110 Mudkip | Grovyle | 25 | 20.5 | -18% | Mega Drain |
@@ -1065,8 +1065,8 @@ Boss Pokemon at least 10% from their level, strongest first (best move; "default
 | Tabitha Mt Chimney | Numel | 25 | 20.1 | -20% | Lava Plume |
 | Juan 1 | Luvdisc | 62 | 49.1 | -21% | Water Pulse |
 | Maxie Mt Chimney | Numel | 31 | 24.0 | -23% | Bulldoze |
+| May Route 103 Mudkip | Treecko | 7 | 4.9 | -30% | Leafage (default) |
 | May Route 110 Mudkip | Wingull | 23 | 16.1 | -30% | Water Pulse (default) |
-| May Route 103 Mudkip | Treecko | 7 | 4.8 | -31% | Leafage (default) |
 | May Route 110 Mudkip | Slugma | 23 | 15.1 | -34% | Ember |
 | May Rustboro Mudkip | Wingull | 16 | 10.1 | -37% | Water Gun (default) |
 | Wally Mauville | Ralts | 25 | 14.8 | -41% | Psybeam (default) |
